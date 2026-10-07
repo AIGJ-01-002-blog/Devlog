@@ -2,12 +2,14 @@ package com.team.blog.account;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +100,24 @@ class SocialLinksTest extends IntegrationTest {
             pool.shutdown();
         }
         assertThat(jdbc.queryForObject("SELECT count(*) FROM member_social_link WHERE member_id = ?", Long.class, me.memberId())).isEqualTo(2);
+    }
+
+    @Test
+    void 글_아래_작성자_영역에도_온다() throws Exception {
+        // spec 044: velog처럼 글 상세의 작성자 영역에도 소셜 정보를 보인다
+        Session me = signup(uniqueLogin("slp"));
+        save(me, Map.of("github", "octo", "homepage", "https://devlog.life")).andExpect(status().isOk());
+        long id = read(me.http().perform(asJson(post("/api/posts"), Map.of("title", "소셜", "contentMd", "본문")))
+                .andExpect(status().isCreated()).andReturn()).path("id").asLong();
+        me.http().perform(asJson(post("/api/posts/" + id + "/publish"), Map.of("title", "소셜", "contentMd", "본문",
+                        "visibility", "PUBLIC", "baseVersion", 0, "tags", List.of()))
+                .header("Idempotency-Key", UUID.randomUUID().toString())).andExpect(status().isOk());
+
+        JsonNode links = read(browser().perform(get("/api/posts/" + id)).andExpect(status().isOk()).andReturn())
+                .path("author").path("socialLinks");
+        assertThat(links.path("github").asString()).isEqualTo("octo");
+        assertThat(links.path("homepage").asString()).isEqualTo("https://devlog.life");
+        assertThat(links.has("email")).isFalse();
     }
 
     @Test
