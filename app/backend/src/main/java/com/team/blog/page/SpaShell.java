@@ -1,0 +1,93 @@
+package com.team.blog.page;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.util.HtmlUtils;
+
+import tools.jackson.databind.json.JsonMapper;
+
+/**
+ * React 앱의 index.html에 페이지별 머리말(제목·설명·정규 주소·OG)과 첫 화면 HTML, 초기 데이터를 넣는다.
+ * 인라인 스크립트는 넣지 않는다(CSP script-src 'self'): 초기 데이터는 실행되지 않는 application/json 블록이다.
+ * 프런트 빌드가 없으면(백엔드만 실행·테스트) 최소 껍데기를 쓴다.
+ */
+@Component
+public class SpaShell {
+    static final String HEAD_MARK = "<!--app-head-->";
+    static final String BODY_MARK = "<!--app-body-->";
+    private static final String FALLBACK = """
+            <!doctype html>
+            <html lang="ko">
+            <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <!--app-head-->
+            </head>
+            <body>
+            <div id="root"><!--app-body--></div>
+            </body>
+            </html>
+            """;
+
+    private final String template;
+    private final JsonMapper json = JsonMapper.builder().build();
+
+    public SpaShell() {
+        this.template = load();
+    }
+
+    private static String load() {
+        ClassPathResource built = new ClassPathResource("static/index.html");
+        if (!built.exists()) return FALLBACK;
+        try (InputStream in = built.getInputStream()) {
+            String html = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            // 빌드된 index.html에 표시가 없으면 넣을 자리를 만든다. 원래 <title>은 페이지별 제목으로 바뀐다
+            html = html.replaceFirst("(?is)<title>.*?</title>", "");
+            if (!html.contains(HEAD_MARK)) html = html.replaceFirst("(?i)</head>", HEAD_MARK + "\n</head>");
+            if (!html.contains(BODY_MARK)) html = html.replaceFirst("<div id=\"root\"></div>", "<div id=\"root\">" + BODY_MARK + "</div>");
+            return html;
+        } catch (IOException e) {
+            return FALLBACK;
+        }
+    }
+
+    public String render(HeadMeta meta, String bodyHtml, Object initialData) {
+        StringBuilder head = new StringBuilder();
+        head.append("<title>").append(esc(meta.title())).append("</title>\n");
+        if (meta.description() != null && !meta.description().isBlank()) {
+            head.append("<meta name=\"description\" content=\"").append(esc(meta.description())).append("\">\n");
+        }
+        if (!meta.indexable()) head.append("<meta name=\"robots\" content=\"noindex, nofollow\">\n");
+        if (meta.indexable() && meta.canonical() != null) {
+            head.append("<link rel=\"canonical\" href=\"").append(esc(meta.canonical())).append("\">\n");
+            head.append("<meta property=\"og:type\" content=\"").append(esc(meta.ogType())).append("\">\n");
+            head.append("<meta property=\"og:url\" content=\"").append(esc(meta.canonical())).append("\">\n");
+            head.append("<meta property=\"og:title\" content=\"").append(esc(meta.title())).append("\">\n");
+            if (meta.description() != null && !meta.description().isBlank()) {
+                head.append("<meta property=\"og:description\" content=\"").append(esc(meta.description())).append("\">\n");
+            }
+            if (meta.ogImage() != null) head.append("<meta property=\"og:image\" content=\"").append(esc(meta.ogImage())).append("\">\n");
+            if (meta.publishedTime() != null) {
+                head.append("<meta property=\"article:published_time\" content=\"").append(meta.publishedTime()).append("\">\n");
+            }
+            if (meta.modifiedTime() != null) {
+                head.append("<meta property=\"article:modified_time\" content=\"").append(meta.modifiedTime()).append("\">\n");
+            }
+        }
+        if (initialData != null) {
+            // </script> 탈출을 막기 위해 <, >, &를 유니코드 이스케이프로 바꾼다 (JSON 문자열 안에서만 나타나므로 의미는 같다)
+            String data = json.writeValueAsString(initialData)
+                    .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026");
+            head.append("<script id=\"initial-data\" type=\"application/json\">").append(data).append("</script>\n");
+        }
+        return template.replace(HEAD_MARK, head.toString()).replace(BODY_MARK, bodyHtml == null ? "" : bodyHtml);
+    }
+
+    public static String esc(String s) {
+        return s == null ? "" : HtmlUtils.htmlEscape(s, "UTF-8");
+    }
+}

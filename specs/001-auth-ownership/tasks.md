@@ -26,7 +26,7 @@
 - [X] T012 [US1] GitHub OAuth2: 인증된 대표 이메일 조회, 성공 핸들러(기존 회원 로그인 / 가입 대기 10분)
 - [X] T013 [US1] `SignupService.complete` 한 트랜잭션(member + auth_identity + member_agreement 2행), UNIQUE 충돌 → 409 + 제안
 - [X] T014a [US1] 가입 API·중복 확인 API
-- [ ] T014b [US1] 대문자 주소 301 (003 PageController와 함께)
+- [X] T014b [US1] 대문자 주소 301 (003 PageController)
 - [X] T015 [US1] 테스트: 주소 규칙 표(08 §2·§3), 닉네임 규칙(09 §11), 가입·재로그인 1계정, 동시 가입 10건 1건 성공
 
 ## Phase 4: User Story 2 — 로그인 유지·로그아웃·정지·재동의·닉네임 변경 (P2)
@@ -40,9 +40,9 @@
 
 ## Phase 5: User Story 3·4 — 소유 권한·내 글 관리 (P3·P4)
 
-- [ ] T022 [US3] `PostAccessPolicy.canRead`, 소유자 조건 조회(002와 함께)
+- [X] T022 [US3] `PostAccessPolicy.canRead`, 소유자 조건 조회(002와 함께)
 - [X] T023 [US4] `GET /api/me/posts` 본인 글만, 빈 상태
-- [ ] T024 테스트: 남의 글 수정·삭제 404 + 내용 불변, 비공개·임시·없는 글 응답 동일, 다른 사용자 값 무시
+- [X] T024 테스트: 남의 글 수정·삭제 404 + 내용 불변, 비공개·임시·없는 글 응답 동일, 다른 사용자 값 무시
 
 ## Phase 6: 화면
 
