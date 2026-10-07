@@ -8,6 +8,10 @@ main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/r
 
 ## [Unreleased]
 
+### 배포
+- 학교 서버가 외부망에서 닫혀 있어, PostgreSQL·Redis·MinIO를 클러스터 안에 함께 띄우는 `selfhosted` 구성을 운영 기본으로 추가. 사진 버킷은 배포 때 자동으로 만들고 같은 도메인의 `/blog-images/`로 내려준다. 데이터 서비스는 앱에서만 접속된다
+- 배포 워크플로에서 `selfhosted`·`nhn`(학교 인프라) 중 고를 수 있다. `deploy/scripts/gen-secret-env.sh`가 비밀번호를 임의 값으로 채운 secret.env를 만든다
+
 ## [0.8.0] - 2026-10-07
 
 다른 회원과 친구를 맺고, 친구끼리는 서로의 최근 활동을 대략 볼 수 있다 (spec 008).

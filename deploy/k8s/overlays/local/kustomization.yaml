@@ -9,17 +9,14 @@ labels:
     includeSelectors: false
 resources:
   - ../../base
-  - deps/postgres.yaml
-  - deps/redis.yaml
-  - deps/minio.yaml
+components:
+  - ../../components/in-cluster-deps
 configMapGenerator:
   - name: blog-app-config
     envs: [app.env]
 secretGenerator:
   - name: blog-app-secret
     envs: [secret.local.env]
-  - name: blog-deps-secret
-    envs: [deps.local.env]
 patches:
   - target:
       kind: Ingress

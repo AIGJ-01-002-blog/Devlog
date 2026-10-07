@@ -3,7 +3,7 @@
 # 직전 버전으로 되돌린다. 민서님 이전 프로젝트 deploy.sh(헬스 체크 + 자동 롤백)를 쿠버네티스 방식으로 옮긴 것.
 #
 # 필요한 환경 변수: IMAGE(이미지 이름), GITHUB_SHA(태그), KUBECONFIG
-# 선택: OVERLAY(기본 nhn), ROLLOUT_TIMEOUT(초, 기본 300), ROLLBACK_TEST=true(없는 태그로 배포해 롤백을 시험), NAMESPACE(기본 blog)
+# 선택: OVERLAY(기본 selfhosted, 학교 서버를 쓰면 nhn), ROLLOUT_TIMEOUT(초, 기본 300), ROLLBACK_TEST=true(없는 태그로 배포해 롤백을 시험), NAMESPACE(기본 blog)
 set -euo pipefail
 
 ns="${NAMESPACE:-blog}"
@@ -14,7 +14,7 @@ if [ "${ROLLBACK_TEST:-false}" = "true" ]; then
   echo "롤백 시험: 존재하지 않는 태그 ${tag}로 배포합니다."
 fi
 
-cd "$(dirname "$0")/../k8s/overlays/${OVERLAY:-nhn}"
+cd "$(dirname "$0")/../k8s/overlays/${OVERLAY:-selfhosted}"
 
 before=$(kubectl -n "$ns" get deploy/blog-app -o jsonpath='{.metadata.annotations.deployment\.kubernetes\.io/revision}' 2>/dev/null || true)
 

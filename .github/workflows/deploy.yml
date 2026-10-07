@@ -9,9 +9,14 @@ on:
   workflow_dispatch:
     inputs:
       deploy:
-        description: "학교 NHN 클러스터에 배포 (KUBECONFIG·BLOG_SECRET_ENV Secret 필요)"
+        description: "클러스터에 배포 (KUBECONFIG·BLOG_SECRET_ENV Secret 필요)"
         type: boolean
         default: false
+      overlay:
+        description: "selfhosted = DB·Redis·MinIO를 클러스터 안에 띄움 / nhn = 학교 공용 서버 사용(학교망에서만 닿음)"
+        type: choice
+        options: [selfhosted, nhn]
+        default: selfhosted
       rollback_test:
         description: "존재하지 않는 이미지로 롤백 테스트 (배포는 실패하고 직전 버전으로 돌아가야 정상)"
         type: boolean
@@ -40,9 +45,9 @@ jobs:
         run: deploy/scripts/check-no-secrets.sh
       - name: kustomize 빌드 + 스키마 검사
         run: |
-          # nhn은 secret.env가 없으므로 예시 파일로 빌드만 확인한다
-          cp deploy/k8s/overlays/nhn/secret.env.example deploy/k8s/overlays/nhn/secret.env
-          for o in local nhn; do
+          # secret.env는 커밋하지 않으므로 예시 파일로 빌드만 확인한다
+          for o in nhn selfhosted; do cp "deploy/k8s/overlays/$o/secret.env.example" "deploy/k8s/overlays/$o/secret.env"; done
+          for o in local nhn selfhosted; do
             kustomize build "deploy/k8s/overlays/$o" | kubeconform -strict -summary -kubernetes-version 1.33.0 -
           done
 
@@ -76,11 +81,13 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    name: NHN 클러스터 배포
+    name: 클러스터 배포 (${{ inputs.overlay }})
     needs: image
     if: github.event_name == 'workflow_dispatch' && inputs.deploy
     runs-on: ubuntu-latest
-    environment: nhn   # 보호 규칙(승인자)을 걸 수 있다
+    environment: ${{ inputs.overlay }}   # 보호 규칙(승인자)을 걸 수 있다
+    env:
+      OVERLAY: ${{ inputs.overlay }}
     steps:
       - uses: actions/checkout@v4
       - name: 이미지 이름 정하기
@@ -95,7 +102,7 @@ jobs:
         run: |
           umask 077
           printf '%s' "$KUBECONFIG_CONTENT" > "$RUNNER_TEMP/kubeconfig"
-          printf '%s\n' "$BLOG_SECRET_ENV" > deploy/k8s/overlays/nhn/secret.env
+          printf '%s\n' "$BLOG_SECRET_ENV" > "deploy/k8s/overlays/$OVERLAY/secret.env"
           echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
       - name: 배포 (헬스 체크 실패 시 직전 버전으로 자동 롤백)
         env:
@@ -104,7 +111,7 @@ jobs:
         run: deploy/scripts/rollout.sh
       - name: 정리
         if: always()
-        run: rm -f deploy/k8s/overlays/nhn/secret.env "$RUNNER_TEMP/kubeconfig"
+        run: rm -f "deploy/k8s/overlays/$OVERLAY/secret.env" "$RUNNER_TEMP/kubeconfig"
       - name: Discord 알림
         if: always() && vars.DISCORD_ENABLED == 'true'
         uses: ./.github/actions/discord-notify
