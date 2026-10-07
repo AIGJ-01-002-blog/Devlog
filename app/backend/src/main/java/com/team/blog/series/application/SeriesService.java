@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.error.FieldErrorItem;
 import com.team.blog.shared.error.NotFoundException;
@@ -18,15 +19,16 @@ import com.team.blog.shared.error.NotFoundException;
  */
 @Service
 public class SeriesService {
-    public static final int MAX_SERIES = 100;
-    public static final int MAX_POSTS = 200;
-
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
+    private final int maxSeries;
+    private final int maxPosts;
 
-    public SeriesService(JdbcTemplate jdbc, TransactionTemplate tx) {
+    public SeriesService(JdbcTemplate jdbc, TransactionTemplate tx, BlogProperties props) {
         this.jdbc = jdbc;
         this.tx = tx;
+        this.maxSeries = props.series().maxPerMember();
+        this.maxPosts = props.series().maxPosts();
     }
 
     public record Mine(long id, String name, String slug, int postCount) {}
@@ -46,8 +48,8 @@ public class SeriesService {
             // 회원 행을 잠가 동시에 만들어도 개수 제한을 넘지 않게 한다
             jdbc.queryForList("SELECT id FROM member WHERE id = ? FOR UPDATE", Long.class, memberId);
             Long count = jdbc.queryForObject("SELECT count(*) FROM series WHERE member_id = ?", Long.class, memberId);
-            if (count != null && count >= MAX_SERIES) {
-                throw ApiException.badRequest("TOO_MANY_SERIES", "시리즈는 " + MAX_SERIES + "개까지 만들 수 있어요.");
+            if (count != null && count >= maxSeries) {
+                throw ApiException.badRequest("TOO_MANY_SERIES", "시리즈는 " + maxSeries + "개까지 만들 수 있어요.");
             }
             long id = insertOrConflict(() -> jdbc.queryForObject(
                     "INSERT INTO series (member_id, name, slug) VALUES (?, ?, ?) RETURNING id", Long.class,
@@ -94,8 +96,8 @@ public class SeriesService {
             }
             if (seriesId == null) return;
             Long size = jdbc.queryForObject("SELECT count(*) FROM series_post WHERE series_id = ?", Long.class, seriesId);
-            if (size != null && size >= MAX_POSTS) {
-                throw ApiException.badRequest("SERIES_FULL", "시리즈 하나에는 글을 " + MAX_POSTS + "개까지 넣을 수 있어요.");
+            if (size != null && size >= maxPosts) {
+                throw ApiException.badRequest("SERIES_FULL", "시리즈 하나에는 글을 " + maxPosts + "개까지 넣을 수 있어요.");
             }
             jdbc.update("""
                     INSERT INTO series_post (post_id, series_id, position)

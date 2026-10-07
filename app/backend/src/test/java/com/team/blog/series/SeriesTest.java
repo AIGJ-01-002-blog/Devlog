@@ -23,12 +23,13 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import tools.jackson.databind.JsonNode;
 
 import com.team.blog.account.application.WithdrawalPurgeStep;
-import com.team.blog.series.application.SeriesService;
+import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.support.IntegrationTest;
 
 /** spec 024 인수 시나리오: 묶기(US1), 따라 읽기(US2), 관리(US3). */
 class SeriesTest extends IntegrationTest {
     @Autowired List<WithdrawalPurgeStep> purgeSteps;
+    @Autowired BlogProperties props;
 
     long draft(Session s, String title) throws Exception {
         return read(s.http().perform(asJson(post("/api/posts"), Map.of("title", title, "contentMd", "본문")))
@@ -213,7 +214,7 @@ class SeriesTest extends IntegrationTest {
     @Test
     void 동시에_만들어도_시리즈_개수_제한을_넘지_않는다() throws Exception {
         Session s = signup(uniqueLogin("src"));
-        for (int i = 0; i < SeriesService.MAX_SERIES - 2; i++) {
+        for (int i = 0; i < props.series().maxPerMember() - 2; i++) {
             jdbc.update("INSERT INTO series (member_id, name, slug) VALUES (?, ?, ?)", s.memberId(), "s" + i, "s" + i);
         }
         var pool = java.util.concurrent.Executors.newFixedThreadPool(5);
@@ -232,7 +233,7 @@ class SeriesTest extends IntegrationTest {
             pool.shutdown();
         }
         assertThat(jdbc.queryForObject("SELECT count(*) FROM series WHERE member_id = ?", Long.class, s.memberId()))
-                .isEqualTo(SeriesService.MAX_SERIES);
+                .isEqualTo(props.series().maxPerMember());
     }
 
     @Test

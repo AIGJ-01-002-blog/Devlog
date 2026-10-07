@@ -23,7 +23,8 @@ public record BlogProperties(
         @DefaultValue Image image,
         @DefaultValue DevLogin devLogin,
         @DefaultValue View view,
-        @DefaultValue Search search) {
+        @DefaultValue Search search,
+        @DefaultValue Series series) {
 
     public record Site(String baseUrl, @DefaultValue("devlog") String name, @DefaultValue("/og-default.png") String defaultOgImage) {}
 
@@ -93,4 +94,7 @@ public record BlogProperties(
      * @param perMinute    같은 방문자 1분 검색 횟수
      */
     public record Search(@DefaultValue("3000") int recentWindow, @DefaultValue("30") int perMinute) {}
+
+    /** 시리즈 (024 FR-003): 회원당 시리즈 수, 시리즈당 글 수 */
+    public record Series(@DefaultValue("100") int maxPerMember, @DefaultValue("200") int maxPosts) {}
 }
