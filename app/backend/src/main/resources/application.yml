@@ -159,3 +159,10 @@ blog:
   search:
     recent-window: 3000
     per-minute: 30
+  # 알림 (spec 015): 커밋 뒤 따로 처리. 90일·1인 1,000개 보관, 매일 04:30(KST) 정리
+  notification:
+    async: true
+    queue-capacity: 1000
+    retention: 90d
+    max-per-member: 1000
+    cleanup-cron: "0 30 4 * * *"

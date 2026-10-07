@@ -9,6 +9,7 @@ import { BlogPage } from './pages/BlogPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { ManagePage } from './pages/ManagePage'
+import { NotificationsPage } from './pages/NotificationsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { PostPage } from './pages/PostPage'
 import { SearchPage } from './pages/SearchPage'
@@ -55,6 +56,7 @@ function route(path: string): ReactNode {
   if (path === '/write') return <RequireLogin><NewPostPage /></RequireLogin>
   if ((p = match('/write/:id', path))) return <RequireLogin><WritePage key={p.id} id={p.id} /></RequireLogin>
   if (path === '/manage/posts') return <RequireLogin><ManagePage /></RequireLogin>
+  if (path === '/notifications') return <RequireLogin><NotificationsPage /></RequireLogin>
   if (path === '/settings') return <RequireLogin><SettingsPage /></RequireLogin>
   return <NotFoundPage />
 }

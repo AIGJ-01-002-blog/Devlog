@@ -487,3 +487,32 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .person:hover, .person:focus-visible { background: var(--hover, rgba(0, 0, 0, 0.04)); }
 .person-bio { display: block; font-size: 14px; margin-top: 2px; }
 .header-search { display: inline-flex; align-items: center; }
+
+/* 알림 (spec 015) */
+.bell-button { position: relative; padding: 6px; display: inline-flex; }
+.bell-badge {
+  position: absolute; top: 0; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--primary); color: #fff; font-size: 0.7rem; font-weight: 700; line-height: 18px; text-align: center;
+}
+.notification-panel { width: min(360px, calc(100vw - 32px)); max-height: 70vh; overflow-y: auto; }
+.notification-panel-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.menu-list .notification-panel-head button { display: inline; width: auto; padding: 4px 8px; }
+.notification-state { padding: 16px; margin: 0; }
+.notification-list { list-style: none; margin: 0; padding: 0; }
+.notification { display: flex; align-items: flex-start; border-bottom: 1px solid var(--border); }
+.notification-open {
+  flex: 1; display: flex; gap: 8px; text-align: left; background: none; border: 0; cursor: pointer;
+  padding: 12px 16px; color: inherit; font: inherit;
+}
+.menu-list .notification-open { display: flex; }
+.notification-open:hover { background: var(--surface-2); }
+.notification.unread .notification-text { font-weight: 600; }
+.notification-dot { color: var(--primary); font-size: 0.6rem; line-height: 1.6rem; }
+.notification-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.notification-text b { font-weight: 700; }
+.notification-quote { color: var(--muted); font-size: 0.875rem; overflow-wrap: anywhere; }
+.notification-remove { padding: 12px; }
+.notification-all { text-align: center !important; font-size: 0.875rem; }
+.notification-list.page { border-top: 1px solid var(--border); margin-bottom: 16px; }
+.notifications-head { display: flex; justify-content: space-between; align-items: center; }
+.notification-settings { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }

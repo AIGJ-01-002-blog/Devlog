@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { loginPath, useAuth } from '../lib/auth'
 import { Link, navigate } from '../lib/router'
 import { Avatar } from './Avatar'
+import { NotificationBell } from './NotificationBell'
 
 export function Header() {
   const { me, logout } = useAuth()
@@ -30,6 +31,7 @@ export function Header() {
           <Link to="/tags" className="btn btn-text">태그</Link>
           {member ? (
             <>
+              <NotificationBell />
               <Link to="/write" className="btn btn-outline">새 글 작성</Link>
               <div className="menu" ref={menuRef}>
                 <button type="button" className="menu-button" aria-haspopup="menu" aria-expanded={open}
@@ -42,6 +44,7 @@ export function Header() {
                     <div className="menu-who">{member.nickname} <span className="muted">@{member.handle}</span></div>
                     <Link to={`/@${member.handle}`} role="menuitem">내 블로그</Link>
                     <Link to="/manage/posts" role="menuitem">내 글 관리</Link>
+                    <Link to="/notifications" role="menuitem">알림</Link>
                     <Link to="/settings" role="menuitem">설정</Link>
                     <button type="button" role="menuitem" onClick={async () => {
                       await logout()
