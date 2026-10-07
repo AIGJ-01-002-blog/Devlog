@@ -1,6 +1,7 @@
 import { relativeDate } from '../lib/format'
 import { Link } from '../lib/router'
 import type { Card } from '../lib/types'
+import { VISIBILITY_ICON, VISIBILITY_LABEL } from '../lib/visibility'
 import { Avatar } from './Avatar'
 
 /** 홈·블로그 카드. 썸네일이 없어도 높이가 같고, 요약은 짧아도 3줄 높이다 (docs/10 §2). */
@@ -14,7 +15,10 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
         <h2 className="card-title"><Link to={card.url}>{card.title}</Link></h2>
         <p className="card-excerpt">{card.excerpt ?? ''}</p>
         <div className="card-meta">
-          <time dateTime={card.firstPublicAt}>{relativeDate(card.firstPublicAt)}</time>
+          {card.visibility === 'FRIENDS' && (
+            <><span className="badge" title="친구에게만 보이는 글">{VISIBILITY_ICON.FRIENDS} {VISIBILITY_LABEL.FRIENDS}</span>{' · '}</>
+          )}
+          <time dateTime={card.firstPublicAt ?? card.publishedAt}>{relativeDate(card.firstPublicAt ?? card.publishedAt)}</time>
           {card.commentCount > 0 && <span> · 댓글 {card.commentCount}</span>}
         </div>
       </div>

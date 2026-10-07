@@ -258,7 +258,7 @@ class ProfileSettingsTest extends IntegrationTest {
                 .andExpect(jsonPath("$.defaultVisibility").value("PRIVATE"));
         s.http().perform(asJson(post("/api/posts"), Map.of("title", "새 글", "contentMd", "본문")))
                 .andExpect(jsonPath("$.visibility").value("PRIVATE"));
-        s.http().perform(asJson(patch("/api/me/settings"), Map.of("defaultVisibility", "FRIENDS"))).andExpect(status().isBadRequest());
+        s.http().perform(asJson(patch("/api/me/settings"), Map.of("defaultVisibility", "GROUP"))).andExpect(status().isBadRequest());
     }
 
     @Test

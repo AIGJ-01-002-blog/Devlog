@@ -136,7 +136,7 @@ public class MyPostsQuery {
     private static String parseVisibility(String raw) {
         if (raw == null || raw.isBlank()) return null;
         String v = raw.trim().toUpperCase();
-        if (!v.equals("PUBLIC") && !v.equals("PRIVATE")) {
+        if (!v.equals("PUBLIC") && !v.equals("FRIENDS") && !v.equals("PRIVATE")) {
             throw ApiException.badRequest("INVALID_VISIBILITY", "공개 범위가 올바르지 않아요.");
         }
         return v;

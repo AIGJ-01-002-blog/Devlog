@@ -1,4 +1,4 @@
-export type Visibility = 'PUBLIC' | 'PRIVATE'
+export type Visibility = 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
 export type PostStatus = 'DRAFT' | 'PUBLISHED'
 
 export interface MemberView {
@@ -34,7 +34,10 @@ export interface Card {
   title: string
   excerpt: string | null
   thumbnailUrl: string | null
-  firstPublicAt: string
+  /** 친구 공개 글은 null */
+  firstPublicAt: string | null
+  publishedAt: string
+  visibility: Visibility
   commentCount: number
   likeCount: number
   author: CardAuthor

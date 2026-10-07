@@ -12,6 +12,7 @@ import { passwordOk } from '../lib/password'
 import { formatBytes, storageUsage, type StorageUsage } from '../lib/postImages'
 import { Link } from '../lib/router'
 import type { FriendOverview, FriendPerson, Visibility } from '../lib/types'
+import { DEFAULT_VISIBILITY_CHANGED } from '../lib/visibility'
 
 interface Settings {
   handle: string
@@ -209,7 +210,7 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
     onChange({ ...settings, defaultVisibility: v }) // 바로 바꿔 보이고, 실패하면 되돌린다
     try {
       await api('/api/me/settings', { method: 'PATCH', body: { defaultVisibility: v } })
-      setMessage({ ok: true, text: v === 'PRIVATE' ? '이제 새 글은 나만 보기로 시작해요.' : '이제 새 글은 전체 공개로 시작해요.' })
+      setMessage({ ok: true, text: DEFAULT_VISIBILITY_CHANGED[v] })
       await refresh()
     } catch {
       onChange(before)
@@ -253,6 +254,7 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
         <dt id="default-visibility">새 글 기본 공개 범위</dt>
         <dd role="radiogroup" aria-labelledby="default-visibility" className="row">
           <label><input type="radio" name="defaultVisibility" checked={settings.defaultVisibility === 'PUBLIC'} onChange={() => changeVisibility('PUBLIC')} /> 전체 공개</label>
+          <label><input type="radio" name="defaultVisibility" checked={settings.defaultVisibility === 'FRIENDS'} onChange={() => changeVisibility('FRIENDS')} /> 친구에게만</label>
           <label><input type="radio" name="defaultVisibility" checked={settings.defaultVisibility === 'PRIVATE'} onChange={() => changeVisibility('PRIVATE')} /> 나만 보기</label>
         </dd>
         <dt>사진 저장 공간</dt>

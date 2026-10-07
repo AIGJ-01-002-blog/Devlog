@@ -10,6 +10,7 @@ import { setFlash } from '../lib/flash'
 import { Link, navigate } from '../lib/router'
 import type { CommentPage } from '../lib/comments'
 import { tagPath } from '../lib/tags'
+import { VISIBILITY_CHANGED } from '../lib/visibility'
 import { TRASH_CONFIRM, trashedMessage, trashPost } from '../lib/trash'
 import type { PostDetail, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
@@ -53,7 +54,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
       const r = await api<{ visibility: Visibility; firstPublicAt: string | null }>(`/api/posts/${post.id}/visibility`,
         { method: 'PATCH', body: { visibility: to } })
       setPost({ ...post, visibility: r.visibility, firstPublicAt: r.firstPublicAt })
-      setNotice(to === 'PUBLIC' ? '공개했어요.' : '비공개로 바꿨어요. 이제 나만 볼 수 있어요.')
+      setNotice(VISIBILITY_CHANGED[to])
     } catch (e) {
       setNotice(e instanceof ApiError ? e.message : '바꾸지 못했어요.')
     }
@@ -92,6 +93,9 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           </div>
         )}
         {post.mine && post.visibility === 'PRIVATE' && <div className="banner">🔒 나만 볼 수 있는 글이에요.</div>}
+        {post.visibility === 'FRIENDS' && (
+          <div className="banner">👥 {post.mine ? '나와 친구만 볼 수 있는 글이에요.' : '친구에게만 공개된 글이에요.'}</div>
+        )}
         {notice && <div className="banner banner-ok" role="status">{notice}</div>}
         <h1 className="post-title">{post.title}</h1>
         <div className="post-meta">
@@ -106,6 +110,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
               <select aria-label="공개 범위" value={post.visibility}
                       onChange={(e) => changeVisibility(e.target.value as Visibility)}>
                 <option value="PUBLIC">🌐 전체 공개</option>
+                <option value="FRIENDS">👥 친구에게만</option>
                 <option value="PRIVATE">🔒 비공개</option>
               </select>
               <button type="button" className="btn btn-text danger" onClick={remove}>삭제</button>

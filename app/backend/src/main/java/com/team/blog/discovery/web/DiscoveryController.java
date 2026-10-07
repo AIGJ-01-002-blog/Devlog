@@ -40,10 +40,14 @@ public class DiscoveryController {
 
     @GetMapping("/api/members/{handle}/posts")
     public ResponseEntity<FeedQuery.Page> blog(@PathVariable String handle, @RequestParam(required = false) String cursor,
-                                               @RequestParam(required = false) String tag) {
+                                               @RequestParam(required = false) String tag,
+                                               @CurrentMember(required = false) MemberPrincipal me) {
         // 블로그 안 태그 필터 (010 FR-031). 형식에 맞지 않는 태그는 404
         String name = tag == null || tag.isEmpty() ? null : TagNormalizer.canonical(tag).orElseThrow(NotFoundException::new);
-        return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(feed.blog(handle, name, cursor));
+        FeedQuery.Page page = feed.blog(handle, name, cursor, me == null ? null : me.id());
+        // 친구에게만 보이는 글이 섞인 목록은 저장하지 않는다 (docs/06 R-5)
+        return ResponseEntity.ok().cacheControl(page.friendsView() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache())
+                .body(page);
     }
 
     /** 상세는 보는 사람마다 달라 공유 캐시에 넣지 않고, 공개가 아닌 글은 어디에도 저장하지 않는다 (docs/40 R-9). */

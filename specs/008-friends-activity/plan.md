@@ -23,3 +23,10 @@
 - 통합 테스트 `FriendTest` 9개: 요청·수락과 사건, 거절·취소 무흔적, 맞요청·반복, 동시 맞요청 20번, 대상 제한·비회원 401, 수락 권한, 최근 활동 노출 조건·구간, 공개 끄기 양방향, 한 시간 갱신
 - 단위 `LastActiveTest`: 한국 날짜 경계
 - 브라우저: 두 계정으로 요청 → 설정에서 수락 → 블로그에 "👥 친구 · 최근 활동 오늘" → 공개 끄기 → 사라짐 → 끊기, 비회원은 로그인 화면으로
+
+## 추가: 친구에게만 공개 (v0.12.0, 2026-10-07 민서 결정 "넣기")
+- 이 블로그는 민서 님 개인 프로젝트라 팀 공통 범위(PUBLIC·PRIVATE)에 묶이지 않는다. docs/06 §6-1 규격을 그대로 켰다.
+- `V4__friends_visibility.sql`: CHECK 교체 2개 + `ix_post_blog_friends`. `Visibility.FRIENDS`, `friend/application/FriendsVisibilityRule`(PostAccessPolicy에 Bean으로 붙음).
+- `FeedQuery.blog(handle, tag, cursor, viewerId)`: 블로그 주인과 친구면 `PUBLIC + FRIENDS`를 `published_at` 순으로, 목록 이름 `blogf:`라 공개 목록과 커서가 섞이지 않는다. 이런 응답은 `no-store`.
+- 프로필 글 수도 친구에게는 친구 공개 글까지 센다. 홈·태그·sitemap은 계속 `PUBLIC_LIST_CONDITION`만 쓴다.
+- 확인: `FriendsVisibilityTest` 4개(권한 매트릭스, 커서, 기본값·전환, 인덱스), 브라우저(친구 없음 안내, 친구 블로그 배지, 남에게 404, 관리 필터, 설정)
