@@ -27,6 +27,7 @@
 | [020-withdraw](./020-withdraw/spec.md) | 회원 탈퇴 | Tier C (데이터 정책은 확정) | 이후 단계 (Tier C) | 44, 13 |
 | [021-dark-mode](./021-dark-mode/spec.md) | 다크 모드 | Tier C | 이후 단계 (Tier C) | 45 |
 | [022-file-attach](./022-file-attach/spec.md) | 글 첨부파일 (사진과 리소스 통합 관리) | C-FILE-1 (2026-10-07 추가) | 다음 단계 (Tier B) | 23 |
+| [023-telegram](./023-telegram/spec.md) | 텔레그램 연결 (알림 받기, 메모로 임시글) | 2026-10-07 추가 (민서 답변) | 이후 단계 (Tier C) | 15, 34 |
 
 ## 여러 spec에 걸치는 문서
 

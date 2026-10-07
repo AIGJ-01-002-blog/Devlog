@@ -5,7 +5,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -30,13 +32,16 @@ public class NotificationService {
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
     private final PostAccessPolicy policy;
+    private final ApplicationEventPublisher events;
 
-    public NotificationService(JdbcTemplate jdbc, PlatformTransactionManager txManager, PostAccessPolicy policy) {
+    public NotificationService(JdbcTemplate jdbc, PlatformTransactionManager txManager, PostAccessPolicy policy,
+                               ApplicationEventPublisher events) {
         this.jdbc = jdbc;
         // 커밋 뒤(afterCommit)에 같은 스레드에서 불려도 끝난 트랜잭션에 묻히지 않게 항상 새 트랜잭션으로 쓴다
         this.tx = new TransactionTemplate(txManager);
         this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.policy = policy;
+        this.events = events;
     }
 
     /**
@@ -150,19 +155,19 @@ public class NotificationService {
                     + PostAccessPolicy.PUBLIC_LIST_CONDITION + " AND m.status <> 'WITHDRAWN' AND m.deleted_at IS NULL)", Boolean.class, postId);
             if (!Boolean.TRUE.equals(listed)) return 0;
             Timestamp ts = Timestamp.from(at);
-            return jdbc.queryForObject("""
+            return publish(jdbc.query("""
                     WITH receivers AS (
                         SELECT f.follower_id FROM follow f JOIN member r ON r.id = f.follower_id
                         WHERE f.followee_id = ? AND r.status <> 'WITHDRAWN' AND r.deleted_at IS NULL
                           AND NOT EXISTS (SELECT 1 FROM notification_mute nm WHERE nm.member_id = f.follower_id AND nm.type = 'NEW_POST')
                     ), made AS (
                         INSERT INTO notification (receiver_id, type, created_at, updated_at)
-                        SELECT follower_id, 'NEW_POST', ?, ? FROM receivers RETURNING id
+                        SELECT follower_id, 'NEW_POST', ?, ? FROM receivers RETURNING id, receiver_id
                     ), linked AS (
-                        INSERT INTO notification_post (notification_id, type, post_id) SELECT id, 'NEW_POST', ? FROM made RETURNING 1
+                        INSERT INTO notification_post (notification_id, type, post_id) SELECT id, 'NEW_POST', ? FROM made RETURNING notification_id
                     )
-                    SELECT count(*) FROM linked
-                    """, Integer.class, authorId, ts, ts, postId);
+                    SELECT made.id, made.receiver_id FROM made JOIN linked ON linked.notification_id = made.id
+                    """, CREATED_ROW, authorId, ts, ts, postId), NotificationType.NEW_POST);
         });
         return n == null ? 0 : n;
     }
@@ -174,7 +179,7 @@ public class NotificationService {
     public int reportsResolved(long caseId, Instant at) {
         Integer n = tx.execute(s -> {
             Timestamp ts = Timestamp.from(at);
-            return jdbc.queryForObject("""
+            return publish(jdbc.query("""
                     WITH targets AS (
                         SELECT r.id AS report_id, r.reporter_id FROM report r JOIN report_case rc ON rc.id = r.case_id
                         JOIN member m ON m.id = r.reporter_id
@@ -186,10 +191,10 @@ public class NotificationService {
                     ), linked AS (
                         INSERT INTO notification_report (notification_id, type, report_id)
                         SELECT made.id, 'REPORT_RESOLVED', targets.report_id FROM made JOIN targets ON targets.reporter_id = made.receiver_id
-                        RETURNING 1
+                        RETURNING notification_id
                     )
-                    SELECT count(*) FROM linked
-                    """, Integer.class, caseId, ts, ts);
+                    SELECT made.id, made.receiver_id FROM made WHERE made.id IN (SELECT notification_id FROM linked)
+                    """, CREATED_ROW, caseId, ts, ts), NotificationType.REPORT_RESOLVED);
         });
         return n == null ? 0 : n;
     }
@@ -269,10 +274,21 @@ public class NotificationService {
                 """, (rs, i) -> rs.getLong(1), receiverId, postId).stream().findFirst().orElse(null);
     }
 
+    private static final RowMapper<long[]> CREATED_ROW = (rs, i) -> new long[] {rs.getLong(1), rs.getLong(2)};
+
+    /** 한 문장으로 여러 행을 만든 경우에도 행마다 사건을 낸다(023 텔레그램). @return 만든 수 */
+    private int publish(List<long[]> rows, NotificationType type) {
+        rows.forEach(r -> events.publishEvent(new NotificationCreated(r[0], r[1], type)));
+        return rows.size();
+    }
+
+    /** 새 알림 행. 커밋 뒤 다른 전달 수단(023 텔레그램)이 받도록 사건을 낸다. 묶음에 사람이 더해질 때는 내지 않는다. */
     private long insert(long receiverId, NotificationType type, Timestamp at) {
-        return jdbc.queryForObject("""
+        long id = jdbc.queryForObject("""
                 INSERT INTO notification (receiver_id, type, created_at, updated_at) VALUES (?, ?, ?, ?) RETURNING id
                 """, Long.class, receiverId, type.name(), at, at);
+        events.publishEvent(new NotificationCreated(id, receiverId, type));
+        return id;
     }
 
     private void lock(long receiverId, NotificationType type, long target) {

@@ -1,6 +1,5 @@
 package com.team.blog.ai.infra;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
@@ -11,7 +10,6 @@ import tools.jackson.databind.node.ObjectNode;
 
 import com.team.blog.ai.application.AiProperties;
 import com.team.blog.ai.application.TagModel;
-import com.team.blog.ai.application.TagPrompt;
 
 /**
  * 외부 AI: Gemini generateContent (018 FR-014·FR-016). 열쇠값은 머리글로만 보내 주소·로그에 남지 않는다(FR-033).
@@ -42,17 +40,17 @@ class GeminiModel implements TagModel {
     }
 
     @Override
-    public List<String> suggest(Prompt prompt) throws ModelException {
+    public String complete(Prompt prompt, String schema, int maxTokens, double temperature) throws ModelException {
         ObjectNode body = json.createObjectNode();
         body.putObject("systemInstruction").putArray("parts").addObject().put("text", prompt.system());
         ObjectNode content = body.putArray("contents").addObject();
         content.put("role", "user");
         content.putArray("parts").addObject().put("text", prompt.user());
         ObjectNode config = body.putObject("generationConfig");
-        config.put("temperature", 0.2);
-        config.put("maxOutputTokens", 200);
+        config.put("temperature", temperature);
+        config.put("maxOutputTokens", maxTokens);
         config.put("responseMimeType", "application/json");
-        config.set("responseSchema", json.readTree(TagPrompt.SCHEMA));
+        config.set("responseSchema", json.readTree(schema));
         String url = HttpJson.trimSlash(props.baseUrl()) + "/v1beta/models/" + props.model() + ":generateContent";
         HttpJson.Response res = HttpJson.post(url, Map.of("x-goog-api-key", props.apiKey()), json.writeValueAsString(body), props.timeout());
         if (res.status() == 429) throw new ModelException(quotaKind(res.body()));
@@ -63,7 +61,7 @@ class GeminiModel implements TagModel {
         } catch (RuntimeException e) {
             throw new ModelException(ModelException.Kind.INVALID);
         }
-        return TagPrompt.parse(text(root));
+        return text(root);
     }
 
     static ModelException.Kind quotaKind(String body) {

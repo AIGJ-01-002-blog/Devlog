@@ -12,6 +12,7 @@ import { passwordOk } from '../lib/password'
 import { MUTABLE_TYPES, notificationsApi, type MutableType } from '../lib/notifications'
 import { formatBytes, storageUsage, type StorageUsage } from '../lib/postImages'
 import { Link } from '../lib/router'
+import { LINK_POLL_MS, linkTimeLeft, telegramApi, type TelegramLink, type TelegramStatus } from '../lib/telegram'
 import type { FriendOverview, FriendPerson, Visibility } from '../lib/types'
 import { DEFAULT_VISIBILITY_CHANGED } from '../lib/visibility'
 
@@ -61,6 +62,7 @@ export function SettingsPage() {
       <ProfileSection settings={settings} onSaved={(p) => setSettings({ ...settings, ...p })} />
       <FriendsSection />
       <NotificationsSection />
+      <TelegramSection />
       <AccountSection settings={settings} onChange={setSettings} />
       {settings.hasPassword && <PasswordSection />}
       <section className="settings-section withdraw-link">
@@ -379,6 +381,91 @@ function NotificationsSection() {
         </ul>
       )}
       <p className="muted small">운영 알림(신고 결과·숨김)은 끌 수 없어요. 끈 알림은 그동안 쌓이지 않아요.</p>
+      {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
+    </section>
+  )
+}
+
+/**
+ * 텔레그램 (023): 1회용 주소로 연결하고, 새 알림 받기를 켜고 끈다. 연결하면 봇에게 보낸 메모가 임시글이 된다.
+ * 서버에 봇이 없으면(available=false) 항목을 숨긴다. 주소를 연 뒤에는 연결될 때까지 상태를 다시 읽는다.
+ */
+function TelegramSection() {
+  const [status, setStatus] = useState<TelegramStatus | null>(null)
+  const [link, setLink] = useState<TelegramLink | null>(null)
+  const [now, setNow] = useState(() => Date.now())
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  useEffect(() => { telegramApi.status().then(setStatus).catch(() => setStatus(null)) }, [])
+
+  // 연결 주소가 살아 있는 동안만 상태를 다시 읽는다
+  useEffect(() => {
+    if (!link) return
+    const timer = window.setInterval(async () => {
+      setNow(Date.now())
+      if (!linkTimeLeft(link.expiresAt)) { setLink(null); return }
+      try {
+        const s = await telegramApi.status()
+        if (s.linked) { setStatus(s); setLink(null); setMessage({ ok: true, text: '텔레그램과 연결했어요.' }) }
+      } catch { /* 다음 차례에 다시 읽는다 */ }
+    }, LINK_POLL_MS)
+    return () => window.clearInterval(timer)
+  }, [link])
+
+  if (!status?.available) return null
+
+  const run = async (fn: () => Promise<void>, fail: string) => {
+    setBusy(true)
+    setMessage(null)
+    try { await fn() } catch { setMessage({ ok: false, text: fail }) } finally { setBusy(false) }
+  }
+
+  const connect = () => run(async () => {
+    const l = await telegramApi.link()
+    setNow(Date.now())
+    setLink(l)
+  }, '연결 주소를 만들지 못했어요. 다시 시도해 주세요.')
+
+  const toggle = (on: boolean) => run(async () => {
+    setStatus(await telegramApi.setNotifications(on))
+    setMessage({ ok: true, text: '저장했어요.' })
+  }, '바꾸지 못했어요. 다시 시도해 주세요.')
+
+  const disconnect = () => run(async () => {
+    await telegramApi.unlink()
+    setStatus({ ...status, linked: false, linkedAt: null })
+    setMessage({ ok: true, text: '연결을 끊었어요.' })
+  }, '연결을 끊지 못했어요. 다시 시도해 주세요.')
+
+  const left = link ? linkTimeLeft(link.expiresAt, now) : null
+
+  return (
+    <section className="settings-section" id="telegram">
+      <h2>텔레그램</h2>
+      {status.linked ? (
+        <>
+          <p>
+            {status.botUsername ? <>@{status.botUsername}</> : '봇'}과 연결돼 있어요
+            {status.linkedAt && <span className="muted small"> · {fullDate(status.linkedAt)}부터</span>}
+          </p>
+          <label><input type="checkbox" checked={status.notifications} disabled={busy} onChange={(e) => toggle(e.target.checked)} /> 새 알림을 텔레그램으로 받기</label>
+          <p className="muted small">봇에게 보낸 메모는 임시글로 저장돼요. AI 사용에 동의했으면 다듬어서 저장해요.</p>
+          <button type="button" className="btn btn-text danger" disabled={busy} onClick={disconnect}>연결 끊기</button>
+        </>
+      ) : (
+        <>
+          <p className="muted small">연결하면 새 알림을 텔레그램으로 받고, 봇에게 보낸 메모를 임시글로 저장할 수 있어요.</p>
+          {link && left ? (
+            <p>
+              <a className="btn btn-primary" href={link.url} target="_blank" rel="noopener noreferrer">텔레그램 열기</a>{' '}
+              <span className="muted small">{left} 열면 자동으로 연결돼요.</span>
+            </p>
+          ) : (
+            <button type="button" className="btn" disabled={busy} onClick={connect}>{link ? '주소 다시 만들기' : '연결하기'}</button>
+          )}
+        </>
+      )}
       {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
     </section>
   )
