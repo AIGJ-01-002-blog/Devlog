@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 
+import com.team.blog.account.application.MemberQueryService;
 import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.post.infra.PostSql;
 import com.team.blog.shared.config.BlogProperties;
@@ -25,10 +26,12 @@ public class RssFeed {
 
     private final JdbcTemplate jdbc;
     private final ContentRenderer renderer;
+    private final MemberQueryService members;
     private final BlogProperties.Site site;
 
-    public RssFeed(JdbcTemplate jdbc, ContentRenderer renderer, BlogProperties props) {
+    public RssFeed(JdbcTemplate jdbc, ContentRenderer renderer, MemberQueryService members, BlogProperties props) {
         this.jdbc = jdbc;
+        this.members = members;
         this.renderer = renderer;
         this.site = props.site();
     }
@@ -41,9 +44,9 @@ public class RssFeed {
 
     /** 없는 블로그면 비어 있다 */
     public Optional<String> blog(String handle) {
-        return jdbc.query("SELECT id, nickname FROM member WHERE handle = ? AND withdrawn_at IS NULL AND deleted_at IS NULL",
-                        (rs, i) -> new Object[] {rs.getLong(1), rs.getString(2)}, handle).stream().findFirst()
-                .map(m -> channel(m[1] + " (@" + handle + ") - " + site.name(), "/@" + handle, m[1] + "의 블로그", items((Long) m[0])));
+        return members.findActiveByHandle(handle)
+                .map(m -> channel(m.nickname() + " (@" + m.handle() + ") - " + site.name(), "/@" + m.handle(),
+                        m.nickname() + "의 블로그", items(m.id())));
     }
 
     private List<Item> items(Long authorId) {

@@ -65,6 +65,12 @@ class RssTest extends IntegrationTest {
 
         browser().perform(get("/@nobody-" + UUID.randomUUID().toString().substring(0, 6) + "/rss")).andExpect(status().isNotFound());
 
+        // 탈퇴한 회원의 블로그 피드는 없는 것으로 본다
+        Session gone = signup(uniqueLogin("rssw"));
+        publish(gone, "떠나기 전 글", "PUBLIC");
+        jdbc.update("UPDATE member SET status = 'WITHDRAWN', withdrawn_at = now() WHERE handle = ?", gone.handle());
+        browser().perform(get("/@" + gone.handle() + "/rss")).andExpect(status().isNotFound());
+
         // 블로그 첫 화면은 구독 주소를 알린다
         String page = browser().perform(get("/@" + s.handle())).andExpect(status().isOk()).andReturn().getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
