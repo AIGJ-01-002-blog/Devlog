@@ -32,9 +32,13 @@ class MigrationTest {
                 .createSchemas(false).locations("classpath:db/migration").load().migrate();
 
         try (Connection c = DriverManager.getConnection(url, "cf_user", "cf_pw"); Statement st = c.createStatement()) {
-            ResultSet tables = st.executeQuery("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'cf_test' AND table_name <> 'flyway_schema_history'");
+            // V3 정규화 뒤: 테이블 28개 + 통계 뷰 post_stat 1개 (Crowfoot 문서 660과 같은 수)
+            ResultSet tables = st.executeQuery("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'cf_test' AND table_type = 'BASE TABLE' AND table_name <> 'flyway_schema_history'");
             tables.next();
-            assertThat(tables.getInt(1)).isEqualTo(20);
+            assertThat(tables.getInt(1)).isEqualTo(28);
+            ResultSet views = st.executeQuery("SELECT string_agg(table_name, ',') FROM information_schema.views WHERE table_schema = 'cf_test'");
+            views.next();
+            assertThat(views.getString(1)).isEqualTo("post_stat");
             ResultSet trgm = st.executeQuery("SELECT count(*) FROM pg_indexes WHERE schemaname = 'cf_test' AND indexname LIKE '%_trgm'");
             trgm.next();
             assertThat(trgm.getInt(1)).isZero();

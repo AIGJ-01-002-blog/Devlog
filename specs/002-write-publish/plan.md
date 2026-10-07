@@ -33,3 +33,14 @@
 | 예약 작업은 Redis 잠금(`lock:job:*`)으로 한 대만 실행 | 쿠버네티스 복제본이 여러 개여도 반영·정리가 겹치지 않는다(ShedLock 대신 의존성 없이) |
 | 썸네일은 첫 번째 내 사진 원본 주소 | 640px 썸네일 규칙은 사진 업로드(009)에서 바꾼다 |
 | 자동 저장 요청 제한은 글마다 5초에 1번 | docs/04 §2-1. 브라우저는 429의 Retry-After를 따른다 |
+
+## V3 정규화 이후 (2026-10-07)
+
+ERD 문서 660의 V3 마이그레이션으로 `post.content_html`·`excerpt`·`thumbnail_url`·`render_version`과 조회수·좋아요 수·댓글 수 컬럼이 없어졌다.
+위 설계에서 이 컬럼을 "저장한다"고 한 부분은 다음으로 바뀐다.
+
+- 본문 HTML: 읽을 때 `ContentRenderer`로 만들고 `RenderedHtmlCache`가 `render:post:{id}:{edit_version}:{렌더 규칙 버전}` 키로 Redis에 7일 캐시한다. Redis가 안 되면 매번 렌더링한다.
+- 목록 요약: `left(content_md, 600)`을 읽어 `ContentRenderer.excerpt`로 만든다.
+- 대표 사진: `post_image`에서 가장 작은 position의 사진 썸네일. 발행 때 `PostImageLinker`(PublishExtension)가 본문 사진을 순서대로 연결한다.
+- 수: `post_stat` 뷰. SQL 조각은 `post/infra/PostSql`에 모았다.
+- API 응답 모양은 바뀌지 않았다.

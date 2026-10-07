@@ -14,10 +14,13 @@ import com.team.blog.post.access.ReadablePost;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
 import com.team.blog.post.infra.AutosaveStore;
+import com.team.blog.post.infra.PostSql;
+import com.team.blog.shared.markdown.ContentRenderer;
 import com.team.blog.shared.markdown.ImageUrls;
+import com.team.blog.shared.markdown.RenderedHtmlCache;
 
 /**
- * 글 상세 (docs/40). 판정은 PostAccessPolicy 한곳에서 한다. 본문 HTML은 발행 때 만든 값을 그대로 쓴다.
+ * 글 상세 (docs/40). 판정은 PostAccessPolicy 한곳에서 한다. 본문 HTML은 원문에서 렌더링하고 Redis에 캐시한다(V3).
  * 수정 중인 글이라도 독자·작성자 모두 마지막 발행본을 본다 (작성자에게는 "수정 중" 안내 정보만 더한다).
  */
 @Service
@@ -26,12 +29,17 @@ public class PostDetailQuery {
     private final PostAccessPolicy policy;
     private final ImageUrls imageUrls;
     private final AutosaveStore autosaves;
+    private final RenderedHtmlCache htmlCache;
+    private final ContentRenderer renderer;
 
-    public PostDetailQuery(JdbcTemplate jdbc, PostAccessPolicy policy, ImageUrls imageUrls, AutosaveStore autosaves) {
+    public PostDetailQuery(JdbcTemplate jdbc, PostAccessPolicy policy, ImageUrls imageUrls, AutosaveStore autosaves,
+                           RenderedHtmlCache htmlCache, ContentRenderer renderer) {
         this.jdbc = jdbc;
         this.policy = policy;
         this.imageUrls = imageUrls;
         this.autosaves = autosaves;
+        this.htmlCache = htmlCache;
+        this.renderer = renderer;
     }
 
     public record Author(long id, String handle, String nickname, String bio, String profileImageUrl) {}
@@ -55,20 +63,21 @@ public class PostDetailQuery {
 
     public Optional<Detail> find(long postId, Viewer viewer) {
         List<Row> rows = jdbc.query("""
-                SELECT p.id, p.author_id, p.title, p.content_html, p.excerpt, p.thumbnail_url, p.status, p.visibility,
-                       p.published_at, p.first_public_at, p.edited_at, p.view_count, p.like_count, p.comment_count,
+                SELECT p.id, p.author_id, p.title, p.content_md, p.edit_version, p.status, p.visibility,
+                       p.published_at, p.first_public_at, p.edited_at, s.view_count, s.like_count, s.comment_count,
                        p.deleted_at IS NOT NULL AS deleted, p.hidden_at IS NOT NULL AS hidden,
                        m.handle, m.nickname, m.bio, m.withdrawn_at IS NOT NULL AS withdrawn,
-                       COALESCE(pi.thumb_storage_key, pi.storage_key) AS profile_image_key,
-                       d.updated_at AS draft_saved_at
+                       d.updated_at AS draft_saved_at,
+                       """ + PostSql.THUMBNAIL_KEY + ", " + PostSql.PROFILE_IMAGE_KEY + """
+
                 FROM post p
                 JOIN member m ON m.id = p.author_id
-                LEFT JOIN image pi ON pi.uploader_id = m.id AND pi.purpose = 'PROFILE'
-                                  AND pi.status = 'ATTACHED' AND pi.detached_at IS NULL
+                """ + PostSql.STAT_JOIN + "\n" + PostSql.PROFILE_IMAGE_JOIN + """
+
                 LEFT JOIN post_draft d ON d.post_id = p.id
                 WHERE p.id = ?
                 """, (rs, i) -> new Row(rs.getLong("id"), rs.getLong("author_id"), rs.getString("title"),
-                rs.getString("content_html"), rs.getString("excerpt"), rs.getString("thumbnail_url"),
+                rs.getString("content_md"), rs.getLong("edit_version"), rs.getString("thumbnail_key"),
                 PostStatus.valueOf(rs.getString("status")), Visibility.valueOf(rs.getString("visibility")),
                 instant(rs.getTimestamp("published_at")), instant(rs.getTimestamp("first_public_at")),
                 instant(rs.getTimestamp("edited_at")), rs.getLong("view_count"), rs.getInt("like_count"),
@@ -85,8 +94,11 @@ public class PostDetailQuery {
             Instant editingAt = r.status == PostStatus.PUBLISHED ? latest(r.draftSavedAt, unflushedSavedAt(r.id)) : null;
             owner = new OwnerInfo(editingAt != null, editingAt, r.hidden);
         }
-        return Optional.of(new Detail(r.id, "/@" + r.handle + "/posts/" + r.id, r.title, r.contentHtml, r.excerpt,
-                r.thumbnailUrl, r.status, r.visibility, r.publishedAt, r.firstPublicAt, r.editedAt, r.viewCount,
+        // 본문 HTML은 저장하지 않고 원문을 렌더링해 캐시한다 (V3). 임시글은 상세로 보이지 않으므로 렌더링하지 않는다
+        String html = r.status == PostStatus.PUBLISHED ? htmlCache.html(r.id, r.editVersion, r.authorId, r.contentMd) : "";
+        String head = r.contentMd.length() > 600 ? r.contentMd.substring(0, 600) : r.contentMd;
+        return Optional.of(new Detail(r.id, "/@" + r.handle + "/posts/" + r.id, r.title, html, renderer.excerpt(head),
+                imageUrls.urlOf(r.thumbnailKey), r.status, r.visibility, r.publishedAt, r.firstPublicAt, r.editedAt, r.viewCount,
                 r.likeCount, r.commentCount,
                 new Author(r.authorId, r.handle, r.nickname, r.bio, imageUrls.urlOf(r.profileImageKey)), mine, owner));
     }
@@ -110,7 +122,7 @@ public class PostDetailQuery {
         return t == null ? null : t.toInstant();
     }
 
-    private record Row(long id, long authorId, String title, String contentHtml, String excerpt, String thumbnailUrl,
+    private record Row(long id, long authorId, String title, String contentMd, long editVersion, String thumbnailKey,
                        PostStatus status, Visibility visibility, Instant publishedAt, Instant firstPublicAt,
                        Instant editedAt, long viewCount, int likeCount, int commentCount, boolean deleted,
                        boolean hidden, String handle, String nickname, String bio, boolean withdrawn,

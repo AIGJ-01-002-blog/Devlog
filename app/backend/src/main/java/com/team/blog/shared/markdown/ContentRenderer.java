@@ -144,6 +144,16 @@ public class ContentRenderer {
         }
     }
 
+    /**
+     * 목록 요약만 만든다 (V3: 요약을 저장하지 않고 content_md 앞부분으로 계산). HTML을 만들지 않아 가볍다.
+     * 잘린 원문이라 코드 블록이 열린 채 끝나도 코드는 요약에서 빠지므로 결과가 안전하다.
+     */
+    public String excerpt(String markdownHead) {
+        if (markdownHead == null || markdownHead.isBlank()) return null;
+        String text = excerptOf(PARSER.parse(markdownHead));
+        return text == null || text.isBlank() ? null : text;
+    }
+
     private RenderedContent doRender(String md, long authorId) {
         Node doc = PARSER.parse(md);
         // 본문의 우리 사진 키를 모아 작성자가 올린 것인지 한 번에 확인한다
