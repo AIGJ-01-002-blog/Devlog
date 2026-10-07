@@ -278,12 +278,20 @@ B·C에게 새 글 알림이 한 번 가며, 그 글을 비공개로 바꿨다 �
 
 ### Key Entities *(include if feature involves data)*
 
-- **알림(Notification)**: 받는 사람, 종류(7가지), 가리키는 글·댓글·신고(식별자만), 신고 처리 결과, 대표 행동자, 행동한 사람 수,
-  묶음 구분값(좋아요·팔로우만), 읽은 일자, 만든 일자, 수정 일자. 글·댓글이 완전히 지워지면 함께 지워진다.
+- **알림(Notification)**: 받는 사람, 종류(7가지), 읽은 일자, 생성·갱신 일자. 종류마다 가리키는 대상은 하위 테이블에 둔다:
+  댓글·답글 → 알림 댓글(NotificationComment), 좋아요·새 글 → 알림 글(NotificationPost), 신고 결과 → 알림 신고(NotificationReport),
+  숨김 → 알림 신고 사건(NotificationCase). 대표 행동자·행동한 사람 수·신고 처리 결과는 저장하지 않고 묶음 참여자와 신고 사건에서 구한다.
 - **묶음 참여자(NotificationActor)**: 묶는 알림에 들어간 사람과 들어간 일자. 같은 알림에 한 사람은 한 번만.
 - **끈 알림 종류(NotificationMute)**: 회원이 끈 알림 종류. 기록이 없으면 켜짐.
 - **알림 사건**: 댓글 작성·삭제, 글 좋아요·취소, 팔로우·언팔로우, 글 처음 전체 공개, 신고 처리, 숨김·숨김 해제, 글 완전 삭제
   (docs/20 §3).
+
+### V3 정규화 반영 (2026-10-07)
+
+근거: `erd/normalization-v3.md`, Crowfoot ERD 요구사항 REQ-025·REQ-027. 다른 값에서 계산되는 값은 저장하지 않는다.
+
+- 안 읽은 묶음 알림은 하나(FR-007·FR-011)라는 규칙은 앱이 (받는 사람, 종류, 글) 단위 트랜잭션 잠금(`pg_advisory_xact_lock`)으로 지킨다.
+- 묶음의 수와 대표(FR-008·FR-012)는 묶음 참여자에서 센다(`ix_notification_actor_latest`). 사람이 빠지면 다시 계산할 필요 없이 자동으로 맞는다.
 
 ## Success Criteria *(mandatory)*
 
