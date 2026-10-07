@@ -49,8 +49,8 @@ selfhosted (기본):
 
 ```bash
 deploy/scripts/gen-secret-env.sh selfhosted   # DB·Redis·MinIO 비밀번호를 임의 값으로 채운 secret.env (커밋 금지)
-# secret.env의 GITHUB_CLIENT_ID/SECRET(필수), SMTP_*(이메일 가입을 열 때)를 채운다
-# app.env의 SITE_BASE_URL·IMAGE_PUBLIC_BASE_URL과 kustomization.yaml의 ingress host를 실제 도메인으로 바꾼다
+# secret.env의 GITHUB_CLIENT_ID/SECRET(필수), SMTP_PASSWORD(운영 Gmail devlogauth@gmail.com의 앱 비밀번호)를 채운다
+# 도메인은 devlog.life (app.env의 SITE_BASE_URL·IMAGE_PUBLIC_BASE_URL, kustomization.yaml의 ingress host)
 kubectl apply -k deploy/k8s/overlays/selfhosted
 kubectl -n blog rollout status deploy/blog-app
 ```
@@ -93,6 +93,7 @@ kubectl -n blog rollout status deploy/blog-app
 |---|---|---|---|
 | Secret | `KUBECONFIG` | 클러스터 접속 파일 내용 | 배포 실패 |
 | Secret | `BLOG_SECRET_ENV` | 고른 overlay의 `secret.env` 내용 전체 (Environment Secret으로 overlay마다 따로 둘 수 있음) | 배포 실패 |
+| Secret | `SMTP_PASSWORD` | 운영 Gmail(devlogauth@gmail.com)의 앱 비밀번호 16자리. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어씀 | 메일 안 감(인증 메일 보관만) |
 | Secret | `DISCORD_WEBHOOK_URL`, `DISCORD_PR_WEBHOOK_URL` | Discord 웹훅 주소 | 알림만 안 감 |
 | Secret | `TELEGRAM_BOT_TOKEN` | 텔레그램 @BotFather → `/newbot`이 준 토큰 | 텔레그램 알림 안 감 |
 | Secret | `TELEGRAM_CHAT_ID` | 알림 받을 대화방 ID (봇에게 말을 건 뒤 `https://api.telegram.org/bot<토큰>/getUpdates`의 `chat.id`) | 텔레그램 알림 안 감 |

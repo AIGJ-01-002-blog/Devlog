@@ -99,10 +99,20 @@ jobs:
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
           BLOG_SECRET_ENV: ${{ secrets.BLOG_SECRET_ENV }}
+          # 따로 넣은 Secret이 있으면 BLOG_SECRET_ENV의 같은 이름 값을 덮어쓴다 (예: Gmail 앱 비밀번호만 따로 등록)
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: |
           umask 077
           printf '%s' "$KUBECONFIG_CONTENT" > "$RUNNER_TEMP/kubeconfig"
-          printf '%s\n' "$BLOG_SECRET_ENV" > "deploy/k8s/overlays/$OVERLAY/secret.env"
+          f="deploy/k8s/overlays/$OVERLAY/secret.env"
+          printf '%s\n' "$BLOG_SECRET_ENV" > "$f"
+          for key in SMTP_PASSWORD; do
+            val="${!key}"
+            [ -n "$val" ] || continue
+            grep -v "^${key}=" "$f" > "$f.tmp" || true
+            printf '%s=%s\n' "$key" "$val" >> "$f.tmp"
+            mv "$f.tmp" "$f"
+          done
           echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
       - name: 배포 (헬스 체크 실패 시 직전 버전으로 자동 롤백)
         env:
