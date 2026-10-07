@@ -58,6 +58,20 @@ export function PostPage({ handle, id }) {
                 setMinutes(readingMinutes(body.textContent ?? '', body.querySelectorAll('img').length));
         }
     }, [post]);
+    // 본문은 불러온 뒤에 그려지므로 주소의 #제목으로는 브라우저가 스스로 이동하지 못한다. 글이 바뀔 때만 한 번 맞춘다.
+    const postId = post?.id;
+    useEffect(() => {
+        if (postId == null || !window.location.hash)
+            return;
+        let target;
+        try {
+            target = decodeURIComponent(window.location.hash.slice(1));
+        }
+        catch {
+            return;
+        }
+        document.getElementById(target)?.scrollIntoView({ block: 'start' });
+    }, [postId]);
     if (missing)
         return _jsx(NotFoundPage, {});
     if (!post)
