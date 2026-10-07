@@ -1,0 +1,118 @@
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { api } from '../lib/api'
+import type { Card, FeedPage } from '../lib/types'
+import { PostCard } from './PostCard'
+
+const KEEP_MS = 30 * 60 * 1000
+
+interface Saved {
+  items: Card[]
+  nextCursor: string | null
+  scrollY: number
+  at: number
+}
+
+/**
+ * 카드 목록 + [더 보기]. 이어 붙일 때 이미 있는 글은 건너뛴다(docs/10 §4-3).
+ * 상세에서 뒤로 오면 카드·커서·스크롤 위치를 30분 동안 복원한다(L-6).
+ */
+export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty }: {
+  endpoint: string
+  storageKey: string
+  initial: FeedPage | null
+  showAuthor?: boolean
+  empty: React.ReactNode
+}) {
+  const restored = useRef<Saved | null>(readSaved(storageKey))
+  const [items, setItems] = useState<Card[]>(restored.current?.items ?? initial?.items ?? [])
+  const [cursor, setCursor] = useState<string | null>(restored.current ? restored.current.nextCursor : initial?.nextCursor ?? null)
+  const [loaded, setLoaded] = useState(restored.current != null || initial != null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+  const state = useRef({ items, cursor })
+  state.current = { items, cursor }
+
+  const load = useCallback(async (next: string | null) => {
+    setLoading(true)
+    setError(false)
+    try {
+      const page = await api<FeedPage>(next ? `${endpoint}?cursor=${encodeURIComponent(next)}` : endpoint)
+      setItems((prev) => {
+        const base = next ? prev : []
+        const seen = new Set(base.map((c) => c.id))
+        return [...base, ...page.items.filter((c) => !seen.has(c.id))]
+      })
+      setCursor(page.nextCursor)
+      setLoaded(true)
+    } catch {
+      setError(true)
+    } finally {
+      setLoading(false)
+    }
+  }, [endpoint])
+
+  useEffect(() => {
+    if (!loaded) void load(null)
+  }, [loaded, load])
+
+  useLayoutEffect(() => {
+    if (restored.current) window.scrollTo(0, restored.current.scrollY)
+    restored.current = null
+    return () => {
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify({ ...state.current, nextCursor: state.current.cursor,
+          scrollY: window.scrollY, at: Date.now() }))
+      } catch {
+        // 저장 공간이 없으면 복원하지 않는다
+      }
+    }
+  }, [storageKey])
+
+  if (loaded && items.length === 0 && !error) return <div className="empty">{empty}</div>
+  return (
+    <section>
+      <div className="card-grid">
+        {items.map((c) => <PostCard key={c.id} card={c} showAuthor={showAuthor} />)}
+      </div>
+      {error && (
+        <p className="feed-error">글을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => load(cursor)}>다시 시도</button></p>
+      )}
+      {!error && cursor && (
+        <div className="more">
+          <button type="button" className="btn btn-outline" disabled={loading} onClick={() => load(cursor)}>
+            {loading ? '불러오는 중…' : '더 보기'}
+          </button>
+        </div>
+      )}
+      {!loaded && loading && <p className="muted center">불러오는 중…</p>}
+    </section>
+  )
+}
+
+function readSaved(key: string): Saved | null {
+  try {
+    const raw = sessionStorage.getItem(key)
+    if (!raw) return null
+    const s = JSON.parse(raw) as Saved
+    if (Date.now() - s.at > KEEP_MS || navigationType() !== 'back_forward') return null
+    return s
+  } catch {
+    return null
+  }
+}
+
+let firstNavigation = true
+function navigationType(): string {
+  // 앱 안에서 뒤로 가기(popstate)는 back_forward로 본다
+  if (firstNavigation) {
+    firstNavigation = false
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
+    return nav?.type ?? 'navigate'
+  }
+  return lastPop ? 'back_forward' : 'navigate'
+}
+let lastPop = false
+window.addEventListener('popstate', () => {
+  lastPop = true
+  setTimeout(() => (lastPop = false), 1000)
+})

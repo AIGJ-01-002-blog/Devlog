@@ -13,6 +13,7 @@ import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.post.access.ReadablePost;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
+import com.team.blog.post.infra.AutosaveStore;
 import com.team.blog.shared.markdown.ImageUrls;
 
 /**
@@ -24,11 +25,13 @@ public class PostDetailQuery {
     private final JdbcTemplate jdbc;
     private final PostAccessPolicy policy;
     private final ImageUrls imageUrls;
+    private final AutosaveStore autosaves;
 
-    public PostDetailQuery(JdbcTemplate jdbc, PostAccessPolicy policy, ImageUrls imageUrls) {
+    public PostDetailQuery(JdbcTemplate jdbc, PostAccessPolicy policy, ImageUrls imageUrls, AutosaveStore autosaves) {
         this.jdbc = jdbc;
         this.policy = policy;
         this.imageUrls = imageUrls;
+        this.autosaves = autosaves;
     }
 
     public record Author(long id, String handle, String nickname, String bio, String profileImageUrl) {}
@@ -77,11 +80,30 @@ public class PostDetailQuery {
         ReadablePost readable = new ReadablePost(r.authorId, r.status, r.visibility, r.deleted, r.hidden, r.withdrawn);
         if (!policy.canRead(readable, viewer)) return Optional.empty();
         boolean mine = viewer.is(r.authorId);
-        OwnerInfo owner = mine ? new OwnerInfo(r.draftSavedAt != null, r.draftSavedAt, r.hidden) : null;
+        OwnerInfo owner = null;
+        if (mine) {
+            Instant editingAt = r.status == PostStatus.PUBLISHED ? latest(r.draftSavedAt, unflushedSavedAt(r.id)) : null;
+            owner = new OwnerInfo(editingAt != null, editingAt, r.hidden);
+        }
         return Optional.of(new Detail(r.id, "/@" + r.handle + "/posts/" + r.id, r.title, r.contentHtml, r.excerpt,
                 r.thumbnailUrl, r.status, r.visibility, r.publishedAt, r.firstPublicAt, r.editedAt, r.viewCount,
                 r.likeCount, r.commentCount,
                 new Author(r.authorId, r.handle, r.nickname, r.bio, imageUrls.urlOf(r.profileImageKey)), mine, owner));
+    }
+
+    /** DB에 아직 반영 전인 자동 저장(최대 1분)도 "수정 중"으로 본다. Redis가 안 되면 DB 작업본만 본다. */
+    private Instant unflushedSavedAt(long postId) {
+        try {
+            return autosaves.read(postId).map(AutosaveStore.Snapshot::savedAt).orElse(null);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    private static Instant latest(Instant a, Instant b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return a.isAfter(b) ? a : b;
     }
 
     private static Instant instant(Timestamp t) {

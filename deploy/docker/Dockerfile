@@ -1,10 +1,19 @@
-# 블로그 앱(Spring Boot, app/backend) 컨테이너 이미지.
+# 블로그 앱(Spring Boot, app/backend + 화면 app/frontend) 컨테이너 이미지.
 # 빌드: 저장소 루트에서  docker build -f deploy/docker/Dockerfile -t blog-app .
+# 화면(React)을 먼저 빌드해 jar의 static/에 넣는다. 서버가 그 index.html에 머리말·첫 화면을 채워 보낸다.
 # Gradle·Maven 어느 쪽이든 래퍼(gradlew/mvnw)가 있으면 그것으로 빌드한다.
+
+FROM node:22-alpine AS web
+WORKDIR /web
+COPY app/frontend/package.json app/frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY app/frontend/ ./
+RUN npm run build
 
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /src
 COPY app/backend/ ./
+COPY --from=web /web/dist/ ./src/main/resources/static/
 RUN set -eu; \
     if [ -x ./gradlew ]; then ./gradlew --no-daemon -q bootJar -x test && cp "$(ls build/libs/*.jar | grep -v plain | head -1)" /app.jar; \
     elif [ -x ./mvnw ]; then ./mvnw -q -B -DskipTests package && cp "$(ls target/*.jar | grep -v original | head -1)" /app.jar; \
