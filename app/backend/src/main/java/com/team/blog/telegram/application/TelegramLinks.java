@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,9 @@ public class TelegramLinks {
     }
 
     /** @param available 기능이 켜져 있고 봇 이름을 알 수 있으면 true. false면 설정 화면이 항목을 숨긴다 */
+    private static final DefaultRedisScript<Long> DELETE_IF_SAME = new DefaultRedisScript<>(
+            "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) end return 0", Long.class);
+
     public record Status(boolean available, String botUsername, boolean linked, boolean notifications, Instant linkedAt) {}
 
     public record Link(String url, Instant expiresAt) {}
@@ -86,7 +90,8 @@ public class TelegramLinks {
         String member = redis.opsForValue().getAndDelete(CODE_PREFIX + code);
         if (member == null) return Optional.empty();
         long memberId = Long.parseLong(member);
-        redis.delete(MEMBER_CODE_PREFIX + memberId);
+        // 그 사이 새 코드를 받았으면 새 코드의 역방향 키는 남긴다
+        redis.execute(DELETE_IF_SAME, List.of(MEMBER_CODE_PREFIX + memberId), code);
         return Optional.ofNullable(tx.execute(s -> {
             List<String> nick = jdbc.queryForList("""
                     SELECT nickname FROM member m WHERE id = ? AND status <> 'WITHDRAWN' AND deleted_at IS NULL AND %s FOR UPDATE
@@ -123,8 +128,8 @@ public class TelegramLinks {
     }
 
     public Optional<Linked> chatOf(long memberId) {
-        return jdbc.query("SELECT t.chat_id, t.notify FROM member_telegram t JOIN member m ON m.id = t.member_id WHERE t.member_id = ? AND "
-                        + props.audienceSql(),
+        return jdbc.query("SELECT t.chat_id, t.notify FROM member_telegram t JOIN member m ON m.id = t.member_id WHERE t.member_id = ?"
+                        + " AND m.status <> 'WITHDRAWN' AND m.deleted_at IS NULL AND " + props.audienceSql(),
                 (rs, i) -> new Linked(rs.getLong(1), rs.getBoolean(2)), memberId).stream().findFirst();
     }
 

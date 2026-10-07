@@ -10,8 +10,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -38,6 +36,8 @@ public class TelegramBot {
     static final String OFFSET_KEY = "tg:offset";
     static final String MEMO_PREFIX = "tg:memo:";
     private static final Duration FAILURE_BACKOFF = Duration.ofSeconds(30);
+    /** 한 번 받은 업데이트를 처리하는 시간 상한 (넘으면 나머지는 다음 폴링에서) */
+    private static final Duration HANDLE_BUDGET = Duration.ofSeconds(60);
 
     private final TelegramProperties props;
     private final TelegramApi api;
@@ -47,14 +47,13 @@ public class TelegramBot {
     private final JdbcTemplate jdbc;
     private final StringRedisTemplate redis;
     private final JobLock lock;
-    private final TaskExecutor executor;
     private final Clock clock;
     private final String baseUrl;
     private volatile Instant pausedUntil = Instant.MIN;
 
     public TelegramBot(TelegramProperties props, TelegramApi api, TelegramLinks links, MemoDraftService drafts,
                        PostCommandService posts, JdbcTemplate jdbc, StringRedisTemplate redis, JobLock lock,
-                       @Qualifier(TelegramConfig.EXECUTOR) TaskExecutor executor, BlogProperties blog, Clock clock) {
+                       BlogProperties blog, Clock clock) {
         this.props = props;
         this.api = api;
         this.links = links;
@@ -63,7 +62,6 @@ public class TelegramBot {
         this.jdbc = jdbc;
         this.redis = redis;
         this.lock = lock;
-        this.executor = executor;
         this.clock = clock;
         String b = blog.site().baseUrl() == null ? "" : blog.site().baseUrl();
         this.baseUrl = b.endsWith("/") ? b.substring(0, b.length() - 1) : b;
@@ -72,7 +70,7 @@ public class TelegramBot {
     @Scheduled(fixedDelay = 1000, initialDelay = 5000)
     public void scheduled() {
         if (!props.available() || !props.poll() || Instant.now().isBefore(pausedUntil)) return;
-        lock.runExclusively("telegram-poll", props.pollTimeout().plusSeconds(30), this::pollOnce);
+        lock.runExclusively("telegram-poll", props.pollTimeout().plus(HANDLE_BUDGET).plusSeconds(60), this::pollOnce);
     }
 
     /** 한 번 받아 처리한다. 실패하면 30초 쉰다(로그가 매초 쌓이지 않게). */
@@ -84,14 +82,18 @@ public class TelegramBot {
             pausedUntil = Instant.now().plus(FAILURE_BACKOFF);
             return;
         }
+        // 처리한 뒤에 오프셋을 넘긴다: 서버가 처리 도중 멈추면 다음 폴링이 그 업데이트를 다시 받는다.
+        // 메모는 AI를 거쳐 느릴 수 있어 잠금 시간 안에서만 처리하고, 남은 것은 다음 폴링에서 다시 받는다
+        Instant until = Instant.now().plus(HANDLE_BUDGET);
         for (TelegramApi.Update u : updates) {
-            // 처리하다 실패해도 다음 업데이트로 넘어간다: 같은 메시지를 계속 다시 받지 않게
-            redis.opsForValue().set(OFFSET_KEY, Long.toString(u.updateId() + 1));
+            if (Instant.now().isAfter(until)) break;
             try {
                 handle(u);
             } catch (RuntimeException e) {
+                // 실패해도 다음으로 넘어간다: 같은 메시지를 계속 다시 받지 않게
                 log.warn("텔레그램 업데이트를 처리하지 못했습니다 ({}): {}", u.updateId(), e.getClass().getSimpleName());
             }
+            redis.opsForValue().set(OFFSET_KEY, Long.toString(u.updateId() + 1));
         }
     }
 
@@ -113,7 +115,7 @@ public class TelegramBot {
             reply(chat, TelegramMessages.NOT_LINKED);
             return;
         }
-        executor.execute(() -> memo(chat, member, text));
+        memo(chat, member, text);
     }
 
     private void command(long chat, String text) {
@@ -150,14 +152,20 @@ public class TelegramBot {
             reply(chat, "오늘은 메모를 " + props.memoDailyLimit() + "개까지 저장할 수 있어요. 내일 다시 보내 주세요.");
             return;
         }
-        MemoDraftService.Draft d = drafts.draft(memberId, text);
+        MemoDraftService.Draft d;
+        long id;
         try {
-            long id = posts.create(memberId, d.title(), d.contentMd()).id();
-            reply(chat, TelegramMessages.drafted(d.title(), baseUrl + "/write/" + id, d.note()));
-        } catch (ApiException e) {
+            d = drafts.draft(memberId, text);
+            id = posts.create(memberId, d.title(), d.contentMd()).id();
+        } catch (RuntimeException e) {
+            // 저장하지 못했으면 오늘 횟수에서 뺀다. 저장한 뒤 답장이 실패한 경우는 빼지 않는다
             redis.opsForValue().decrement(key);
-            reply(chat, "임시글을 저장하지 못했어요: " + e.getMessage());
+            log.warn("메모를 임시글로 저장하지 못했습니다: {}", e.getClass().getSimpleName());
+            reply(chat, e instanceof ApiException ae ? "임시글을 저장하지 못했어요: " + ae.getMessage()
+                    : "임시글을 저장하지 못했어요. 잠시 뒤 다시 보내 주세요.");
+            return;
         }
+        reply(chat, TelegramMessages.drafted(d.title(), baseUrl + "/write/" + id, d.note()));
     }
 
     private static final Map<String, String> BLOCKED = Map.of(

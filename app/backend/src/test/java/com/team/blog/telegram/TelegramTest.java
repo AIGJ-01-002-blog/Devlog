@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -144,6 +145,16 @@ class TelegramTest extends IntegrationTest {
         assertThat(TG.to(chat)).hasSize(2);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM notification WHERE receiver_id = ? AND type = 'COMMENT'", Long.class,
                 author.memberId())).isEqualTo(2);
+    }
+
+    @Test
+    void 팔로우한_사람의_새_글처럼_한_번에_여러_명에게_만드는_알림도_보낸다() throws Exception {
+        Session author = signup(uniqueLogin("tgn")), follower = signup(uniqueLogin("tgf"));
+        long chat = link(follower);
+        follower.http().perform(put("/api/members/" + author.handle() + "/follow").with(csrf())).andExpect(status().is2xxSuccessful());
+        long post = publish(author);
+        drain();
+        assertThat(TG.await(chat, 2)).contains("「레디스 정리」").contains("/@" + author.handle() + "/posts/" + post);
     }
 
     @Test

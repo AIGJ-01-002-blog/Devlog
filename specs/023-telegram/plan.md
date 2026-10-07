@@ -7,8 +7,8 @@
 | `telegram/application/TelegramProperties` | `blog.telegram.*`: 토큰이 비면 `available()=false`라 모든 기능이 꺼진다(FR-001). `toString`은 토큰을 숨긴다 |
 | `telegram/infra/HttpTelegramApi` | getMe(봇 이름 캐시), getUpdates(롱 폴링 25초, message만), sendMessage(일반 글자, 미리보기 끔). 403·"chat not found"는 GONE. 토큰이 들어갈 수 있는 주소·응답은 로그에 남기지 않는다(FR-007) |
 | `telegram/application/TelegramLinks` | 1회용 코드(Redis `tg:link:{code}`, 10분, 새로 만들면 이전 코드 무효)와 연결·끊기·알림 켜기. 코드는 `getAndDelete`로 한 번만 쓴다(FR-002) |
-| `telegram/application/TelegramNotifier` | `NotificationCreated`(새 알림 행이 생길 때만)를 커밋 뒤 별도 실행기(`telegramExecutor`, 2스레드)에서 보낸다(FR-004). 문구는 `NotificationQuery.find`로 알림 화면과 같은 판정을 거친 값으로 만든다(FR-005). 봇을 차단하면 연결을 지운다 |
-| `telegram/application/TelegramBot` | 1초마다 `JobLock("telegram-poll")`을 잡은 서버 한 대만 받는다(FR-009). 오프셋은 Redis `tg:offset`. 개인 대화만 받고 `/start 코드`, `/stop`, 그 밖의 명령은 도움말, 일반 글은 메모 |
+| `telegram/application/TelegramNotifier` | `NotificationCreated`(새 알림 행이 생길 때만)를 커밋 뒤 별도 실행기(`telegramExecutor`, 2스레드)에서 보낸다(FR-004). 새 글·신고 결과처럼 한 문장으로 여러 명에게 만드는 알림도 행마다 사건을 낸다. 문구는 `NotificationQuery.find`로 알림 화면과 같은 판정을 거친 값으로 만든다(FR-005). 봇을 차단하면 연결을 지운다 |
+| `telegram/application/TelegramBot` | 1초마다 `JobLock("telegram-poll")`을 잡은 서버 한 대만 받는다(FR-009). 개인 대화만 받고 `/start 코드`, `/stop`, 그 밖의 명령은 도움말, 일반 글은 메모. 업데이트를 처리한 뒤에 오프셋(Redis `tg:offset`)을 넘겨 서버가 도중에 멈춰도 메모를 잃지 않는다. 메모는 폴링 스레드에서 차례로 처리하고(한 번에 60초까지, 남은 것은 다음 폴링), 저장에 실패하면 오늘 횟수를 되돌린다 |
 | `ai/application/MemoDraftService` | 메모 → `{title, contentMd}`. AI 동의가 없거나 AI가 꺼졌거나 실패하면 메모 그대로(첫 줄이 제목). 외부 AI 하루 한도는 태그 추천과 같은 `ProviderState`로 센다(FR-006). 지어내지 말라는 시스템 지시 |
 | `TelegramWithdrawalPurgeStep` | 탈퇴 정리 때 연결을 지운다(FR-008). 유예 기간에는 남겨 두되 정지·탈퇴 상태면 메모를 받지 않는다 |
 | 화면 `lib/telegram.ts`, 설정의 `TelegramSection` | 서버에 봇이 없으면 숨김. [연결하기] → [텔레그램 열기] 주소와 남은 시간, 연결될 때까지 3초마다 상태를 다시 읽고 주소가 끝나면 멈춘다. 연결되면 알림 켜기·끄기와 [연결 끊기] |
