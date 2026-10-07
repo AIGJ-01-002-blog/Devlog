@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.markdown.ContentRenderer;
 import com.team.blog.shared.markdown.ContentTooComplexException;
+import com.team.blog.shared.markdown.ImageOwnership;
 import com.team.blog.shared.markdown.ImageUrls;
 import com.team.blog.shared.markdown.RenderedContent;
 import com.team.blog.support.HtmlSafety;
@@ -30,13 +31,15 @@ class ContentRendererTest extends IntegrationTest {
     String cdn;
     String myKey = "images/2026/10/11111111-2222-4333-8444-555555555555.webp";
     String othersKey = "images/2026/10/aaaaaaaa-2222-4333-8444-555555555555.webp";
+    String unsizedKey = "images/2026/10/bbbbbbbb-2222-4333-8444-555555555555.webp";
 
     @BeforeEach
     void setUp() {
-        // 작성자 7이 올린 사진은 myKey 하나뿐이라고 가정한다
+        // 작성자 7이 올린 사진은 myKey(1200x800)와 크기를 모르는 unsizedKey뿐이라고 가정한다
         renderer = new ContentRenderer(imageUrls, (uploader, keys) -> {
-            java.util.Map<String, String> owned = new java.util.HashMap<>();
-            if (uploader == AUTHOR && keys.contains(myKey)) owned.put(myKey, null);
+            java.util.Map<String, ImageOwnership.OwnedImage> owned = new java.util.HashMap<>();
+            if (uploader == AUTHOR && keys.contains(myKey)) owned.put(myKey, new ImageOwnership.OwnedImage(null, 1200, 800));
+            if (uploader == AUTHOR && keys.contains(unsizedKey)) owned.put(unsizedKey, new ImageOwnership.OwnedImage(null, null, null));
             return owned;
         }, props, "http://localhost:8080");
         cdn = imageUrls.publicBaseUrl() + "/";
@@ -96,6 +99,14 @@ class ContentRendererTest extends IntegrationTest {
         assertThat(r.imageKeys()).containsExactly(myKey);
         // 같은 본문도 다른 사람이 쓰면 이미지가 아니다
         assertThat(renderer.render(md, 99L).imageKeys()).isEmpty();
+    }
+
+    @Test
+    void 크기를_아는_사진에는_가로세로를_적어_읽는_중에_글이_밀리지_않게_한다() {
+        String html = renderer.render("![내 사진](" + cdn + myKey + ")\n\n![크기 모름](" + cdn + unsizedKey + ")", AUTHOR).html();
+        assertThat(html).contains("<img src=\"" + cdn + myKey + "\"").contains("width=\"1200\"").contains("height=\"800\"");
+        String unsized = html.substring(html.indexOf("<img src=\"" + cdn + unsizedKey));
+        assertThat(unsized.substring(0, unsized.indexOf('>'))).doesNotContain("width=").doesNotContain("height=");
     }
 
     @Test

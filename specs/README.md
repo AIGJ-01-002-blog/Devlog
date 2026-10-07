@@ -36,6 +36,7 @@
 | [029-keyboard-reader-a11y](./029-keyboard-reader-a11y/spec.md) | 키보드·화면 읽기 프로그램 이동 개선 | 2026-10-08 추가 (최적화) | 이후 단계 (Tier C) | 42 |
 | [030-static-delivery](./030-static-delivery/spec.md) | 화면 파일 캐시와 응답 압축 | 2026-10-08 추가 (최적화) | 이후 단계 (Tier C) | 2 |
 | [031-reduced-motion](./031-reduced-motion/spec.md) | 움직임 줄이기와 카드 키보드 초점 | 2026-10-08 추가 (최적화) | 이후 단계 (Tier C) | 42 |
+| [032-image-dimensions](./032-image-dimensions/spec.md) | 본문 사진 자리 먼저 잡기 | 2026-10-08 추가 (최적화) | 이후 단계 (Tier C) | 2 |
 
 ## 여러 spec에 걸치는 문서
 
