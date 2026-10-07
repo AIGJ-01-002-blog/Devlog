@@ -29,8 +29,17 @@ public class RenderedHtmlCache {
         return "render:post:" + postId + ":" + editVersion + ":" + ContentRenderer.RENDER_VERSION;
     }
 
+    /** 블로그 소개 (042). 글과 같은 규칙으로 캐시한다. */
+    public static String aboutKey(long memberId, long editVersion) {
+        return "render:about:" + memberId + ":" + editVersion + ":" + ContentRenderer.RENDER_VERSION;
+    }
+
     public String html(long postId, long editVersion, long authorId, String contentMd) {
-        String key = key(postId, editVersion);
+        return html(key(postId, editVersion), authorId, contentMd);
+    }
+
+    /** @param key 원문이 바뀌면 달라지는 키 ({@link #key}, {@link #aboutKey}) */
+    public String html(String key, long authorId, String contentMd) {
         try {
             String cached = redis.opsForValue().get(key);
             if (cached != null) return cached;

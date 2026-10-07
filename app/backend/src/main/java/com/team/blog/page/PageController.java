@@ -28,6 +28,7 @@ import com.team.blog.post.domain.PostStatus;
 import com.team.blog.search.application.SearchQuery;
 import com.team.blog.search.web.SearchController;
 import com.team.blog.series.application.SeriesQuery;
+import com.team.blog.account.application.MemberAbout;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
@@ -56,10 +57,12 @@ public class PageController {
     private final FollowQuery follows;
     private final TrendingService trending;
     private final SeriesQuery series;
+    private final MemberAbout about;
 
     public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
                           TagController tagApi, CommentQuery comments, SearchQuery search, FollowQuery follows,
-                          TrendingService trending, SeriesQuery series) {
+                          TrendingService trending, SeriesQuery series, MemberAbout about) {
+        this.about = about;
         this.series = series;
         this.trending = trending;
         this.follows = follows;
@@ -226,6 +229,25 @@ public class PageController {
                 "website", p.profileImageUrl() != null ? p.profileImageUrl() : absolute(site.defaultOgImage()), null, null, true);
         return html(HttpStatus.OK, shell.render(meta, body.toString(), Map.of("page", "series-list")),
                 listing.get().personal() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate());
+    }
+
+    /** 블로그 [소개] 탭 (042). 소개 HTML을 담아 수집한다. 비어 있으면 수집하지 않는다. */
+    @GetMapping("/@{handle}/about")
+    public ResponseEntity<String> about(@PathVariable String handle, @CurrentMember(required = false) MemberPrincipal me) {
+        if (!HANDLE_CHARS.matcher(handle).matches()) return notFound();
+        if (!handle.equals(handle.toLowerCase())) return redirect(HttpStatus.MOVED_PERMANENTLY, "/@" + handle.toLowerCase() + "/about");
+        Long viewer = me == null ? null : me.id();
+        var profile = feed.profile(handle, viewer);
+        var found = about.of(handle, viewer);
+        if (profile.isEmpty() || found.isEmpty()) return notFound();
+        FeedQuery.BlogProfile p = profile.get();
+        MemberAbout.About a = found.get();
+        String title = p.nickname() + "님 소개";
+        String body = "<main><h1>" + SpaShell.esc(title) + "</h1>" + (a.html() == null ? "" : "<article>" + a.html() + "</article>") + "</main>";
+        HeadMeta meta = new HeadMeta(title + " - " + site.name(), p.bio() != null ? p.bio() : p.nickname() + "의 블로그 소개",
+                absolute("/@" + handle + "/about"), "profile",
+                p.profileImageUrl() != null ? p.profileImageUrl() : absolute(site.defaultOgImage()), null, a.updatedAt(), a.html() != null);
+        return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "about")), CacheControl.noCache().cachePrivate());
     }
 
     /** 시리즈 페이지 (024 US2-2). 글 목록을 순서대로 담아 수집한다. */

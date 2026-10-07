@@ -21,7 +21,7 @@ import com.team.blog.shared.time.Times;
  * 본문 사진 정리 (009 FR-041, docs/04 §4-4). 매일 새벽, 쓰지 않는 사진의 원본·썸네일 파일을 먼저 지우고 기록을 지운다.
  * 저장소 삭제가 실패하면 그 행의 트랜잭션을 되돌려 기록이 남고 다음 정리 때 다시 시도한다.
  * <p>
- * "쓰지 않는다" = 어떤 발행 글에도 연결되지 않았고(post_image), 올린 사람의 글·작업본 원문 어디에도 키가 없음.
+ * "쓰지 않는다" = 어떤 발행 글에도 연결되지 않았고(post_image), 올린 사람의 글·작업본·블로그 소개(042) 원문 어디에도 키가 없음.
  * 원문까지 확인하므로 아직 발행하지 않은 임시글·수정 중인 작업본의 사진은 지워지지 않는다(연결은 발행 때만 만든다).
  * 그 위에 기간 조건: 올리고 한 번도 연결되지 않은 사진은 24시간, 연결이 끊긴 사진은 끊긴 지 7일.
  * <p>
@@ -41,7 +41,8 @@ public class PostImageCleanupJob {
                   AND NOT EXISTS (SELECT 1 FROM post_image pi WHERE pi.resource_id = r.id)
                   AND NOT EXISTS (SELECT 1 FROM post p WHERE p.author_id = r.uploader_id AND strpos(p.content_md, r.storage_key) > 0)
                   AND NOT EXISTS (SELECT 1 FROM post_draft d JOIN post p ON p.id = d.post_id
-                                  WHERE p.author_id = r.uploader_id AND strpos(d.content_md, r.storage_key) > 0))
+                                  WHERE p.author_id = r.uploader_id AND strpos(d.content_md, r.storage_key) > 0)
+                  AND NOT EXISTS (SELECT 1 FROM member_about a WHERE a.member_id = r.uploader_id AND strpos(a.content_md, r.storage_key) > 0))
               OR (r.storage_key LIKE 'files/%'
                   AND NOT EXISTS (SELECT 1 FROM post_file pf WHERE pf.resource_id = r.id)))
             """;
