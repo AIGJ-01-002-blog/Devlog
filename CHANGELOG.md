@@ -18,7 +18,7 @@ main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/r
 - 탈퇴 정리 때 소셜 정보도 지운다
 
 ### 테스트
-- `SocialLinksTest` 3개, `SocialLinks.test.tsx` 4개
+- `SocialLinksTest` 4개(동시 저장 포함), `SocialLinks.test.tsx` 4개
 
 ## [1.19.0] - 2026-10-08
 

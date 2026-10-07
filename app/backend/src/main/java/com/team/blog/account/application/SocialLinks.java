@@ -98,6 +98,8 @@ public class SocialLinks {
         }
         if (!errors.isEmpty()) throw ApiException.validation(errors);
 
+        // 지우고 다시 넣는 사이에 같은 회원의 다른 저장이 끼면 기본 키가 겹친다. 회원 행을 잠가 차례로 처리한다
+        jdbc.queryForObject("SELECT id FROM member WHERE id = ? FOR UPDATE", Long.class, memberId);
         jdbc.update("DELETE FROM member_social_link WHERE member_id = ?", memberId);
         List<Object[]> rows = clean.entrySet().stream().map(e -> new Object[] {memberId, e.getKey().name(), e.getValue()}).toList();
         if (!rows.isEmpty()) jdbc.batchUpdate("INSERT INTO member_social_link (member_id, kind, value) VALUES (?, ?, ?)", rows);

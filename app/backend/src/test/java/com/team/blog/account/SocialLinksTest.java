@@ -84,6 +84,23 @@ class SocialLinksTest extends IntegrationTest {
     }
 
     @Test
+    void 동시에_저장해도_서버_오류_없이_한쪽_값으로_남는다() throws Exception {
+        // 리뷰 지적: 지우고 다시 넣는 사이에 다른 저장이 끼면 기본 키가 겹쳐 500이 났다. 회원 행을 잠가 차례로 처리한다
+        Session me = signup(uniqueLogin("slc"));
+        for (int round = 0; round < 10; round++) {
+            var pool = java.util.concurrent.Executors.newFixedThreadPool(4);
+            var results = new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
+            for (int i = 0; i < 4; i++) {
+                String id = "octo" + round + i;
+                results.add(pool.submit(() -> save(me, Map.of("github", id, "x", id)).andReturn().getResponse().getStatus()));
+            }
+            for (var f : results) assertThat(f.get()).isEqualTo(200);
+            pool.shutdown();
+        }
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM member_social_link WHERE member_id = ?", Long.class, me.memberId())).isEqualTo(2);
+    }
+
+    @Test
     void 탈퇴_정리에서_지운다() throws Exception {
         Session me = signup(uniqueLogin("slw"));
         save(me, Map.of("email", "bye@example.com")).andExpect(status().isOk());
