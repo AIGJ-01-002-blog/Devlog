@@ -101,6 +101,8 @@ jobs:
           BLOG_SECRET_ENV: ${{ secrets.BLOG_SECRET_ENV }}
           # 따로 넣은 Secret이 있으면 BLOG_SECRET_ENV의 같은 이름 값을 덮어쓴다 (예: Gmail 앱 비밀번호만 따로 등록)
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          # 비밀번호가 있을 때만 SMTP를 켠다. 없으면 빈 값이라 덮어쓰지 않고, 앱은 메일을 보관만 한다
+          SMTP_HOST: ${{ secrets.SMTP_PASSWORD != '' && 'smtp.gmail.com' || '' }}
           # 앱 텔레그램 봇(023). 따로 만든 봇이 없으면 배포 알림 봇을 같이 쓴다
           TELEGRAM_BOT_TOKEN: ${{ secrets.APP_TELEGRAM_BOT_TOKEN || secrets.TELEGRAM_BOT_TOKEN }}
         run: |
@@ -108,7 +110,7 @@ jobs:
           printf '%s' "$KUBECONFIG_CONTENT" > "$RUNNER_TEMP/kubeconfig"
           f="deploy/k8s/overlays/$OVERLAY/secret.env"
           printf '%s\n' "$BLOG_SECRET_ENV" > "$f"
-          for key in SMTP_PASSWORD TELEGRAM_BOT_TOKEN; do
+          for key in SMTP_PASSWORD SMTP_HOST TELEGRAM_BOT_TOKEN; do
             val="${!key}"
             [ -n "$val" ] || continue
             grep -v "^${key}=" "$f" > "$f.tmp" || true
