@@ -20,7 +20,7 @@ deploy/
 
 | 무엇 | 어디서 | 비고 |
 |---|---|---|
-| PostgreSQL | Crowfoot 발급 DB (`nhnacademy` DB, 스키마 `cf_u25_d1`) | 호스트·비밀번호는 Crowfoot 데이터베이스 탭. 안 되면 학교 PG-SQL `s3.java21.net:8000`의 2팀 DB(계정은 secret.env에만). 테이블은 앱 시작 때 Flyway가 만든다 |
+| PostgreSQL | Crowfoot 발급 DB (`nhnacademy` DB, `DB_SCHEMA=cf_u25_d1`) | 호스트·비밀번호는 Crowfoot 데이터베이스 탭. 안 되면 학교 PG-SQL `s3.java21.net:8000`의 2팀 DB(계정은 secret.env에만). 테이블은 앱 시작 때 Flyway가 만든다 |
 | Redis | `220.67.216.14:6379` | DB 번호 8 (318·319는 범위 0~56 밖이라 마지막 대안 8). `FLUSHALL` 금지 |
 | MinIO | `storage.java21.net` | 버킷 `blog-images` |
 | RabbitMQ | `s4.java21.net:5672` | 알림(015) |
@@ -65,7 +65,8 @@ kubectl -n blog port-forward svc/blog-app 8080:80
 - `kustomize build` + `kubeconform -strict`: local 17개, nhn 10개 리소스 모두 통과
 - local 배포: PostgreSQL 17·Redis 7.4·MinIO(pgsty/silo)·앱 자리 이미지 모두 Running, 앱 파드에서 세 서비스 접속과 환경 변수 주입 확인
 - `V1__schema_docs51.sql`을 클러스터 안 PostgreSQL 17에 적용해 테이블 20개 생성 확인
-- 앱 이미지가 아직 없어 앱 자리에는 상태 확인만 답하는 작은 대역 이미지를 썼다. 실제 앱 이미지로는 아직 돌려 보지 않았다.
+- 실제 앱(구현 PR #3, 커밋 027e062)을 이 Dockerfile의 런타임 단계 그대로 이미지로 만들어 배포: 재시작 없이 Running, Flyway V1·V2 적용(테이블 20개 + 이력), `/actuator/health/readiness` UP, 비로그인 `/api/me` 401 + CSRF 쿠키 확인
+- 앱보다 PostgreSQL이 늦게 뜨면 앱 파드가 몇 번 재시작한 뒤 붙는다(정상 동작)
 
 ## 클라우드 세션에서 학교 서버 접속 확인 결과 (2026-10-07)
 
