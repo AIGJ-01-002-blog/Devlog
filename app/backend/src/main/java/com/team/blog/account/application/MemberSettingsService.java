@@ -40,7 +40,8 @@ public class MemberSettingsService {
      */
     public record Settings(String handle, String nickname, Instant nicknameNextChangeableAt, String bio, String profileImageUrl,
                            String email, boolean emailVerified, String provider, boolean hasPassword,
-                           PreviousLogin previousLogin, String defaultVisibility, boolean aiAgreed, Terms terms) {}
+                           PreviousLogin previousLogin, String defaultVisibility, boolean lastActiveVisible, boolean aiAgreed,
+                           Terms terms) {}
 
     public record PreviousLogin(Instant at, String provider) {}
 
@@ -55,7 +56,7 @@ public class MemberSettingsService {
         return new Settings(m.getHandle(), p.nickname(), p.nicknameNextChangeableAt(), p.bio(), p.profileImageUrl(),
                 identity == null ? null : identity.getEmail(), identity != null && identity.isEmailVerified(),
                 me.provider(), identity != null && identity.getPasswordHash() != null,
-                new PreviousLogin(me.previousLoginAt(), me.provider()), m.getDefaultVisibility().name(),
+                new PreviousLogin(me.previousLoginAt(), me.provider()), m.getDefaultVisibility().name(), m.isLastActiveVisible(),
                 agreements.hasAgreed(me.id(), AgreementType.AI),
                 new Terms(t.termsVersion(), t.termsEffectiveDate(), t.privacyVersion(), t.privacyEffectiveDate()));
     }
@@ -64,5 +65,12 @@ public class MemberSettingsService {
     public void changeDefaultVisibility(long memberId, Visibility visibility) {
         Member m = members.findById(memberId).orElseThrow();
         if (m.getDefaultVisibility() != visibility) m.changeDefaultVisibility(visibility, Times.now(clock));
+    }
+
+    /** 최근 활동을 친구에게 보이기 (008 FR-012). 끄면 나도 친구들의 최근 활동을 못 본다. */
+    @Transactional
+    public void changeLastActiveVisible(long memberId, boolean visible) {
+        Member m = members.findById(memberId).orElseThrow();
+        if (m.isLastActiveVisible() != visible) m.changeLastActiveVisible(visible, Times.now(clock));
     }
 }

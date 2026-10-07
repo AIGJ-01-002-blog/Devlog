@@ -377,3 +377,11 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 
 /* 되돌리기 어려운 동작 (삭제·영구 삭제, 007) */
 .btn-text.danger { color: var(--danger, #c0392b); }
+
+/* 친구 (008) */
+.friend-actions { gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.settings-section h3 { font-size: 0.95rem; margin: 16px 0 8px; }
+.friend-list { list-style: none; padding: 0; margin: 0; }
+.friend-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border, #e9ecef); flex-wrap: wrap; }
+.friend-who { display: flex; align-items: center; gap: 8px; min-width: 0; color: inherit; }
+.friend-row-actions { margin-left: auto; display: flex; gap: 4px; }

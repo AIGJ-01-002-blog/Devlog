@@ -89,14 +89,25 @@ public class MeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(profileImages.upload(me.id(), data));
     }
 
-    public record SettingsRequest(String defaultVisibility) {}
+    public record SettingsRequest(String defaultVisibility, Boolean lastActiveVisible) {}
 
-    /** 새 글 기본 공개 범위 (FR-024). 이미 있는 글은 바뀌지 않는다. */
+    /**
+     * 보낸 칸만 바꾼다: 새 글 기본 공개 범위 (005 FR-024, 이미 있는 글은 그대로), 최근 활동을 친구에게 보이기 (008 FR-012).
+     */
     @PatchMapping("/settings")
-    public Map<String, String> updateSettings(@CurrentMember MemberPrincipal me, @RequestBody SettingsRequest body) {
-        Visibility v = parseVisibility(body.defaultVisibility());
-        settings.changeDefaultVisibility(me.id(), v);
-        return Map.of("defaultVisibility", v.name());
+    public Map<String, Object> updateSettings(@CurrentMember MemberPrincipal me, @RequestBody SettingsRequest body) {
+        if (body.defaultVisibility() == null && body.lastActiveVisible() == null) parseVisibility(null);
+        Map<String, Object> changed = new java.util.LinkedHashMap<>();
+        if (body.defaultVisibility() != null) {
+            Visibility v = parseVisibility(body.defaultVisibility());
+            settings.changeDefaultVisibility(me.id(), v);
+            changed.put("defaultVisibility", v.name());
+        }
+        if (body.lastActiveVisible() != null) {
+            settings.changeLastActiveVisible(me.id(), body.lastActiveVisible());
+            changed.put("lastActiveVisible", body.lastActiveVisible());
+        }
+        return changed;
     }
 
     /** AI 동의 철회 (FR-025). 동의 기록이 없어도 같은 결과(204)다. */
