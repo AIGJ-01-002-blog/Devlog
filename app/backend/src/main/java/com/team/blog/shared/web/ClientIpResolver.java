@@ -4,9 +4,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.team.blog.shared.config.BlogProperties;
@@ -20,9 +22,14 @@ import com.team.blog.shared.config.BlogProperties;
 public class ClientIpResolver {
     private final List<Cidr> trusted;
 
+    @Autowired
     public ClientIpResolver(BlogProperties props) {
+        this(props.web().trustedProxies());
+    }
+
+    ClientIpResolver(List<String> trustedProxies) {
         List<Cidr> list = new ArrayList<>();
-        for (String s : props.web().trustedProxies()) {
+        for (String s : trustedProxies) {
             if (s != null && !s.isBlank()) list.add(Cidr.parse(s.trim()));
         }
         this.trusted = List.copyOf(list);
@@ -50,11 +57,16 @@ public class ClientIpResolver {
     }
 
     record Cidr(byte[] network, int prefix) {
+        /** 0~255 네 덩어리만 IPv4로 본다. 999.1.1.1처럼 범위를 넘으면 JDK가 호스트 이름으로 보고 DNS를 묻는다. */
+        private static final Pattern V4 = Pattern.compile(
+                "((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)");
+
         static Cidr parse(String s) {
             String[] parts = s.split("/");
             byte[] addr = toBytes(parts[0]);
             if (addr == null) throw new IllegalArgumentException("잘못된 신뢰 프록시 대역: " + s);
             int prefix = parts.length > 1 ? Integer.parseInt(parts[1]) : addr.length * 8;
+            if (prefix < 0 || prefix > addr.length * 8) throw new IllegalArgumentException("잘못된 신뢰 프록시 대역: " + s);
             return new Cidr(addr, prefix);
         }
 
@@ -72,7 +84,7 @@ public class ClientIpResolver {
         static byte[] toBytes(String ip) {
             if (ip == null || ip.isBlank()) return null;
             String v = ip.trim();
-            boolean v4 = v.matches("\\d{1,3}(\\.\\d{1,3}){3}");
+            boolean v4 = V4.matcher(v).matches();
             boolean v6 = v.contains(":") && v.matches("[0-9a-fA-F:.%]+");
             if (!v4 && !v6) return null;
             try {
