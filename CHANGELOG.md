@@ -6,6 +6,13 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [Unreleased]
+
+### CI/CD
+- 텔레그램 알림: Discord와 같은 내용(배포 성공·실패, 새 버전, PR 리뷰 요청·머지, 테스트 통과·실패)을 텔레그램 봇으로도 보낸다. `TELEGRAM_ENABLED`와 봇 토큰·대화방 ID가 있을 때만 동작
+- PR 머지와 백엔드·화면 테스트 결과도 알림으로 보낸다
+- SonarQube 검사를 SonarCloud 기본으로 바꿨다(학교 SonarQube는 `SONAR_HOST_URL`로 계속 쓸 수 있음)
+
 ## [0.10.0] - 2026-10-07
 
 글에 태그를 달고, 태그로 글을 모아 본다 (spec 010).

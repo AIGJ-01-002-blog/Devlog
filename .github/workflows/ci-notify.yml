@@ -1,0 +1,29 @@
+# 백엔드·화면 CI가 끝나면 결과(통과·실패)를 Discord·텔레그램에 알린다.
+# 레포 변수 DISCORD_ENABLED·TELEGRAM_ENABLED 중 하나가 true일 때만 동작. 취소·건너뜀은 알리지 않는다.
+name: CI 결과 알림
+
+on:
+  workflow_run:
+    workflows: [backend-ci, 화면 CI]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: >-
+      (vars.DISCORD_ENABLED == 'true' || vars.TELEGRAM_ENABLED == 'true') &&
+      contains(fromJSON('["success", "failure", "timed_out"]'), github.event.workflow_run.conclusion)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/notify
+        with:
+          discord-webhook-url: ${{ vars.DISCORD_ENABLED == 'true' && secrets.DISCORD_WEBHOOK_URL || '' }}
+          telegram-bot-token: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_BOT_TOKEN || '' }}
+          telegram-chat-id: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_CHAT_ID || '' }}
+          title: "${{ github.event.workflow_run.name }} ${{ github.event.workflow_run.conclusion == 'success' && '통과' || '실패' }}"
+          description: "${{ github.event.workflow_run.head_branch }} · ${{ github.event.workflow_run.display_title }} · ${{ github.event.workflow_run.actor.login }}"
+          status: ${{ github.event.workflow_run.conclusion == 'success' && 'success' || 'failure' }}
+          url: ${{ github.event.workflow_run.html_url }}

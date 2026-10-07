@@ -79,8 +79,11 @@ kubectl -n blog rollout status deploy/blog-app
 | `backend-ci.yml` | PR·main (백엔드 변경) | `./mvnw verify`: 테스트 + JaCoCo 줄 커버리지 40% 기준, 보고서 업로드, (선택) SonarQube |
 | `frontend-ci.yml` | PR·main (화면 변경) | 타입 검사, 테스트, 빌드 |
 | `deploy.yml` | PR·main·수동 | 매니페스트 검증(local·nhn·selfhosted) + 비밀값 검사 → 이미지 빌드(main은 GHCR에 올림) → 수동 실행 시 고른 overlay로 배포 |
-| `pr-review-notify.yml` | PR이 리뷰 가능해질 때 | Discord 리뷰 요청 알림 |
-| `release.yml` | CHANGELOG 버전이 main에 들어올 때 | 태그와 GitHub Release |
+| `pr-notify.yml` | PR이 리뷰 가능해질 때·main에 머지될 때 | 리뷰 요청·머지 알림 |
+| `ci-notify.yml` | backend-ci·화면 CI가 끝날 때 | 테스트 통과·실패 알림 |
+| `release.yml` | CHANGELOG 버전이 main에 들어올 때 | 태그와 GitHub Release, 새 버전 알림 |
+
+알림은 `.github/actions/notify`가 Discord와 텔레그램에 같은 내용으로 보낸다(배포 성공·실패, 릴리스, PR 리뷰 요청·머지, CI 통과·실패). 각각 변수 `DISCORD_ENABLED`·`TELEGRAM_ENABLED`가 `true`이고 값이 있을 때만 보내며, 전송이 실패해도 워크플로 결과는 바뀌지 않는다.
 
 배포는 `deploy/scripts/rollout.sh`가 한다. 새 이미지로 바꾼 뒤 모든 파드가 준비(`/actuator/health/readiness` UP)되기를 기다리고, 시간(`ROLLOUT_TIMEOUT_SECONDS`, 기본 300초) 안에 안 되면 `kubectl rollout undo`로 직전 버전으로 되돌린다. 새 파드가 준비되기 전에는 옛 파드를 내리지 않으므로(`maxUnavailable: 0`) 되돌리는 동안에도 서비스는 끊기지 않는다. Actions → 블로그 배포 → Run workflow에서 `rollback_test`를 켜면 없는 이미지로 배포해 롤백을 시험한다.
 
@@ -91,9 +94,14 @@ kubectl -n blog rollout status deploy/blog-app
 | Secret | `KUBECONFIG` | 클러스터 접속 파일 내용 | 배포 실패 |
 | Secret | `BLOG_SECRET_ENV` | 고른 overlay의 `secret.env` 내용 전체 (Environment Secret으로 overlay마다 따로 둘 수 있음) | 배포 실패 |
 | Secret | `DISCORD_WEBHOOK_URL`, `DISCORD_PR_WEBHOOK_URL` | Discord 웹훅 주소 | 알림만 안 감 |
-| Secret | `SONAR_TOKEN`, `SONAR_HOST_URL` | 학교 SonarQube(`http://s4.java21.net:9000`) 토큰·주소 | 품질 검사 건너뜀 |
-| Variable | `DISCORD_ENABLED` | `true`면 알림 켬 | 꺼짐 |
+| Secret | `TELEGRAM_BOT_TOKEN` | 텔레그램 @BotFather → `/newbot`이 준 토큰 | 텔레그램 알림 안 감 |
+| Secret | `TELEGRAM_CHAT_ID` | 알림 받을 대화방 ID (봇에게 말을 건 뒤 `https://api.telegram.org/bot<토큰>/getUpdates`의 `chat.id`) | 텔레그램 알림 안 감 |
+| Secret | `SONAR_TOKEN` | SonarCloud(sonarcloud.io → My Account → Security) 토큰 | 품질 검사 건너뜀 |
+| Secret | `SONAR_HOST_URL` | 학교 SonarQube를 쓸 때만 `http://s4.java21.net:9000` | SonarCloud 사용 |
+| Variable | `DISCORD_ENABLED` | `true`면 Discord 알림 켬 | 꺼짐 |
+| Variable | `TELEGRAM_ENABLED` | `true`면 텔레그램 알림 켬 | 꺼짐 |
 | Variable | `SONAR_ENABLED` | `true`면 SonarQube 켬 | 꺼짐 |
+| Variable | `SONAR_ORGANIZATION`, `SONAR_PROJECT_KEY` | SonarCloud 조직 키·프로젝트 키 | 프로젝트 키 `aigj-01-002-blog` |
 | Variable | `SERVICE_NAME` | 알림에 보일 이름 | 레포 이름 |
 | Variable | `ROLLOUT_TIMEOUT_SECONDS` | 배포 대기 초 | 300 |
 
