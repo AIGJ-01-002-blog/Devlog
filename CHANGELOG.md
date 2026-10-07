@@ -17,6 +17,7 @@ main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/r
 
 ### 테스트
 - `GlobalExceptionHandlerTest` 6개, `ErrorMappingTest` 1개, `JobLockTest` 6개(예약 작업 잠금)
+- 실행 순서에 따라 깨지던 테스트 2개: 테스트 아이디 번호가 금칙어를 만들던 문제(`trash`+`17` → `trashit`), 실행 계획 검사가 데이터 양과 연결에 따라 다른 인덱스를 보던 문제
 
 ## [1.16.6] - 2026-10-08
 

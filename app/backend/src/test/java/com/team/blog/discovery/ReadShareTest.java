@@ -9,6 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -17,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.test.web.servlet.MvcResult;
 
 import tools.jackson.databind.JsonNode;
@@ -232,22 +236,36 @@ class ReadShareTest extends IntegrationTest {
 
     @Test
     void 공개_목록_쿼리는_공개_목록_인덱스를_쓴다() {
-        jdbc.execute("ANALYZE post");
-        jdbc.execute("SET enable_seqscan = off");
-        try {
-            String feed = String.join("\n", jdbc.queryForList("""
-                    EXPLAIN SELECT p.id FROM post p JOIN member m ON m.id = p.author_id
-                    WHERE p.status = 'PUBLISHED' AND p.visibility = 'PUBLIC' AND p.deleted_at IS NULL AND p.hidden_at IS NULL
-                      AND m.withdrawn_at IS NULL ORDER BY p.first_public_at DESC, p.id DESC LIMIT 10""", String.class));
-            String blog = String.join("\n", jdbc.queryForList("""
-                    EXPLAIN SELECT p.id FROM post p JOIN member m ON m.id = p.author_id
-                    WHERE p.status = 'PUBLISHED' AND p.visibility = 'PUBLIC' AND p.deleted_at IS NULL AND p.hidden_at IS NULL
-                      AND m.withdrawn_at IS NULL AND p.author_id = 1 ORDER BY p.first_public_at DESC, p.id DESC LIMIT 10""", String.class));
-            // 데이터가 적으면 같은 부분 인덱스 조건을 가진 두 인덱스 중 어느 쪽이든 고를 수 있다. 조건이 맞아 부분 인덱스를 쓴다는 것이 핵심이다
-            assertThat(feed).containsAnyOf("ix_post_feed", "ix_post_blog");
-            assertThat(blog).contains("ix_post_blog");
-        } finally {
-            jdbc.execute("SET enable_seqscan = on");
+        // 테스트 데이터는 적어서 비용만으로는 어느 인덱스든 고를 수 있다. 전체 읽기·따로 정렬하기를 막으면
+        // 조건과 정렬을 모두 맞춘 부분 인덱스만 남는다. 설정과 EXPLAIN은 같은 연결에서 해야 한다
+        List<String> plans = jdbc.execute((ConnectionCallback<List<String>>) c -> {
+            try (Statement st = c.createStatement()) {
+                st.execute("SET enable_seqscan = off");
+                st.execute("SET enable_sort = off");
+                try {
+                    return List.of(explain(st, """
+                            SELECT p.id FROM post p JOIN member m ON m.id = p.author_id
+                            WHERE p.status = 'PUBLISHED' AND p.visibility = 'PUBLIC' AND p.deleted_at IS NULL AND p.hidden_at IS NULL
+                              AND m.withdrawn_at IS NULL ORDER BY p.first_public_at DESC, p.id DESC LIMIT 10"""),
+                            explain(st, """
+                            SELECT p.id FROM post p JOIN member m ON m.id = p.author_id
+                            WHERE p.status = 'PUBLISHED' AND p.visibility = 'PUBLIC' AND p.deleted_at IS NULL AND p.hidden_at IS NULL
+                              AND m.withdrawn_at IS NULL AND p.author_id = 1 ORDER BY p.first_public_at DESC, p.id DESC LIMIT 10"""));
+                } finally {
+                    st.execute("RESET enable_seqscan");
+                    st.execute("RESET enable_sort");
+                }
+            }
+        });
+        assertThat(plans.get(0)).containsAnyOf("ix_post_feed", "ix_post_blog").doesNotContain("Sort  (");
+        assertThat(plans.get(1)).contains("ix_post_blog").doesNotContain("Sort  (");
+    }
+
+    private static String explain(Statement st, String sql) throws SQLException {
+        StringBuilder plan = new StringBuilder();
+        try (ResultSet rs = st.executeQuery("EXPLAIN " + sql)) {
+            while (rs.next()) plan.append(rs.getString(1)).append('\n');
         }
+        return plan.toString();
     }
 }

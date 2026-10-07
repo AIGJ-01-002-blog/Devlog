@@ -75,9 +75,12 @@ public abstract class IntegrationTest {
         }
     }
 
-    /** 테스트마다 겹치지 않는 GitHub 아이디. */
+    /**
+     * 테스트마다 겹치지 않는 GitHub 아이디. 이름과 번호 사이에 x를 둔다: 금칙어 검사는 숫자를 글자로도 읽어서(1→i, 7→t)
+     * "trash"+"17"이 "trashit"(shit)이 되는 것처럼, 실행 순서에 따라 번호가 금칙어를 만들어 가입이 400으로 실패했다.
+     */
     protected static String uniqueLogin(String base) {
-        return base + SEQ.incrementAndGet();
+        return base + "x" + SEQ.incrementAndGet();
     }
 
     protected Browser browser() {
