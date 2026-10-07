@@ -2,6 +2,7 @@ import { Suspense, useEffect, type ReactNode } from 'react'
 import { Flash } from './components/Flash'
 import { Header } from './components/Header'
 import { SkipLink } from './components/SkipLink'
+import { PageAnnouncer } from './components/PageAnnouncer'
 import { MAIN_ID } from './lib/focusMain'
 import { VerifyBanner } from './components/VerifyBanner'
 import { loginPath, useAuth } from './lib/auth'
@@ -48,6 +49,7 @@ export function App() {
   return (
     <>
       <SkipLink />
+      <PageAnnouncer />
       {!path.startsWith('/write') && path !== '/account/restore' && <Header />}
       {path !== '/verify-email' && <VerifyBanner />}
       <Flash path={path} />
