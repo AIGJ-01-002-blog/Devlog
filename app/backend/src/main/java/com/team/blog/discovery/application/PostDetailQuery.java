@@ -49,7 +49,8 @@ public class PostDetailQuery {
     public record Author(long id, String handle, String nickname, String bio, String profileImageUrl, boolean following) {}
 
     /** 작성자에게만 채운다. 독자에게는 null. */
-    public record OwnerInfo(boolean editing, Instant editingSavedAt, boolean hidden) {}
+    /** @param hiddenReason 숨긴 글이면 숨김 사유 코드 (019 FR-021) */
+    public record OwnerInfo(boolean editing, Instant editingSavedAt, boolean hidden, String hiddenReason) {}
 
     public record Detail(long id, String url, String title, String contentHtml, String excerpt, String thumbnailUrl,
                          PostStatus status, Visibility visibility, Instant publishedAt, Instant firstPublicAt,
@@ -96,7 +97,9 @@ public class PostDetailQuery {
         OwnerInfo owner = null;
         if (mine) {
             Instant editingAt = r.status == PostStatus.PUBLISHED ? latest(r.draftSavedAt, unflushedSavedAt(r.id)) : null;
-            owner = new OwnerInfo(editingAt != null, editingAt, r.hidden);
+            String hiddenReason = r.hidden
+                    ? jdbc.queryForObject("SELECT hidden_reason FROM post WHERE id = ?", String.class, r.id) : null;
+            owner = new OwnerInfo(editingAt != null, editingAt, r.hidden, hiddenReason);
         }
         // 본문 HTML은 저장하지 않고 원문을 렌더링해 캐시한다 (V3). 임시글은 상세로 보이지 않으므로 렌더링하지 않는다
         String html = r.status == PostStatus.PUBLISHED ? htmlCache.html(r.id, r.editVersion, r.authorId, r.contentMd) : "";

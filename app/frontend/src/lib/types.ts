@@ -105,7 +105,7 @@ export interface PostDetail {
   /** 내가 눌렀는지. 비회원·작성자는 false */
   liked: boolean
   mine: boolean
-  owner: { editing: boolean; editingSavedAt: string | null; hidden: boolean } | null
+  owner: { editing: boolean; editingSavedAt: string | null; hidden: boolean; hiddenReason: string | null } | null
   /** 입력한 순서 (010) */
   tags: string[]
 }

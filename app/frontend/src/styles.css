@@ -548,3 +548,19 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .ai-consent h3 { margin: 0 0 8px; font-size: 1rem; }
 .ai-consent ul { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 4px; }
 .ai-consent-actions { display: flex; gap: 8px; }
+
+/* 신고·숨김·정지 (spec 019) */
+.report-button { font-size: 0.875rem; }
+.report-reasons label, .suspend-fields fieldset label, .admin fieldset label { display: block; padding: 4px 0; }
+.admin-cases { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 12px; }
+.admin-case { padding: 12px 14px; border: 1px solid var(--border-2); border-radius: var(--radius); }
+.admin-case-main { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+.admin-case-title { font-weight: 600; overflow-wrap: anywhere; }
+.admin-section { margin: 24px 0; }
+.admin-section h2 { font-size: 1.125rem; margin: 0 0 8px; }
+.snapshot { padding: 12px 14px; background: var(--surface-2); border-radius: var(--radius); }
+.snapshot pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; font: inherit; }
+.snapshot h3 { margin: 0 0 8px; }
+.report-lines, .suspension-history { padding-left: 20px; }
+.admin .check { display: block; margin: 12px 0; }
+.suspend-form .btn, .admin-section > .btn { margin-top: 8px; }

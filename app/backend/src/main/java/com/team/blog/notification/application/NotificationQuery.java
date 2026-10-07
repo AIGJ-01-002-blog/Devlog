@@ -55,8 +55,18 @@ public class NotificationQuery {
      * @param commentPreview 댓글 내용 앞 50자 (글자 그대로, 화면이 이스케이프)
      * @param link         누르면 갈 곳. 볼 수 없으면 null
      */
+    /**
+     * 내 콘텐츠 숨김 알림의 대상 (docs/25 §2). reason은 지금 숨김 사유 코드이고, 그 사이 숨김이 풀렸으면 stillHidden=false·reason=null
+     * ("숨겨졌었어요 (지금은 다시 보여요)").
+     */
+    public record Hidden(String targetType, String reason, boolean stillHidden) {}
+
+    /**
+     * @param result 신고 처리 결과 (REPORT_RESOLVED): ACTION_TAKEN / NO_VIOLATION. 신고 대상의 내용·작성자는 싣지 않는다
+     * @param hidden 숨김 알림(CONTENT_HIDDEN)의 대상
+     */
     public record Item(long id, NotificationType type, boolean read, Instant at, Actor actor, int othersCount,
-                       PostRef post, String commentPreview, String link) {}
+                       PostRef post, String commentPreview, String link, String result, Hidden hidden) {}
 
     public record Page(List<Item> items, String nextCursor) {}
 
@@ -86,12 +96,19 @@ public class NotificationQuery {
                        p.deleted_at IS NOT NULL AS post_deleted, p.hidden_at IS NOT NULL AS post_hidden,
                        pa.handle AS post_handle, pa.withdrawn_at IS NOT NULL AS post_author_withdrawn,
                        a.actor_count, am.nickname AS actor_nickname, am.handle AS actor_handle,
-                       am.status = 'WITHDRAWN' OR am.deleted_at IS NOT NULL AS actor_withdrawn
+                       am.status = 'WITHDRAWN' OR am.deleted_at IS NOT NULL AS actor_withdrawn,
+                       rc.status AS case_status, rc.target_type AS case_target, rc.comment_id AS hidden_comment_id,
+                       p.hidden_reason AS post_hidden_reason, hc.hidden_at IS NOT NULL AS comment_hidden, hc.hidden_reason AS comment_hidden_reason
                 FROM notification n
                 LEFT JOIN notification_comment nc ON nc.notification_id = n.id
                 LEFT JOIN comment c ON c.id = nc.comment_id
                 LEFT JOIN notification_post np ON np.notification_id = n.id
-                LEFT JOIN post p ON p.id = COALESCE(c.post_id, np.post_id)
+                LEFT JOIN notification_report nr ON nr.notification_id = n.id
+                LEFT JOIN report rp ON rp.id = nr.report_id
+                LEFT JOIN notification_case ncs ON ncs.notification_id = n.id
+                LEFT JOIN report_case rc ON rc.id = COALESCE(rp.case_id, ncs.case_id)
+                LEFT JOIN comment hc ON hc.id = rc.comment_id AND n.type = 'CONTENT_HIDDEN'
+                LEFT JOIN post p ON p.id = COALESCE(c.post_id, np.post_id, CASE WHEN n.type = 'CONTENT_HIDDEN' THEN COALESCE(rc.post_id, hc.post_id) END)
                 LEFT JOIN member pa ON pa.id = p.author_id
                 LEFT JOIN LATERAL (SELECT x.actor_id, count(*) OVER () AS actor_count FROM notification_actor x
                                    WHERE x.notification_id = n.id ORDER BY x.created_at DESC, x.actor_id DESC LIMIT 1) a ON true
@@ -151,7 +168,9 @@ public class NotificationQuery {
 
     private record Row(long id, NotificationType type, boolean read, Instant at, Long commentId, String commentContent,
                        boolean commentGone, Long postId, String title, ReadablePost post, String postHandle,
-                       int actorCount, String actorNickname, String actorHandle, boolean actorWithdrawn) {}
+                       int actorCount, String actorNickname, String actorHandle, boolean actorWithdrawn,
+                       String caseStatus, String caseTarget, Long hiddenCommentId, String postHiddenReason,
+                       boolean commentHidden, String commentHiddenReason) {}
 
     private Row row(ResultSet rs, int i) throws SQLException {
         long postId = rs.getLong("post_id");
@@ -164,10 +183,23 @@ public class NotificationQuery {
         return new Row(rs.getLong("id"), NotificationType.valueOf(rs.getString("type")), rs.getTimestamp("read_at") != null,
                 rs.getTimestamp("updated_at").toInstant(), hasComment ? commentId : null, rs.getString("comment_content"),
                 rs.getBoolean("comment_gone"), hasPost ? postId : null, rs.getString("title"), post, rs.getString("post_handle"),
-                rs.getInt("actor_count"), rs.getString("actor_nickname"), rs.getString("actor_handle"), rs.getBoolean("actor_withdrawn"));
+                rs.getInt("actor_count"), rs.getString("actor_nickname"), rs.getString("actor_handle"), rs.getBoolean("actor_withdrawn"),
+                rs.getString("case_status"), rs.getString("case_target"), nullableLong(rs, "hidden_comment_id"),
+                rs.getString("post_hidden_reason"), rs.getBoolean("comment_hidden"), rs.getString("comment_hidden_reason"));
+    }
+
+    private static Long nullableLong(ResultSet rs, String col) throws SQLException {
+        long v = rs.getLong(col);
+        return rs.wasNull() ? null : v;
     }
 
     private Item item(Row r, long viewerId) {
+        if (r.type() == NotificationType.REPORT_RESOLVED) {
+            // 신고자에게는 결과만 (대상·작성자·관리자 없음, docs/25 §2)
+            String result = "HIDDEN".equals(r.caseStatus()) ? "ACTION_TAKEN" : "NO_VIOLATION";
+            return new Item(r.id(), r.type(), r.read(), r.at(), null, 0, null, null, null, result, null);
+        }
+        if (r.type() == NotificationType.CONTENT_HIDDEN) return hiddenItem(r, viewerId);
         Actor actor = r.actorNickname() == null ? null
                 : r.actorWithdrawn() ? new Actor(null, null, true) : new Actor(r.actorNickname(), r.actorHandle(), false);
         int others = Math.max(0, r.actorCount() - 1);
@@ -188,7 +220,30 @@ public class NotificationQuery {
         }
         // 새 팔로워는 글이 없고 대표 팔로워의 블로그로 간다
         if (r.type() == NotificationType.FOLLOW && actor != null && !actor.withdrawn()) link = "/@" + actor.handle();
-        return new Item(r.id(), r.type(), r.read(), r.at(), actor, others, post, preview, link);
+        return new Item(r.id(), r.type(), r.read(), r.at(), actor, others, post, preview, link, null, null);
+    }
+
+    /**
+     * 내 콘텐츠 숨김 (docs/25 §2). 글이면 받는 사람이 작성자라 숨겨진 상태여도 제목과 링크를 준다. 댓글이면 글 제목은 주지 않고,
+     * 그 글을 지금 읽을 수 있을 때만 댓글 위치로 링크한다.
+     */
+    private Item hiddenItem(Row r, long viewerId) {
+        boolean comment = "COMMENT".equals(r.caseTarget());
+        boolean stillHidden = comment ? r.commentHidden() : r.post() != null && r.post().hidden();
+        String reason = !stillHidden ? null : comment ? r.commentHiddenReason() : r.postHiddenReason();
+        Hidden hidden = new Hidden(comment ? "COMMENT" : "POST", reason, stillHidden);
+        PostRef post = null;
+        String link = null;
+        if (r.post() != null && r.postId() != null) {
+            if (!comment && policy.canRead(r.post(), new Viewer(viewerId, false))) {
+                post = new PostRef(r.postId(), r.title(), true);
+                link = "/@" + r.postHandle() + "/posts/" + r.postId();
+            } else if (comment && r.hiddenCommentId() != null && r.post().status() == PostStatus.PUBLISHED && !r.post().hidden()
+                    && policy.canRead(r.post(), new Viewer(viewerId, false))) {
+                link = "/@" + r.postHandle() + "/posts/" + r.postId() + "?comment=" + r.hiddenCommentId() + "#comment-" + r.hiddenCommentId();
+            }
+        }
+        return new Item(r.id(), r.type(), r.read(), r.at(), null, 0, post, null, link, null, hidden);
     }
 
     static String preview(String content) {

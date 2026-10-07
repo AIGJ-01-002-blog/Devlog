@@ -1,3 +1,4 @@
+import { ReportButton } from './ReportButton'
 import { useEffect, useRef, useState } from 'react'
 import { api, ApiError } from '../lib/api'
 import { loginPath, useAuth } from '../lib/auth'
@@ -293,6 +294,7 @@ function CommentItem({ c, rootId, ctx }: { c: CommentView; rootId: number | null
           {c.mine && (normal || c.state === 'HIDDEN') && (
             <button type="button" className="btn btn-text danger" onClick={remove} disabled={deleting}>{deleting ? '지우는 중…' : '삭제'}</button>
           )}
+          {!c.mine && normal && <ReportButton targetType="COMMENT" targetId={c.id} />}
         </div>
       )}
       {error && <p className="error small" role="alert">{error}</p>}

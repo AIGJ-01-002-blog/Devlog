@@ -9,6 +9,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import com.team.blog.comment.application.CommentEvents;
 import com.team.blog.follow.application.FollowEvents;
 import com.team.blog.like.application.LikeEvents;
+import com.team.blog.moderation.application.ModerationEvents;
+import com.team.blog.moderation.application.ReportTarget;
 import com.team.blog.post.application.PostEvents;
 
 /**
@@ -67,6 +69,19 @@ class NotificationEventListener {
     @TransactionalEventListener
     public void on(PostEvents.PostFirstPublic e) {
         run("new-post", () -> notifications.newPost(e.postId(), e.authorId(), e.at()));
+    }
+
+    @Async(NotificationAsyncConfig.EXECUTOR)
+    @TransactionalEventListener
+    public void on(ModerationEvents.ReportsResolved e) {
+        run("report-resolved", () -> notifications.reportsResolved(e.caseId(), e.at()));
+    }
+
+    @Async(NotificationAsyncConfig.EXECUTOR)
+    @TransactionalEventListener
+    public void on(ModerationEvents.ContentHidden e) {
+        run("content-hidden", () -> notifications.contentHidden(e.caseId(), e.ownerId(), e.targetType() == ReportTarget.COMMENT,
+                e.targetId(), e.at()));
     }
 
     private static void run(String kind, Runnable work) {

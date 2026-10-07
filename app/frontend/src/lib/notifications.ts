@@ -1,4 +1,5 @@
 import { api } from './api'
+import { reasonLabel } from './moderation'
 
 // 인앱 알림 (spec 015, docs/25). 문구와 이동 위치는 docs/25 §2 표. 서버가 볼 수 없는 글의 제목·링크를 빼서 보낸다.
 
@@ -17,6 +18,10 @@ export interface NotificationItem {
   post: { id: number | null; title: string | null; readable: boolean } | null
   commentPreview: string | null
   link: string | null
+  /** 신고 처리 결과 (REPORT_RESOLVED) */
+  result?: 'ACTION_TAKEN' | 'NO_VIOLATION' | null
+  /** 내 콘텐츠 숨김 (CONTENT_HIDDEN). 그 사이 풀렸으면 stillHidden=false */
+  hidden?: { targetType: 'POST' | 'COMMENT'; reason: string | null; stillHidden: boolean } | null
 }
 
 export interface NotificationPage {
@@ -66,6 +71,12 @@ export interface Message {
 export function messageOf(n: NotificationItem): Message {
   const who = n.actor == null ? null : n.actor.withdrawn ? '탈퇴한 사용자' : n.actor.nickname
   const others = n.othersCount > 0 ? ` 외 ${n.othersCount}명` : ''
+  if (n.type === 'REPORT_RESOLVED') {
+    return n.result === 'ACTION_TAKEN'
+      ? { who: null, text: '신고하신 내용을 검토해 조치했어요. 알려 주셔서 고마워요', quote: null }
+      : { who: null, text: '신고하신 내용을 검토했지만 운영 정책 위반은 아니었어요', quote: null }
+  }
+  if (n.type === 'CONTENT_HIDDEN') return hiddenMessage(n)
   const unreadable = n.post != null && !n.post.readable
   const title = n.post?.title ? `「${n.post.title}」` : ''
   if (unreadable) {
@@ -82,11 +93,16 @@ export function messageOf(n: NotificationItem): Message {
       return { who: `${who}님${others}`, text: '이 회원님을 팔로우해요', quote: null }
     case 'NEW_POST':
       return { who: `${who}님`, text: `이 새 글 ${title}을(를) 올렸어요`, quote: null }
-    case 'REPORT_RESOLVED':
-      return { who: null, text: '신고하신 내용을 검토했어요', quote: null }
-    case 'CONTENT_HIDDEN':
-      return { who: null, text: '회원님의 글이 운영 정책에 따라 숨겨졌어요', quote: null }
+    default:
+      return { who: null, text: '', quote: null }
   }
+}
+
+/** 숨김 알림 (docs/25 §2): 사유는 지금 대상에서 읽는다. 그 사이 풀렸으면 "숨겨졌었어요 (지금은 다시 보여요)". */
+function hiddenMessage(n: NotificationItem): Message {
+  const what = n.hidden?.targetType === 'COMMENT' ? '댓글이' : `글${n.post?.title ? `「${n.post.title}」이(가)` : '이'}`
+  if (!n.hidden?.stillHidden) return { who: null, text: `회원님의 ${what} 운영 정책에 따라 숨겨졌었어요 (지금은 다시 보여요)`, quote: null }
+  return { who: null, text: `회원님의 ${what} 운영 정책에 따라 숨겨졌어요 (사유: ${reasonLabel(n.hidden.reason)})`, quote: null }
 }
 
 /** 시각: 1시간 안 N분 전, 24시간 안 N시간 전, 그 뒤 2026.10.02 (FR-024). */

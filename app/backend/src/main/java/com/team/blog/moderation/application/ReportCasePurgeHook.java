@@ -1,4 +1,4 @@
-package com.team.blog.moderation;
+package com.team.blog.moderation.application;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;

@@ -151,10 +151,10 @@ class LikeTest extends IntegrationTest {
         assertThat(likeStatus(reader, draft, true)).isEqualTo(404);
         assertThat(likeStatus(author, draft, true)).isEqualTo(404);
         set(reader, pub, true);
-        jdbc.update("UPDATE post SET hidden_at = now() WHERE id = ?", pub);
+        jdbc.update("UPDATE post SET hidden_at = now(), hidden_reason = 'SPAM' WHERE id = ?", pub);
         assertThat(likeStatus(reader, pub, false)).isEqualTo(404);
         assertThat(rows(pub)).isEqualTo(1); // 숨겨도 지우지 않는다
-        jdbc.update("UPDATE post SET hidden_at = NULL, deleted_at = now() WHERE id = ?", pub);
+        jdbc.update("UPDATE post SET hidden_at = NULL, hidden_reason = NULL, deleted_at = now() WHERE id = ?", pub);
         assertThat(likeStatus(reader, pub, false)).isEqualTo(404);
         jdbc.update("UPDATE post SET deleted_at = NULL WHERE id = ?", pub);
         assertThat(set(reader, pub, true).path("likeCount").asInt()).isEqualTo(1); // 복구하면 그대로

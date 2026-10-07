@@ -1,0 +1,102 @@
+import { useEffect, useId, useRef, useState } from 'react'
+import { loginPath, useAuth } from '../lib/auth'
+import { DETAIL_MAX, REASONS, reportApi, reportErrorText, type ReportReason, type ReportTarget } from '../lib/moderation'
+import { navigate } from '../lib/router'
+
+/**
+ * [신고] (spec 019 US1). 비회원·인증 전 회원에게도 보이고 누르면 로그인·인증 안내로 보낸다(H6). 작성자 본인에게는 그리지 않는다.
+ * 같은 대상을 다시 신고해도 같은 안내다(서버가 한 건으로 남긴다).
+ */
+export function ReportButton({ targetType, targetId, label = '신고' }: { targetType: ReportTarget; targetId: number; label?: string }) {
+  const { me, loading } = useAuth()
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState<ReportReason | null>(null)
+  const [detail, setDetail] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const titleId = useId()
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    dialogRef.current?.querySelector<HTMLInputElement>('input')?.focus()
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const start = () => {
+    if (loading) return // 로그인 상태를 읽는 중에 누르면 로그인 화면으로 잘못 보내지 않는다
+    if (!me?.authenticated) return navigate(loginPath())
+    if (!me.emailVerified) return setNotice('이메일 인증 후 신고할 수 있어요.')
+    setReason(null)
+    setDetail('')
+    setError(null)
+    setDone(false)
+    setOpen(true)
+  }
+
+  const submit = async () => {
+    if (!reason) return setError('신고 사유를 골라 주세요.')
+    if (reason === 'OTHER' && !detail.trim()) return setError('기타 사유를 적어 주세요.')
+    setBusy(true)
+    setError(null)
+    try {
+      await reportApi.report(targetType, targetId, reason, reason === 'OTHER' ? detail.trim() : null)
+      setDone(true)
+    } catch (e) {
+      setError(reportErrorText(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <button type="button" className="btn btn-text report-button" onClick={start}>{label}</button>
+      {notice && <span className="like-notice" role="status">{notice}</span>}
+      {open && (
+        <div className="dialog-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false) }}>
+          <div className="dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} ref={dialogRef}>
+            <h2 id={titleId}>{targetType === 'POST' ? '글 신고' : '댓글 신고'}</h2>
+            {done ? (
+              <>
+                <p role="status">신고가 접수됐어요. 검토 후 처리할게요.</p>
+                <footer className="dialog-footer">
+                  <button type="button" className="btn btn-primary" onClick={() => setOpen(false)}>닫기</button>
+                </footer>
+              </>
+            ) : (
+              <>
+                <fieldset className="field report-reasons">
+                  <legend>신고 사유</legend>
+                  {REASONS.map((r) => (
+                    <label key={r.code}>
+                      <input type="radio" name={`reason-${titleId}`} value={r.code} checked={reason === r.code}
+                             onChange={() => { setReason(r.code); setError(null) }} /> {r.label}
+                    </label>
+                  ))}
+                </fieldset>
+                {reason === 'OTHER' && (
+                  <label className="field">
+                    <span>설명 ({[...detail].length}/{DETAIL_MAX})</span>
+                    <textarea value={detail} maxLength={DETAIL_MAX} rows={3} onChange={(e) => setDetail(e.target.value)}
+                              placeholder="어떤 문제인지 적어 주세요" />
+                  </label>
+                )}
+                <p className="muted small">신고한 사람은 작성자에게 알려지지 않아요.</p>
+                {error && <p className="error small" role="alert">{error}</p>}
+                <footer className="dialog-footer">
+                  <button type="button" className="btn btn-text" onClick={() => setOpen(false)} disabled={busy}>취소</button>
+                  <button type="button" className="btn btn-primary" onClick={submit} disabled={busy}>{busy ? '보내는 중…' : '신고하기'}</button>
+                </footer>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
