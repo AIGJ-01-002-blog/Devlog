@@ -31,6 +31,7 @@
 | [024-series](./024-series/spec.md) | 시리즈 (글 묶기, 순서, 이전·다음 글) | 2026-10-08 추가 (velog 비교) | 이후 단계 (Tier C) | 03, 10 |
 | [025-toc-reading-time](./025-toc-reading-time/spec.md) | 글 목차·읽는 시간 | 2026-10-08 추가 (velog 비교) | 이후 단계 (Tier C) | 03 |
 | [026-rss](./026-rss/spec.md) | RSS 구독 (블로그별·전체) | 2026-10-08 추가 (velog 비교) | 이후 단계 (Tier C) | 03 |
+| [027-liked-posts](./027-liked-posts/spec.md) | 좋아한 글 모아 보기 | 2026-10-08 추가 (velog 비교) | 이후 단계 (Tier C) | 12 |
 
 ## 여러 spec에 걸치는 문서
 

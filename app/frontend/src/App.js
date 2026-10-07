@@ -11,6 +11,7 @@ import { match, navigate, useLocation } from './lib/router';
 import { AgreementsPage } from './pages/AgreementsPage';
 import { BlogPage } from './pages/BlogPage';
 import { SeriesPage } from './pages/SeriesPage';
+import { LikedPage } from './pages/LikedPage';
 import { FeedPage } from './pages/FeedPage';
 import { FollowsPage } from './pages/FollowsPage';
 import { HomePage } from './pages/HomePage';
@@ -86,6 +87,8 @@ function route(path) {
         return _jsx(RequireLogin, { children: _jsx(ManagePage, {}) });
     if (path === '/feed')
         return _jsx(RequireLogin, { children: _jsx(FeedPage, {}) });
+    if (path === '/lists/liked')
+        return _jsx(RequireLogin, { children: _jsx(LikedPage, {}) });
     if (path === '/notifications')
         return _jsx(RequireLogin, { children: _jsx(NotificationsPage, {}) });
     if (path === '/settings')

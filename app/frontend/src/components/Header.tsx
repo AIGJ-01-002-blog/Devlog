@@ -46,6 +46,7 @@ export function Header() {
                     <div className="menu-who">{member.nickname} <span className="muted">@{member.handle}</span></div>
                     <Link to={`/@${member.handle}`} role="menuitem">내 블로그</Link>
                     <Link to="/manage/posts" role="menuitem">내 글 관리</Link>
+                    <Link to="/lists/liked" role="menuitem">좋아한 글</Link>
                     <Link to="/notifications" role="menuitem">알림</Link>
                     <Link to="/settings" role="menuitem">설정</Link>
                     {member.role === 'ADMIN' && <Link to="/admin/reports" role="menuitem">신고 관리</Link>}
