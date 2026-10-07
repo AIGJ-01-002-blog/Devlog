@@ -14,7 +14,7 @@ main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/r
 - 글 상세 좋아요 옆 [공유]: 휴대폰은 기기 공유 창을 열고, 데스크톱은 글 주소를 복사해 "링크를 복사했어요"라고 알린다. 비공개 글에는 보이지 않는다
 
 ### 테스트
-- `share.test.ts` 6개, `ShareButton.test.tsx` 2개
+- `share.test.ts` 6개, `ShareButton.test.tsx` 4개
 
 ## [1.16.11] - 2026-10-08
 

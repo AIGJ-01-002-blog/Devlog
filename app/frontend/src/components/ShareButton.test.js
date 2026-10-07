@@ -39,4 +39,38 @@ describe('ShareButton', () => {
         expect(status.textContent).toContain('복사하지 못했어요');
         expect(status.className).toContain('error');
     });
+    it('같은 결과로 다시 누르면 3초를 새로 센다', async () => {
+        ;
+        globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+        vi.useFakeTimers();
+        vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn(async () => { }) } });
+        const el = document.createElement('div');
+        document.body.appendChild(el);
+        act(() => createRoot(el).render(_jsx(ShareButton, { path: "/@minseo/42", title: "\uC81C\uBAA9" })));
+        const status = el.querySelector('[role="status"]');
+        await act(async () => { el.querySelector('button').click(); });
+        act(() => { vi.advanceTimersByTime(2000); });
+        await act(async () => { el.querySelector('button').click(); });
+        act(() => { vi.advanceTimersByTime(2000); });
+        expect(status.textContent).toBe('링크를 복사했어요');
+        act(() => { vi.advanceTimersByTime(1000); });
+        expect(status.textContent).toBe('');
+    });
+    it('먼저 누른 요청이 늦게 끝나도 마지막 결과를 보인다', async () => {
+        ;
+        globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+        const pending = [];
+        const writeText = vi.fn(() => new Promise((resolve, reject) => { pending.push({ resolve, reject }); }));
+        vi.stubGlobal('navigator', { clipboard: { writeText } });
+        const el = document.createElement('div');
+        document.body.appendChild(el);
+        act(() => createRoot(el).render(_jsx(ShareButton, { path: "/@minseo/42", title: "\uC81C\uBAA9" })));
+        const status = el.querySelector('[role="status"]');
+        act(() => { el.querySelector('button').click(); });
+        act(() => { el.querySelector('button').click(); });
+        await act(async () => { pending[1].resolve(); });
+        expect(status.textContent).toBe('링크를 복사했어요');
+        await act(async () => { pending[0].reject(new Error('late')); });
+        expect(status.textContent).toBe('링크를 복사했어요');
+    });
 });
