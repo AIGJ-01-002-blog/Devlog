@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: blog
+  labels:
+    # 파드 보안 기준: 루트 실행·권한 상승 금지
+    pod-security.kubernetes.io/enforce: restricted

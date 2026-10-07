@@ -1,0 +1,44 @@
+# 로컬 kind·Docker Desktop용. PostgreSQL·Redis·MinIO를 클러스터 안에 함께 띄운다.
+# 학교 서버 없이 배포 구성 전체를 검증하는 용도이고, 값은 모두 로컬 전용 예시 값이다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: blog
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: blog
+    includeSelectors: false
+resources:
+  - ../../base
+  - deps/postgres.yaml
+  - deps/redis.yaml
+  - deps/minio.yaml
+configMapGenerator:
+  - name: blog-app-config
+    envs: [app.env]
+secretGenerator:
+  - name: blog-app-secret
+    envs: [secret.local.env]
+  - name: blog-deps-secret
+    envs: [deps.local.env]
+patches:
+  - target:
+      kind: Ingress
+      name: blog-app
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: blog.localtest.me
+  - target:
+      kind: Deployment
+      name: blog-app
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: blog-app
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1

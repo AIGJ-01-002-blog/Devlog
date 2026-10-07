@@ -1,0 +1,3 @@
+# 배포 비밀값 (예시는 secret.env.example)
+deploy/k8s/overlays/*/secret.env
+kubeconfig*
