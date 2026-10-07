@@ -49,7 +49,7 @@ class HttpTelegramApi implements TelegramApi {
     public Optional<String> botUsername() {
         if (username != null) return Optional.of(username);
         if (!props.available()) return Optional.empty();
-        JsonNode r = call(HttpRequest.newBuilder(URI.create(url("getMe"))).timeout(SEND_TIMEOUT).GET().build());
+        JsonNode r = get("getMe", "", SEND_TIMEOUT);
         String name = r == null ? null : r.path("result").path("username").asString(null);
         if (name != null && !name.isBlank()) username = name;
         return Optional.ofNullable(username);
@@ -59,8 +59,7 @@ class HttpTelegramApi implements TelegramApi {
     public List<Update> updates(long offset) {
         String q = "?timeout=" + props.pollTimeout().toSeconds() + "&offset=" + offset
                 + "&allowed_updates=" + URLEncoder.encode("[\"message\"]", StandardCharsets.UTF_8);
-        JsonNode r = call(HttpRequest.newBuilder(URI.create(url("getUpdates") + q))
-                .timeout(props.pollTimeout().plusSeconds(10)).GET().build());
+        JsonNode r = get("getUpdates", q, props.pollTimeout().plusSeconds(10));
         if (r == null || !r.path("ok").asBoolean(false)) return null;
         List<Update> out = new ArrayList<>();
         for (JsonNode u : r.path("result")) {
@@ -81,17 +80,18 @@ class HttpTelegramApi implements TelegramApi {
         body.put("chat_id", chatId);
         body.put("text", text);
         body.putObject("link_preview_options").put("is_disabled", true);
-        HttpRequest req = HttpRequest.newBuilder(URI.create(url("sendMessage"))).timeout(SEND_TIMEOUT)
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body), StandardCharsets.UTF_8)).build();
         try {
+            HttpRequest req = HttpRequest.newBuilder(URI.create(url("sendMessage"))).timeout(SEND_TIMEOUT)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body), StandardCharsets.UTF_8)).build();
             HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (res.statusCode() == 200) return SendResult.OK;
             // 403: 봇 차단·탈퇴한 사용자, 400 chat not found: 대화가 없다
             if (res.statusCode() == 403 || (res.statusCode() == 400 && res.body().contains("chat not found"))) return SendResult.GONE;
             log.warn("텔레그램 메시지를 보내지 못했습니다 (HTTP {})", res.statusCode());
             return SendResult.FAILED;
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // 예외 메시지에는 토큰이 든 주소가 실릴 수 있어(설정한 토큰에 공백 등) 종류만 남긴다
             log.warn("텔레그램 메시지를 보내지 못했습니다: {}", e.getClass().getSimpleName());
             return SendResult.FAILED;
         } catch (InterruptedException e) {
@@ -100,8 +100,10 @@ class HttpTelegramApi implements TelegramApi {
         }
     }
 
-    private JsonNode call(HttpRequest req) {
+    /** 주소 만들기도 try 안에서 한다: 잘못된 토큰·주소의 예외 메시지에 토큰이 실려 로그로 나가지 않게 (FR-007) */
+    private JsonNode get(String method, String query, Duration timeout) {
         try {
+            HttpRequest req = HttpRequest.newBuilder(URI.create(url(method) + query)).timeout(timeout).GET().build();
             HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (res.statusCode() != 200) {
                 log.warn("텔레그램 API 호출 실패 (HTTP {})", res.statusCode());
