@@ -23,6 +23,8 @@ blog:
     cron: "-"
   report:
     purge-cron: "-"
+  account:
+    withdraw-purge-cron: "-"
   # AI 태그 추천 (018): 주소는 가짜 공급자(IntegrationTest), 열쇠값은 시험용
   ai:
     gemini:

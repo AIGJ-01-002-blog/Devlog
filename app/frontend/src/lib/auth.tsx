@@ -40,14 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await api('/api/auth/logout', { method: 'POST' })
     } finally {
-      // 공용 PC 대비: 이 브라우저에 남은 본인의 작성 데이터·백업·대기 사진을 지운다 (docs/04 §2-2, 006 FR-017)
-      if (id != null) {
-        await localDrafts.clearMember(id)
-        for (const store of [localStorage, sessionStorage]) {
-          Object.keys(store).filter((k) => k.includes(`:${id}:`)).forEach((k) => store.removeItem(k))
-        }
-      }
-      sessionStorage.clear()
+      await clearLocalData(id)
       await refresh()
     }
   }, [me, refresh])
@@ -58,6 +51,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   return <AuthContext.Provider value={{ me, loading, refresh, logout }}>{children}</AuthContext.Provider>
+}
+
+/**
+ * 공용 PC 대비: 이 브라우저에 남은 본인의 작성 데이터·백업·대기 사진을 지운다 (docs/04 §2-2, 006 FR-017).
+ * 로그아웃과 탈퇴(020 FR-014)가 같이 쓴다.
+ */
+export async function clearLocalData(id: number | null | undefined): Promise<void> {
+  if (id != null) {
+    await localDrafts.clearMember(id)
+    for (const store of [localStorage, sessionStorage]) {
+      Object.keys(store).filter((k) => k.includes(`:${id}:`)).forEach((k) => store.removeItem(k))
+    }
+  }
+  sessionStorage.clear()
 }
 
 export function useAuth(): AuthState {

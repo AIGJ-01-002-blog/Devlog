@@ -28,15 +28,19 @@ import { SignupSocialPage } from './pages/SignupSocialPage'
 import { TermsPage } from './pages/TermsPage'
 import { VerifyEmailPage } from './pages/VerifyEmailPage'
 import { NewPostPage, WritePage } from './pages/WritePage'
+import { RestorePage } from './pages/RestorePage'
+import { WithdrawnPage } from './pages/WithdrawnPage'
+import { WithdrawPage } from './pages/WithdrawPage'
+import { withdrawnRedirect } from './lib/withdraw'
 
 export function App() {
   const { path } = useLocation()
   return (
     <>
-      {!path.startsWith('/write') && <Header />}
+      {!path.startsWith('/write') && path !== '/account/restore' && <Header />}
       {path !== '/verify-email' && <VerifyBanner />}
       <Flash path={path} />
-      <AgreementGate path={path}>{route(path)}</AgreementGate>
+      <WithdrawnGate path={path}><AgreementGate path={path}>{route(path)}</AgreementGate></WithdrawnGate>
     </>
   )
 }
@@ -66,6 +70,9 @@ function route(path: string): ReactNode {
   if (path === '/feed') return <RequireLogin><FeedPage /></RequireLogin>
   if (path === '/notifications') return <RequireLogin><NotificationsPage /></RequireLogin>
   if (path === '/settings') return <RequireLogin><SettingsPage /></RequireLogin>
+  if (path === '/settings/withdraw') return <RequireLogin><WithdrawPage /></RequireLogin>
+  if (path === '/withdrawn') return <WithdrawnPage />
+  if (path === '/account/restore') return <RequireLogin><RestorePage /></RequireLogin>
   if (path === '/admin/reports') return <RequireAdmin><AdminReportsPage /></RequireAdmin>
   if ((p = match('/admin/reports/:id', path))) return <RequireAdmin><AdminReportPage key={p.id} id={p.id} /></RequireAdmin>
   if ((p = match('/admin/members/:handle', path))) return <RequireAdmin><AdminMemberPage key={p.handle} handle={p.handle} /></RequireAdmin>
@@ -90,11 +97,23 @@ function RequireAdmin({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+/** 탈퇴 유예 회원은 복구 화면만 쓴다 (020 FR-016, 서버도 403 ACCOUNT_WITHDRAWN으로 막는다). */
+function WithdrawnGate({ path, children }: { path: string; children: ReactNode }) {
+  const { me, loading } = useAuth()
+  const to = loading ? null : withdrawnRedirect(me?.authenticated ? me.member?.status : undefined, path)
+  useEffect(() => {
+    if (to) navigate(to, { replace: true })
+  }, [to])
+  if (to) return null
+  return <>{children}</>
+}
+
 /** 재동의가 필요하면 동의 화면만 쓸 수 있다 (서버도 403 AGREEMENT_REQUIRED로 막는다). */
 function AgreementGate({ path, children }: { path: string; children: ReactNode }) {
   const { me } = useAuth()
   useEffect(() => {
-    if (me?.agreementRequired && path !== '/agreements') {
+    // 탈퇴 유예 회원은 복구 화면만 쓴다(WithdrawnGate). 재동의 요청도 서버가 막으므로 여기서 보내지 않는다
+    if (me?.agreementRequired && me.member?.status !== 'WITHDRAWN' && path !== '/agreements') {
       navigate(`/agreements?redirect=${encodeURIComponent(path)}`, { replace: true })
     }
   }, [me, path])

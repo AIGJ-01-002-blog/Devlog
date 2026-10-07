@@ -32,7 +32,7 @@ export function SettingsPage() {
         return _jsx("main", { className: "container narrow", children: _jsx("p", { className: "error center", children: "\uC124\uC815\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. \uC0C8\uB85C\uACE0\uCE68\uD574 \uC8FC\uC138\uC694." }) });
     if (!settings)
         return _jsx("main", { className: "container narrow", children: _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" }) });
-    return (_jsxs("main", { className: "container narrow", children: [_jsx("h1", { className: "page-title", children: "\uC124\uC815" }), _jsx(ProfileSection, { settings: settings, onSaved: (p) => setSettings({ ...settings, ...p }) }), _jsx(FriendsSection, {}), _jsx(NotificationsSection, {}), _jsx(AccountSection, { settings: settings, onChange: setSettings }), settings.hasPassword && _jsx(PasswordSection, {})] }));
+    return (_jsxs("main", { className: "container narrow", children: [_jsx("h1", { className: "page-title", children: "\uC124\uC815" }), _jsx(ProfileSection, { settings: settings, onSaved: (p) => setSettings({ ...settings, ...p }) }), _jsx(FriendsSection, {}), _jsx(NotificationsSection, {}), _jsx(AccountSection, { settings: settings, onChange: setSettings }), settings.hasPassword && _jsx(PasswordSection, {}), _jsx("section", { className: "settings-section withdraw-link", children: _jsx(Link, { to: "/settings/withdraw", className: "btn btn-text danger", children: "\uD68C\uC6D0 \uD0C8\uD1F4" }) })] }));
 }
 function ProfileSection({ settings, onSaved }) {
     const { me, refresh } = useAuth();

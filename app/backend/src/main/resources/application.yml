@@ -179,6 +179,9 @@ blog:
   # 신고 (spec 019): 처리된 지 30일 지난 사건의 스냅샷·설명 비우기
   report:
     purge-cron: "0 10 5 * * *"
+  # 회원 탈퇴 (spec 020): 신청 30일 뒤 매일 04:50(KST) 한 서버가 정리
+  account:
+    withdraw-purge-cron: "0 50 4 * * *"
   trending:
     cron: "0 */10 * * * *"
     keep: 30m

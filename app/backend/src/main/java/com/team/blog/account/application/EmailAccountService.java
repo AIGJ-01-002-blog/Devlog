@@ -91,7 +91,14 @@ public class EmailAccountService {
         if (!form.agreeTerms()) errors.add(new FieldErrorItem("agreeTerms", "AGREEMENT_REQUIRED", "이용약관에 동의해 주세요."));
         if (!form.agreePrivacy()) errors.add(new FieldErrorItem("agreePrivacy", "AGREEMENT_REQUIRED", "개인정보 처리방침에 동의해 주세요."));
         if (!errors.isEmpty()) throw ApiException.validation(errors);
-        if (identities.findByProviderAndProviderUserId(AuthProvider.LOCAL, email).isPresent()) throw emailTaken();
+        var existing = identities.findByProviderAndProviderUserId(AuthProvider.LOCAL, email);
+        if (existing.isPresent()) {
+            // 탈퇴 유예 중인 계정이면 복구 방법을 알려 준다 (020 FR-020, 가입 여부 노출은 감수)
+            boolean withdrawn = members.findById(existing.get().getMemberId())
+                    .map(m -> m.getStatus() == com.team.blog.account.domain.MemberStatus.WITHDRAWN).orElse(false);
+            if (withdrawn) throw ApiException.conflict("WITHDRAWN_ACCOUNT", "탈퇴 신청한 계정이 있어요. 로그인하면 복구할 수 있어요.");
+            throw emailTaken();
+        }
 
         String hash = encoder.encode(form.password());
         String handle = AuthProvider.LOCAL.handlePrefix() + body;
