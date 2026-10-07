@@ -7,6 +7,8 @@ import { Comments } from '../components/Comments'
 import { AttachmentList } from '../components/AttachmentList'
 import { LikeButton } from '../components/LikeButton'
 import { SeriesBox } from '../components/SeriesBox'
+import { Toc } from '../components/Toc'
+import { readingMinutes } from '../lib/toc'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { clock, compactNumber, fullDate, monthDay, relativeDate } from '../lib/format'
 import { enhanceGifs } from '../lib/gifPlayer'
@@ -30,6 +32,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
   const [post, setPost] = useState<PostDetail | null>(boot?.post ?? null)
   const [missing, setMissing] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [minutes, setMinutes] = useState<number | null>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const { me } = useAuth()
   useViewBeacon(bodyRef, post?.id, !!post && !post.mine && post.status === 'PUBLISHED')
@@ -50,8 +53,19 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
       document.title = `${post.title} - ${post.author.nickname}`
       void highlightWithin(bodyRef.current)
       enhanceGifs(bodyRef.current)
+      const body = bodyRef.current
+      if (body) setMinutes(readingMinutes(body.textContent ?? '', body.querySelectorAll('img').length))
     }
   }, [post])
+
+  // 본문은 불러온 뒤에 그려지므로 주소의 #제목으로는 브라우저가 스스로 이동하지 못한다. 글이 바뀔 때만 한 번 맞춘다.
+  const postId = post?.id
+  useEffect(() => {
+    if (postId == null || !window.location.hash) return
+    let target: string
+    try { target = decodeURIComponent(window.location.hash.slice(1)) } catch { return }
+    document.getElementById(target)?.scrollIntoView({ block: 'start' })
+  }, [postId])
 
   if (missing) return <NotFoundPage />
   if (!post) return <main className="container narrow"><p className="muted center">불러오는 중…</p></main>
@@ -115,6 +129,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
             <Link to={`/@${post.author.handle}`} className="post-author">{post.author.nickname}</Link>
             {date && <time dateTime={date} title={fullDate(date)}> · {relativeDate(date)}</time>}
             {post.editedAt && <span className="muted"> · 수정됨 {monthDay(post.editedAt)}</span>}
+            {minutes != null && <span className="muted"> · {minutes}분 읽기</span>}
           </span>
           {post.mine && (
             <span className="post-owner-actions">
@@ -135,6 +150,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           </ul>
         )}
         <SeriesBox key={`series-${post.id}`} postId={post.id} />
+        <Toc bodyRef={bodyRef} html={post.contentHtml} />
         <div className="post-body markdown" ref={bodyRef} dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
         <AttachmentList key={post.id} postId={post.id} />
         <div className="post-stats muted">
