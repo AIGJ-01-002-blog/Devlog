@@ -39,10 +39,8 @@ public class SocialLoginService {
     public LoginOutcome onAuthenticated(SocialProfile profile) {
         Instant now = Times.now(clock);
         Optional<AuthIdentity> found = identities.findByProviderAndProviderUserId(profile.provider(), profile.providerUserId());
-        if (found.isEmpty()) {
-            if (profile.verifiedEmail() == null) return new LoginOutcome.NoVerifiedEmail();
-            return new LoginOutcome.NeedsSignup(new PendingSignup(profile, now));
-        }
+        // 인증된 이메일이 없으면 가입 마무리 화면에서 이메일을 받아 메일로 인증한다 (004 FR-028)
+        if (found.isEmpty()) return new LoginOutcome.NeedsSignup(new PendingSignup(profile, now));
         AuthIdentity identity = found.get();
         if (profile.verifiedEmail() != null && !profile.verifiedEmail().equals(identity.getEmail())) {
             identity.updateEmail(profile.verifiedEmail());

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.team.blog.account.application.AgreementService;
+import com.team.blog.account.application.EmailVerification;
 import com.team.blog.account.application.MemberQueryService;
 import com.team.blog.account.application.PendingSignup;
 import com.team.blog.account.application.SignupService;
@@ -34,22 +35,25 @@ public class AuthController {
     private final SignupService signupService;
     private final AgreementService agreementService;
     private final MemberQueryService memberQuery;
+    private final EmailVerification verification;
     private final LoginSessions sessions;
     private final BlogProperties props;
     private final Clock clock;
 
     public AuthController(SignupService signupService, AgreementService agreementService, MemberQueryService memberQuery,
-                          LoginSessions sessions, BlogProperties props, Clock clock) {
+                          EmailVerification verification, LoginSessions sessions, BlogProperties props, Clock clock) {
         this.signupService = signupService;
         this.agreementService = agreementService;
         this.memberQuery = memberQuery;
+        this.verification = verification;
         this.sessions = sessions;
         this.props = props;
         this.clock = clock;
     }
 
+    /** @param emailVerified 메일 인증 전이면 쓰기 행동이 막힌다 (004 FR-008) */
     public record MeResponse(boolean authenticated, MemberView member, boolean agreementRequired,
-                             PreviousLogin previousLogin, boolean pendingSignup) {}
+                             PreviousLogin previousLogin, boolean pendingSignup, boolean emailVerified) {}
 
     public record MemberView(long id, String handle, String nickname, String role, String defaultVisibility, String status) {}
 
@@ -61,33 +65,35 @@ public class AuthController {
         if (principal == null) {
             HttpSession session = request.getSession(false);
             boolean pending = session != null && validPending(session) != null;
-            return new MeResponse(false, null, false, null, pending);
+            return new MeResponse(false, null, false, null, pending, false);
         }
         MemberView view = memberQuery.findById(principal.id())
                 .map(m -> new MemberView(m.id(), m.handle(), m.nickname(), principal.role(), m.defaultVisibility().name(), m.status().name()))
                 .orElse(null);
         return new MeResponse(view != null, view, principal.agreementRequired(),
-                new PreviousLogin(principal.previousLoginAt(), principal.provider()), false);
+                new PreviousLogin(principal.previousLoginAt(), principal.provider()), false,
+                view != null && verification.isVerified(principal.id()));
     }
 
     public record SignupDraftResponse(String provider, String prefix, String handleBody, String nickname, String email,
-                                      String avatarUrl, TermsView terms) {}
+                                      String avatarUrl, boolean emailRequired, TermsView terms) {}
 
     @GetMapping("/auth/signup")
     public SignupDraftResponse signupDraft(HttpServletRequest request) {
         PendingSignup pending = requirePending(request);
         SignupService.SignupDraft d = signupService.draftFor(pending);
-        return new SignupDraftResponse(d.provider().name(), d.prefix(), d.handleBody(), d.nickname(), d.email(), d.avatarUrl(), terms());
+        return new SignupDraftResponse(d.provider().name(), d.prefix(), d.handleBody(), d.nickname(), d.email(), d.avatarUrl(),
+                d.emailRequired(), terms());
     }
 
-    public record SignupRequest(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy) {}
+    public record SignupRequest(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy, String email) {}
 
     @PostMapping("/auth/signup")
     public ResponseEntity<Map<String, String>> signup(@RequestBody SignupRequest body, HttpServletRequest request,
                                                       HttpServletResponse response) {
         PendingSignup pending = requirePending(request);
         MemberPrincipal principal = signupService.complete(pending,
-                new SignupService.SignupForm(body.handleBody(), body.nickname(), body.agreeTerms(), body.agreePrivacy()));
+                new SignupService.SignupForm(body.handleBody(), body.nickname(), body.agreeTerms(), body.agreePrivacy(), body.email()));
         HttpSession session = request.getSession(true);
         session.removeAttribute(PendingSignup.SESSION_KEY);
         String target = LoginFlow.popRedirect(session);

@@ -34,12 +34,13 @@ public class SignupService {
     private final HandleSuggester suggester;
     private final NicknamePolicy nicknamePolicy;
     private final SocialLoginService loginService;
+    private final EmailVerification verification;
     private final TransactionTemplate tx;
     private final Clock clock;
 
     public SignupService(MemberRepository members, AuthIdentityRepository identities, AgreementService agreements,
                          HandlePolicy handlePolicy, HandleSuggester suggester, NicknamePolicy nicknamePolicy,
-                         SocialLoginService loginService, TransactionTemplate tx, Clock clock) {
+                         SocialLoginService loginService, EmailVerification verification, TransactionTemplate tx, Clock clock) {
         this.members = members;
         this.identities = identities;
         this.agreements = agreements;
@@ -47,23 +48,30 @@ public class SignupService {
         this.suggester = suggester;
         this.nicknamePolicy = nicknamePolicy;
         this.loginService = loginService;
+        this.verification = verification;
         this.tx = tx;
         this.clock = clock;
     }
 
-    public record SignupForm(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy) {}
+    /** @param email 소셜이 인증된 이메일을 주지 않았을 때만 쓴다 (004 FR-028). 메일 인증을 거친다 */
+    public record SignupForm(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy, String email) {
+        public SignupForm(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy) {
+            this(handleBody, nickname, agreeTerms, agreePrivacy, null);
+        }
+    }
 
-    /** 가입 마무리 화면의 미리 채우는 값. */
+    /** 가입 마무리 화면의 미리 채우는 값. emailRequired면 화면이 이메일을 입력받는다. */
     public record SignupDraft(AuthProvider provider, String prefix, String handleBody, String nickname,
-                              String email, String avatarUrl) {}
+                              String email, String avatarUrl, boolean emailRequired) {}
 
     public SignupDraft draftFor(PendingSignup pending) {
         SocialProfile p = pending.profile();
-        String material = p.provider() == AuthProvider.GITHUB ? p.login() : localPart(p.verifiedEmail());
+        String material = p.provider() == AuthProvider.GITHUB ? p.login()
+                : p.verifiedEmail() != null ? localPart(p.verifiedEmail()) : p.name();
         String handle = suggester.suggest(p.provider(), material);
         String nickname = nicknamePolicy.prefill(p.name() != null && !p.name().isBlank() ? p.name() : p.login());
         return new SignupDraft(p.provider(), p.provider().handlePrefix(), HandlePolicy.bodyOf(handle), nickname,
-                p.verifiedEmail(), p.avatarUrl());
+                p.verifiedEmail(), p.avatarUrl(), p.verifiedEmail() == null);
     }
 
     public MemberPrincipal complete(PendingSignup pending, SignupForm form) {
@@ -72,6 +80,12 @@ public class SignupService {
         String nickname = NicknamePolicy.normalize(form.nickname());
 
         List<FieldErrorItem> errors = new ArrayList<>();
+        String email = profile.verifiedEmail();
+        boolean emailVerified = email != null;
+        if (!emailVerified) {
+            email = EmailAddress.normalize(form.email());
+            if (!EmailAddress.isValid(email)) errors.add(new FieldErrorItem("email", "EMAIL_INVALID", "이메일 형식을 확인해 주세요. (최대 254자)"));
+        }
         HandlePolicy.Reason handleReason = handlePolicy.checkBody(profile.provider(), body);
         if (handleReason != null) errors.add(new FieldErrorItem("handleBody", "HANDLE_" + handleReason.name(), handleReason.message()));
         NicknamePolicy.Code nickCode = nicknamePolicy.checkRules(nickname);
@@ -81,8 +95,11 @@ public class SignupService {
         if (!errors.isEmpty()) throw ApiException.validation(errors);
 
         String handle = profile.provider().handlePrefix() + body;
+        String finalEmail = email;
         try {
-            return tx.execute(status -> create(profile, handle, nickname));
+            MemberPrincipal principal = tx.execute(status -> create(profile, handle, nickname, finalEmail, emailVerified));
+            if (!emailVerified) verification.sendAfterSignup(principal.id(), finalEmail);
+            return principal;
         } catch (DataIntegrityViolationException e) {
             String msg = String.valueOf(e.getMostSpecificCause().getMessage());
             if (msg.contains("uq_auth_identity")) {
@@ -102,11 +119,11 @@ public class SignupService {
         }
     }
 
-    private MemberPrincipal create(SocialProfile profile, String handle, String nickname) {
+    private MemberPrincipal create(SocialProfile profile, String handle, String nickname, String email, boolean emailVerified) {
         Instant now = Times.now(clock);
         Member member = members.saveAndFlush(Member.join(handle, nickname, now));
         AuthIdentity identity = identities.saveAndFlush(
-                AuthIdentity.social(member.getId(), profile.provider(), profile.providerUserId(), profile.verifiedEmail(), now));
+                AuthIdentity.social(member.getId(), profile.provider(), profile.providerUserId(), email, emailVerified, now));
         agreements.recordSignup(member.getId(), now);
         identity.recordLogin(now);
         return new MemberPrincipal(member.getId(), handle, member.getRole().name(), profile.provider().name(), false, null);

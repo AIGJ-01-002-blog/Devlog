@@ -106,13 +106,6 @@ class SignupLoginTest extends IntegrationTest {
     }
 
     @Test
-    void 인증된_이메일이_없으면_가입하지_않는다() throws Exception {
-        MvcResult r = browser().perform(asJson(post("/api/dev/login"),
-                Map.of("providerUserId", gid(), "login", "noemail", "name", "x"))).andReturn();
-        assertThat(read(r).path("redirect").asString()).isEqualTo("/login?error=NO_VERIFIED_EMAIL");
-    }
-
-    @Test
     void 같은_주소로_동시에_10건_가입하면_1건만_성공한다() throws Exception {
         String body = uniqueLogin("race");
         List<Browser> browsers = new ArrayList<>();

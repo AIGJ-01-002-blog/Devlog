@@ -1,7 +1,9 @@
 package com.team.blog.account.web;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import tools.jackson.databind.json.JsonMapper;
 
 import com.team.blog.account.domain.MemberStatus;
+import com.team.blog.account.infra.AuthIdentityRepository;
 import com.team.blog.account.infra.MemberRepository;
 import com.team.blog.shared.error.ErrorResponse;
 import com.team.blog.shared.security.CurrentMemberArgumentResolver;
@@ -28,6 +31,7 @@ import com.team.blog.shared.security.MemberPrincipal;
  *   <li>정지: 쓰기 요청은 403 ACCOUNT_SUSPENDED, 읽기는 비회원으로 처리 (P-7)</li>
  *   <li>탈퇴 유예: 복구·로그아웃 외에는 403 ACCOUNT_WITHDRAWN (P-12)</li>
  *   <li>약관 재동의 필요: 동의·로그아웃 외에는 403 AGREEMENT_REQUIRED (docs/07 §3-1)</li>
+ *   <li>이메일 인증 전: 글쓰기·댓글·사진·좋아요·신고는 403 EMAIL_NOT_VERIFIED (004 FR-008). 삭제·복구·프로필·비밀번호 등은 허용</li>
  * </ul>
  */
 public class AccountStateFilter extends OncePerRequestFilter {
@@ -35,12 +39,30 @@ public class AccountStateFilter extends OncePerRequestFilter {
     private static final Set<String> ALWAYS_ALLOWED = Set.of("/api/auth/me", "/api/auth/logout", "/api/terms/current");
     private static final Set<String> RECONSENT_ALLOWED = Set.of("/api/auth/agreements");
     private static final Set<String> WITHDRAWN_ALLOWED = Set.of("/api/me/restore", "/api/me/withdrawal");
+    /** 인증 전 회원에게 막는 쓰기 (메서드 + 경로). 새 기능이 들어오면 여기에 더한다 (004 A-7). */
+    private static final List<Pattern> VERIFIED_ONLY = List.of(
+            Pattern.compile("^POST /api/posts$"),
+            Pattern.compile("^PUT /api/posts/\\d+(/autosave)?$"),
+            Pattern.compile("^DELETE /api/posts/\\d+/draft$"),
+            Pattern.compile("^POST /api/posts/\\d+/publish$"),
+            Pattern.compile("^PATCH /api/posts/\\d+/visibility$"),
+            Pattern.compile("^(POST|PUT|PATCH) /api/(posts/\\d+/)?comments(/.*)?$"),
+            Pattern.compile("^(POST|DELETE) /api/posts/\\d+/likes?$"),
+            Pattern.compile("^POST /api/(images|files|uploads)(/.*)?$"),
+            Pattern.compile("^POST /api/reports(/.*)?$"));
 
     private final MemberRepository members;
+    private final AuthIdentityRepository identities;
     private final JsonMapper json = JsonMapper.builder().build();
 
-    public AccountStateFilter(MemberRepository members) {
+    public AccountStateFilter(MemberRepository members, AuthIdentityRepository identities) {
         this.members = members;
+        this.identities = identities;
+    }
+
+    static boolean requiresVerifiedEmail(String method, String path) {
+        String line = method + " " + path;
+        return VERIFIED_ONLY.stream().anyMatch(p -> p.matcher(line).matches());
     }
 
     @Override
@@ -79,6 +101,11 @@ public class AccountStateFilter extends OncePerRequestFilter {
         }
         if (principal.agreementRequired() && !ALWAYS_ALLOWED.contains(path) && !RECONSENT_ALLOWED.contains(path)) {
             deny(response, HttpStatus.FORBIDDEN, "AGREEMENT_REQUIRED", "바뀐 약관에 동의해 주세요.");
+            return;
+        }
+        if (!safe && requiresVerifiedEmail(request.getMethod(), path)
+                && !identities.findByMemberId(principal.id()).map(i -> i.isEmailVerified()).orElse(false)) {
+            deny(response, HttpStatus.FORBIDDEN, "EMAIL_NOT_VERIFIED", "이메일 인증을 마쳐야 할 수 있어요. 인증 메일을 다시 받을 수 있어요.");
             return;
         }
         chain.doFilter(request, response);
