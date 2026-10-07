@@ -81,6 +81,11 @@ class WritePublishTest extends IntegrationTest {
         return jdbc.queryForMap("SELECT * FROM post WHERE id = ?", id);
     }
 
+    /** 독자가 받는 발행본 (V3: HTML·요약은 저장하지 않고 읽을 때 만든다). */
+    JsonNode detail(long id) throws Exception {
+        return read(browser().perform(get("/api/posts/" + id)).andExpect(status().isOk()).andReturn());
+    }
+
     // ---------------------------------------------------------------- US1 쓰고 발행
 
     @Test
@@ -107,8 +112,10 @@ class WritePublishTest extends IntegrationTest {
         assertThat(p.get("published_at")).isNotNull();
         assertThat(p.get("first_public_at")).isEqualTo(p.get("published_at"));
         assertThat(p.get("edited_at")).isNull();
-        assertThat((String) p.get("content_html")).contains("<h3").contains("지연 로딩");
-        assertThat((String) p.get("excerpt")).contains("지연 로딩");
+        assertThat(p).doesNotContainKeys("content_html", "excerpt", "thumbnail_url", "view_count");
+        JsonNode d = detail(id);
+        assertThat(d.path("contentHtml").asString()).contains("<h3").contains("지연 로딩");
+        assertThat(d.path("excerpt").asString()).contains("지연 로딩");
     }
 
     @Test
@@ -209,7 +216,7 @@ class WritePublishTest extends IntegrationTest {
             JsonNode r = read(publish(s, id, attack.length() > 100 ? attack.substring(0, 100) : attack, attack, "PUBLIC", version, null)
                     .andExpect(status().isOk()).andReturn());
             version = r.path("version").asLong();
-            String html = (String) row(id).get("content_html");
+            String html = detail(id).path("contentHtml").asString();
             assertThat(HtmlSafety.dangerous(html)).as(attack + " → " + html).isFalse();
         }
     }
@@ -311,7 +318,7 @@ class WritePublishTest extends IntegrationTest {
         long id = newPost(s);
         publish(s, id, "v1 제목", "v1 본문", "PUBLIC", 0, null).andExpect(status().isOk());
         Map<String, Object> first = row(id);
-        jdbc.update("UPDATE post SET view_count = 120, like_count = 12 WHERE id = ?", id);
+        jdbc.update("INSERT INTO post_view (post_id) SELECT ?::bigint FROM generate_series(1, 120)", id);
 
         long v = version(save(s, id, "v2 제목", "v2 본문", 1).andExpect(status().isOk()));
         assertThat(row(id)).containsEntry("title", "v1 제목").containsEntry("content_md", "v1 본문");
@@ -333,7 +340,9 @@ class WritePublishTest extends IntegrationTest {
                 .andExpect(status().isOk()).andReturn());
         assertThat(r.path("url").asString()).isEqualTo("/@" + s.handle() + "/posts/" + id);
         Map<String, Object> after = row(id);
-        assertThat(after).containsEntry("title", "v3 제목").containsEntry("view_count", 120L).containsEntry("like_count", 12);
+        assertThat(after).containsEntry("title", "v3 제목");
+        assertThat(detail(id).path("viewCount").asLong()).isEqualTo(120);
+        assertThat(detail(id).path("contentHtml").asString()).contains("v3 본문").doesNotContain("v1 본문");
         assertThat(after.get("published_at")).isEqualTo(first.get("published_at"));
         assertThat(after.get("first_public_at")).isEqualTo(first.get("first_public_at"));
         assertThat(after.get("edited_at")).isNotNull();
@@ -407,7 +416,7 @@ class WritePublishTest extends IntegrationTest {
                 .andExpect(status().isOk()).andReturn());
         long id = newPost(s);
         publish(s, id, "제목", md, "PUBLIC", 0, null).andExpect(status().isOk());
-        assertThat(p.path("html").asString()).isEqualTo(row(id).get("content_html"));
+        assertThat(p.path("html").asString()).isEqualTo(detail(id).path("contentHtml").asString());
         browser().perform(asJson(post("/api/markdown/preview"), Map.of("contentMd", md))).andExpect(status().isUnauthorized());
     }
 

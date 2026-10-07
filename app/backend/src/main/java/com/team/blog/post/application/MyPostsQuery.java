@@ -16,6 +16,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.team.blog.post.infra.PostSql;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.cursor.CursorCodec;
 import com.team.blog.shared.error.ApiException;
@@ -60,9 +61,10 @@ public class MyPostsQuery {
         StringBuilder sql = new StringBuilder("""
                 SELECT p.id, p.title, p.status, p.visibility, p.hidden_at IS NOT NULL AS hidden,
                        p.updated_at, p.published_at, p.edited_at, p.deleted_at,
-                       p.view_count, p.like_count, p.comment_count, p.edit_version,
+                       s.view_count, s.like_count, s.comment_count, p.edit_version,
                        EXISTS (SELECT 1 FROM post_draft d WHERE d.post_id = p.id) AS has_draft
-                FROM post p WHERE p.author_id = ?""");
+                FROM post p
+                """ + PostSql.STAT_JOIN + " WHERE p.author_id = ?");
         List<Object> args = new ArrayList<>(List.of(memberId));
         String sortColumn = tab == Tab.TRASH ? "p.deleted_at" : "p.updated_at";
         switch (tab) {

@@ -33,7 +33,6 @@ import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.error.FieldErrorItem;
 import com.team.blog.shared.error.NotFoundException;
 import com.team.blog.shared.markdown.ContentRenderer;
-import com.team.blog.shared.markdown.ImageUrls;
 import com.team.blog.shared.markdown.RenderedContent;
 import com.team.blog.shared.time.Times;
 
@@ -57,7 +56,6 @@ public class PostCommandService {
     private final IdempotencyStore idempotency;
     private final EditorStateLoader editorState;
     private final ContentRenderer renderer;
-    private final ImageUrls imageUrls;
     private final List<PublishExtension> extensions;
     private final ApplicationEventPublisher events;
     private final TransactionTemplate tx;
@@ -67,7 +65,7 @@ public class PostCommandService {
 
     public PostCommandService(PostRepository posts, PostDraftRepository drafts, MemberRepository members,
                               AutosaveStore autosave, IdempotencyStore idempotency, EditorStateLoader editorState,
-                              ContentRenderer renderer, ImageUrls imageUrls, List<PublishExtension> extensions,
+                              ContentRenderer renderer, List<PublishExtension> extensions,
                               ApplicationEventPublisher events, TransactionTemplate tx, BlogProperties props, Clock clock) {
         this.posts = posts;
         this.drafts = drafts;
@@ -76,7 +74,6 @@ public class PostCommandService {
         this.idempotency = idempotency;
         this.editorState = editorState;
         this.renderer = renderer;
-        this.imageUrls = imageUrls;
         this.extensions = extensions;
         this.events = events;
         this.tx = tx;
@@ -263,8 +260,7 @@ public class PostCommandService {
             Optional<PostDraft> draft = editorState.workingCopy(post);
             Instant now = Times.now(clock);
             long version = gate(post, draft, cmd.baseVersion(), in, now, true);
-            String thumbnail = imageUrls.urlOf(rendered.firstImageKey());
-            boolean first = post.publish(in.title(), in.contentMd(), rendered, thumbnail, cmd.visibility(), version, now);
+            boolean first = post.publish(in.title(), in.contentMd(), cmd.visibility(), version, now);
             draft.ifPresent(drafts::delete);
             extensions.forEach(e -> e.onPublish(post, rendered, cmd));
             if (first) {

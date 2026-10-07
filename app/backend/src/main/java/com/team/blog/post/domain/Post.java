@@ -12,12 +12,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import com.team.blog.account.domain.Visibility;
-import com.team.blog.shared.markdown.RenderedContent;
 
 /**
  * 글. 발행·공개 범위의 시각 규칙(published_at, first_public_at, edited_at)을 이 엔티티의 메서드에 모은다 (docs/05 J-1).
  * edit_version은 Redis 자동 저장·스케줄러와 함께 쓰므로 @Version을 붙이지 않는다 (J-3).
- * 조회수·좋아요·댓글 수는 엔티티로 바꾸지 않고 전용 UPDATE 쿼리로만 바꾼다 (J-2) — 그래서 여기서는 읽기 전용이다.
+ * 본문은 원본(content_md)만 저장한다. HTML·요약·대표 사진·조회수 같은 파생 값은 읽을 때 계산한다 (V3 정규화).
  */
 @Entity
 @Table(name = "post")
@@ -35,15 +34,6 @@ public class Post {
     @Column(nullable = false)
     private String contentMd = "";
 
-    @Column(nullable = false)
-    private String contentHtml = "";
-
-    @Column(length = 200)
-    private String excerpt;
-
-    @Column(length = 500)
-    private String thumbnailUrl;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PostStatus status = PostStatus.DRAFT;
@@ -52,18 +42,8 @@ public class Post {
     @Column(nullable = false)
     private Visibility visibility = Visibility.PUBLIC;
 
-    @Column(nullable = false, insertable = false, updatable = false)
-    private long viewCount;
-    @Column(nullable = false, insertable = false, updatable = false)
-    private int likeCount;
-    @Column(nullable = false, insertable = false, updatable = false)
-    private int commentCount;
-
     @Column(nullable = false)
     private long editVersion;
-
-    @Column(nullable = false)
-    private int renderVersion = 1;
 
     private Instant publishedAt;
     private Instant firstPublicAt;
@@ -107,15 +87,10 @@ public class Post {
      * 최초 발행과 다시 발행 (docs/05 §7 ⑦, §8).
      * @return 최초 발행이면 true
      */
-    public boolean publish(String title, String contentMd, RenderedContent rendered, String thumbnailUrl,
-                           Visibility visibility, long version, Instant now) {
+    public boolean publish(String title, String contentMd, Visibility visibility, long version, Instant now) {
         boolean first = status == PostStatus.DRAFT;
         this.title = title;
         this.contentMd = contentMd;
-        this.contentHtml = rendered.html();
-        this.excerpt = rendered.excerpt();
-        this.renderVersion = rendered.renderVersion();
-        this.thumbnailUrl = thumbnailUrl;
         this.status = PostStatus.PUBLISHED;
         if (publishedAt == null) publishedAt = now;
         if (!first) editedAt = now;
@@ -154,16 +129,9 @@ public class Post {
     public long getAuthorId() { return authorId; }
     public String getTitle() { return title; }
     public String getContentMd() { return contentMd; }
-    public String getContentHtml() { return contentHtml; }
-    public String getExcerpt() { return excerpt; }
-    public String getThumbnailUrl() { return thumbnailUrl; }
     public PostStatus getStatus() { return status; }
     public Visibility getVisibility() { return visibility; }
-    public long getViewCount() { return viewCount; }
-    public int getLikeCount() { return likeCount; }
-    public int getCommentCount() { return commentCount; }
     public long getEditVersion() { return editVersion; }
-    public int getRenderVersion() { return renderVersion; }
     public Instant getPublishedAt() { return publishedAt; }
     public Instant getFirstPublicAt() { return firstPublicAt; }
     public Instant getEditedAt() { return editedAt; }
