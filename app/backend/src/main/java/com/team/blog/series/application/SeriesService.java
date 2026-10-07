@@ -1,0 +1,160 @@
+package com.team.blog.series.application;
+
+import java.util.HashSet;
+import java.util.List;
+
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import com.team.blog.shared.error.ApiException;
+import com.team.blog.shared.error.FieldErrorItem;
+import com.team.blog.shared.error.NotFoundException;
+
+/**
+ * 시리즈 만들기·이름 바꾸기·지우기와 글 넣기·빼기·순서 (024 US1·US3). 모두 본인 것만, 남의 것이면 404 (FR-007).
+ * 잠금 순서는 글 → 시리즈로 같아 서로 기다리다 멈추지 않는다.
+ */
+@Service
+public class SeriesService {
+    public static final int MAX_SERIES = 100;
+    public static final int MAX_POSTS = 200;
+
+    private final JdbcTemplate jdbc;
+    private final TransactionTemplate tx;
+
+    public SeriesService(JdbcTemplate jdbc, TransactionTemplate tx) {
+        this.jdbc = jdbc;
+        this.tx = tx;
+    }
+
+    public record Mine(long id, String name, String slug, int postCount) {}
+
+    public List<Mine> mine(long memberId) {
+        return jdbc.query("""
+                SELECT s.id, s.name, s.slug,
+                       (SELECT count(*) FROM series_post sp JOIN post p ON p.id = sp.post_id
+                        WHERE sp.series_id = s.id AND p.deleted_at IS NULL) AS post_count
+                FROM series s WHERE s.member_id = ? ORDER BY s.updated_at DESC, s.id DESC
+                """, (rs, i) -> new Mine(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getInt(4)), memberId);
+    }
+
+    public Mine create(long memberId, String rawName) {
+        String name = validName(rawName);
+        return tx.execute(st -> {
+            // 회원 행을 잠가 동시에 만들어도 개수 제한을 넘지 않게 한다
+            jdbc.queryForList("SELECT id FROM member WHERE id = ? FOR UPDATE", Long.class, memberId);
+            Long count = jdbc.queryForObject("SELECT count(*) FROM series WHERE member_id = ?", Long.class, memberId);
+            if (count != null && count >= MAX_SERIES) {
+                throw ApiException.badRequest("TOO_MANY_SERIES", "시리즈는 " + MAX_SERIES + "개까지 만들 수 있어요.");
+            }
+            long id = insertOrConflict(() -> jdbc.queryForObject(
+                    "INSERT INTO series (member_id, name, slug) VALUES (?, ?, ?) RETURNING id", Long.class,
+                    memberId, name, SeriesNames.slug(name)));
+            return new Mine(id, name, SeriesNames.slug(name), 0);
+        });
+    }
+
+    public Mine rename(long memberId, long seriesId, String rawName) {
+        String name = validName(rawName);
+        return tx.execute(st -> {
+            lockSeries(memberId, seriesId);
+            insertOrConflict(() -> (long) jdbc.update("UPDATE series SET name = ?, slug = ?, updated_at = now() WHERE id = ?",
+                    name, SeriesNames.slug(name), seriesId));
+            return mine(memberId).stream().filter(m -> m.id() == seriesId).findFirst().orElseThrow(NotFoundException::new);
+        });
+    }
+
+    /** 시리즈만 지운다. 글은 남는다 (US3-3). */
+    public void delete(long memberId, long seriesId) {
+        if (jdbc.update("DELETE FROM series WHERE id = ? AND member_id = ?", seriesId, memberId) == 0) throw new NotFoundException();
+    }
+
+    /**
+     * 글을 시리즈에 넣거나(맨 뒤) 뺀다 (US1). seriesId가 null이면 뺀다. 이미 그 시리즈에 있으면 그대로 둔다.
+     * 임시글도 넣을 수 있다(독자에게는 발행된 뒤에 보인다).
+     */
+    public void assign(long memberId, long postId, Long seriesId) {
+        tx.executeWithoutResult(st -> {
+            List<Long> post = jdbc.queryForList("SELECT id FROM post WHERE id = ? AND author_id = ? AND deleted_at IS NULL FOR UPDATE",
+                    Long.class, postId, memberId);
+            if (post.isEmpty()) throw new NotFoundException();
+            List<Long> current = jdbc.queryForList("SELECT series_id FROM series_post WHERE post_id = ?", Long.class, postId);
+            if (seriesId != null && current.contains(seriesId)) return;
+            if (seriesId != null) lockSeries(memberId, seriesId);
+            if (!current.isEmpty()) {
+                jdbc.update("DELETE FROM series_post WHERE post_id = ?", postId);
+                jdbc.update("UPDATE series SET updated_at = now() WHERE id = ?", current.getFirst());
+            }
+            if (seriesId == null) return;
+            Long size = jdbc.queryForObject("SELECT count(*) FROM series_post WHERE series_id = ?", Long.class, seriesId);
+            if (size != null && size >= MAX_POSTS) {
+                throw ApiException.badRequest("SERIES_FULL", "시리즈 하나에는 글을 " + MAX_POSTS + "개까지 넣을 수 있어요.");
+            }
+            jdbc.update("""
+                    INSERT INTO series_post (post_id, series_id, position)
+                    SELECT ?, ?, COALESCE(max(position) + 1, 0) FROM series_post WHERE series_id = ?
+                    """, postId, seriesId, seriesId);
+            jdbc.update("UPDATE series SET updated_at = now() WHERE id = ?", seriesId);
+        });
+    }
+
+    /**
+     * 순서 바꾸기·빼기 (US3-1). postIds는 지금 든 글 가운데 남길 글을 새 순서대로 담는다. 목록에 없는 글은 빠진다.
+     * 시리즈 페이지에 보이지 않는 글(휴지통 글·임시글)은 목록에 없어도 빼지 않고 맨 뒤에 남긴다(복구·발행하면 보이게, FR-005).
+     */
+    public void reorder(long memberId, long seriesId, List<Long> postIds) {
+        if (postIds == null || postIds.stream().anyMatch(id -> id == null) || new HashSet<>(postIds).size() != postIds.size()) {
+            throw ApiException.validation(List.of(new FieldErrorItem("postIds", "INVALID_POSTS", "글 목록을 확인해 주세요.")));
+        }
+        tx.executeWithoutResult(st -> {
+            lockSeries(memberId, seriesId);
+            List<Long> live = jdbc.queryForList("""
+                    SELECT sp.post_id FROM series_post sp JOIN post p ON p.id = sp.post_id
+                    WHERE sp.series_id = ? AND """ + " " + SeriesQuery.OWNER_CONDITION, Long.class, seriesId);
+            if (!new HashSet<>(live).containsAll(postIds)) {
+                throw ApiException.validation(List.of(new FieldErrorItem("postIds", "INVALID_POSTS", "시리즈에 없는 글이 있어요.")));
+            }
+            Long[] keep = postIds.toArray(Long[]::new);
+            jdbc.update("DELETE FROM series_post WHERE series_id = ? AND post_id = ANY (?) AND NOT (post_id = ANY (?))",
+                    seriesId, live.toArray(Long[]::new), keep);
+            // 남길 글은 0부터, 보이지 않는 글은 그 뒤로 원래 순서대로 (위치 고유 제약은 커밋 때 확인)
+            jdbc.update("""
+                    UPDATE series_post sp SET position = k.ord - 1
+                    FROM unnest(?::bigint[]) WITH ORDINALITY AS k(id, ord)
+                    WHERE sp.series_id = ? AND sp.post_id = k.id
+                    """, keep, seriesId);
+            jdbc.update("""
+                    UPDATE series_post sp SET position = ? + r.rn - 1
+                    FROM (SELECT post_id, row_number() OVER (ORDER BY position) AS rn FROM series_post
+                          WHERE series_id = ? AND NOT (post_id = ANY (?))) r
+                    WHERE sp.post_id = r.post_id
+                    """, keep.length, seriesId, keep);
+            jdbc.update("UPDATE series SET updated_at = now() WHERE id = ?", seriesId);
+        });
+    }
+
+    private void lockSeries(long memberId, long seriesId) {
+        if (jdbc.queryForList("SELECT id FROM series WHERE id = ? AND member_id = ? FOR UPDATE", Long.class, seriesId, memberId).isEmpty()) {
+            throw new NotFoundException();
+        }
+    }
+
+    private static String validName(String raw) {
+        String name = SeriesNames.clean(raw);
+        if (name.isEmpty() || name.codePointCount(0, name.length()) > SeriesNames.MAX_NAME || SeriesNames.slug(name).isEmpty()) {
+            throw ApiException.validation(List.of(new FieldErrorItem("name", "INVALID_SERIES_NAME",
+                    "시리즈 이름은 글자나 숫자를 넣어 " + SeriesNames.MAX_NAME + "자 안으로 써 주세요.")));
+        }
+        return name;
+    }
+
+    private static long insertOrConflict(java.util.function.LongSupplier op) {
+        try {
+            return op.getAsLong();
+        } catch (DuplicateKeyException e) {
+            throw ApiException.conflict("SERIES_EXISTS", "같은 이름(주소)의 시리즈가 이미 있어요.");
+        }
+    }
+}

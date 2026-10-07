@@ -27,6 +27,7 @@ import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
 import com.team.blog.search.application.SearchQuery;
 import com.team.blog.search.web.SearchController;
+import com.team.blog.series.application.SeriesQuery;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
@@ -54,10 +55,12 @@ public class PageController {
     private final SearchQuery search;
     private final FollowQuery follows;
     private final TrendingService trending;
+    private final SeriesQuery series;
 
     public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
                           TagController tagApi, CommentQuery comments, SearchQuery search, FollowQuery follows,
-                          TrendingService trending) {
+                          TrendingService trending, SeriesQuery series) {
+        this.series = series;
         this.trending = trending;
         this.follows = follows;
         this.comments = comments;
@@ -203,6 +206,52 @@ public class PageController {
         body.append("</ul></main>");
         return html(HttpStatus.OK, shell.render(HeadMeta.privatePage(site.name(), title), body.toString(),
                 Map.of("page", "follows", "profile", p, "follows", first)), CacheControl.noCache().cachePrivate());
+    }
+
+    /** 블로그의 시리즈 탭 (024 US2-2). 남과 다른 응답(친구·주인)은 저장하지 않는다. */
+    @GetMapping("/@{handle}/series")
+    public ResponseEntity<String> seriesList(@PathVariable String handle, @CurrentMember(required = false) MemberPrincipal me) {
+        if (!HANDLE_CHARS.matcher(handle).matches()) return notFound();
+        if (!handle.equals(handle.toLowerCase())) return redirect(HttpStatus.MOVED_PERMANENTLY, "/@" + handle.toLowerCase() + "/series");
+        var profile = feed.profile(handle, me == null ? null : me.id());
+        var listing = series.list(handle, me == null ? null : me.id());
+        if (profile.isEmpty() || listing.isEmpty()) return notFound();
+        FeedQuery.BlogProfile p = profile.get();
+        String title = p.nickname() + "님의 시리즈";
+        StringBuilder body = new StringBuilder("<main><h1>").append(SpaShell.esc(title)).append("</h1><ul>");
+        listing.get().items().forEach(x -> body.append("<li><a href=\"").append(SpaShell.esc(seriesPath(handle, x.slug()))).append("\">")
+                .append(SpaShell.esc(x.name())).append("</a> (").append(x.postCount()).append(")</li>"));
+        body.append("</ul></main>");
+        HeadMeta meta = new HeadMeta(title + " - " + site.name(), p.nickname() + "의 블로그 시리즈", absolute("/@" + handle + "/series"),
+                "website", p.profileImageUrl() != null ? p.profileImageUrl() : absolute(site.defaultOgImage()), null, null, true);
+        return html(HttpStatus.OK, shell.render(meta, body.toString(), Map.of("page", "series-list")),
+                listing.get().personal() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate());
+    }
+
+    /** 시리즈 페이지 (024 US2-2). 글 목록을 순서대로 담아 수집한다. */
+    @GetMapping("/@{handle}/series/{slug}")
+    public ResponseEntity<String> seriesDetail(@PathVariable String handle, @PathVariable String slug,
+                                               @CurrentMember(required = false) MemberPrincipal me) {
+        if (!HANDLE_CHARS.matcher(handle).matches()) return notFound();
+        if (!handle.equals(handle.toLowerCase())) return redirect(HttpStatus.MOVED_PERMANENTLY, seriesPath(handle.toLowerCase(), slug));
+        var found = series.detail(handle, slug, me == null ? null : me.id());
+        if (found.isEmpty()) return notFound();
+        SeriesQuery.Detail d = found.get();
+        StringBuilder body = new StringBuilder("<main><h1>").append(SpaShell.esc(d.name())).append("</h1><ol>");
+        d.posts().forEach(c -> body.append("<li><a href=\"").append(SpaShell.esc(c.url())).append("\">").append(SpaShell.esc(c.title()))
+                .append("</a></li>"));
+        body.append("</ol></main>");
+        String owner = d.posts().isEmpty() ? handle : d.posts().getFirst().author().nickname();
+        String image = d.posts().stream().map(FeedQuery.Card::thumbnailUrl).filter(java.util.Objects::nonNull).findFirst()
+                .orElse(absolute(site.defaultOgImage()));
+        HeadMeta meta = new HeadMeta(d.name() + " - " + owner, owner + "의 시리즈 · 글 " + d.posts().size() + "개",
+                absolute(seriesPath(handle, d.slug())), "website", image, null, d.updatedAt(), !d.posts().isEmpty());
+        return html(HttpStatus.OK, shell.render(meta, body.toString(), Map.of("page", "series")),
+                d.personal() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate());
+    }
+
+    static String seriesPath(String handle, String slug) {
+        return "/@" + handle + "/series/" + UriUtils.encodePathSegment(slug, java.nio.charset.StandardCharsets.UTF_8);
     }
 
     @GetMapping("/@{handle}/posts/{postId}")

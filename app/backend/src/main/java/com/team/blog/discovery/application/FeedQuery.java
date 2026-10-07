@@ -39,7 +39,7 @@ public class FeedQuery {
             + " FROM post p JOIN member m ON m.id = p.author_id " + PostSql.STAT_JOIN + " " + PostSql.PROFILE_IMAGE_JOIN
             + " WHERE ";
     /** 친구가 보는 블로그 목록 조건 (docs/06 §6-3). ix_post_blog_friends의 WHERE를 그대로 포함한다. */
-    static final String FRIENDS_BLOG_CONDITION =
+    public static final String FRIENDS_BLOG_CONDITION =
             "p.status = 'PUBLISHED' AND p.visibility IN ('PUBLIC', 'FRIENDS') AND p.deleted_at IS NULL AND p.hidden_at IS NULL"
                     + " AND m.withdrawn_at IS NULL";
 
@@ -110,9 +110,17 @@ public class FeedQuery {
      * 순서는 받은 번호 순서 그대로다.
      */
     public List<Card> publicCards(List<Long> ids) {
+        return cards(ids, PostAccessPolicy.PUBLIC_LIST_CONDITION);
+    }
+
+    /**
+     * 번호로 카드 읽기, 목록 조건을 지정한다 (024 시리즈: 보는 사람에 따라 공개·친구·본인 조건). condition은 코드 안 상수만 넘긴다.
+     * 순서는 받은 번호 순서 그대로이고 조건에 맞지 않는 글은 빠진다.
+     */
+    public List<Card> cards(List<Long> ids, String condition) {
         if (ids.isEmpty()) return List.of();
         List<Card> found = jdbc.query(con -> {
-            var ps = con.prepareStatement(CARD_SELECT + PostAccessPolicy.PUBLIC_LIST_CONDITION + " AND p.id = ANY (?)");
+            var ps = con.prepareStatement(CARD_SELECT + condition + " AND p.id = ANY (?)");
             ps.setArray(1, con.createArrayOf("bigint", ids.toArray()));
             return ps;
         }, this::card);

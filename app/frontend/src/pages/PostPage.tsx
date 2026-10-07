@@ -6,6 +6,7 @@ import { FollowButton } from '../components/FollowButton'
 import { Comments } from '../components/Comments'
 import { AttachmentList } from '../components/AttachmentList'
 import { LikeButton } from '../components/LikeButton'
+import { SeriesBox } from '../components/SeriesBox'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { clock, compactNumber, fullDate, monthDay, relativeDate } from '../lib/format'
 import { enhanceGifs } from '../lib/gifPlayer'
@@ -133,6 +134,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
             {post.tags.map((t) => <li key={t}><Link to={tagPath(t)} className="tag-link">#{t}</Link></li>)}
           </ul>
         )}
+        <SeriesBox key={`series-${post.id}`} postId={post.id} />
         <div className="post-body markdown" ref={bodyRef} dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
         <AttachmentList key={post.id} postId={post.id} />
         <div className="post-stats muted">

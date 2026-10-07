@@ -28,6 +28,7 @@
 | [021-dark-mode](./021-dark-mode/spec.md) | 다크 모드 | Tier C | 이후 단계 (Tier C) | 45 |
 | [022-file-attach](./022-file-attach/spec.md) | 글 첨부파일 (사진과 리소스 통합 관리) | C-FILE-1 (2026-10-07 추가) | 다음 단계 (Tier B) | 23 |
 | [023-telegram](./023-telegram/spec.md) | 텔레그램 연결 (알림 받기, 메모로 임시글) | 2026-10-07 추가 (민서 답변) | 이후 단계 (Tier C) | 15, 34 |
+| [024-series](./024-series/spec.md) | 시리즈 (글 묶기, 순서, 이전·다음 글) | 2026-10-08 추가 (velog 비교) | 이후 단계 (Tier C) | 03, 10 |
 
 ## 여러 spec에 걸치는 문서
 

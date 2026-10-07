@@ -12,7 +12,9 @@ import { friendsApi, lastActiveLabel } from '../lib/friends';
 import { Link, navigate, useLocation } from '../lib/router';
 import { blogTagPath, normalizeTag, tagFormatError, tagsApi } from '../lib/tags';
 import { NotFoundPage } from './NotFoundPage';
-export function BlogPage({ handle }) {
+import { BlogSeries } from './SeriesPage';
+/** tab: 블로그 글 목록(기본) 또는 [시리즈] 탭 (024) */
+export function BlogPage({ handle, tab = 'posts' }) {
     const [initial] = useState(() => takeInitialData('blog'));
     const [profile, setProfile] = useState(initial?.profile.handle === handle ? initial.profile : null);
     const [missing, setMissing] = useState(false);
@@ -44,9 +46,9 @@ export function BlogPage({ handle }) {
                                             // 친구가 되면 최근 활동을 다시 받아 온다 (서버가 조건을 판단한다)
                                             if (f === 'FRIENDS')
                                                 void api(`/api/members/${encodeURIComponent(handle)}`).then(setProfile).catch(() => { });
-                                        } })] })] })] }), _jsx(SearchBox, { initial: q, placeholder: `${profile.nickname}님의 글 검색`, onSearch: searchIn }), q ? (_jsxs(_Fragment, { children: [_jsxs("div", { className: "filter-head row", children: [_jsxs("b", { children: ["'", q, "' \uAC80\uC0C9 \uACB0\uACFC"] }), _jsx(Link, { to: `/@${handle}`, className: "btn btn-text", children: "\uAC80\uC0C9 \uD574\uC81C" })] }), _jsx(PostResults, { q: q, sort: parseSort(search.get('sort')), initial: null, blog: handle }, q)] })) : _jsxs(_Fragment, { children: [_jsx(BlogTags, { handle: handle, initial: initial?.profile.handle === handle ? initial.blogTags : null, active: tag }), _jsx(Feed, { showAuthor: false, endpoint: `/api/members/${encodeURIComponent(handle)}/posts${tag ? `?tag=${encodeURIComponent(tag)}` : ''}`, storageKey: `feed:blog:${handle}${tag ? `:tag:${tag}` : ''}`, initial: initial?.profile.handle === handle && (initial.tag ?? null) === tag ? initial.feed : null, empty: tag ? _jsx("p", { children: "\uC774 \uD0DC\uADF8\uB85C \uACF5\uAC1C\uD55C \uAE00\uC774 \uC5C6\uC5B4\uC694." }) : profile.mine
-                            ? _jsxs(_Fragment, { children: [_jsx("p", { children: "\uC544\uC9C1 \uACF5\uAC1C\uD55C \uAE00\uC774 \uC5C6\uC5B4\uC694." }), _jsx(Link, { to: "/write", className: "btn btn-primary", children: "\uCCAB \uAE00 \uC4F0\uAE30" })] })
-                            : _jsx("p", { children: "\uC544\uC9C1 \uACF5\uAC1C\uD55C \uAE00\uC774 \uC5C6\uC5B4\uC694." }) }, tag ?? '')] })] }));
+                                        } })] })] })] }), _jsxs("nav", { className: "blog-tabs", "aria-label": "\uBE14\uB85C\uADF8 \uBA54\uB274", children: [_jsx(Link, { to: `/@${profile.handle}`, "aria-current": tab === 'posts' ? 'page' : undefined, children: "\uAE00" }), _jsx(Link, { to: `/@${profile.handle}/series`, "aria-current": tab === 'series' ? 'page' : undefined, children: "\uC2DC\uB9AC\uC988" })] }), tab === 'series' ? _jsx(BlogSeries, { handle: profile.handle, mine: profile.mine }) : _jsxs(_Fragment, { children: [_jsx(SearchBox, { initial: q, placeholder: `${profile.nickname}님의 글 검색`, onSearch: searchIn }), q ? (_jsxs(_Fragment, { children: [_jsxs("div", { className: "filter-head row", children: [_jsxs("b", { children: ["'", q, "' \uAC80\uC0C9 \uACB0\uACFC"] }), _jsx(Link, { to: `/@${handle}`, className: "btn btn-text", children: "\uAC80\uC0C9 \uD574\uC81C" })] }), _jsx(PostResults, { q: q, sort: parseSort(search.get('sort')), initial: null, blog: handle }, q)] })) : _jsxs(_Fragment, { children: [_jsx(BlogTags, { handle: handle, initial: initial?.profile.handle === handle ? initial.blogTags : null, active: tag }), _jsx(Feed, { showAuthor: false, endpoint: `/api/members/${encodeURIComponent(handle)}/posts${tag ? `?tag=${encodeURIComponent(tag)}` : ''}`, storageKey: `feed:blog:${handle}${tag ? `:tag:${tag}` : ''}`, initial: initial?.profile.handle === handle && (initial.tag ?? null) === tag ? initial.feed : null, empty: tag ? _jsx("p", { children: "\uC774 \uD0DC\uADF8\uB85C \uACF5\uAC1C\uD55C \uAE00\uC774 \uC5C6\uC5B4\uC694." }) : profile.mine
+                                    ? _jsxs(_Fragment, { children: [_jsx("p", { children: "\uC544\uC9C1 \uACF5\uAC1C\uD55C \uAE00\uC774 \uC5C6\uC5B4\uC694." }), _jsx(Link, { to: "/write", className: "btn btn-primary", children: "\uCCAB \uAE00 \uC4F0\uAE30" })] })
+                                    : _jsx("p", { children: "\uC544\uC9C1 \uACF5\uAC1C\uD55C \uAE00\uC774 \uC5C6\uC5B4\uC694." }) }, tag ?? '')] })] })] }));
 }
 /** 블로그 태그 줄과 필터 머리 (010 FR-030·FR-031): 공개 글의 태그, 글 수 많은 순 처음 10개 + [태그 더 보기]. */
 function BlogTags({ handle, initial, active }) {

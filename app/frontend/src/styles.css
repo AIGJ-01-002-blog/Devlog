@@ -684,3 +684,21 @@ a.attachment-name:hover { color: var(--color-brand); }
 .attachment-actions { display: flex; gap: 2px; flex: none; }
 .attachment-actions .btn-text { padding: 0 6px; }
 .attachment-pending .attachment-name { color: var(--color-text-muted); }
+
+/* 시리즈 (024) */
+.blog-tabs { display: flex; gap: 24px; justify-content: center; margin: 16px 0 24px; border-bottom: 1px solid var(--color-border); }
+.blog-tabs a { padding: 8px 4px; color: var(--color-text-muted); text-decoration: none; border-bottom: 2px solid transparent; }
+.blog-tabs a[aria-current="page"] { color: inherit; font-weight: 700; border-bottom-color: currentColor; }
+.series-picker { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.series-box { margin: 24px 0; padding: 16px 20px; border-radius: 8px; background: var(--color-surface-2); }
+.series-box h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.series-list { margin: 8px 0; padding-left: 1.4em; line-height: 1.9; }
+.series-foot { justify-content: space-between; }
+.series-arrows { display: inline-flex; gap: 6px; }
+.series-arrows [aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+.series-posts, .series-edit { list-style: none; padding: 0; }
+.series-posts > li { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px; }
+.series-posts > li > .card { flex: 1; }
+.series-no { font-weight: 700; color: var(--color-text-muted); min-width: 2em; padding-top: 8px; }
+.series-edit li { padding: 8px 0; border-bottom: 1px solid var(--color-border); }
+.series-edit .grow { flex: 1; }
