@@ -281,6 +281,7 @@ public class PostCommandService {
             Optional<PostDraft> draft = editorState.workingCopy(post);
             Instant now = Times.now(clock);
             long version = gate(post, draft, cmd.baseVersion(), in, now, true);
+            boolean wasPublic = post.getFirstPublicAt() != null;
             boolean first = post.publish(in.title(), in.contentMd(), cmd.visibility(), version, now);
             draft.ifPresent(drafts::delete);
             extensions.forEach(e -> e.onPublish(post, rendered, cmd));
@@ -288,6 +289,9 @@ public class PostCommandService {
                 events.publishEvent(new PostEvents.PostPublished(post.getId(), post.getAuthorId(), post.getVisibility(), version, now));
             } else {
                 events.publishEvent(new PostEvents.PostEdited(post.getId(), post.getAuthorId(), post.getVisibility(), version, now));
+            }
+            if (!wasPublic && post.getFirstPublicAt() != null) {
+                events.publishEvent(new PostEvents.PostFirstPublic(post.getId(), post.getAuthorId(), post.getFirstPublicAt()));
             }
             events.publishEvent(new AutosaveCleanup(post.getId(), version));
             return new PublishResult(post.getId(), "/@" + handle + "/posts/" + post.getId(), post.getPublishedAt(),
@@ -303,9 +307,13 @@ public class PostCommandService {
         return tx.execute(s -> {
             Post post = posts.findOwnForUpdate(postId, memberId).orElseThrow(NotFoundException::new);
             Visibility from = post.getVisibility();
+            boolean wasPublic = post.getFirstPublicAt() != null;
             Instant now = Times.now(clock);
             post.changeVisibility(to, now);
             if (from != to) events.publishEvent(new PostEvents.PostVisibilityChanged(postId, memberId, from, to, now));
+            if (!wasPublic && post.getFirstPublicAt() != null) {
+                events.publishEvent(new PostEvents.PostFirstPublic(postId, memberId, post.getFirstPublicAt()));
+            }
             return new VisibilityResult(post.getVisibility(), post.getFirstPublicAt());
         });
     }

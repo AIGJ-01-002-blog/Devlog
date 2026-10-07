@@ -1,6 +1,7 @@
 package com.team.blog.notification.application;
 
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -24,6 +25,8 @@ import com.team.blog.post.domain.PostStatus;
  */
 @Service
 public class NotificationService {
+    static final Duration FOLLOW_REPEAT = Duration.ofDays(7);
+
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
     private final PostAccessPolicy policy;
@@ -99,6 +102,76 @@ public class NotificationService {
         });
     }
 
+    /**
+     * 새 팔로워 (FR-007·FR-010). 받는 사람마다 안 읽은 묶음 하나에 사람을 더하고, 같은 사람은 7일에 한 번만 알린다.
+     * 언팔로우했다가 안 읽은 동안 다시 팔로우하면 묶음에서 빠졌던 사람이 돌아올 뿐 알림 수는 늘지 않는다.
+     */
+    public void followed(long followerId, long followeeId, Instant at) {
+        if (!allowed(NotificationType.FOLLOW, followeeId, followerId, null)) return;
+        tx.executeWithoutResult(s -> {
+            lock(followeeId, NotificationType.FOLLOW, 0);
+            if (!following(followerId, followeeId)) return; // 언팔로우가 먼저 처리됐다
+            Boolean recent = jdbc.queryForObject("""
+                    SELECT EXISTS (SELECT 1 FROM notification n JOIN notification_actor a ON a.notification_id = n.id AND a.actor_id = ?
+                                   WHERE n.receiver_id = ? AND n.type = 'FOLLOW' AND a.created_at > ?)
+                    """, Boolean.class, followerId, followeeId, Timestamp.from(at.minus(FOLLOW_REPEAT)));
+            if (Boolean.TRUE.equals(recent)) return;
+            Long open = unread(followeeId, NotificationType.FOLLOW);
+            Timestamp ts = Timestamp.from(at);
+            if (open == null) {
+                open = insert(followeeId, NotificationType.FOLLOW, ts);
+            } else {
+                jdbc.update("UPDATE notification SET updated_at = GREATEST(updated_at, ?) WHERE id = ?", ts, open);
+            }
+            jdbc.update("INSERT INTO notification_actor (notification_id, actor_id, created_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
+                    open, followerId, ts);
+        });
+    }
+
+    /** 언팔로우 (FR-012): 안 읽은 묶음에서만 빼고, 0명이면 지운다. 상대에게 따로 알리지 않는다. */
+    public void unfollowed(long followerId, long followeeId) {
+        tx.executeWithoutResult(s -> {
+            lock(followeeId, NotificationType.FOLLOW, 0);
+            if (following(followerId, followeeId)) return;
+            Long open = unread(followeeId, NotificationType.FOLLOW);
+            if (open == null) return;
+            jdbc.update("DELETE FROM notification_actor WHERE notification_id = ? AND actor_id = ?", open, followerId);
+            jdbc.update("DELETE FROM notification n WHERE n.id = ? AND NOT EXISTS (SELECT 1 FROM notification_actor a WHERE a.notification_id = n.id)", open);
+        });
+    }
+
+    /**
+     * 팔로우한 사람의 새 글 (FR-004·FR-006). 처음 전체 공개될 때 한 번 오는 사건이라 중복이 없다. 처리 시점에 이미 공개 목록 조건을
+     * 벗어났으면 만들지 않는다. 팔로워 전원에게 문장 하나로 만든다(끈 사람·탈퇴 신청한 사람 제외). 행동자 = 글 작성자라 따로 적지 않는다.
+     */
+    public int newPost(long postId, long authorId, Instant at) {
+        Integer n = tx.execute(s -> {
+            Boolean listed = jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM post p JOIN member m ON m.id = p.author_id WHERE p.id = ? AND "
+                    + PostAccessPolicy.PUBLIC_LIST_CONDITION + " AND m.status <> 'WITHDRAWN' AND m.deleted_at IS NULL)", Boolean.class, postId);
+            if (!Boolean.TRUE.equals(listed)) return 0;
+            Timestamp ts = Timestamp.from(at);
+            return jdbc.queryForObject("""
+                    WITH receivers AS (
+                        SELECT f.follower_id FROM follow f JOIN member r ON r.id = f.follower_id
+                        WHERE f.followee_id = ? AND r.status <> 'WITHDRAWN' AND r.deleted_at IS NULL
+                          AND NOT EXISTS (SELECT 1 FROM notification_mute nm WHERE nm.member_id = f.follower_id AND nm.type = 'NEW_POST')
+                    ), made AS (
+                        INSERT INTO notification (receiver_id, type, created_at, updated_at)
+                        SELECT follower_id, 'NEW_POST', ?, ? FROM receivers RETURNING id
+                    ), linked AS (
+                        INSERT INTO notification_post (notification_id, type, post_id) SELECT id, 'NEW_POST', ? FROM made RETURNING 1
+                    )
+                    SELECT count(*) FROM linked
+                    """, Integer.class, authorId, ts, ts, postId);
+        });
+        return n == null ? 0 : n;
+    }
+
+    private boolean following(long followerId, long followeeId) {
+        return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM follow WHERE follower_id = ? AND followee_id = ?)",
+                Boolean.class, followerId, followeeId));
+    }
+
     private void createComment(NotificationType type, long receiverId, long actorId, long postId, long commentId, Instant at) {
         if (!allowed(type, receiverId, actorId, postId)) return;
         tx.executeWithoutResult(s -> {
@@ -107,8 +180,8 @@ public class NotificationService {
         });
     }
 
-    /** FR-005 ①~⑤. */
-    private boolean allowed(NotificationType type, long receiverId, long actorId, long postId) {
+    /** FR-005 ①~⑤. postId가 null이면(팔로우) ⑤를 건너뛴다. */
+    private boolean allowed(NotificationType type, long receiverId, long actorId, Long postId) {
         if (receiverId == actorId) return false;
         List<Boolean> withdrawn = jdbc.query("SELECT status = 'WITHDRAWN' OR deleted_at IS NOT NULL FROM member WHERE id IN (?, ?)",
                 (rs, i) -> rs.getBoolean(1), receiverId, actorId);
@@ -117,7 +190,7 @@ public class NotificationService {
                 "SELECT EXISTS (SELECT 1 FROM notification_mute WHERE member_id = ? AND type = ?)", Boolean.class, receiverId, type.name()))) {
             return false;
         }
-        return readable(postId, receiverId);
+        return postId == null || readable(postId, receiverId);
     }
 
     /** 글 상세와 같은 판정 (FR-005 ⑤): 발행·숨김 아님·공개 범위 규칙. */
@@ -137,6 +210,11 @@ public class NotificationService {
     private boolean commentAlive(long commentId) {
         return Boolean.TRUE.equals(jdbc.queryForObject(
                 "SELECT EXISTS (SELECT 1 FROM comment WHERE id = ? AND deleted_at IS NULL AND hidden_at IS NULL)", Boolean.class, commentId));
+    }
+
+    private Long unread(long receiverId, NotificationType type) {
+        return jdbc.query("SELECT id FROM notification WHERE receiver_id = ? AND type = ? AND read_at IS NULL ORDER BY id DESC LIMIT 1",
+                (rs, i) -> rs.getLong(1), receiverId, type.name()).stream().findFirst().orElse(null);
     }
 
     private Long unreadLike(long receiverId, long postId) {

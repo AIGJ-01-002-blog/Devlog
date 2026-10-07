@@ -516,3 +516,19 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .notification-list.page { border-top: 1px solid var(--border); margin-bottom: 16px; }
 .notifications-head { display: flex; justify-content: space-between; align-items: center; }
 .notification-settings { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }
+
+/* 팔로우·피드 (spec 016) */
+.follow-wrap { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; }
+.author-card .follow-wrap { margin: 0 0 0 auto; }
+.btn.following { min-width: 104px; }
+.btn-small { padding: 4px 12px; font-size: 0.875rem; }
+.blog-stats a { color: inherit; }
+.blog-stats a:hover { color: var(--primary); }
+.tabs a[aria-current="page"], .tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); }
+.person-list { list-style: none; margin: 0; padding: 0; }
+.person-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.person-who { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; color: inherit; }
+.person-bio { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person-row .follow-wrap { margin: 0; }
+.blog-actions { gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.blog-actions .follow-wrap, .blog-actions .friend-actions { margin-top: 0; }

@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.team.blog.follow.application.FollowQuery;
 import com.team.blog.friend.application.FriendQuery;
 import com.team.blog.friend.application.FriendService;
 import com.team.blog.friend.application.FriendsVisibilityRule;
@@ -49,10 +50,12 @@ public class FeedQuery {
     private final int pageSize;
     private final FriendService friends;
     private final FriendQuery friendQuery;
+    private final FollowQuery follows;
 
     public FeedQuery(JdbcTemplate jdbc, CursorCodec cursors, ImageUrls imageUrls, ContentRenderer renderer,
-                     BlogProperties props, FriendService friends, FriendQuery friendQuery) {
+                     BlogProperties props, FriendService friends, FriendQuery friendQuery, FollowQuery follows) {
         this.jdbc = jdbc;
+        this.follows = follows;
         this.friends = friends;
         this.friendQuery = friendQuery;
         this.cursors = cursors;
@@ -82,14 +85,23 @@ public class FeedQuery {
      * @param lastActiveDaysAgo 친구이고 양쪽 모두 공개 설정을 켰을 때만 0~7 (008 FR-009·FR-010)
      */
     public record BlogProfile(long id, String handle, String nickname, String bio, String profileImageUrl,
-                              long publicPostCount, boolean mine, String friendship, Integer lastActiveDaysAgo) {
+                              long publicPostCount, boolean mine, String friendship, Integer lastActiveDaysAgo,
+                              long followerCount, long followingCount, boolean following) {
         /** 친구가 보면 친구 공개 글까지 센 수 (docs/06 §3 "블로그 글 수") */
         BlogProfile withPostCount(long count) {
-            return new BlogProfile(id, handle, nickname, bio, profileImageUrl, count, mine, friendship, lastActiveDaysAgo);
+            return new BlogProfile(id, handle, nickname, bio, profileImageUrl, count, mine, friendship, lastActiveDaysAgo,
+                    followerCount, followingCount, following);
         }
 
         BlogProfile withFriendship(String relation, Integer days) {
-            return new BlogProfile(id, handle, nickname, bio, profileImageUrl, publicPostCount, mine, relation, days);
+            return new BlogProfile(id, handle, nickname, bio, profileImageUrl, publicPostCount, mine, relation, days,
+                    followerCount, followingCount, following);
+        }
+
+        /** 팔로워·팔로잉 수는 비회원도 본다 (016 FR-010). following은 보는 사람이 팔로우 중인지. */
+        BlogProfile withFollow(FollowQuery.Counts counts, boolean viewerFollows) {
+            return new BlogProfile(id, handle, nickname, bio, profileImageUrl, publicPostCount, mine, friendship, lastActiveDaysAgo,
+                    counts.followers(), counts.following(), viewerFollows);
         }
     }
 
@@ -129,8 +141,9 @@ public class FeedQuery {
                 WHERE m.handle = ? AND m.withdrawn_at IS NULL AND m.deleted_at IS NULL
                 """, (rs, i) -> new BlogProfile(rs.getLong("id"), rs.getString("handle"), rs.getString("nickname"),
                 rs.getString("bio"), imageUrls.urlOf(rs.getString("profile_image_key")), rs.getLong("post_count"),
-                viewerId != null && viewerId == rs.getLong("id"), null, null), handle);
-        return rows.stream().findFirst().map(p -> {
+                viewerId != null && viewerId == rs.getLong("id"), null, null, 0, 0, false), handle);
+        return rows.stream().findFirst().map(p -> p.withFollow(follows.counts(p.id()),
+                viewerId != null && !p.mine() && follows.isFollowing(viewerId, p.id()))).map(p -> {
             if (viewerId == null || p.mine()) return p;
             FriendService.Relation relation = friends.relation(viewerId, p.id());
             BlogProfile withRelation = p.withFriendship(relation.name(), friendQuery.lastActiveDaysAgo(viewerId, p.id()).orElse(null));
@@ -150,13 +163,29 @@ public class FeedQuery {
                 Long.class, handle).stream().findFirst();
     }
 
+    /**
+     * 팔로잉 피드 (016 US2): 내가 팔로우한 사람의 공개 글만, 홈과 같은 정렬·카드·9개 (FR-016·FR-017).
+     * 친구 공개 글은 친구여도 넣지 않는다. 팔로우 조건은 요청마다 다시 읽어 언팔로우가 다음 요청부터 반영된다(FR-019).
+     */
+    public Page following(long memberId, String cursor) {
+        return list("feed:" + memberId, null, null, cursor, false, memberId);
+    }
+
     private Page list(String listName, Long authorId, String tag, String cursor, boolean friendsView) {
+        return list(listName, authorId, tag, cursor, friendsView, null);
+    }
+
+    private Page list(String listName, Long authorId, String tag, String cursor, boolean friendsView, Long followerId) {
         StringBuilder sql = new StringBuilder(CARD_SELECT).append(friendsView ? FRIENDS_BLOG_CONDITION : PostAccessPolicy.PUBLIC_LIST_CONDITION);
         String sortColumn = friendsView ? "p.published_at" : "p.first_public_at";
         List<Object> args = new ArrayList<>();
         if (authorId != null) {
             sql.append(" AND p.author_id = ?");
             args.add(authorId);
+        }
+        if (followerId != null) {
+            sql.append(" AND p.author_id IN (SELECT f.followee_id FROM follow f WHERE f.follower_id = ?)");
+            args.add(followerId);
         }
         if (tag != null) {
             sql.append(" AND EXISTS (SELECT 1 FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = p.id AND t.name = ?)");

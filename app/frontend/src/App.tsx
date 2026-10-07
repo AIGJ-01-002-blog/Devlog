@@ -6,6 +6,8 @@ import { loginPath, useAuth } from './lib/auth'
 import { match, navigate, useLocation } from './lib/router'
 import { AgreementsPage } from './pages/AgreementsPage'
 import { BlogPage } from './pages/BlogPage'
+import { FeedPage } from './pages/FeedPage'
+import { FollowsPage } from './pages/FollowsPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { ManagePage } from './pages/ManagePage'
@@ -40,6 +42,8 @@ function route(path: string): ReactNode {
   let p: Record<string, string> | null
   if (path === '/') return <HomePage />
   if ((p = match('/@:handle/posts/:id', path))) return <PostPage key={`${p.handle}/${p.id}`} handle={p.handle} id={p.id} />
+  if ((p = match('/@:handle/followers', path))) return <FollowsPage key={`${p.handle}/f`} handle={p.handle} direction="followers" />
+  if ((p = match('/@:handle/following', path))) return <FollowsPage key={`${p.handle}/g`} handle={p.handle} direction="following" />
   if ((p = match('/@:handle', path))) return <BlogPage key={p.handle} handle={p.handle} />
   if (path === '/search') return <SearchPage />
   if (path === '/tags') return <TagsPage />
@@ -56,6 +60,7 @@ function route(path: string): ReactNode {
   if (path === '/write') return <RequireLogin><NewPostPage /></RequireLogin>
   if ((p = match('/write/:id', path))) return <RequireLogin><WritePage key={p.id} id={p.id} /></RequireLogin>
   if (path === '/manage/posts') return <RequireLogin><ManagePage /></RequireLogin>
+  if (path === '/feed') return <RequireLogin><FeedPage /></RequireLogin>
   if (path === '/notifications') return <RequireLogin><NotificationsPage /></RequireLogin>
   if (path === '/settings') return <RequireLogin><SettingsPage /></RequireLogin>
   return <NotFoundPage />
