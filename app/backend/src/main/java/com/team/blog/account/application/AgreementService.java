@@ -73,6 +73,18 @@ public class AgreementService {
                 .orElse(false);
     }
 
+    /**
+     * AI 동의 철회 (005 FR-025): 기록을 지워 다음 사용 때 다시 동의를 받는다. 필수 약관은 철회 대상이 아니다.
+     * @return 지운 기록이 있었으면 true
+     */
+    @Transactional
+    public boolean withdrawAi(long memberId) {
+        MemberAgreement.Key key = new MemberAgreement.Key(memberId, AgreementType.AI);
+        if (!agreements.existsById(key)) return false;
+        agreements.deleteById(key);
+        return true;
+    }
+
     public BlogProperties.Agreements current() {
         return current;
     }

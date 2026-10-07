@@ -1,0 +1,55 @@
+import { useEffect, useState } from 'react'
+import { api } from '../lib/api'
+
+interface Terms { termsVersion: string; termsEffectiveDate: string; privacyVersion: string; privacyEffectiveDate: string }
+
+/** 이용약관·개인정보 처리방침 (005 FR-026). 수업 프로젝트용 기본 문안이다. */
+export function TermsPage({ kind }: { kind: 'terms' | 'privacy' }) {
+  const [terms, setTerms] = useState<Terms | null>(null)
+  useEffect(() => {
+    api<Terms>('/api/terms/current').then(setTerms).catch(() => setTerms(null))
+  }, [])
+  const date = kind === 'terms' ? terms?.termsEffectiveDate : terms?.privacyEffectiveDate
+  return (
+    <main className="container narrow terms">
+      <h1 className="page-title">{kind === 'terms' ? '이용약관' : '개인정보 처리방침'}</h1>
+      {date && <p className="muted small">시행일 {date}</p>}
+      {kind === 'terms' ? <TermsBody /> : <PrivacyBody />}
+      <p><a href={kind === 'terms' ? '/privacy' : '/terms'}>{kind === 'terms' ? '개인정보 처리방침 보기' : '이용약관 보기'}</a></p>
+    </main>
+  )
+}
+
+function TermsBody() {
+  return (
+    <>
+      <h2>1. 목적</h2>
+      <p>이 약관은 devlog(이하 "서비스")에서 글을 쓰고 읽는 데 필요한 회원과 서비스의 권리·의무를 정합니다.</p>
+      <h2>2. 회원 가입과 계정</h2>
+      <p>회원은 GitHub·Google 계정이나 이메일로 가입합니다. 블로그 주소와 이메일은 가입 뒤 바꿀 수 없습니다. 계정은 본인만 쓰며, 남에게 빌려주거나 넘기면 안 됩니다.</p>
+      <h2>3. 게시물</h2>
+      <p>회원이 쓴 글의 권리는 회원에게 있습니다. 서비스는 글을 보여 주는 데 필요한 범위에서만 씁니다. 다른 사람의 권리를 침해하거나 법을 어기는 글은 숨기거나 지울 수 있습니다.</p>
+      <h2>4. 이용 제한</h2>
+      <p>스팸·도배·불법 정보 게시, 서비스 방해가 확인되면 이용을 정지할 수 있으며, 정지 사유와 기간을 알립니다.</p>
+      <h2>5. 탈퇴</h2>
+      <p>회원은 언제든 탈퇴할 수 있습니다. 탈퇴한 계정의 처리 방식은 개인정보 처리방침을 따릅니다.</p>
+    </>
+  )
+}
+
+function PrivacyBody() {
+  return (
+    <>
+      <h2>1. 모으는 정보</h2>
+      <p>이메일, 로그인 수단(GitHub·Google·이메일), 블로그 주소, 닉네임, 소개, 프로필 사진, 로그인 시각을 모읍니다. 이메일 가입자의 비밀번호는 되돌릴 수 없는 방식으로만 저장합니다.</p>
+      <h2>2. 쓰는 곳</h2>
+      <p>로그인, 블로그 운영, 계정 도용 알림(직전 로그인 표시), 인증·비밀번호 재설정 메일에만 씁니다.</p>
+      <h2>3. 프로필 사진</h2>
+      <p>소셜 가입 때 고르면 소셜 프로필 사진을 한 번만 복사해 저장하며, 소셜 사진 주소는 저장하지 않습니다. 사진 속 촬영 위치 같은 정보는 올리기 전에 지웁니다.</p>
+      <h2>4. 보관 기간</h2>
+      <p>탈퇴하면 30일 뒤 닉네임·소개 등 개인정보를 지우고 블로그 주소만 남깁니다. 법으로 보관해야 하는 정보는 그 기간 동안 보관합니다.</p>
+      <h2>5. AI 기능</h2>
+      <p>AI 태그 추천에 동의하면 글 내용을 학교 내부 AI 서버로 보내 태그를 추천받습니다. 설정에서 언제든 동의를 철회할 수 있습니다.</p>
+    </>
+  )
+}

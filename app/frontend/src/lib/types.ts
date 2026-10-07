@@ -8,6 +8,7 @@ export interface MemberView {
   role: string
   defaultVisibility: Visibility
   status: string
+  profileImageUrl: string | null
 }
 
 export interface Me {

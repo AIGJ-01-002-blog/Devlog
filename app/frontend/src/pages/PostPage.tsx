@@ -95,7 +95,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           {date && <span>{fullDate(date)}</span>}
         </div>
         <footer className="author-card">
-          <Avatar src={post.author.profileImageUrl} name={post.author.nickname} size={64} />
+          <Avatar src={post.author.profileImageUrl} name={post.author.nickname} seed={post.author.handle} size={64} />
           <div>
             <Link to={`/@${post.author.handle}`}><b>{post.author.nickname}</b> <span className="muted">@{post.author.handle}</span></Link>
             {post.author.bio && <p className="bio">{post.author.bio}</p>}

@@ -137,3 +137,15 @@ blog:
     secret: ${CURSOR_SECRET:local-cursor-secret-change-me}
   dev-login:
     enabled: ${DEV_LOGIN_ENABLED:false}
+  # 사진 공개 주소. 본문 정화 허용 목록·CSP가 함께 쓴다. 로컬 저장소면 앱이 /media로 내려준다
+  image:
+    public-base-url: ${IMAGE_PUBLIC_BASE_URL:${blog.site.base-url}/media}
+  # 사진 저장소 (005·009): S3_ENDPOINT가 있으면 MinIO(S3 API), 없으면 로컬 폴더
+  storage:
+    local-dir: ${MEDIA_LOCAL_DIR:${java.io.tmpdir}/blog-media}
+    s3:
+      endpoint: ${S3_ENDPOINT:}
+      region: ${S3_REGION:us-east-1}
+      bucket: ${S3_BUCKET:blog-images}
+      access-key: ${S3_ACCESS_KEY:}
+      secret-key: ${S3_SECRET_KEY:}

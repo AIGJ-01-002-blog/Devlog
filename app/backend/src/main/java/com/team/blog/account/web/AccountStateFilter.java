@@ -49,6 +49,7 @@ public class AccountStateFilter extends OncePerRequestFilter {
             Pattern.compile("^(POST|PUT|PATCH) /api/(posts/\\d+/)?comments(/.*)?$"),
             Pattern.compile("^(POST|DELETE) /api/posts/\\d+/likes?$"),
             Pattern.compile("^POST /api/(images|files|uploads)(/.*)?$"),
+            Pattern.compile("^POST /api/me/profile-image$"),
             Pattern.compile("^POST /api/reports(/.*)?$"));
 
     private final MemberRepository members;

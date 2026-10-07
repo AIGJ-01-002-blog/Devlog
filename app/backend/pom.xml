@@ -21,6 +21,7 @@
         <java.version>21</java.version>
         <commonmark.version>0.30.0</commonmark.version>
         <owasp-sanitizer.version>20260924.2</owasp-sanitizer.version>
+        <awssdk.version>2.55.12</awssdk.version>
         <!-- 줄 커버리지 최소 기준 (민서님 이전 프로젝트 CI 템플릿과 같은 40%) -->
         <jacoco.minimum.line.coverage>0.40</jacoco.minimum.line.coverage>
     </properties>
@@ -46,6 +47,17 @@
         <dependency><groupId>org.commonmark</groupId><artifactId>commonmark-ext-autolink</artifactId><version>${commonmark.version}</version></dependency>
         <dependency><groupId>org.commonmark</groupId><artifactId>commonmark-ext-heading-anchor</artifactId><version>${commonmark.version}</version></dependency>
         <dependency><groupId>com.googlecode.owasp-java-html-sanitizer</groupId><artifactId>owasp-java-html-sanitizer</artifactId><version>${owasp-sanitizer.version}</version></dependency>
+
+        <!-- 사진 저장소 (MinIO, S3 API). HTTP는 JDK 클라이언트만 쓴다 (005·009) -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId><artifactId>s3</artifactId><version>${awssdk.version}</version>
+            <exclusions>
+                <exclusion><groupId>software.amazon.awssdk</groupId><artifactId>apache-client</artifactId></exclusion>
+                <exclusion><groupId>software.amazon.awssdk</groupId><artifactId>apache5-client</artifactId></exclusion>
+                <exclusion><groupId>software.amazon.awssdk</groupId><artifactId>netty-nio-client</artifactId></exclusion>
+            </exclusions>
+        </dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>url-connection-client</artifactId><version>${awssdk.version}</version></dependency>
 
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc-test</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security-test</artifactId><scope>test</scope></dependency>
