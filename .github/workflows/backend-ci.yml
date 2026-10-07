@@ -42,15 +42,20 @@ jobs:
           name: jacoco-report
           path: app/backend/target/site/jacoco
           if-no-files-found: ignore
-      # 레포 변수 SONAR_ENABLED=true이고 SONAR_TOKEN·SONAR_HOST_URL이 있을 때만 (학교 SonarQube: s4.java21.net:9000)
+      # 레포 변수 SONAR_ENABLED=true이고 SONAR_TOKEN이 있을 때만. 기본은 SonarCloud(https://sonarcloud.io, 변수 SONAR_ORGANIZATION 필요),
+      # 학교 SonarQube를 쓰려면 Secret SONAR_HOST_URL=http://s4.java21.net:9000
       - name: SonarQube 분석
         if: vars.SONAR_ENABLED == 'true' && github.event_name == 'push'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
         run: |
-          if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then echo "SonarQube 비밀값이 없어 건너뜁니다."; exit 0; fi
+          if [ -z "$SONAR_TOKEN" ]; then echo "SONAR_TOKEN이 없어 건너뜁니다."; exit 0; fi
+          org=()
+          if [ -n "$SONAR_ORGANIZATION" ]; then org=("-Dsonar.organization=$SONAR_ORGANIZATION"); fi
           ./mvnw -B -ntp org.sonarsource.scanner.maven:sonar-maven-plugin:5.2.0.4988:sonar \
+            "${org[@]}" \
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY || 'aigj-01-002-blog' }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
       - name: 실패한 테스트 보고서

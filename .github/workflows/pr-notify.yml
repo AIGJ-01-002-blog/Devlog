@@ -1,0 +1,28 @@
+# PR이 리뷰 가능해지거나 main에 머지되면 Discord·텔레그램에 알린다.
+# 레포 변수 DISCORD_ENABLED·TELEGRAM_ENABLED 중 하나가 true일 때만 동작.
+name: PR 알림
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: >-
+      (vars.DISCORD_ENABLED == 'true' || vars.TELEGRAM_ENABLED == 'true') &&
+      ((github.event.action != 'closed' && !github.event.pull_request.draft) || github.event.pull_request.merged)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/notify
+        with:
+          discord-webhook-url: ${{ vars.DISCORD_ENABLED == 'true' && (secrets.DISCORD_PR_WEBHOOK_URL || secrets.DISCORD_WEBHOOK_URL) || '' }}
+          telegram-bot-token: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_BOT_TOKEN || '' }}
+          telegram-chat-id: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_CHAT_ID || '' }}
+          title: "${{ github.event.pull_request.merged && '머지됨' || '리뷰 요청' }}: ${{ github.event.pull_request.title }}"
+          description: "#${{ github.event.pull_request.number }} · ${{ github.event.pull_request.user.login }} · ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}"
+          status: ${{ github.event.pull_request.merged && 'success' || 'info' }}
+          url: ${{ github.event.pull_request.html_url }}
