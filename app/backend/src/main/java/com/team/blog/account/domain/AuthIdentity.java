@@ -41,12 +41,21 @@ public class AuthIdentity {
     protected AuthIdentity() {}
 
     public static AuthIdentity social(long memberId, AuthProvider provider, String providerUserId, String email, Instant now) {
+        return social(memberId, provider, providerUserId, email, true, now);
+    }
+
+    /**
+     * @param emailVerified 소셜이 인증해 준 이메일이면 true(가입 시각으로 인증된 것으로 본다, docs/07 §5).
+     *                      인증된 대표 이메일이 없는 GitHub 계정이 직접 입력한 이메일은 false로, 메일 인증을 거친다 (004 FR-028)
+     */
+    public static AuthIdentity social(long memberId, AuthProvider provider, String providerUserId, String email,
+                                      boolean emailVerified, Instant now) {
         AuthIdentity a = new AuthIdentity();
         a.memberId = memberId;
         a.provider = provider;
         a.providerUserId = providerUserId;
         a.email = email;
-        a.emailVerifiedAt = now; // 소셜 가입은 가입 시각으로 인증된 것으로 본다 (docs/07 §5)
+        a.emailVerifiedAt = emailVerified ? now : null;
         a.createdAt = now;
         return a;
     }
@@ -71,6 +80,10 @@ public class AuthIdentity {
 
     public void markEmailVerified(Instant now) {
         if (emailVerifiedAt == null) emailVerifiedAt = now;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
     }
 
     public void changePasswordHash(String hash) {

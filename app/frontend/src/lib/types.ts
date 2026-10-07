@@ -16,6 +16,8 @@ export interface Me {
   agreementRequired: boolean
   previousLogin: { at: string | null; provider: string } | null
   pendingSignup: boolean
+  /** 메일 인증 전이면 글쓰기 같은 쓰기 행동이 막힌다 (004) */
+  emailVerified: boolean
 }
 
 export interface CardAuthor {

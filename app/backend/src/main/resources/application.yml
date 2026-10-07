@@ -32,9 +32,14 @@ spring:
       connect-timeout: 1s
   session:
     timeout: 14d
-    redis:
-      namespace: blog:session
-      repository-type: indexed
+    # Boot 4는 spring.session.data.redis.* (예전 spring.session.redis.*는 무시된다)
+    # indexed: 회원 번호로 세션을 찾아 비밀번호 변경·재설정 때 다른 기기를 로그아웃시킨다 (004 FR-025·FR-032)
+    data:
+      redis:
+        namespace: blog:session
+        repository-type: indexed
+        # 공용 Redis는 CONFIG 명령을 막을 수 있어 키 만료 알림 설정을 건드리지 않는다 (만료 세션 색인은 정리 작업이 지운다)
+        configure-action: none
   security:
     oauth2:
       client:
@@ -43,6 +48,19 @@ spring:
             client-id: ${GITHUB_CLIENT_ID:local-dev-client}
             client-secret: ${GITHUB_CLIENT_SECRET:local-dev-secret}
             scope: read:user,user:email
+          # Google은 GOOGLE_CLIENT_ID(·SECRET)가 있을 때 OAuthClientsConfig가 더한다
+  # 메일 (004): SMTP_HOST가 있으면 SMTP로 보내고, 비어 있으면 보내지 않고 보관한다 (개발은 /api/dev/mails)
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   servlet:
     multipart:
       enabled: false
@@ -76,6 +94,9 @@ management:
         enabled: true
       show-details: never
   health:
+    # 메일 서버 상태로 앱이 내려가지 않게 한다 (메일은 실패해도 기록만 하고 다시 보내기로 받을 수 있다)
+    mail:
+      enabled: false
     livenessstate:
       enabled: true
     readinessstate:
@@ -98,6 +119,11 @@ blog:
     pending-signup-ttl: 10m
     login-rate-limit-per-minute: 20
     availability-rate-limit-per-minute: 30
+    verify-token-ttl: 24h
+    reset-token-ttl: 30m
+    login-lock-threshold: 5
+    login-lock-duration: 15m
+    mail-from: ${MAIL_FROM:devlog <no-reply@devlog.local>}
   handle:
     auto-body-max-length: 16
     reserved: [admin, administrator, root, system, official, support, help, about, terms, privacy,

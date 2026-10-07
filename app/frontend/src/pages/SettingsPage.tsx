@@ -1,7 +1,10 @@
 import { useState, type FormEvent } from 'react'
+import { PasswordRules } from '../components/PasswordRules'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import { fieldErrors } from '../lib/fieldErrors'
 import { fullDate } from '../lib/format'
+import { passwordOk } from '../lib/password'
 
 export function SettingsPage() {
   const { me, refresh } = useAuth()
@@ -39,6 +42,62 @@ export function SettingsPage() {
         <p className="muted small">한 번 바꾸면 30일 동안 다시 바꿀 수 없어요.</p>
         {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
       </section>
+      {me.previousLogin?.provider === 'LOCAL' && <PasswordSection />}
     </main>
+  )
+}
+
+/** 비밀번호 변경 (004 US5): 이메일 가입자만. 바꾸면 다른 기기는 로그아웃되고 알림 메일이 간다. */
+function PasswordSection() {
+  const [current, setCurrent] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [done, setDone] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setErrors({})
+    setDone(false)
+    try {
+      await api('/api/me/password', { method: 'PUT', body: { currentPassword: current, password, passwordConfirm: confirm } })
+      setDone(true)
+      setCurrent('')
+      setPassword('')
+      setConfirm('')
+    } catch (err) {
+      setErrors(fieldErrors(err))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <section className="settings-section">
+      <h2>비밀번호</h2>
+      <form className="form" onSubmit={submit}>
+        <label className="field">
+          <span>현재 비밀번호</span>
+          <input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" required />
+          {errors.currentPassword && <small className="error">{errors.currentPassword}</small>}
+        </label>
+        <label className="field">
+          <span>새 비밀번호</span>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" maxLength={64} required />
+          <PasswordRules password={password} />
+          {errors.password && <small className="error">{errors.password}</small>}
+        </label>
+        <label className="field">
+          <span>새 비밀번호 확인</span>
+          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" maxLength={64} required />
+          {(errors.passwordConfirm || (confirm && confirm !== password)) && <small className="error">{errors.passwordConfirm ?? '비밀번호가 서로 달라요.'}</small>}
+        </label>
+        {errors.form && <p className="error" role="alert">{errors.form}</p>}
+        {done && <p className="ok" role="status">비밀번호를 바꿨어요. 다른 기기에서는 로그아웃됐어요.</p>}
+        <div><button className="btn btn-primary" disabled={submitting || !current || !passwordOk(password) || password !== confirm}>비밀번호 변경</button></div>
+      </form>
+    </section>
   )
 }

@@ -59,10 +59,6 @@ public class LoginFlow {
                 session.setAttribute(ERROR_KEY, new LoginError("ACCOUNT_SUSPENDED", s.endsAt(), s.reason()));
                 yield "/login?error=ACCOUNT_SUSPENDED";
             }
-            case LoginOutcome.NoVerifiedEmail n -> {
-                sessions.clearAuthentication(request, response);
-                yield "/login?error=NO_VERIFIED_EMAIL";
-            }
         };
     }
 

@@ -58,6 +58,21 @@ public class AvailabilityController {
         return new HandleAvailability(false, reason.name(), reason.message(), suggestion);
     }
 
+    public record HandleSuggestion(String handleBody) {}
+
+    /**
+     * 가입 화면의 주소 미리 채우기 (docs/08 §3, 004 FR-011). 재료는 이메일 @ 앞부분(이메일 가입) 또는 이름이다.
+     * 비어 있는 첫 번호까지 붙여 돌려준다.
+     */
+    @GetMapping("/api/handles/suggestion")
+    public HandleSuggestion suggest(@RequestParam String material,
+                                    @RequestParam(defaultValue = "LOCAL") com.team.blog.account.domain.AuthProvider provider,
+                                    HttpServletRequest request) {
+        rateLimiter.check("avail:ip:" + ipResolver.resolve(request), perMinute, Duration.ofMinutes(1));
+        String m = material.length() > 254 ? material.substring(0, 254) : material;
+        return new HandleSuggestion(HandlePolicy.bodyOf(suggester.suggest(provider, m)));
+    }
+
     public record NicknameAvailability(boolean available, String code, String message) {}
 
     @GetMapping("/api/nicknames/availability")

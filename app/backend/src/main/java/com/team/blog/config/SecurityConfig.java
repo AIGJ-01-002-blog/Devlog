@@ -13,6 +13,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
@@ -22,6 +24,7 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
+import com.team.blog.account.infra.AuthIdentityRepository;
 import com.team.blog.account.infra.MemberRepository;
 import com.team.blog.account.infra.oauth.GithubOAuth2UserService;
 import com.team.blog.account.infra.oauth.OAuth2LoginHandlers;
@@ -44,12 +47,13 @@ public class SecurityConfig {
     static final String[] PUBLIC_WRITES = {
             "/api/auth/signup", "/api/auth/redirect", "/api/dev/login",
             "/api/auth/login", "/api/auth/signup/email", "/api/auth/email/verify", "/api/auth/email/resend",
-            "/api/auth/password/reset-request", "/api/auth/password/reset",
+            "/api/auth/password/reset-request", "/api/auth/password/reset", "/api/auth/password/reset-check",
             "/api/markdown/preview-public", "/api/posts/*/views"
     };
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, MemberRepository members, GithubOAuth2UserService githubUsers,
+    SecurityFilterChain securityFilterChain(HttpSecurity http, MemberRepository members, AuthIdentityRepository identities,
+                                            GithubOAuth2UserService githubUsers,
                                             OAuth2LoginHandlers loginHandlers, RateLimiter rateLimiter,
                                             ClientIpResolver ipResolver, StringRedisTemplate redis, BlogProperties props,
                                             ContentSecurityPolicy csp) throws Exception {
@@ -89,8 +93,14 @@ public class SecurityConfig {
                         .referrerPolicy(r -> r.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                         .addHeaderWriter(csp))
                 .addFilterBefore(new LoginGuardFilter(rateLimiter, ipResolver, redis, props), OAuth2AuthorizationRequestRedirectFilter.class)
-                .addFilterBefore(new AccountStateFilter(members), AnonymousAuthenticationFilter.class);
+                .addFilterBefore(new AccountStateFilter(members, identities), AnonymousAuthenticationFilter.class);
         return http.build();
+    }
+
+    /** 비밀번호는 되돌릴 수 없는 BCrypt로만 저장한다 (004 FR-017). */
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(10);
     }
 
     private static void unauthorized(HttpServletRequest request, HttpServletResponse response,

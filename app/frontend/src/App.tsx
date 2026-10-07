@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { Header } from './components/Header'
+import { VerifyBanner } from './components/VerifyBanner'
 import { loginPath, useAuth } from './lib/auth'
 import { match, navigate, useLocation } from './lib/router'
 import { AgreementsPage } from './pages/AgreementsPage'
@@ -10,7 +11,11 @@ import { ManagePage } from './pages/ManagePage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { PostPage } from './pages/PostPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { SignupEmailPage } from './pages/SignupEmailPage'
 import { SignupSocialPage } from './pages/SignupSocialPage'
+import { VerifyEmailPage } from './pages/VerifyEmailPage'
 import { NewPostPage, WritePage } from './pages/WritePage'
 
 export function App() {
@@ -18,6 +23,7 @@ export function App() {
   return (
     <>
       {!path.startsWith('/write') && <Header />}
+      {path !== '/verify-email' && <VerifyBanner />}
       <AgreementGate path={path}>{route(path)}</AgreementGate>
     </>
   )
@@ -29,7 +35,11 @@ function route(path: string): ReactNode {
   if ((p = match('/@:handle/posts/:id', path))) return <PostPage key={`${p.handle}/${p.id}`} handle={p.handle} id={p.id} />
   if ((p = match('/@:handle', path))) return <BlogPage key={p.handle} handle={p.handle} />
   if (path === '/login') return <LoginPage />
+  if (path === '/signup') return <SignupEmailPage />
   if (path === '/signup/social') return <SignupSocialPage />
+  if (path === '/forgot-password') return <ForgotPasswordPage />
+  if (path === '/reset-password') return <ResetPasswordPage />
+  if (path === '/verify-email') return <VerifyEmailPage />
   if (path === '/agreements') return <AgreementsPage />
   if (path === '/write') return <RequireLogin><NewPostPage /></RequireLogin>
   if ((p = match('/write/:id', path))) return <RequireLogin><WritePage key={p.id} id={p.id} /></RequireLogin>

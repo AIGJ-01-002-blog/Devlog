@@ -28,9 +28,20 @@ public record BlogProperties(
 
     public record Agreements(String termsVersion, String termsEffectiveDate, String privacyVersion, String privacyEffectiveDate) {}
 
+    /**
+     * @param verifyTokenTtl    이메일 인증 링크 유효 시간 (docs/07 §3)
+     * @param resetTokenTtl     비밀번호 재설정 링크 유효 시간 (docs/07 §4-1)
+     * @param loginLockThreshold 같은 계정 연속 실패 허용 횟수, 넘으면 loginLockDuration 동안 잠금 (docs/07 §6)
+     * @param mailFrom          보내는 사람 (메일 머리글 From)
+     */
     public record Auth(@DefaultValue("10m") Duration pendingSignupTtl,
                        @DefaultValue("20") int loginRateLimitPerMinute,
-                       @DefaultValue("30") int availabilityRateLimitPerMinute) {}
+                       @DefaultValue("30") int availabilityRateLimitPerMinute,
+                       @DefaultValue("24h") Duration verifyTokenTtl,
+                       @DefaultValue("30m") Duration resetTokenTtl,
+                       @DefaultValue("5") int loginLockThreshold,
+                       @DefaultValue("15m") Duration loginLockDuration,
+                       @DefaultValue("devlog <no-reply@devlog.local>") String mailFrom) {}
 
     public record Handle(@DefaultValue("16") int autoBodyMaxLength, @DefaultValue Set<String> reserved) {}
 

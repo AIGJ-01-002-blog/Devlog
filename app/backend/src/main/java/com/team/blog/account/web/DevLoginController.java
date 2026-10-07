@@ -1,17 +1,22 @@
 package com.team.blog.account.web;
 
+import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.team.blog.account.application.SocialProfile;
 import com.team.blog.account.domain.AuthProvider;
+import com.team.blog.shared.mail.Mail;
+import com.team.blog.shared.mail.Mailer;
+import com.team.blog.shared.mail.OutboxMailer;
 import com.team.blog.shared.web.SafeRedirects;
 
 /**
@@ -22,9 +27,17 @@ import com.team.blog.shared.web.SafeRedirects;
 @ConditionalOnProperty(name = "blog.dev-login.enabled", havingValue = "true")
 public class DevLoginController {
     private final LoginFlow loginFlow;
+    private final Mailer mailer;
 
-    public DevLoginController(LoginFlow loginFlow) {
+    public DevLoginController(LoginFlow loginFlow, Mailer mailer) {
         this.loginFlow = loginFlow;
+        this.mailer = mailer;
+    }
+
+    /** 개발 환경의 보낸 메일함 (004 FR-033): 실제로 보내지 않은 인증·재설정 메일을 확인한다. */
+    @GetMapping("/api/dev/mails")
+    public List<Mail> mails() {
+        return mailer instanceof OutboxMailer outbox ? outbox.recent() : List.of();
     }
 
     public record DevLoginRequest(String provider, String providerUserId, String login, String name, String email,

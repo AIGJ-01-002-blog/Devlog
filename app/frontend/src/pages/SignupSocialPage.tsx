@@ -4,7 +4,11 @@ import { useAuth } from '../lib/auth'
 import { navigate } from '../lib/router'
 
 interface Terms { termsVersion: string; termsEffectiveDate: string; privacyVersion: string; privacyEffectiveDate: string }
-interface Draft { provider: string; prefix: string; handleBody: string; nickname: string; email: string; avatarUrl: string | null; terms: Terms }
+interface Draft {
+  provider: string; prefix: string; handleBody: string; nickname: string; email: string | null; avatarUrl: string | null
+  /** 소셜이 인증된 이메일을 주지 않았으면 여기서 받아 메일로 인증한다 (004 FR-028) */
+  emailRequired: boolean; terms: Terms
+}
 interface Check { available: boolean; message: string | null; suggestion?: string | null }
 
 /** 소셜 가입 마무리 (docs/08·09): 접두어 고정 + 본문 입력, 0.5초 뒤 중복 확인, 닉네임, 약관 동의. */
@@ -14,6 +18,7 @@ export function SignupSocialPage() {
   const [expired, setExpired] = useState(false)
   const [body, setBody] = useState('')
   const [nickname, setNickname] = useState('')
+  const [email, setEmail] = useState('')
   const [terms, setTerms] = useState(false)
   const [privacy, setPrivacy] = useState(false)
   const [handleCheck, setHandleCheck] = useState<Check | null>(null)
@@ -50,7 +55,7 @@ export function SignupSocialPage() {
     return (
       <main className="container narrow auth-page">
         <h1>가입 시간이 지났어요</h1>
-        <p className="muted">GitHub 로그인부터 다시 시작해 주세요.</p>
+        <p className="muted">소셜 로그인부터 다시 시작해 주세요.</p>
         <a className="btn btn-primary" href="/login">로그인으로</a>
       </main>
     )
@@ -63,7 +68,7 @@ export function SignupSocialPage() {
     setErrors({})
     try {
       const r = await api<{ handle: string; redirect: string }>('/api/auth/signup', {
-        method: 'POST', body: { handleBody: body, nickname, agreeTerms: terms, agreePrivacy: privacy },
+        method: 'POST', body: { handleBody: body, nickname, agreeTerms: terms, agreePrivacy: privacy, email: draft.emailRequired ? email : undefined },
       })
       await refresh()
       navigate(r.redirect || '/', { replace: true })
@@ -89,6 +94,15 @@ export function SignupSocialPage() {
       <h1>가입 마무리</h1>
       <p className="muted">블로그 주소는 가입 뒤 바꿀 수 없어요.</p>
       <form onSubmit={submit} className="form">
+        {draft.emailRequired && (
+          <label className="field">
+            <span>이메일</span>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" maxLength={254} required />
+            <small className={errors.email ? 'error' : 'muted'}>
+              {errors.email ?? `${draft.provider === 'GITHUB' ? 'GitHub' : 'Google'} 계정에 인증된 이메일이 없어요. 받을 수 있는 이메일을 넣으면 인증 메일을 보내요.`}
+            </small>
+          </label>
+        )}
         <label className="field">
           <span>블로그 주소</span>
           <div className="input-prefix">
