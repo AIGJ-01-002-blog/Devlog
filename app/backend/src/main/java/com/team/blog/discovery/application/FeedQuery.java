@@ -73,12 +73,22 @@ public class FeedQuery {
     }
 
     public Page home(String cursor) {
-        return list("home", null, cursor);
+        return list("home", null, null, cursor);
     }
 
     public Page blog(String handle, String cursor) {
+        return blog(handle, null, cursor);
+    }
+
+    /** @param tag 정규화한 태그 이름. null이면 거르지 않는다 (010 블로그 안 태그 필터) */
+    public Page blog(String handle, String tag, String cursor) {
         long authorId = findBlogOwner(handle).orElseThrow(NotFoundException::new);
-        return list("blog:" + authorId, authorId, cursor);
+        return list(tag == null ? "blog:" + authorId : "blog:" + authorId + ":tag:" + tag, authorId, tag, cursor);
+    }
+
+    /** 태그별 목록 (010 FR-019). 없는 태그도 빈 목록이라 비공개 글에만 쓰인 태그와 구별되지 않는다. */
+    public Page tag(String tag, String cursor) {
+        return list("tag:" + tag, null, tag, cursor);
     }
 
     public Optional<BlogProfile> profile(String handle, Long viewerId) {
@@ -97,17 +107,25 @@ public class FeedQuery {
                 : p.withFriendship(friends.relation(viewerId, p.id()).name(), friendQuery.lastActiveDaysAgo(viewerId, p.id()).orElse(null)));
     }
 
+    public Optional<Long> ownerId(String handle) {
+        return findBlogOwner(handle);
+    }
+
     private Optional<Long> findBlogOwner(String handle) {
         return jdbc.queryForList("SELECT id FROM member WHERE handle = ? AND withdrawn_at IS NULL AND deleted_at IS NULL",
                 Long.class, handle).stream().findFirst();
     }
 
-    private Page list(String listName, Long authorId, String cursor) {
+    private Page list(String listName, Long authorId, String tag, String cursor) {
         StringBuilder sql = new StringBuilder(CARD_SELECT);
         List<Object> args = new ArrayList<>();
         if (authorId != null) {
             sql.append(" AND p.author_id = ?");
             args.add(authorId);
+        }
+        if (tag != null) {
+            sql.append(" AND EXISTS (SELECT 1 FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = p.id AND t.name = ?)");
+            args.add(tag);
         }
         if (cursor != null && !cursor.isBlank()) {
             long[] k = cursors.decode(cursor, listName, 2);

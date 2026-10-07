@@ -4,14 +4,24 @@ import { Feed } from '../components/Feed'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { loginPath, useAuth } from '../lib/auth'
 import { friendsApi, lastActiveLabel } from '../lib/friends'
-import { Link, navigate } from '../lib/router'
+import { Link, navigate, useLocation } from '../lib/router'
+import { blogTagPath, normalizeTag, tagFormatError, tagsApi, type TagCount } from '../lib/tags'
 import type { BlogProfile, FeedPage, FriendRelation } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 
 export function BlogPage({ handle }: { handle: string }) {
-  const initial = takeInitialData<{ profile: BlogProfile; feed: FeedPage }>('blog')
+  const [initial] = useState(() => takeInitialData<{ profile: BlogProfile; feed: FeedPage; blogTags: TagCount[]; tag?: string }>('blog'))
   const [profile, setProfile] = useState<BlogProfile | null>(initial?.profile.handle === handle ? initial.profile : null)
   const [missing, setMissing] = useState(false)
+  const { search } = useLocation()
+  const rawTag = search.get('tag')
+  const tag = rawTag ? normalizeTag(rawTag) : null
+  const badTag = tag != null && tagFormatError(tag) != null
+
+  useEffect(() => {
+    // 정규화되지 않은 필터 값은 정규화된 주소로 바꾼다 (서버는 301)
+    if (tag && !badTag && tag !== rawTag) navigate(blogTagPath(handle, tag), { replace: true })
+  }, [tag, rawTag, badTag, handle])
 
   useEffect(() => {
     if (profile?.handle === handle) return
@@ -20,7 +30,7 @@ export function BlogPage({ handle }: { handle: string }) {
       .catch((e) => { if (e instanceof ApiError && e.status === 404) setMissing(true) })
   }, [handle, profile])
 
-  if (missing) return <NotFoundPage />
+  if (missing || badTag) return <NotFoundPage />
   if (!profile) return <main className="container"><p className="muted center">불러오는 중…</p></main>
   return (
     <main className="container">
@@ -41,12 +51,48 @@ export function BlogPage({ handle }: { handle: string }) {
           }} />}
         </div>
       </header>
-      <Feed endpoint={`/api/members/${encodeURIComponent(handle)}/posts`} storageKey={`feed:blog:${handle}`}
-            initial={initial?.profile.handle === handle ? initial.feed : null} showAuthor={false}
-            empty={profile.mine
+      <BlogTags handle={handle} initial={initial?.profile.handle === handle ? initial.blogTags : null} active={tag} />
+      <Feed key={tag ?? ''} showAuthor={false}
+            endpoint={`/api/members/${encodeURIComponent(handle)}/posts${tag ? `?tag=${encodeURIComponent(tag)}` : ''}`}
+            storageKey={`feed:blog:${handle}${tag ? `:tag:${tag}` : ''}`}
+            initial={initial?.profile.handle === handle && (initial.tag ?? null) === tag ? initial.feed : null}
+            empty={tag ? <p>이 태그로 공개한 글이 없어요.</p> : profile.mine
               ? <><p>아직 공개한 글이 없어요.</p><Link to="/write" className="btn btn-primary">첫 글 쓰기</Link></>
               : <p>아직 공개한 글이 없어요.</p>} />
     </main>
+  )
+}
+
+/** 블로그 태그 줄과 필터 머리 (010 FR-030·FR-031): 공개 글의 태그, 글 수 많은 순 처음 10개 + [태그 더 보기]. */
+function BlogTags({ handle, initial, active }: { handle: string; initial: TagCount[] | null; active: string | null }) {
+  const [tags, setTags] = useState<TagCount[] | null>(initial)
+  const [all, setAll] = useState(false)
+  useEffect(() => {
+    if (!initial) tagsApi.blogTags(handle).then(setTags).catch(() => setTags([]))
+  }, [handle, initial])
+  if (!tags) return null
+  const shown = all ? tags : tags.slice(0, 10)
+  const activeCount = active ? tags.find((t) => t.name === active)?.postCount ?? 0 : 0
+  return (
+    <>
+      {tags.length > 0 && (
+        <nav className="blog-tags" aria-label="이 블로그의 태그">
+          {shown.map((t) => (
+            <Link key={t.name} to={blogTagPath(handle, t.name)} className={`tag-link${t.name === active ? ' active' : ''}`}
+                  aria-current={t.name === active ? 'page' : undefined}>
+              #{t.name} <span className="muted">{t.postCount}</span>
+            </Link>
+          ))}
+          {tags.length > 10 && !all && <button type="button" className="btn btn-text" onClick={() => setAll(true)}>태그 더 보기</button>}
+        </nav>
+      )}
+      {active && (
+        <div className="filter-head row">
+          <b>#{active} 글 {activeCount}개</b>
+          <Link to={`/@${handle}`} className="btn btn-text">필터 해제</Link>
+        </div>
+      )}
+    </>
   )
 }
 

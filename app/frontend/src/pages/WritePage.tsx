@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ConflictDialog } from '../components/ConflictDialog'
+import { TagInput } from '../components/TagInput'
 import { api, ApiError } from '../lib/api'
 import { Autosaver, type Content, type SaveState } from '../lib/autosave'
 import { useAuth } from '../lib/auth'
@@ -10,6 +11,7 @@ import { ALT_SOFT_LIMIT, bodyImages, formatBytes, forPreview, pendingIds, restor
 import { useImageUploads } from '../lib/useImageUploads'
 import { decideRestore } from '../lib/restore'
 import { navigate, setLeaveGuard } from '../lib/router'
+import { tagErrors } from '../lib/tags'
 import type { EditorView, ServerContent, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 
@@ -66,6 +68,8 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
   const [publishing, setPublishing] = useState(false)
   const [showPublish, setShowPublish] = useState(false)
   const [visibility, setVisibility] = useState<Visibility>(view.visibility)
+  // 태그는 발행할 때만 확정된다. 다시 발행할 때는 지금 달린 태그로 미리 채운다 (010 FR-006·FR-014)
+  const [tags, setTags] = useState<string[]>(view.tags ?? [])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showAlts, setShowAlts] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -227,7 +231,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     setPublishing(true)
     setErrors({})
     const key = crypto.randomUUID()
-    const body = { title, contentMd: content, tags: [], visibility, baseVersion: saver.current!.version }
+    const body = { title, contentMd: content, tags, visibility, baseVersion: saver.current!.version }
     try {
       for (let attempt = 0; ; attempt++) {
         try {
@@ -249,7 +253,8 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
         }
       }
     } catch (e) {
-      setShowPublish(false)
+      // 태그 오류는 발행 창 안의 칩에 보여 준다
+      if (!(e instanceof ApiError && e.errors.some((f) => f.field.startsWith('tags')))) setShowPublish(false)
       handleError(e)
     } finally {
       setPublishing(false)
@@ -351,6 +356,8 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
               <label><input type="radio" name="visibility" checked={visibility === 'PUBLIC'} onChange={() => setVisibility('PUBLIC')} /> 🌐 전체 공개</label>
               <label><input type="radio" name="visibility" checked={visibility === 'PRIVATE'} onChange={() => setVisibility('PRIVATE')} /> 🔒 비공개 (나만 보기)</label>
             </fieldset>
+            <TagInput value={tags} onChange={(t) => { setTags(t); setErrors((m) => withoutTagErrors(m)) }} errors={tagErrors(errors)} />
+            {Object.keys(withoutTagErrors(errors)).length > 0 && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
             {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
             <AltTexts content={content} open={showAlts} onOpen={() => setShowAlts(true)}
                       localUrls={images.localUrls.current} onChange={(i, alt) => setContent((c) => setAlt(c, i, alt))} />
@@ -434,6 +441,10 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
 }
 
 /** 발행 설정 창의 대체글 넣기 (009 US3). 없어도 발행은 막지 않는다. */
+function withoutTagErrors(map: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(map).filter(([k]) => !k.startsWith('tags')))
+}
+
 function AltTexts({ content, open, onOpen, localUrls, onChange }: {
   content: string; open: boolean; onOpen: () => void; localUrls: Map<string, string>; onChange: (index: number, alt: string) => void
 }) {

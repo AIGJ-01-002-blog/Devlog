@@ -403,3 +403,36 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .storage-bar { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; margin: 4px 0; max-width: 320px; }
 .storage-bar > span { display: block; height: 100%; background: var(--primary, #12b886); }
 .storage-bar.warn > span { background: var(--danger); }
+
+/* 태그 (010) */
+.tag-box { display: flex; flex-direction: column; gap: 0; }
+.tag-input {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 8px; min-height: 40px;
+  border: 1px solid var(--border-2); border-radius: var(--radius); background: var(--surface);
+}
+.tag-input:focus-within { border-color: var(--primary); }
+.tag-input.invalid { border-color: var(--danger); }
+.field .tag-input input:not([type]) { flex: 1; width: auto; min-width: 120px; height: auto; border: 0; padding: 4px; background: transparent; outline: none; box-shadow: none; }
+.tag-chip {
+  display: inline-flex; align-items: center; gap: 2px; height: 26px; padding: 0 4px 0 10px; border-radius: 13px;
+  border: 1px solid transparent; background: var(--surface-2); color: var(--primary); font-size: 0.875rem; cursor: grab;
+}
+.tag-chip.invalid { border-color: var(--danger); color: var(--danger); }
+.tag-remove { border: 0; background: none; color: var(--muted); padding: 0 4px; font-size: 1rem; line-height: 1; cursor: pointer; }
+.tag-suggest {
+  margin: 4px 0 0; padding: 4px 0; list-style: none;
+  background: var(--surface); border: 1px solid var(--border-2); border-radius: var(--radius); box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+}
+.tag-suggest li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 12px; cursor: pointer; }
+.tag-suggest li[aria-selected="true"], .tag-suggest li:hover { background: var(--surface-2); }
+.post-tags, .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 12px 0 24px; }
+.tag-link {
+  display: inline-block; padding: 4px 12px; border-radius: 16px; background: var(--surface-2); color: var(--primary);
+  font-size: 0.875rem; text-decoration: none;
+}
+.tag-link:hover { background: var(--border); }
+.tag-link.active { background: var(--primary); color: var(--surface); }
+.tag-link.active .muted { color: inherit; }
+.blog-tags { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 16px; }
+.filter-head { justify-content: space-between; margin: 0 0 16px; }
+.tag-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; }

@@ -16,8 +16,10 @@ interface Saved {
  * 카드 목록 + [더 보기]. 이어 붙일 때 이미 있는 글은 건너뛴다(docs/10 §4-3).
  * 상세에서 뒤로 오면 카드·커서·스크롤 위치를 30분 동안 복원한다(L-6).
  */
-export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty }: {
+export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, onFirstPage }: {
   endpoint: string
+  /** 첫 쪽을 서버에서 새로 받았을 때 (태그 페이지의 글 수 같은 머리 정보) */
+  onFirstPage?: (page: FeedPage) => void
   storageKey: string
   initial: FeedPage | null
   showAuthor?: boolean
@@ -30,13 +32,16 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty }
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const state = useRef({ items, cursor })
+  const firstPage = useRef(onFirstPage)
+  firstPage.current = onFirstPage
   state.current = { items, cursor }
 
   const load = useCallback(async (next: string | null) => {
     setLoading(true)
     setError(false)
     try {
-      const page = await api<FeedPage>(next ? `${endpoint}?cursor=${encodeURIComponent(next)}` : endpoint)
+      const page = await api<FeedPage>(next ? `${endpoint}${endpoint.includes('?') ? '&' : '?'}cursor=${encodeURIComponent(next)}` : endpoint)
+      if (!next) firstPage.current?.(page)
       setItems((prev) => {
         const base = next ? prev : []
         const seen = new Set(base.map((c) => c.id))

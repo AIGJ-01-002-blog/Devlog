@@ -18,6 +18,7 @@ import com.team.blog.post.infra.PostSql;
 import com.team.blog.shared.markdown.ContentRenderer;
 import com.team.blog.shared.markdown.ImageUrls;
 import com.team.blog.shared.markdown.RenderedHtmlCache;
+import com.team.blog.tag.application.TagQuery;
 
 /**
  * 글 상세 (docs/40). 판정은 PostAccessPolicy 한곳에서 한다. 본문 HTML은 원문에서 렌더링하고 Redis에 캐시한다(V3).
@@ -31,9 +32,11 @@ public class PostDetailQuery {
     private final AutosaveStore autosaves;
     private final RenderedHtmlCache htmlCache;
     private final ContentRenderer renderer;
+    private final TagQuery tags;
 
     public PostDetailQuery(JdbcTemplate jdbc, PostAccessPolicy policy, ImageUrls imageUrls, AutosaveStore autosaves,
-                           RenderedHtmlCache htmlCache, ContentRenderer renderer) {
+                           RenderedHtmlCache htmlCache, ContentRenderer renderer, TagQuery tags) {
+        this.tags = tags;
         this.jdbc = jdbc;
         this.policy = policy;
         this.imageUrls = imageUrls;
@@ -50,7 +53,7 @@ public class PostDetailQuery {
     public record Detail(long id, String url, String title, String contentHtml, String excerpt, String thumbnailUrl,
                          PostStatus status, Visibility visibility, Instant publishedAt, Instant firstPublicAt,
                          Instant editedAt, long viewCount, int likeCount, int commentCount, Author author,
-                         boolean mine, OwnerInfo owner) {
+                         boolean mine, OwnerInfo owner, List<String> tags) {
         /** 독자에게 보이는 날짜: 공개 글은 처음 공개된 날, 비공개 글은 최초 발행일 (spec 003 FR-005). */
         public Instant displayDate() {
             return firstPublicAt != null ? firstPublicAt : publishedAt;
@@ -100,7 +103,8 @@ public class PostDetailQuery {
         return Optional.of(new Detail(r.id, "/@" + r.handle + "/posts/" + r.id, r.title, html, renderer.excerpt(head),
                 imageUrls.urlOf(r.thumbnailKey), r.status, r.visibility, r.publishedAt, r.firstPublicAt, r.editedAt, r.viewCount,
                 r.likeCount, r.commentCount,
-                new Author(r.authorId, r.handle, r.nickname, r.bio, imageUrls.urlOf(r.profileImageKey)), mine, owner));
+                new Author(r.authorId, r.handle, r.nickname, r.bio, imageUrls.urlOf(r.profileImageKey)), mine, owner,
+                r.status == PostStatus.PUBLISHED ? tags.tagsOf(r.id) : List.of()));
     }
 
     /** DB에 아직 반영 전인 자동 저장(최대 1분)도 "수정 중"으로 본다. Redis가 안 되면 DB 작업본만 본다. */

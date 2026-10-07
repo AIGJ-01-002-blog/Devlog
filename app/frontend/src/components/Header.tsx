@@ -23,6 +23,7 @@ export function Header() {
       <div className="container header-inner">
         <Link to="/" className="logo">devlog</Link>
         <nav className="header-actions">
+          <Link to="/tags" className="btn btn-text">태그</Link>
           {member ? (
             <>
               <Link to="/write" className="btn btn-outline">새 글 작성</Link>
