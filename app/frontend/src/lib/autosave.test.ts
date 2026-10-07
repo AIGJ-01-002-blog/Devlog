@@ -145,3 +145,38 @@ describe('Autosaver', () => {
     expect(send).not.toHaveBeenCalled()
   })
 })
+
+describe('Autosaver 기기 저장 보조 (006)', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('연결이 돌아오면 기다리던 재시도를 바로 한다', async () => {
+    let fail = true
+    const send = vi.fn(async (_c: Content, v: number) => {
+      if (fail) throw new TypeError('network')
+      return { version: v + 1, savedAt: '2026-10-07T00:00:00Z' }
+    })
+    const { saver, states } = setup(send)
+    saver.change({ title: '제목', contentMd: '오프라인' })
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(states.at(-1)?.kind).toBe('offline')
+    await vi.advanceTimersByTimeAsync(10_000)
+    const tries = send.mock.calls.length
+    fail = false
+    saver.retryNow()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(send.mock.calls.length).toBe(tries + 1)
+    expect(states.at(-1)?.kind).toBe('saved')
+  })
+
+  it('처음부터 충돌이면 보내지 않고 입력은 계속 받는다', async () => {
+    const { saver, send, states } = setup()
+    saver.markConflict({ title: '서버', contentMd: '서버 본문', version: 5, savedAt: '2026-10-07T00:00:00Z' })
+    saver.change({ title: '제목', contentMd: '기기' })
+    saver.retryNow()
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(send).not.toHaveBeenCalled()
+    expect(states.at(-1)?.kind).toBe('conflict')
+    expect(saver.hasUnsaved).toBe(true)
+  })
+})

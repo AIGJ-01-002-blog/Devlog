@@ -5,8 +5,10 @@ import { Autosaver, type Content, type SaveState } from '../lib/autosave'
 import { useAuth } from '../lib/auth'
 import { clock } from '../lib/format'
 import { highlightWithin } from '../lib/highlight'
+import { localDrafts, type LocalBackup, type LocalDraft } from '../lib/localDrafts'
+import { decideRestore } from '../lib/restore'
 import { navigate, setLeaveGuard } from '../lib/router'
-import type { EditorView, Visibility } from '../lib/types'
+import type { EditorView, ServerContent, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 
 /** [새 글]: 임시글을 먼저 만들고 에디터 주소로 바꾼다 (docs/04 §2-5). */
@@ -24,25 +26,38 @@ export function NewPostPage() {
 }
 
 export function WritePage({ id }: { id: string }) {
-  const [view, setView] = useState<EditorView | null>(null)
+  const { me } = useAuth()
+  const memberId = me?.member?.id
+  const [loaded, setLoaded] = useState<{ view: EditorView; local: LocalDraft | null } | null>(null)
   const [missing, setMissing] = useState(false)
 
   useEffect(() => {
-    setView(null)
-    api<EditorView>(`/api/posts/${encodeURIComponent(id)}/edit`).then(setView).catch(() => setMissing(true))
-  }, [id])
+    if (memberId == null) return
+    setLoaded(null)
+    api<EditorView>(`/api/posts/${encodeURIComponent(id)}/edit`)
+      .then(async (view) => setLoaded({ view, local: await localDrafts.get(memberId, view.id) }))
+      .catch(() => setMissing(true))
+  }, [id, memberId])
 
   if (missing) return <NotFoundPage />
-  if (!view) return <main className="container"><p className="muted center">불러오는 중…</p></main>
-  return <Editor key={view.id} view={view} />
+  if (!loaded || memberId == null) return <main className="container"><p className="muted center">불러오는 중…</p></main>
+  return <Editor key={loaded.view.id} view={loaded.view} local={loaded.local} memberId={memberId} />
 }
 
-function Editor({ view }: { view: EditorView }) {
-  const { me } = useAuth()
-  const [title, setTitle] = useState(view.title)
-  const [content, setContent] = useState(view.contentMd)
+const LOCAL_IDLE_MS = 1000
+
+function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft | null; memberId: number }) {
+  const serverContent: ServerContent = { title: view.title, contentMd: view.contentMd, version: view.version, savedAt: view.savedAt }
+  const [restore] = useState(() => decideRestore(view, local))
+  const restored = restore === 'load' || restore === 'conflict'
+  const [title, setTitle] = useState(restored ? local!.title : view.title)
+  const [content, setContent] = useState(restored ? local!.contentMd : view.contentMd)
   const [state, setState] = useState<SaveState>({ kind: 'saved', at: new Date(view.savedAt) })
-  const [showConflict, setShowConflict] = useState(false)
+  const [showConflict, setShowConflict] = useState(restore === 'conflict')
+  const [notice, setNotice] = useState<string | null>(restore === 'load' ? '이 기기에 저장되지 않은 변경을 불러왔어요.' : null)
+  const [localStored, setLocalStored] = useState(false)
+  const [backups, setBackups] = useState<LocalBackup[]>([])
+  const [showBackups, setShowBackups] = useState(false)
   const [preview, setPreview] = useState('')
   const [previewError, setPreviewError] = useState<string | null>(null)
   const [tab, setTab] = useState<'write' | 'preview'>('write')
@@ -60,11 +75,36 @@ function Editor({ view }: { view: EditorView }) {
       onState: setState,
       onVersion: () => undefined,
     })
+    if (restore === 'conflict') saver.current.markConflict(serverContent)
   }
+
+  // 이 기기에 남기기 (FR-001·FR-002): 입력이 1초 멈추면 서버 요청 없이. 서버 저장이 끝나도 미전송 여부를 갱신한다
+  const latest = useRef({ title, content })
+  latest.current = { title, content }
+  const storeLocal = useCallback(async () => {
+    const s = saver.current!
+    const ok = await localDrafts.put({
+      memberId, postId: view.id, title: latest.current.title, contentMd: latest.current.content,
+      baseVersion: s.version, unsynced: s.hasUnsaved || s.isConflict, pendingImages: [], savedAt: Date.now(),
+    })
+    setLocalStored(ok)
+  }, [memberId, view.id])
 
   useEffect(() => {
     saver.current?.change({ title, contentMd: content })
-  }, [title, content])
+    setLocalStored(false)
+    const t = setTimeout(() => void storeLocal(), LOCAL_IDLE_MS)
+    return () => clearTimeout(t)
+  }, [title, content, storeLocal])
+
+  useEffect(() => {
+    if (state.kind === 'saved') void storeLocal()
+  }, [state, storeLocal])
+
+  useEffect(() => {
+    if (restore === 'discard') void localDrafts.remove(memberId, view.id)
+    void localDrafts.backups(memberId, view.id).then(setBackups)
+  }, [restore, memberId, view.id])
 
   // 탭이 가려지거나 떠날 때 바로 저장, 미저장이면 떠나기 전에 묻는다 (FR-011, FR-015)
   useEffect(() => {
@@ -74,15 +114,20 @@ function Editor({ view }: { view: EditorView }) {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (s.hasUnsaved || s.isConflict) e.preventDefault()
     }
+    const onOnline = () => s.retryNow()
     document.addEventListener('visibilitychange', onHide)
     window.addEventListener('pagehide', onPageHide)
     window.addEventListener('beforeunload', onBeforeUnload)
+    window.addEventListener('online', onOnline)
     setLeaveGuard(() => !(s.hasUnsaved || s.isConflict) || confirm('저장되지 않은 변경이 있어요. 떠날까요?'))
     return () => {
       document.removeEventListener('visibilitychange', onHide)
       window.removeEventListener('pagehide', onPageHide)
       window.removeEventListener('beforeunload', onBeforeUnload)
+      window.removeEventListener('online', onOnline)
       setLeaveGuard(null)
+      // 미전송 내용이 없으면 이 글의 기기 데이터를 지운다 (FR-009). 있으면 남겨 다시 열 때 복구한다
+      if (!(s.hasUnsaved || s.isConflict)) void localDrafts.remove(memberId, view.id)
       void s.flushNow(true)
       s.stop()
     }
@@ -105,6 +150,11 @@ function Editor({ view }: { view: EditorView }) {
 
   const saveNow = useCallback(async (base?: number) => {
     const s = saver.current!
+    // 충돌 중 [저장]은 비교 창으로 (FR-011). 비교 창의 [편집 중인 내용으로 저장]만 서버 버전을 넘겨 덮어쓴다
+    if (s.isConflict && base === undefined) {
+      setShowConflict(true)
+      return false
+    }
     setState({ kind: 'saving' })
     try {
       const r = await api<{ version: number; savedAt: string }>(`/api/posts/${view.id}`,
@@ -146,6 +196,7 @@ function Editor({ view }: { view: EditorView }) {
             { method: 'POST', body, headers: { 'Idempotency-Key': key } })
           saver.current!.reset({ title, contentMd: content }, r.version)
           saver.current!.stop()
+          await localDrafts.remove(memberId, view.id)
           setLeaveGuard(null)
           navigate(r.url)
           return
@@ -172,7 +223,7 @@ function Editor({ view }: { view: EditorView }) {
       <div className="editor-toolbar">
         <div className="row">
           <button type="button" className="btn btn-text" onClick={() => history.length > 1 ? history.back() : navigate('/manage/posts')}>← 나가기</button>
-          <SaveIndicator state={state} onCompare={() => setShowConflict(true)} />
+          <SaveIndicator state={state} localStored={localStored} onCompare={() => setShowConflict(true)} />
         </div>
         <div className="row">
           <div className="tabs-mobile" role="tablist">
@@ -180,15 +231,24 @@ function Editor({ view }: { view: EditorView }) {
             <button type="button" role="tab" aria-selected={tab === 'preview'} onClick={() => setTab('preview')}>미리보기</button>
           </div>
           <button type="button" className="btn btn-outline" onClick={() => saveNow()}>저장</button>
-          <button type="button" className="btn btn-primary" onClick={() => setShowPublish(true)}>
+          {backups.length > 0 && (
+            <button type="button" className="btn btn-text" onClick={() => setShowBackups(true)}>이 기기 백업 {backups.length}</button>
+          )}
+          <button type="button" className="btn btn-primary" onClick={() => saver.current!.isConflict ? setShowConflict(true) : setShowPublish(true)}>
             {view.status === 'PUBLISHED' ? '다시 발행' : '발행'}
           </button>
         </div>
       </div>
       {state.kind === 'conflict' && (
         <div className="banner banner-warn">
-          ⚠ 다른 탭이나 기기에서 이 글이 수정되었어요({clock(state.server.savedAt)}). 지금 내용은 이 화면에만 있어요.
+          ⚠ 다른 탭이나 기기에서 이 글이 수정되었어요({clock(state.server.savedAt)}). 지금 내용은 이 기기에만 저장되고 있어요.
           <button type="button" className="btn btn-text" onClick={() => setShowConflict(true)}>비교하기</button>
+        </div>
+      )}
+      {notice && (
+        <div className="banner banner-ok" role="status">
+          {notice}
+          <button type="button" className="btn btn-text" aria-label="닫기" onClick={() => setNotice(null)}>✕</button>
         </div>
       )}
       {view.status === 'PUBLISHED' && (
@@ -231,14 +291,57 @@ function Editor({ view }: { view: EditorView }) {
         </div>
       )}
 
+      {showBackups && (
+        <div className="dialog-backdrop" role="presentation">
+          <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="backups-title">
+            <h2 id="backups-title">이 기기 백업</h2>
+            <p className="muted small">[저장된 내용 불러오기]를 고를 때 편집 중이던 내용이에요. 7일 동안 이 브라우저에만 남아요.</p>
+            <ul className="backup-list">
+              {backups.map((b) => (
+                <li key={b.at}>
+                  <div>
+                    <b>{b.title || '제목 없음'}</b> <span className="muted small">{new Date(b.at).toLocaleString('ko-KR')}</span>
+                    <p className="small muted backup-excerpt">{b.contentMd.slice(0, 120)}</p>
+                  </div>
+                  <div className="row">
+                    <button type="button" className="btn btn-outline" onClick={async () => {
+                      // 지금 내용도 백업해 두고 바꾼다: 어느 쪽도 모르게 사라지지 않게 (FR-013)
+                      const mine = { memberId, postId: view.id, ...current(), at: Date.now() }
+                      if (mine.title !== b.title || mine.contentMd !== b.contentMd) await localDrafts.addBackup(mine)
+                      setTitle(b.title)
+                      setContent(b.contentMd)
+                      setBackups(await localDrafts.backups(memberId, view.id))
+                      setShowBackups(false)
+                      setNotice('백업한 내용을 불러왔어요. 바로 전 내용도 백업해 두었어요.')
+                    }}>불러오기</button>
+                    <button type="button" className="btn btn-text" onClick={async () => {
+                      await localDrafts.removeBackup(b)
+                      setBackups((list) => list.filter((x) => x !== b))
+                    }}>지우기</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <footer className="dialog-footer">
+              <button type="button" className="btn btn-text" onClick={() => setShowBackups(false)}>닫기</button>
+            </footer>
+          </div>
+        </div>
+      )}
+
       {showConflict && conflictServer && (
         <ConflictDialog server={conflictServer} mine={current()}
           onClose={() => setShowConflict(false)}
           onOverwrite={() => void saveNow(conflictServer.version)}
-          onLoadServer={() => {
-            try {
-              localStorage.setItem(`draft-backup:${me?.member?.id}:${view.id}`, JSON.stringify({ ...current(), at: Date.now() }))
-            } catch { /* 백업 실패해도 불러오기는 한다 */ }
+          onLoadServer={async () => {
+            // 편집 중이던 내용은 이 기기에 7일 백업한다 (FR-012). 백업을 못 하면 불러오기 전에 알린다
+            const backup = { memberId, postId: view.id, ...current(), at: Date.now() }
+            if (!(await localDrafts.addBackup(backup))) {
+              if (!confirm('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 저장된 내용을 불러올까요?')) return
+            } else {
+              setBackups((b) => [backup, ...b])
+              setNotice('편집 중인 내용은 이 기기에 7일 동안 백업돼요.')
+            }
             setTitle(conflictServer.title)
             setContent(conflictServer.contentMd)
             saver.current!.reset({ title: conflictServer.title, contentMd: conflictServer.contentMd }, conflictServer.version)
@@ -256,18 +359,18 @@ function Editor({ view }: { view: EditorView }) {
   )
 }
 
-function SaveIndicator({ state, onCompare }: { state: SaveState; onCompare: () => void }) {
+function SaveIndicator({ state, localStored, onCompare }: { state: SaveState; localStored: boolean; onCompare: () => void }) {
   switch (state.kind) {
     case 'saved':
       return <span className="save-state ok" role="status">✓ 저장됨{state.at ? ` ${clock(state.at)}` : ''}</span>
     case 'dirty':
-      return <span className="save-state" role="status">● 저장 대기</span>
+      return <span className="save-state" role="status">{localStored ? '● 이 기기에 저장됨 (동기화 대기)' : '● 저장 대기'}</span>
     case 'saving':
       return <span className="save-state" role="status">저장 중…</span>
     case 'offline':
-      return <span className="save-state warn" role="status">⚠ 오프라인 — 연결되면 다시 저장해요</span>
+      return <span className="save-state warn" role="status">⚠ 오프라인 — 이 기기에 저장 중, 연결되면 자동 동기화</span>
     case 'conflict':
-      return <button type="button" className="save-state warn btn-text" onClick={onCompare}>⚠ 다른 곳에서 수정됨 [비교하기]</button>
+      return <button type="button" className="save-state warn btn-text" onClick={onCompare}>⚠ 다른 곳에서 수정됨 — 이 기기에만 저장 중 [비교하기]</button>
     case 'error':
       return <span className="save-state warn" role="status">⚠ {state.message}</span>
   }
