@@ -10,6 +10,7 @@ import { loginPath, useAuth } from './lib/auth';
 import { match, navigate, useLocation } from './lib/router';
 import { AgreementsPage } from './pages/AgreementsPage';
 import { BlogPage } from './pages/BlogPage';
+import { SeriesPage } from './pages/SeriesPage';
 import { FeedPage } from './pages/FeedPage';
 import { FollowsPage } from './pages/FollowsPage';
 import { HomePage } from './pages/HomePage';
@@ -47,6 +48,10 @@ function route(path) {
         return _jsx(FollowsPage, { handle: p.handle, direction: "followers" }, `${p.handle}/f`);
     if ((p = match('/@:handle/following', path)))
         return _jsx(FollowsPage, { handle: p.handle, direction: "following" }, `${p.handle}/g`);
+    if ((p = match('/@:handle/series/:slug', path)))
+        return _jsx(SeriesPage, { handle: p.handle, slug: p.slug }, `${p.handle}/s/${p.slug}`);
+    if ((p = match('/@:handle/series', path)))
+        return _jsx(BlogPage, { handle: p.handle, tab: "series" }, p.handle);
     if ((p = match('/@:handle', path)))
         return _jsx(BlogPage, { handle: p.handle }, p.handle);
     if (path === '/search')

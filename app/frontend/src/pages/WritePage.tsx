@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ConflictDialog } from '../components/ConflictDialog'
 import { AiTagSuggest } from '../components/AiTagSuggest'
 import { AttachmentEditor } from '../components/AttachmentEditor'
+import { SeriesPicker } from '../components/SeriesPicker'
 import { TagInput } from '../components/TagInput'
 import { api, ApiError } from '../lib/api'
 import { Autosaver, type Content, type SaveState } from '../lib/autosave'
@@ -341,6 +342,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
                       }
                     }} />
           {errors.contentMd && <small className="error">{errors.contentMd}</small>}
+          <SeriesPicker postId={view.id} />
           <AttachmentEditor postId={view.id} published={view.status === 'PUBLISHED'} />
         </section>
         <section className="editor-preview" aria-label="미리보기">

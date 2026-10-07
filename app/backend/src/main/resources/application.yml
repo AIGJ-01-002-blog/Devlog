@@ -159,6 +159,10 @@ blog:
   search:
     recent-window: 3000
     per-minute: 30
+  # 시리즈 (spec 024 FR-003): 회원당 시리즈 수, 시리즈당 글 수
+  series:
+    max-per-member: 100
+    max-posts: 200
   # AI 태그 추천 (spec 018): 외부 AI(Gemini 무료 등급) 먼저, 한도면 자체 AI(Ollama). 둘 다 비어 있으면 기능이 꺼진다
   ai:
     enabled: ${AI_ENABLED:true}

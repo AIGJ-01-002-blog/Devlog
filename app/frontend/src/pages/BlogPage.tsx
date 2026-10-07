@@ -12,8 +12,10 @@ import { Link, navigate, useLocation } from '../lib/router'
 import { blogTagPath, normalizeTag, tagFormatError, tagsApi, type TagCount } from '../lib/tags'
 import type { BlogProfile, FeedPage, FriendRelation } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
+import { BlogSeries } from './SeriesPage'
 
-export function BlogPage({ handle }: { handle: string }) {
+/** tab: 블로그 글 목록(기본) 또는 [시리즈] 탭 (024) */
+export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'posts' | 'series' }) {
   const [initial] = useState(() => takeInitialData<{ profile: BlogProfile; feed: FeedPage; blogTags: TagCount[]; tag?: string }>('blog'))
   const [profile, setProfile] = useState<BlogProfile | null>(initial?.profile.handle === handle ? initial.profile : null)
   const [missing, setMissing] = useState(false)
@@ -63,6 +65,11 @@ export function BlogPage({ handle }: { handle: string }) {
           </div>}
         </div>
       </header>
+      <nav className="blog-tabs" aria-label="블로그 메뉴">
+        <Link to={`/@${profile.handle}`} aria-current={tab === 'posts' ? 'page' : undefined}>글</Link>
+        <Link to={`/@${profile.handle}/series`} aria-current={tab === 'series' ? 'page' : undefined}>시리즈</Link>
+      </nav>
+      {tab === 'series' ? <BlogSeries handle={profile.handle} mine={profile.mine} /> : <>
       <SearchBox initial={q} placeholder={`${profile.nickname}님의 글 검색`} onSearch={searchIn} />
       {q ? (
         <>
@@ -82,6 +89,7 @@ export function BlogPage({ handle }: { handle: string }) {
             empty={tag ? <p>이 태그로 공개한 글이 없어요.</p> : profile.mine
               ? <><p>아직 공개한 글이 없어요.</p><Link to="/write" className="btn btn-primary">첫 글 쓰기</Link></>
               : <p>아직 공개한 글이 없어요.</p>} />
+      </>}
       </>}
     </main>
   )
