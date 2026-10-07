@@ -1,0 +1,22 @@
+# 구현 메모: 021 다크 모드 (v1.10.0)
+
+## 구조
+| 파일 | 역할 |
+|---|---|
+| `app/frontend/public/theme.js` (577바이트) | 머리에서 바로 실행되는 별도 스크립트(인라인 아님, CSP `script-src 'self'`). 저장된 고정 선택(light/dark)만 `data-theme`로 두고 `html.js`를 붙인다. 저장소가 막혀도 오류 없이 기기 설정 |
+| `index.html` | 모듈 스크립트보다 먼저 `<script src="/theme.js">`. 서버 화면(SpaShell)도 같은 index.html을 쓴다. `color-scheme` 메타는 이미 있음 |
+| `styles.css` 토큰 | docs/45 §3 이름(`--color-bg` 등 11개)과 개인 토큰. 라이트는 `:root, [data-theme="light"]`, 다크는 `[data-theme="dark"]`와 `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])` 두 곳(스크립트가 꺼져도 기기 설정을 따름). 토큰 밖에는 색 값이 없다 |
+| `lib/theme.ts`, `components/ThemeToggle.tsx` | 헤더 맨 오른쪽 버튼: 시스템 → 라이트 → 다크(🖥/☀️/🌙, 읽기 이름·툴팁). "시스템"은 저장 값과 `data-theme`를 지워 CSS 미디어 쿼리가 기기 설정 변화를 바로 따른다 |
+
+## 결정
+- 시스템 상태에서는 `data-theme`를 두지 않는다. 기기 설정 변화를 따라가는 감시 코드가 필요 없다(FR-006).
+- 강조색: 기존 velog 초록 `#12b886`은 흰 배경 글자 대비 2.6:1이라 기준 미달 → 글자 `--color-brand` 라이트 `#087f5b`(5.0:1)·다크 `#63e6be`(12.1:1), 버튼 배경 `--color-brand-fill` `#087f5b`(흰 글자 5.0:1).
+- 입력칸 테두리는 3:1을 위해 개인 토큰 `--color-input-border`(라이트 `#868e96` 3.3:1, 다크 `#6c757d` 3.6:1). 구분선은 공통 `--color-border`.
+- 페이지 배경은 공통 기본값 `#ffffff`(이전 `#f8f9fa`).
+- 코드 강조는 테마 파일 두 개 대신 같은 GitHub/GitHub Dark 색을 토큰으로 바꾼다(파일 하나, 같은 결과). 주석 색은 대비를 위해 `#57606a`.
+- 바꾸는 순간 한 프레임 동안 `.theme-switching`으로 전환 효과를 끈다(FR-012).
+- 테마 버튼이 늘어 375px 화면에서 헤더가 넘쳤다(이미 451px로 넘치고 있었음). 좁은 화면에서 간격을 줄이고 [새 글 작성]을 [글쓰기]로 줄였다.
+
+## 확인
+- 화면 `theme.test.ts` 8개: 순서, 저장·적용·시스템, 저장소 막힘, 다크 값 두 곳 일치, 공통 이름 존재, 토큰 밖 색 값 없음, theme.js 1KB 미만
+- 브라우저: 기기 다크면 `#121212`, 라이트 → 새로 고침 유지 → 다크 고정은 기기 설정 무시 → 시스템은 기기 설정 변화를 바로 따름, 스크립트 꺼짐에서도 기기 설정, CSP 위반 없음, 375px 가로 넘침 없음

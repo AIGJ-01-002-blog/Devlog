@@ -3,6 +3,7 @@ import { loginPath, useAuth } from '../lib/auth'
 import { Link, navigate } from '../lib/router'
 import { Avatar } from './Avatar'
 import { NotificationBell } from './NotificationBell'
+import { ThemeToggle } from './ThemeToggle'
 
 export function Header() {
   const { me, logout } = useAuth()
@@ -33,7 +34,7 @@ export function Header() {
           {member ? (
             <>
               <NotificationBell />
-              <Link to="/write" className="btn btn-outline">새 글 작성</Link>
+              <Link to="/write" className="btn btn-outline header-write" aria-label="새 글 작성"><span className="long">새 글 작성</span><span className="short" aria-hidden="true">글쓰기</span></Link>
               <div className="menu" ref={menuRef}>
                 <button type="button" className="menu-button" aria-haspopup="menu" aria-expanded={open}
                         onClick={() => setOpen((o) => !o)}>
@@ -59,6 +60,7 @@ export function Header() {
           ) : (
             <Link to={loginPath()} className="btn btn-dark">로그인</Link>
           )}
+          <ThemeToggle />
         </nav>
       </div>
     </header>
