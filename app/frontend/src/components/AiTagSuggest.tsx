@@ -82,7 +82,7 @@ export function AiTagSuggest({ postId, title, content, tags, onAdd }: {
         <section className="ai-consent" role="group" aria-labelledby={consentId}>
           <h3 id={consentId}>AI 태그 추천을 쓰기 전에 확인해 주세요</h3>
           <ul>
-            <li>글 제목과 본문 앞부분이 Google Gemini(무료 등급)로 전송돼요.</li>
+            <li>글 제목과 본문 앞부분, 지금 붙인 태그가 Google Gemini(무료 등급)로 전송돼요.</li>
             <li>Google이 이 내용을 서비스 개선에 쓰고, 사람이 검토할 수 있어요.</li>
             <li>Gemini를 쓸 수 없을 때는 우리 서버의 AI로 처리하고, 이때는 외부로 전송되지 않아요.</li>
             <li>개인정보·비밀번호·회사 기밀이 든 글에는 쓰지 마세요.</li>
