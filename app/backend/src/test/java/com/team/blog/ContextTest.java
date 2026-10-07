@@ -19,4 +19,10 @@ class ContextTest extends IntegrationTest {
                 .andExpect(header().string("Referrer-Policy", "strict-origin-when-cross-origin"))
                 .andExpect(header().exists("Content-Security-Policy"));
     }
+
+    @Test
+    void 쿠버네티스_프로브가_응답한다() throws Exception {
+        mvc.perform(get("/actuator/health/liveness")).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("UP"));
+        mvc.perform(get("/actuator/health/readiness")).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("UP"));
+    }
 }

@@ -3,6 +3,12 @@ blog:
     enabled: true
   cursor:
     secret: test-cursor-secret
+  post:
+    # 테스트는 자동 저장을 연달아 보내므로 간격 제한을 끈다 (제한 자체는 PostLimitsTest가 확인)
+    autosave-min-interval: 0s
+    # 예약 작업은 테스트가 직접 부른다
+    autosave-flush-interval: 1h
+    empty-draft-cleanup-cron: "-"
 logging:
   level:
     root: WARN

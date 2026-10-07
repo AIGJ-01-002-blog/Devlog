@@ -3,7 +3,7 @@
 -- ERD Cloud DATETIME은 timestamptz로 변환; 현재 시각 기본값은 CURRENT_TIMESTAMP.
 -- friendship은 포함하되 FRIENDS 공개 범위 및 친구 알림 종류는 활성화하지 않는다.
 -- 신고는 report_case(사건) + report(신고)로 분리(2026-10-07 E1 채택). 동의는 member_agreement(2026-10-07 E2 채택, 버전 포함), 정지는 member_suspension으로 분리(2026-10-07 E3 채택).
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
+-- pg_trgm 확장과 trgm 인덱스 4개는 V2__optional_trgm.sql로 옮겼다 (공용 DB에 확장 생성 권한이 없을 수 있음, 2026-10-07 인프라 결정)
 
 -- 회원
 CREATE TABLE member (
@@ -37,10 +37,6 @@ CREATE TABLE member (
 CREATE UNIQUE INDEX uq_member_nickname ON member (lower(nickname));
 
 CREATE INDEX ix_member_withdraw_purge ON member (withdrawn_at) WHERE status = 'WITHDRAWN' AND deleted_at IS NULL;
-
-CREATE INDEX ix_member_nickname_trgm ON member USING gin (nickname gin_trgm_ops);
-
-CREATE INDEX ix_member_handle_trgm ON member USING gin (handle gin_trgm_ops);
 
 COMMENT ON TABLE member IS '회원';
 
@@ -264,10 +260,6 @@ CREATE INDEX ix_post_blog ON post (author_id, first_public_at DESC, id DESC) WHE
 CREATE INDEX ix_post_manage ON post (author_id, status, updated_at DESC) WHERE deleted_at IS NULL;
 
 CREATE INDEX ix_post_trash ON post (author_id, deleted_at DESC) WHERE deleted_at IS NOT NULL;
-
-CREATE INDEX ix_post_title_trgm ON post USING gin (title gin_trgm_ops);
-
-CREATE INDEX ix_post_content_trgm ON post USING gin (content_md gin_trgm_ops);
 
 COMMENT ON TABLE post IS '글';
 

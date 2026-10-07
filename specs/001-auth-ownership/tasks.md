@@ -4,9 +4,11 @@
 
 ## Phase 1: Setup
 
-- [X] T001 `app/backend` Maven 프로젝트(Spring Boot 4.1.1, Java 21)와 `app/frontend`(Vite + React + TS) 만들기
-- [X] T002 Flyway `V1__common_schema.sql`(erd 원본 그대로), `V2__handle_rule.sql`
-- [X] T003 `app/compose.yaml`(PostgreSQL 16, Redis 7), `application.yml` 설정값(약관 버전·예약어·요청 제한·세션 14일)
+- [X] T001a `app/backend` Maven 프로젝트(Spring Boot 4.1.1, Java 21)
+- [ ] T001b `app/frontend`(Vite + React + TS) 만들기
+- [X] T002 Flyway `V1__common_schema.sql` = ERD 정본(docs/51, Crowfoot 문서 660과 같은 스키마). 블로그 주소 규칙이 이미 반영되어 V2는 두지 않음
+- [ ] T003a `app/compose.yaml`(PostgreSQL 16, Redis 7)
+- [X] T003b `application.yml` 설정값(약관 버전·예약어·요청 제한·세션 14일)
 - [X] T004 테스트 기반: Testcontainers PostgreSQL·Redis 공용 설정, MockMvc 로그인 헬퍼
 
 ## Phase 2: Foundational
@@ -23,7 +25,8 @@
 - [X] T011 [US1] `NicknamePolicy`(NFC·형식·글자 포함·예약어·금칙어 4변형·예외), `WordFilter` 리소스 파일
 - [X] T012 [US1] GitHub OAuth2: 인증된 대표 이메일 조회, 성공 핸들러(기존 회원 로그인 / 가입 대기 10분)
 - [X] T013 [US1] `SignupService.complete` 한 트랜잭션(member + auth_identity + member_agreement 2행), UNIQUE 충돌 → 409 + 제안
-- [X] T014 [US1] 가입 API·중복 확인 API, 대문자 주소 301
+- [X] T014a [US1] 가입 API·중복 확인 API
+- [ ] T014b [US1] 대문자 주소 301 (003 PageController와 함께)
 - [X] T015 [US1] 테스트: 주소 규칙 표(08 §2·§3), 닉네임 규칙(09 §11), 가입·재로그인 1계정, 동시 가입 10건 1건 성공
 
 ## Phase 4: User Story 2 — 로그인 유지·로그아웃·정지·재동의·닉네임 변경 (P2)
@@ -37,10 +40,10 @@
 
 ## Phase 5: User Story 3·4 — 소유 권한·내 글 관리 (P3·P4)
 
-- [X] T022 [US3] `PostAccessPolicy.canRead`, 소유자 조건 조회(002와 함께)
+- [ ] T022 [US3] `PostAccessPolicy.canRead`, 소유자 조건 조회(002와 함께)
 - [X] T023 [US4] `GET /api/me/posts` 본인 글만, 빈 상태
-- [X] T024 테스트: 남의 글 수정·삭제 404 + 내용 불변, 비공개·임시·없는 글 응답 동일, 다른 사용자 값 무시
+- [ ] T024 테스트: 남의 글 수정·삭제 404 + 내용 불변, 비공개·임시·없는 글 응답 동일, 다른 사용자 값 무시
 
 ## Phase 6: 화면
 
-- [X] T025 React: 로그인 화면, 가입 마무리(접두어 고정·0.5초 중복 확인), 재동의, 정지 안내, 프로필 메뉴·로그아웃
+- [ ] T025 React: 로그인 화면, 가입 마무리(접두어 고정·0.5초 중복 확인), 재동의, 정지 안내, 프로필 메뉴·로그아웃

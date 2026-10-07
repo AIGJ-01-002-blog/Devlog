@@ -34,7 +34,7 @@ Session Data Redis, Flyway, Validation), Vite 8
 
 | 원칙 | 확인 |
 |---|---|
-| I. 공통 기준선 보존 | V1 스키마(`erd/V1__common_schema.sql`)를 Flyway `V1`로 그대로 쓴다. 블로그 주소 규칙(08 §7, H-6~H-9 결정)은 `V2__handle_rule.sql`에서 CHECK·길이만 바꾼다 (민서님 "고치기" 결정) |
+| I. 공통 기준선 보존 | ERD 정본(docs/51, Crowfoot 문서 660)을 Flyway `V1`로 그대로 쓴다. 블로그 주소 규칙(08 §7, H-6~H-9, 민서님 "고치기" 결정)은 정본 V1에 이미 들어 있다 |
 | II. 서버가 권한을 결정 | 모든 쓰기 Service가 `MemberPrincipal`의 회원 번호로 `author_id` 조건 조회. 남의 것·없는 것 404 |
 | III. 본문 안전성 | 001은 본문을 다루지 않음. 보안 헤더(CSP·nosniff·Referrer-Policy)는 001에서 공통 필터로 넣는다 |
 | IV. 모듈 경계 | `account` 모듈만 `member`·`auth_identity`·`member_agreement`·`member_suspension`을 쓴다. 다른 모듈은 `MemberQueryService`로만 접근 |
@@ -56,8 +56,9 @@ Session Data Redis, Flyway, Validation), Vite 8
 
 ## Data Model
 
-V1의 `member`, `auth_identity`, `member_agreement`, `member_suspension`을 그대로 쓴다. 바꾸는 것은 V2의
-`member.handle`(VARCHAR(23), CHECK `^((go|gi)-)?[a-z0-9][a-z0-9_]{1,18}[a-z0-9]$` AND `!~ '^(go|gi)_'`)뿐이다.
+V1의 `member`, `auth_identity`, `member_agreement`, `member_suspension`을 그대로 쓴다. `member.handle`(VARCHAR(23), CHECK
+`^((go|gi)-)?[a-z0-9][a-z0-9_]{1,18}[a-z0-9]$` AND `!~ '^(go|gi)_'`)은 정본 V1에 이미 들어 있다. pg_trgm 확장과 trgm 인덱스 4개는
+공용 DB 권한 문제로 `V2__optional_trgm.sql`로 분리했고, 만들 수 없으면 건너뛴다.
 
 ## Contracts (REST)
 
@@ -97,4 +98,4 @@ app/
 
 | 위반 | 필요한 이유 | 더 단순한 대안을 버린 이유 |
 |---|---|---|
-| V1 `member.handle` CHECK·길이 변경(V2) | 08 §7·H-6~H-9 결정(민서님 확정)과 V1이 다름 | 애플리케이션에서만 검사하면 DB가 규칙 밖 주소를 받아들인다 |
+| pg_trgm 확장·trgm 인덱스를 V1에서 V2로 분리 | 학교·Crowfoot 공용 DB에 확장 생성 권한이 없을 수 있음(2026-10-07 인프라 결정) | V1 그대로면 공용 DB에서 마이그레이션이 처음부터 실패한다 |
