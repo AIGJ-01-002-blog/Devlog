@@ -21,6 +21,8 @@ blog:
   # 순위표는 테스트가 직접 만든다 (017)
   trending:
     cron: "-"
+  report:
+    purge-cron: "-"
   # AI 태그 추천 (018): 주소는 가짜 공급자(IntegrationTest), 열쇠값은 시험용
   ai:
     gemini:

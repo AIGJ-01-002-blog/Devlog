@@ -56,9 +56,12 @@ public class Post {
     private Instant updatedAt;
 
     private Instant deletedAt;
+    // 숨김은 관리자 처리(SQL)만 바꾼다. 작성자의 수정·발행 저장이 숨김을 덮어쓰지 않게 읽기 전용으로 둔다 (019 FR-022)
+    @Column(insertable = false, updatable = false)
     private Instant hiddenAt;
+    @Column(insertable = false, updatable = false)
     private Long hiddenBy;
-    @Column(length = 30)
+    @Column(length = 30, insertable = false, updatable = false)
     private String hiddenReason;
 
     protected Post() {}

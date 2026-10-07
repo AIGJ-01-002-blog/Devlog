@@ -142,7 +142,7 @@ class ReadShareTest extends IntegrationTest {
     void 관리자가_숨긴_글은_작성자에게만_보이고_목록에는_없다() throws Exception {
         Session s = signup(uniqueLogin("hidden"));
         long id = publish(s, "숨김", "본문", "PUBLIC");
-        jdbc.update("UPDATE post SET hidden_at = now() WHERE id = ?", id);
+        jdbc.update("UPDATE post SET hidden_at = now(), hidden_reason = 'SPAM' WHERE id = ?", id);
         mvc.perform(get("/api/posts/" + id)).andExpect(status().isNotFound());
         s.http().perform(get("/api/posts/" + id)).andExpect(status().isOk()).andExpect(jsonPath("$.owner.hidden").value(true));
         assertThat(ids(read(mvc.perform(get("/api/members/" + s.handle() + "/posts")).andReturn()))).doesNotContain(id);

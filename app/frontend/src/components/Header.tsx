@@ -47,6 +47,7 @@ export function Header() {
                     <Link to="/manage/posts" role="menuitem">내 글 관리</Link>
                     <Link to="/notifications" role="menuitem">알림</Link>
                     <Link to="/settings" role="menuitem">설정</Link>
+                    {member.role === 'ADMIN' && <Link to="/admin/reports" role="menuitem">신고 관리</Link>}
                     <button type="button" role="menuitem" onClick={async () => {
                       await logout()
                       navigate('/')

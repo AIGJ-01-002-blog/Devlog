@@ -142,7 +142,7 @@ class TagTest extends IntegrationTest {
         long trashed = published(a, "PUBLIC", t);
         a.http().perform(delete("/api/posts/" + trashed).with(csrf())).andExpect(status().isOk());
         long hidden = published(a, "PUBLIC", t);
-        jdbc.update("UPDATE post SET hidden_at = now() WHERE id = ?", hidden);
+        jdbc.update("UPDATE post SET hidden_at = now(), hidden_reason = 'SPAM' WHERE id = ?", hidden);
         published(gone, "PUBLIC", t);
         jdbc.update("UPDATE member SET withdrawn_at = now(), status = 'WITHDRAWN' WHERE id = ?", gone.memberId());
 

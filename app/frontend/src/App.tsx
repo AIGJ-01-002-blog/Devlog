@@ -1,3 +1,6 @@
+import { AdminMemberPage } from './pages/AdminMemberPage'
+import { AdminReportPage } from './pages/AdminReportPage'
+import { AdminReportsPage } from './pages/AdminReportsPage'
 import { useEffect, type ReactNode } from 'react'
 import { Flash } from './components/Flash'
 import { Header } from './components/Header'
@@ -63,6 +66,9 @@ function route(path: string): ReactNode {
   if (path === '/feed') return <RequireLogin><FeedPage /></RequireLogin>
   if (path === '/notifications') return <RequireLogin><NotificationsPage /></RequireLogin>
   if (path === '/settings') return <RequireLogin><SettingsPage /></RequireLogin>
+  if (path === '/admin/reports') return <RequireAdmin><AdminReportsPage /></RequireAdmin>
+  if ((p = match('/admin/reports/:id', path))) return <RequireAdmin><AdminReportPage key={p.id} id={p.id} /></RequireAdmin>
+  if ((p = match('/admin/members/:handle', path))) return <RequireAdmin><AdminMemberPage key={p.handle} handle={p.handle} /></RequireAdmin>
   return <NotFoundPage />
 }
 
@@ -72,6 +78,15 @@ function RequireLogin({ children }: { children: ReactNode }) {
     if (!loading && !me?.authenticated) navigate(loginPath(), { replace: true })
   }, [loading, me])
   if (loading || !me?.authenticated) return <main className="container"><p className="muted center">불러오는 중…</p></main>
+  return <>{children}</>
+}
+
+/** 관리자 화면: 서버가 비회원은 로그인으로, 일반 회원은 404로 보내므로 여기서는 화면 안에서 옮겨 온 경우만 막는다. */
+function RequireAdmin({ children }: { children: ReactNode }) {
+  const { me, loading } = useAuth()
+  if (loading) return <main className="container"><p className="muted center">불러오는 중…</p></main>
+  if (!me?.authenticated) return <RequireLogin>{children}</RequireLogin>
+  if (me.member?.role !== 'ADMIN') return <NotFoundPage />
   return <>{children}</>
 }
 

@@ -243,6 +243,19 @@ public class PageController {
                 CacheControl.noStore());
     }
 
+    /**
+     * 관리자 화면 (019 FR-011). 비회원은 있는 주소·없는 주소 모두 로그인으로, 일반 회원은 없는 페이지와 같은 404다.
+     */
+    @GetMapping({"/admin", "/admin/**"})
+    public ResponseEntity<String> admin(HttpServletRequest request, @CurrentMember(required = false) MemberPrincipal me) {
+        if (me == null) {
+            String back = request.getRequestURI() + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
+            return redirect(HttpStatus.FOUND, "/login?redirect=" + UriUtils.encodeQueryParam(back, java.nio.charset.StandardCharsets.UTF_8));
+        }
+        if (!me.isAdmin()) return notFound();
+        return app();
+    }
+
     private ResponseEntity<String> notFound() {
         String body = "<main><h1>볼 수 없는 페이지예요</h1><p>주소가 바뀌었거나, 삭제·비공개된 글일 수 있어요.</p><a href=\"/\">홈으로</a></main>";
         return html(HttpStatus.NOT_FOUND, shell.render(HeadMeta.privatePage(site.name(), "볼 수 없는 페이지예요"), body,

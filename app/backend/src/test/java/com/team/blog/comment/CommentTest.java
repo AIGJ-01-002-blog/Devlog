@@ -195,7 +195,7 @@ class CommentTest extends IntegrationTest {
         Session a = signup(uniqueLogin("cmi")), b = signup(uniqueLogin("cmj"));
         long p = postOf(a, "PUBLIC"), other = postOf(a, "PUBLIC");
         long hidden = comment(b, p, "숨김");
-        jdbc.update("UPDATE comment SET hidden_at = now() WHERE id = ?", hidden);
+        jdbc.update("UPDATE comment SET hidden_at = now(), hidden_reason = 'SPAM' WHERE id = ?", hidden);
         long elsewhere = comment(b, other, "다른 글");
         long root = comment(a, p, "자리");
         reply(b, p, root, "답");
@@ -274,7 +274,7 @@ class CommentTest extends IntegrationTest {
         a.http().perform(delete("/api/comments/999999999").with(csrf())).andExpect(status().isNotFound());
         assertThat(jdbc.queryForObject("SELECT content FROM comment WHERE id = ?", String.class, id)).isEqualTo("고침");
 
-        jdbc.update("UPDATE comment SET hidden_at = now() WHERE id = ?", id);
+        jdbc.update("UPDATE comment SET hidden_at = now(), hidden_reason = 'SPAM' WHERE id = ?", id);
         b.http().perform(asJson(patch("/api/comments/" + id), Map.of("content", "숨김 중"))).andExpect(status().isConflict())
                 .andExpect(r -> assertThat(r.getResponse().getContentAsString()).contains("COMMENT_HIDDEN"));
         JsonNode mine = list(b, p, null).path("items").get(0);
@@ -371,7 +371,7 @@ class CommentTest extends IntegrationTest {
         a.http().perform(delete("/api/posts/" + p).with(csrf())).andExpect(status().isOk());
         b.http().perform(get("/api/posts/" + p + "/comments")).andExpect(status().isNotFound());
         long hiddenPost = postOf(a, "PUBLIC");
-        jdbc.update("UPDATE post SET hidden_at = now() WHERE id = ?", hiddenPost);
+        jdbc.update("UPDATE post SET hidden_at = now(), hidden_reason = 'SPAM' WHERE id = ?", hiddenPost);
         write(a, hiddenPost, "숨긴 글", null).andExpect(status().isNotFound());
         long draft = read(a.http().perform(asJson(post("/api/posts"), Map.of("title", "임시", "contentMd", "본문")))
                 .andExpect(status().isCreated()).andReturn()).path("id").asLong();

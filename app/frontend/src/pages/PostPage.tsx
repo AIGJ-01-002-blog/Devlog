@@ -1,3 +1,5 @@
+import { ReportButton } from '../components/ReportButton'
+import { reasonLabel } from '../lib/moderation'
 import { useEffect, useRef, useState } from 'react'
 import { Avatar } from '../components/Avatar'
 import { FollowButton } from '../components/FollowButton'
@@ -86,7 +88,11 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
   return (
     <main className="container narrow">
       <article className="post">
-        {post.owner?.hidden && <div className="banner banner-warn">운영 정책에 따라 숨겨진 글이에요. 다른 사람에게는 보이지 않아요.</div>}
+        {post.owner?.hidden && (
+          <div className="banner banner-warn">
+            운영 정책에 따라 숨겨진 글이에요{post.owner.hiddenReason ? ` (사유: ${reasonLabel(post.owner.hiddenReason)})` : ''}. 다른 사람에게는 보이지 않아요.
+          </div>
+        )}
         {post.mine && post.owner?.editing && (
           <div className="banner">
             수정 중인 내용이 있어요{post.owner.editingSavedAt ? `(${monthDay(post.owner.editingSavedAt)} ${clock(post.owner.editingSavedAt)} 저장)` : ''}.
@@ -135,6 +141,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
             조회 {compactNumber(post.viewCount)}
           </span>
           {date && <span>{fullDate(date)}</span>}
+          {!post.mine && <ReportButton targetType="POST" targetId={post.id} />}
         </div>
         <footer className="author-card">
           <Avatar src={post.author.profileImageUrl} name={post.author.nickname} seed={post.author.handle} size={64} />

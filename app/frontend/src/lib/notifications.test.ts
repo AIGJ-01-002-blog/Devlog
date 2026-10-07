@@ -26,4 +26,15 @@ describe('notifications', () => {
     expect(messageOf({ ...base, post: { id: null, title: null, readable: false }, link: null }).text).toBe('볼 수 없는 글이에요')
     expect(messageOf({ ...base, actor: { nickname: null, handle: null, withdrawn: true } }).who).toBe('탈퇴한 사용자님')
   })
+
+  it('신고 처리 결과와 숨김 (019)', () => {
+    const sys = { ...base, actor: null, commentPreview: null }
+    expect(messageOf({ ...sys, type: 'REPORT_RESOLVED', result: 'ACTION_TAKEN' }).text).toContain('조치했어요')
+    expect(messageOf({ ...sys, type: 'REPORT_RESOLVED', result: 'NO_VIOLATION' }).text).toContain('위반은 아니었어요')
+    const hidden = { ...sys, type: 'CONTENT_HIDDEN' as const }
+    expect(messageOf({ ...hidden, hidden: { targetType: 'POST', reason: 'SPAM', stillHidden: true } }).text)
+      .toBe('회원님의 글「JPA N+1 정리」이(가) 운영 정책에 따라 숨겨졌어요 (사유: 스팸·광고)')
+    expect(messageOf({ ...hidden, hidden: { targetType: 'COMMENT', reason: null, stillHidden: false } }).text)
+      .toBe('회원님의 댓글이 운영 정책에 따라 숨겨졌었어요 (지금은 다시 보여요)')
+  })
 })

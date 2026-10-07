@@ -167,6 +167,50 @@ public class NotificationService {
         return n == null ? 0 : n;
     }
 
+    /**
+     * 신고 처리 결과 (019 FR-039, docs/25 §2): 사건의 신고 한 건(신고자 한 명)마다 하나. 결과는 사건 상태에서 읽어 따로 저장하지 않는다.
+     * 탈퇴 신청한 신고자에게는 만들지 않는다. 운영 알림이라 끌 수 없다.
+     */
+    public int reportsResolved(long caseId, Instant at) {
+        Integer n = tx.execute(s -> {
+            Timestamp ts = Timestamp.from(at);
+            return jdbc.queryForObject("""
+                    WITH targets AS (
+                        SELECT r.id AS report_id, r.reporter_id FROM report r JOIN report_case rc ON rc.id = r.case_id
+                        JOIN member m ON m.id = r.reporter_id
+                        WHERE r.case_id = ? AND rc.status IN ('HIDDEN', 'REJECTED') AND m.status <> 'WITHDRAWN' AND m.deleted_at IS NULL
+                          AND NOT EXISTS (SELECT 1 FROM notification_report x WHERE x.report_id = r.id)
+                    ), made AS (
+                        INSERT INTO notification (receiver_id, type, created_at, updated_at)
+                        SELECT reporter_id, 'REPORT_RESOLVED', ?, ? FROM targets ORDER BY report_id RETURNING id, receiver_id
+                    ), linked AS (
+                        INSERT INTO notification_report (notification_id, type, report_id)
+                        SELECT made.id, 'REPORT_RESOLVED', targets.report_id FROM made JOIN targets ON targets.reporter_id = made.receiver_id
+                        RETURNING 1
+                    )
+                    SELECT count(*) FROM linked
+                    """, Integer.class, caseId, ts, ts);
+        });
+        return n == null ? 0 : n;
+    }
+
+    /**
+     * 내 콘텐츠 숨김 (019 FR-040): 작성자에게 한 번. 사유는 보여줄 때 대상에서 읽는다. 댓글이 숨겨지면 그 댓글로 생긴 알림은 지운다.
+     */
+    public void contentHidden(long caseId, long ownerId, boolean comment, long targetId, Instant at) {
+        if (comment) commentDeleted(targetId);
+        tx.executeWithoutResult(s -> {
+            Boolean active = jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM member WHERE id = ? AND status <> 'WITHDRAWN' AND deleted_at IS NULL)",
+                    Boolean.class, ownerId);
+            if (!Boolean.TRUE.equals(active)) return;
+            if (Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM notification_case WHERE case_id = ?)", Boolean.class, caseId))) {
+                return;
+            }
+            long id = insert(ownerId, NotificationType.CONTENT_HIDDEN, Timestamp.from(at));
+            jdbc.update("INSERT INTO notification_case (notification_id, type, case_id) VALUES (?, 'CONTENT_HIDDEN', ?)", id, caseId);
+        });
+    }
+
     private boolean following(long followerId, long followeeId) {
         return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM follow WHERE follower_id = ? AND followee_id = ?)",
                 Boolean.class, followerId, followeeId));

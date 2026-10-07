@@ -98,7 +98,7 @@ class SearchTest extends IntegrationTest {
         long draft = read(a.http().perform(asJson(post("/api/posts"), Map.of("title", "임시 트랜잭션전파", "contentMd", "트랜잭션전파")))
                 .andReturn()).path("id").asLong();
         jdbc.update("UPDATE post SET deleted_at = now() WHERE id = ?", trashed);
-        jdbc.update("UPDATE post SET hidden_at = now() WHERE id = ?", hidden);
+        jdbc.update("UPDATE post SET hidden_at = now(), hidden_reason = 'SPAM' WHERE id = ?", hidden);
         jdbc.update("UPDATE member SET withdrawn_at = now(), status = 'WITHDRAWN' WHERE id = ?", gone.memberId());
 
         // 친구가 검색해도, 작성자 본인이 검색해도 공개 글만
