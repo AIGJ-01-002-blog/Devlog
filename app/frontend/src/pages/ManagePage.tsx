@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { Link, navigate, useLocation } from '../lib/router'
 import { daysLeft, purgePost, PURGE_CONFIRM, restorePost, TRASH_CONFIRM, trashedMessage, trashPost } from '../lib/trash'
 import type { ManageItem, ManagePage as Page, Visibility } from '../lib/types'
+import { VISIBILITY_ICON, VISIBILITY_LABEL } from '../lib/visibility'
 
 type Tab = 'drafts' | 'published' | 'trash'
 type CountKey = keyof NonNullable<Page['counts']>
@@ -124,7 +125,7 @@ export function ManagePage() {
       {tab === 'trash' && <p className="muted small">휴지통의 글은 30일이 지나면 완전히 지워져요. 다른 사람에게는 보이지 않아요.</p>}
       {tab === 'published' && (
         <div className="filters">
-          {[['', '전체'], ['public', '공개'], ['private', '비공개']].map(([v, label]) => (
+          {[['', '전체'], ['public', '공개'], ['friends', '친구에게만'], ['private', '비공개']].map(([v, label]) => (
             <button key={v} type="button" className={`chip ${(filter ?? '') === v ? 'active' : ''}`} onClick={() => go('published', v)}>{label}</button>
           ))}
         </div>
@@ -139,9 +140,9 @@ export function ManagePage() {
         {items.map((item) => (
           <li key={item.id} className="manage-item">
             <div className="manage-main">
-              {item.status === 'PUBLISHED' && (
-                <span className="vis" title={item.visibility === 'PUBLIC' ? '공개' : '비공개'}>
-                  {item.visibility === 'PUBLIC' ? '🌐' : '🔒'}<span className="sr-only">{item.visibility === 'PUBLIC' ? '공개' : '비공개'}</span>
+              {item.status === 'PUBLISHED' && item.visibility && (
+                <span className="vis" title={VISIBILITY_LABEL[item.visibility]}>
+                  {VISIBILITY_ICON[item.visibility]}<span className="sr-only">{VISIBILITY_LABEL[item.visibility]}</span>
                 </span>
               )}
               <span className={item.title ? 'manage-title' : 'manage-title muted'}>{item.title || '(제목 없음)'}</span>
@@ -174,6 +175,7 @@ export function ManagePage() {
                   <select aria-label="공개 범위" value={item.visibility ?? 'PUBLIC'}
                           onChange={(e) => changeVisibility(item, e.target.value as Visibility)}>
                     <option value="PUBLIC">공개</option>
+                    <option value="FRIENDS">친구에게만</option>
                     <option value="PRIVATE">비공개</option>
                   </select>
                   <button type="button" className="btn btn-text danger" disabled={busy === item.id} onClick={() => remove(item)}>삭제</button>

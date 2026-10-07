@@ -12,7 +12,7 @@ import { useImageUploads } from '../lib/useImageUploads'
 import { decideRestore } from '../lib/restore'
 import { navigate, setLeaveGuard } from '../lib/router'
 import { tagErrors } from '../lib/tags'
-import type { EditorView, ServerContent, Visibility } from '../lib/types'
+import type { EditorView, FriendOverview, ServerContent, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 
 /** [새 글]: 임시글을 먼저 만들고 에디터 주소로 바꾼다 (docs/04 §2-5). */
@@ -354,8 +354,10 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
             <fieldset className="field">
               <legend>공개 범위</legend>
               <label><input type="radio" name="visibility" checked={visibility === 'PUBLIC'} onChange={() => setVisibility('PUBLIC')} /> 🌐 전체 공개</label>
+              <label><input type="radio" name="visibility" checked={visibility === 'FRIENDS'} onChange={() => setVisibility('FRIENDS')} /> 👥 친구에게만</label>
               <label><input type="radio" name="visibility" checked={visibility === 'PRIVATE'} onChange={() => setVisibility('PRIVATE')} /> 🔒 비공개 (나만 보기)</label>
             </fieldset>
+            {visibility === 'FRIENDS' && <NoFriendsHint onPublic={() => setVisibility('PUBLIC')} />}
             <TagInput value={tags} onChange={(t) => { setTags(t); setErrors((m) => withoutTagErrors(m)) }} errors={tagErrors(errors)} />
             {Object.keys(withoutTagErrors(errors)).length > 0 && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
             {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
@@ -493,4 +495,21 @@ function SaveIndicator({ state, localStored, onCompare }: { state: SaveState; lo
     case 'error':
       return <span className="save-state warn" role="status">⚠ {state.message}</span>
   }
+}
+
+/** 친구가 없는데 친구 공개를 고르면 아무도 못 보는 글이 된다는 것을 알려 준다 (docs/06 §5). */
+function NoFriendsHint({ onPublic }: { onPublic: () => void }) {
+  const [count, setCount] = useState<number | null>(null)
+  useEffect(() => {
+    let alive = true
+    api<FriendOverview>('/api/me/friends').then((o) => { if (alive) setCount(o.friends.length) }).catch(() => undefined)
+    return () => { alive = false }
+  }, [])
+  if (count !== 0) return null
+  return (
+    <p className="banner small" role="status">
+      아직 친구가 없어서 지금은 나만 볼 수 있어요.{' '}
+      <button type="button" className="btn btn-text" onClick={onPublic}>전체 공개로 바꾸기</button>
+    </p>
+  )
 }

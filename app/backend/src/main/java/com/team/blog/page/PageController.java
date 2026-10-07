@@ -121,7 +121,7 @@ public class PageController {
         var profile = feed.profile(handle, me == null ? null : me.id());
         if (profile.isEmpty()) return notFound();
         FeedQuery.BlogProfile p = profile.get();
-        FeedQuery.Page first = feed.blog(handle, filter, null);
+        FeedQuery.Page first = feed.blog(handle, filter, null, me == null ? null : me.id());
         var blogTags = tags.blogTags(p.id());
         String body = "<main><header><h1>" + SpaShell.esc(p.nickname()) + "</h1><p>@" + SpaShell.esc(p.handle()) + "</p>"
                 + (p.bio() == null ? "" : "<p>" + SpaShell.esc(p.bio()) + "</p>") + "</header>" + cards(first) + "</main>";
@@ -132,7 +132,7 @@ public class PageController {
         return html(HttpStatus.OK, shell.render(meta, body, filter == null
                         ? Map.of("page", "blog", "profile", p, "feed", first, "blogTags", blogTags)
                         : Map.of("page", "blog", "profile", p, "feed", first, "blogTags", blogTags, "tag", filter)),
-                CacheControl.noCache().cachePrivate());
+                first.friendsView() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate());
     }
 
     @GetMapping("/@{handle}/posts/{postId}")

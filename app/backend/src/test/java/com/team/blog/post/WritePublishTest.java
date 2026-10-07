@@ -143,7 +143,7 @@ class WritePublishTest extends IntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].code").value("TITLE_TOO_LONG"))
                 .andExpect(jsonPath("$.errors[1].code").value("PENDING_IMAGES"));
-        publish(s, id, "제목", "본문", "FRIENDS", 0, null)
+        publish(s, id, "제목", "본문", "GROUP", 0, null)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].code").value("INVALID_VISIBILITY"));
         assertThat(row(id)).containsEntry("status", "DRAFT");
@@ -415,7 +415,7 @@ class WritePublishTest extends IntegrationTest {
                 .andExpect(status().isOk());
         assertThat(row(id).get("first_public_at")).isEqualTo(firstPublic);
         assertThat(row(id).get("edited_at")).isNull();
-        s.http().perform(asJson(patch("/api/posts/" + id + "/visibility"), Map.of("visibility", "FRIENDS")))
+        s.http().perform(asJson(patch("/api/posts/" + id + "/visibility"), Map.of("visibility", "GROUP")))
                 .andExpect(status().isBadRequest());
     }
 
