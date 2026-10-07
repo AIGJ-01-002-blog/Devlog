@@ -136,7 +136,8 @@ function WithdrawnGate({ path, children }) {
 function AgreementGate({ path, children }) {
     const { me } = useAuth();
     useEffect(() => {
-        if (me?.agreementRequired && path !== '/agreements') {
+        // 탈퇴 유예 회원은 복구 화면만 쓴다(WithdrawnGate). 재동의 요청도 서버가 막으므로 여기서 보내지 않는다
+        if (me?.agreementRequired && me.member?.status !== 'WITHDRAWN' && path !== '/agreements') {
             navigate(`/agreements?redirect=${encodeURIComponent(path)}`, { replace: true });
         }
     }, [me, path]);
