@@ -113,7 +113,12 @@ public class PostFiles {
         try {
             storage.put(key, data, contentType);
         } catch (RuntimeException e) {
-            jdbc.update("DELETE FROM resource WHERE id = ?", id);
+            try {
+                jdbc.update("DELETE FROM resource WHERE id = ?", id);
+            } catch (RuntimeException cleanup) {
+                // 남은 행은 정리 작업이 지운다. 원래 오류를 덮지 않는다
+                e.addSuppressed(cleanup);
+            }
             images.deleteQuietly(key);
             log.warn("첨부파일을 저장소에 올리지 못했습니다: {}", e.getMessage());
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "STORAGE_UNAVAILABLE", "파일을 올리지 못했어요. 잠시 뒤 다시 시도해 주세요.");
