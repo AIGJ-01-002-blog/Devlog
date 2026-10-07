@@ -42,8 +42,7 @@ public class OAuth2LoginHandlers implements AuthenticationSuccessHandler, Authen
                     str(user.getAttributes().get("sub")),
                     null,
                     str(user.getAttributes().get("name")),
-                    Boolean.TRUE.equals(user.getAttributes().get("email_verified"))
-                            ? str(user.getAttributes().get("email")).toLowerCase(java.util.Locale.ROOT) : null,
+                    Boolean.TRUE.equals(user.getAttributes().get("email_verified")) ? str(user.getAttributes().get("email")) : null,
                     str(user.getAttributes().get("picture")));
             default -> throw new IllegalStateException("지원하지 않는 로그인 수단");
         };

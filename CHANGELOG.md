@@ -6,6 +6,20 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.16.11] - 2026-10-08
+
+소셜 로그인 이메일을 가입과 같은 규칙으로 (spec 038).
+
+### 고침
+- Google이 이메일 없이 "인증됨"만 보내면 로그인이 서버 오류로 끝나던 문제
+- 소셜 로그인 이메일의 앞뒤 공백·대문자를 가입과 같이 정리하고, 형식이 맞지 않거나 254자를 넘으면 가입 마무리 화면에서 다시 받는다
+
+### 바뀜
+- 세 곳에 따로 있던 이메일 정리를 `SocialProfile` 한 곳으로 모았다
+
+### 테스트
+- `SocialProfileTest` 2개, `OAuth2LoginHandlersTest` 5개, `GithubOAuth2UserServiceTest` 4개(가짜 GitHub API)
+
 ## [1.16.10] - 2026-10-08
 
 잘못 들어간 텔레그램 토큰이 로그에 남지 않게 (spec 037).

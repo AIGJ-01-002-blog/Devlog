@@ -20,7 +20,16 @@ import org.springframework.web.client.RestClientException;
 @Component
 public class GithubOAuth2UserService extends DefaultOAuth2UserService {
     public static final String VERIFIED_EMAIL = "blog_verified_email";
-    private final RestClient rest = RestClient.builder().baseUrl("https://api.github.com").build();
+    private final RestClient rest;
+
+    public GithubOAuth2UserService() {
+        this("https://api.github.com");
+    }
+
+    /** 테스트가 가짜 GitHub API 주소를 넣는다 */
+    GithubOAuth2UserService(String apiBaseUrl) {
+        this.rest = RestClient.builder().baseUrl(apiBaseUrl).build();
+    }
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
@@ -42,7 +51,7 @@ public class GithubOAuth2UserService extends DefaultOAuth2UserService {
             for (Map<String, Object> e : emails) {
                 if (Boolean.TRUE.equals(e.get("primary")) && Boolean.TRUE.equals(e.get("verified"))) {
                     Object email = e.get("email");
-                    return email == null ? null : email.toString().strip().toLowerCase(java.util.Locale.ROOT);
+                    return email == null ? null : email.toString();
                 }
             }
             return null;
