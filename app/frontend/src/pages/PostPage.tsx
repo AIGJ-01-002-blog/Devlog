@@ -12,6 +12,7 @@ import { Link, navigate } from '../lib/router'
 import type { CommentPage } from '../lib/comments'
 import { tagPath } from '../lib/tags'
 import { VISIBILITY_CHANGED } from '../lib/visibility'
+import { useViewBeacon, VIEW_HINT } from '../lib/views'
 import { TRASH_CONFIRM, trashedMessage, trashPost } from '../lib/trash'
 import type { PostDetail, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
@@ -26,6 +27,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
   const [notice, setNotice] = useState<string | null>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const { me } = useAuth()
+  useViewBeacon(bodyRef, post?.id, !!post && !post.mine && post.status === 'PUBLISHED')
 
   useEffect(() => {
     if (post && String(post.id) === id) return
@@ -128,7 +130,9 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           <LikeButton postId={post.id} mine={post.mine} initial={{ liked: post.liked, likeCount: post.likeCount }}
             onChange={(l) => setPost((p) => p && { ...p, liked: l.liked, likeCount: l.likeCount })} />
           <span>댓글 {compactNumber(post.commentCount)}</span>
-          <span>조회 {compactNumber(post.viewCount)}</span>
+          <span className="view-count" tabIndex={0} title={VIEW_HINT} aria-label={`조회 ${post.viewCount}회, ${VIEW_HINT}`}>
+            조회 {compactNumber(post.viewCount)}
+          </span>
           {date && <span>{fullDate(date)}</span>}
         </div>
         <footer className="author-card">

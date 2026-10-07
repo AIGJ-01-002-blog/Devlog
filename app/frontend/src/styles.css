@@ -470,3 +470,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .like-button.liked { border-color: var(--primary); color: var(--primary); }
 .like-notice { font-size: 0.8125rem; color: var(--muted); }
 .like-notice.error { color: var(--danger, #e03131); }
+
+/* 조회수 안내: 마우스를 올리거나 키보드로 가면 "하루에 한 번" 설명이 보인다 (spec 013) */
+.view-count { cursor: help; border-radius: 4px; }
+.view-count:focus-visible { outline: 2px solid var(--accent, #12b886); outline-offset: 2px; }

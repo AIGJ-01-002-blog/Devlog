@@ -149,3 +149,9 @@ blog:
       bucket: ${S3_BUCKET:blog-images}
       access-key: ${S3_ACCESS_KEY:}
       secret-key: ${S3_SECRET_KEY:}
+  # 조회수 (spec 013): 같은 방문자·같은 글은 window 안에 max-per-window번만 센다. 모은 조회는 flush-interval마다 post_view로 옮긴다
+  view:
+    window: ${VIEW_WINDOW:24h}
+    max-per-window: ${VIEW_MAX_PER_WINDOW:1}
+    per-minute: 60
+    flush-interval: 60s

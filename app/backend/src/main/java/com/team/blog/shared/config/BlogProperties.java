@@ -21,7 +21,8 @@ public record BlogProperties(
         @DefaultValue Post post,
         @DefaultValue Feed feed,
         @DefaultValue Image image,
-        @DefaultValue DevLogin devLogin) {
+        @DefaultValue DevLogin devLogin,
+        @DefaultValue View view) {
 
     public record Site(String baseUrl, @DefaultValue("devlog") String name, @DefaultValue("/og-default.png") String defaultOgImage) {}
 
@@ -72,4 +73,16 @@ public record BlogProperties(
                         @DefaultValue("20") int perMinute) {}
 
     public record DevLogin(@DefaultValue("false") boolean enabled) {}
+
+    /**
+     * 조회수 중복 기준과 제외 목록 (spec 013, docs/31 §2·§3).
+     * @param window    같은 방문자·같은 글을 다시 세기까지의 기간 (처음 본 순간부터)
+     * @param maxPerWindow 기간 안 최대 횟수
+     * @param botPattern 로봇·링크 미리보기로 보는 User-Agent (대소문자 무시 정규식)
+     */
+    public record View(@DefaultValue("24h") Duration window,
+                       @DefaultValue("1") int maxPerWindow,
+                       @DefaultValue("60") int perMinute,
+                       @DefaultValue("bot|crawl|spider|slurp|preview|facebookexternalhit|embedly|whatsapp|telegrambot|discordbot|slackbot|slack-imgproxy|kakaotalk-scrap|headless|curl|wget|python-requests|httpclient")
+                       String botPattern) {}
 }

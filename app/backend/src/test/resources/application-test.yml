@@ -10,6 +10,8 @@ blog:
     autosave-flush-interval: 1h
     empty-draft-cleanup-cron: "-"
     trash-purge-cron: "-"
+  view:
+    flush-interval: 1h
   media:
     profile-cleanup-cron: "-"
     post-image-cleanup-cron: "-"
