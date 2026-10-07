@@ -15,7 +15,6 @@ blog:
   # 최근창을 줄여 인덱스 후보 경로도 시험한다 (014)
   # 알림은 같은 스레드에서 바로 만든다(결과를 기다리지 않게). 정리 작업은 테스트가 직접 부른다
   notification:
-    async: false
     cleanup-cron: "-"
   search:
     recent-window: 5

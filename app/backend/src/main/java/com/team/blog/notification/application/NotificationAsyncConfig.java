@@ -13,7 +13,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 /**
  * 알림 처리 실행기 (015 FR-041·FR-042, docs/20 EV-5). 원래 요청과 떼어 커밋 뒤 따로 처리한다.
  * 대기열이 넘치면 버리고 경고를 남기며, 서버가 꺼질 때는 최대 20초 동안 남은 처리를 끝낸다(유실 허용).
- * 시험에서는 {@code blog.notification.async=false}로 같은 스레드에서 바로 처리해 결과를 기다리지 않게 한다.
+ * {@code blog.notification.async=false}면 같은 스레드에서 처리한다(디버깅용). 커밋 뒤 콜백에서는 원래 연결이 아직 반납되지 않아
+ * 알림 트랜잭션이 연결을 하나 더 잡으므로, 동시 요청이 많으면 연결 풀이 막힐 수 있다. 운영·시험 모두 비동기로 둔다.
  */
 @Configuration
 @EnableAsync
