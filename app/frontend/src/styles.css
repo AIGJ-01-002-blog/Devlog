@@ -532,3 +532,8 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .person-row .follow-wrap { margin: 0; }
 .blog-actions { gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .blog-actions .follow-wrap, .blog-actions .friend-actions { margin-top: 0; }
+
+/* 트렌딩 (spec 017) */
+.home-tabs { margin-top: 24px; }
+.trending-hint { margin: -12px 0 20px; }
+.feed-notice { padding: 10px 14px; margin: 0 0 16px; background: var(--surface-2); border-radius: var(--radius); }

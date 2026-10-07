@@ -105,6 +105,22 @@ public class FeedQuery {
         }
     }
 
+    /**
+     * 번호로 카드 읽기 (트렌딩 순위표). 한 번의 조회로 읽고 지금 공개 목록 조건을 다시 확인해, 그 사이 볼 수 없게 된 글은 빠진다.
+     * 순서는 받은 번호 순서 그대로다.
+     */
+    public List<Card> publicCards(List<Long> ids) {
+        if (ids.isEmpty()) return List.of();
+        List<Card> found = jdbc.query(con -> {
+            var ps = con.prepareStatement(CARD_SELECT + PostAccessPolicy.PUBLIC_LIST_CONDITION + " AND p.id = ANY (?)");
+            ps.setArray(1, con.createArrayOf("bigint", ids.toArray()));
+            return ps;
+        }, this::card);
+        java.util.Map<Long, Card> byId = new java.util.HashMap<>();
+        found.forEach(c -> byId.put(c.id(), c));
+        return ids.stream().map(byId::get).filter(java.util.Objects::nonNull).toList();
+    }
+
     public Page home(String cursor) {
         return list("home", null, null, cursor, false);
     }
