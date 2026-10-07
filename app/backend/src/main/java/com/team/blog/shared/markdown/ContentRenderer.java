@@ -155,6 +155,30 @@ public class ContentRenderer {
         return text == null || text.isBlank() ? null : text;
     }
 
+    /**
+     * 검색 결과 문장용 본문 글자 (014 FR-018). 요약과 달리 코드 블록·표 글자도 넣는다(개발 글은 코드에서도 찾는다, FR-010).
+     * 사진은 빼고 공백은 하나로 줄인다. 결과는 HTML이 아닌 글자라 화면에 쓰기 전에 이스케이프해야 한다.
+     */
+    public String searchText(String markdown) {
+        if (markdown == null || markdown.isBlank()) return "";
+        StringBuilder sb = new StringBuilder();
+        PARSER.parse(markdown).accept(new AbstractVisitor() {
+            @Override public void visit(FencedCodeBlock n) { sb.append(' ').append(n.getLiteral()).append(' '); }
+            @Override public void visit(IndentedCodeBlock n) { sb.append(' ').append(n.getLiteral()).append(' '); }
+            @Override public void visit(Image n) {}
+            @Override public void visit(HtmlBlock n) { sb.append(' ').append(n.getLiteral()).append(' '); }
+            @Override public void visit(HtmlInline n) { sb.append(n.getLiteral()); }
+            @Override public void visit(Text t) { sb.append(t.getLiteral()); }
+            @Override public void visit(Code c) { sb.append(c.getLiteral()); }
+            @Override public void visit(SoftLineBreak n) { sb.append(' '); }
+            @Override public void visit(HardLineBreak n) { sb.append(' '); }
+            @Override public void visit(Paragraph p) { visitChildren(p); sb.append(' '); }
+            @Override public void visit(Heading h) { visitChildren(h); sb.append(' '); }
+            @Override public void visit(CustomBlock b) { visitChildren(b); sb.append(' '); }
+        });
+        return SPACES.matcher(sb).replaceAll(" ").strip();
+    }
+
     private RenderedContent doRender(String md, long authorId) {
         Node doc = PARSER.parse(md);
         // 본문의 우리 사진 키를 모아 작성자가 올린 것인지 한 번에 확인한다

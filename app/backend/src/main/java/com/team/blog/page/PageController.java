@@ -21,6 +21,8 @@ import com.team.blog.discovery.application.FeedQuery;
 import com.team.blog.discovery.application.PostDetailQuery;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
+import com.team.blog.search.application.SearchQuery;
+import com.team.blog.search.web.SearchController;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
@@ -45,10 +47,12 @@ public class PageController {
     private final TagQuery tags;
     private final TagController tagApi;
     private final CommentQuery comments;
+    private final SearchQuery search;
 
     public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
-                          TagController tagApi, CommentQuery comments) {
+                          TagController tagApi, CommentQuery comments, SearchQuery search) {
         this.comments = comments;
+        this.search = search;
         this.shell = shell;
         this.feed = feed;
         this.details = details;
@@ -93,6 +97,30 @@ public class PageController {
         return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "tag", "tag", page)), CacheControl.noCache());
     }
 
+    /**
+     * 검색 결과 화면 (014, docs/33 §5). 검색 엔진 수집 거부(FR-022), 저장 안 함. 글 탭은 첫 결과를 함께 내려준다.
+     * 요청 제한은 API에만 둔다(화면 주소는 링크 미리보기 등이 열 수 있어 같은 결과를 그린다).
+     */
+    @GetMapping("/search")
+    public ResponseEntity<String> search(@RequestParam(required = false) String q, @RequestParam(required = false) String tab,
+                                         @RequestParam(required = false) String sort) {
+        String title = q == null || q.isBlank() ? "검색" : "'" + truncate(q.strip(), 50) + "' 검색";
+        HeadMeta meta = HeadMeta.privatePage(site.name(), title);
+        if (q == null || q.isBlank() || "people".equals(tab)) {
+            return html(HttpStatus.OK, shell.render(meta, "<main><h1>검색</h1></main>", Map.of("page", "search")), CacheControl.noStore());
+        }
+        SearchQuery.PostPage result = search.posts(q, SearchController.parseSort(sort), null, null);
+        StringBuilder body = new StringBuilder("<main><h1>").append(SpaShell.esc(title)).append("</h1><ul>");
+        for (SearchQuery.Hit h : result.items()) {
+            body.append("<li><a href=\"").append(SpaShell.esc(h.url())).append("\">").append(SpaShell.esc(h.title()))
+                    .append("</a> <span>").append(SpaShell.esc(h.author().nickname())).append("</span>");
+            if (h.snippetHtml() != null) body.append("<p>").append(h.snippetHtml()).append("</p>"); // mark 외 태그 없음 (FR-019)
+            body.append("</li>");
+        }
+        body.append("</ul></main>");
+        return html(HttpStatus.OK, shell.render(meta, body.toString(), Map.of("page", "search", "result", result)), CacheControl.noStore());
+    }
+
     @GetMapping({"/", "/index.html"})
     public ResponseEntity<String> home() {
         FeedQuery.Page first = feed.home(null);
@@ -103,6 +131,7 @@ public class PageController {
 
     @GetMapping("/@{handle}")
     public ResponseEntity<String> blog(@PathVariable String handle, @RequestParam(required = false) String tag,
+                                       @RequestParam(required = false) String q,
                                        @CurrentMember(required = false) MemberPrincipal me) {
         if (!HANDLE_CHARS.matcher(handle).matches()) return notFound();
         String tagQuery = tag == null || tag.isEmpty() ? "" : "?tag=" + java.net.URLEncoder.encode(tag, java.nio.charset.StandardCharsets.UTF_8);
@@ -128,7 +157,7 @@ public class PageController {
         String description = p.bio() == null || p.bio().isBlank() ? p.nickname() + "의 블로그" : truncate(p.bio(), 160);
         HeadMeta meta = new HeadMeta(p.nickname() + " (@" + p.handle() + ") - " + site.name(), description,
                 absolute("/@" + p.handle()), "profile", p.profileImageUrl() != null ? p.profileImageUrl() : absolute(site.defaultOgImage()),
-                null, null, true);
+                null, null, q == null || q.isBlank()); // 블로그 안 검색 결과는 수집 거부 (014 FR-022)
         return html(HttpStatus.OK, shell.render(meta, body, filter == null
                         ? Map.of("page", "blog", "profile", p, "feed", first, "blogTags", blogTags)
                         : Map.of("page", "blog", "profile", p, "feed", first, "blogTags", blogTags, "tag", filter)),

@@ -139,9 +139,10 @@ public class ViewRecorder {
 
     /**
      * 회원은 회원 단위(FR-004), 비회원은 방문자 쿠키(FR-005), 쿠키가 없으면 IP·브라우저·그날 비밀값의 해시(FR-006).
-     * 어느 쪽이든 해시해서 키에 쓰므로 원래 값이 저장소에 남지 않는다.
+     * 어느 쪽이든 해시해서 키에 쓰므로 원래 값이 저장소에 남지 않는다. 검색 요청 제한(014 FR-021)도 같은 구분을 쓴다.
+     * @return 저장소가 멈춰 그날 비밀값을 못 읽으면 null
      */
-    String visitorKey(Visit visit) {
+    public String visitorKey(Visit visit) {
         if (visit.memberId() != null) return sha256("m:" + visit.memberId());
         if (visit.visitorId() != null && visit.visitorId().matches("[0-9a-f-]{36}")) return sha256("v:" + visit.visitorId());
         String salt = dailySalt();

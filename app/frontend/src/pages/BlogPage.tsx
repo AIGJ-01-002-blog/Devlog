@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Avatar } from '../components/Avatar'
 import { Feed } from '../components/Feed'
+import { SearchBox } from '../components/SearchBox'
+import { parseSort } from '../lib/search'
+import { PostResults } from './SearchPage'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { loginPath, useAuth } from '../lib/auth'
 import { friendsApi, lastActiveLabel } from '../lib/friends'
@@ -17,6 +20,8 @@ export function BlogPage({ handle }: { handle: string }) {
   const rawTag = search.get('tag')
   const tag = rawTag ? normalizeTag(rawTag) : null
   const badTag = tag != null && tagFormatError(tag) != null
+  const q = (search.get('q') ?? '').trim()
+  const searchIn = (nq: string) => navigate(`/@${handle}?q=${encodeURIComponent(nq)}`)
 
   useEffect(() => {
     // 정규화되지 않은 필터 값은 정규화된 주소로 바꾼다 (서버는 301)
@@ -51,6 +56,17 @@ export function BlogPage({ handle }: { handle: string }) {
           }} />}
         </div>
       </header>
+      <SearchBox initial={q} placeholder={`${profile.nickname}님의 글 검색`} onSearch={searchIn} />
+      {q ? (
+        <>
+          <div className="filter-head row">
+            <b>'{q}' 검색 결과</b>
+            <Link to={`/@${handle}`} className="btn btn-text">검색 해제</Link>
+          </div>
+          {/* 블로그 안 검색 (014 FR-003): 본인이 봐도 공개 글만 */}
+          <PostResults key={q} q={q} sort={parseSort(search.get('sort'))} initial={null} blog={handle} />
+        </>
+      ) : <>
       <BlogTags handle={handle} initial={initial?.profile.handle === handle ? initial.blogTags : null} active={tag} />
       <Feed key={tag ?? ''} showAuthor={false}
             endpoint={`/api/members/${encodeURIComponent(handle)}/posts${tag ? `?tag=${encodeURIComponent(tag)}` : ''}`}
@@ -59,6 +75,7 @@ export function BlogPage({ handle }: { handle: string }) {
             empty={tag ? <p>이 태그로 공개한 글이 없어요.</p> : profile.mine
               ? <><p>아직 공개한 글이 없어요.</p><Link to="/write" className="btn btn-primary">첫 글 쓰기</Link></>
               : <p>아직 공개한 글이 없어요.</p>} />
+      </>}
     </main>
   )
 }

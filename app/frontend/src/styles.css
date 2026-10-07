@@ -474,3 +474,16 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 /* 조회수 안내: 마우스를 올리거나 키보드로 가면 "하루에 한 번" 설명이 보인다 (spec 013) */
 .view-count { cursor: help; border-radius: 4px; }
 .view-count:focus-visible { outline: 2px solid var(--accent, #12b886); outline-offset: 2px; }
+
+/* 검색 (spec 014) */
+.search-box { display: flex; gap: 8px; margin: 16px 0; }
+.search-box input { flex: 1; min-width: 0; }
+.search-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.search-head .tabs { margin: 8px 0 16px; flex: 1; }
+.search-notice { color: var(--muted, #868e96); font-size: 14px; margin: 0 0 16px; }
+.card-snippet mark, .card-excerpt mark { background: color-mix(in srgb, var(--primary) 22%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }
+.people-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.person { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 8px; color: inherit; text-decoration: none; }
+.person:hover, .person:focus-visible { background: var(--hover, rgba(0, 0, 0, 0.04)); }
+.person-bio { display: block; font-size: 14px; margin-top: 2px; }
+.header-search { display: inline-flex; align-items: center; }
