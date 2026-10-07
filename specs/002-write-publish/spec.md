@@ -14,6 +14,8 @@ docs/12-content-sanitize.md를 따른다. MVP 자동 저장은 서버 저장과 
 
 **관련 기능 ID**: C-POST-1, C-POST-2(서버 저장 범위), C-POST-3, C-POST-4(PUBLIC/PRIVATE)
 
+**우선순위 단계**: MVP
+
 **선행 기능**: `001-auth-ownership` (로그인한 본인, 소유 권한, 내 글 관리)
 
 ## User Scenarios & Testing *(mandatory)*

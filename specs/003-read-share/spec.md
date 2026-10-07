@@ -12,6 +12,8 @@
 
 **관련 기능 ID**: C-READ-1, C-BLOG-1, C-READ-2
 
+**우선순위 단계**: MVP
+
 **선행 기능**: `001-auth-ownership`, `002-write-publish`
 
 ## User Scenarios & Testing *(mandatory)*

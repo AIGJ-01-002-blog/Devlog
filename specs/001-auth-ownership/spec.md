@@ -13,6 +13,8 @@ docs/09-nickname.md, docs/42-permission-matrix.md, docs/41-manage-posts.md를 �
 
 **관련 기능 ID**: C-AUTH-1(GitHub 범위), C-AUTH-2(닉네임 변경만), C-OWN-1, C-MANAGE-1
 
+**우선순위 단계**: MVP
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - GitHub로 가입하고 블로그 주소를 갖는다 (Priority: P1)
