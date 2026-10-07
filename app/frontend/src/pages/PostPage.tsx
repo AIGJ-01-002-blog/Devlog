@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Avatar } from '../components/Avatar'
+import { Comments } from '../components/Comments'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { clock, compactNumber, fullDate, monthDay, relativeDate } from '../lib/format'
 import { enhanceGifs } from '../lib/gifPlayer'
@@ -7,14 +8,18 @@ import { highlightWithin } from '../lib/highlight'
 import { useAuth } from '../lib/auth'
 import { setFlash } from '../lib/flash'
 import { Link, navigate } from '../lib/router'
+import type { CommentPage } from '../lib/comments'
 import { tagPath } from '../lib/tags'
 import { TRASH_CONFIRM, trashedMessage, trashPost } from '../lib/trash'
 import type { PostDetail, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 
 export function PostPage({ handle, id }: { handle: string; id: string }) {
-  const initial = takeInitialData<{ post: PostDetail }>('post')?.post
-  const [post, setPost] = useState<PostDetail | null>(initial && String(initial.id) === id ? initial : null)
+  const [boot] = useState(() => {
+    const data = takeInitialData<{ post: PostDetail; comments?: CommentPage }>('post')
+    return data && String(data.post.id) === id ? data : null
+  })
+  const [post, setPost] = useState<PostDetail | null>(boot?.post ?? null)
   const [missing, setMissing] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -115,6 +120,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
         <div className="post-body markdown" ref={bodyRef} dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
         <div className="post-stats muted">
           <span>♥ {compactNumber(post.likeCount)}</span>
+          <span>댓글 {compactNumber(post.commentCount)}</span>
           <span>조회 {compactNumber(post.viewCount)}</span>
           {date && <span>{fullDate(date)}</span>}
         </div>
@@ -126,6 +132,10 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           </div>
         </footer>
       </article>
+      {post.status === 'PUBLISHED' && (
+        <Comments key={post.id} postId={post.id} initial={boot?.post.id === post.id ? boot.comments ?? null : null}
+          onCount={(n) => setPost((p) => p && { ...p, commentCount: n })} />
+      )}
     </main>
   )
 }
