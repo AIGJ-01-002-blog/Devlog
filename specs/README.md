@@ -43,6 +43,7 @@
 | [036-session-store-down](./036-session-store-down/spec.md) | 세션 저장소가 멈췄을 때 가입·로그인 응답 | 2026-10-08 추가 (장애 처리) | 이후 단계 (Tier C) | 2 |
 | [037-telegram-token-logs](./037-telegram-token-logs/spec.md) | 잘못 들어간 텔레그램 토큰이 로그에 남지 않게 | 2026-10-08 추가 (보안) | 이후 단계 (Tier C) | 2 |
 | [038-social-email-rules](./038-social-email-rules/spec.md) | 소셜 로그인 이메일을 가입과 같은 규칙으로 | 2026-10-08 추가 (버그) | 이후 단계 (Tier C) | 2 |
+| [039-share-link](./039-share-link/spec.md) | 글 공유 버튼 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 2 |
 
 ## 여러 spec에 걸치는 문서
 
