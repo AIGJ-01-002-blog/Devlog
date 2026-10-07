@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.team.blog.shared.scheduling.JobLock;
 
@@ -22,10 +22,12 @@ public class ReportPurgeJob {
 
     private final JdbcTemplate jdbc;
     private final JobLock lock;
+    private final TransactionTemplate tx;
 
-    public ReportPurgeJob(JdbcTemplate jdbc, JobLock lock) {
+    public ReportPurgeJob(JdbcTemplate jdbc, JobLock lock, TransactionTemplate tx) {
         this.jdbc = jdbc;
         this.lock = lock;
+        this.tx = tx;
     }
 
     @Scheduled(cron = "${blog.report.purge-cron:0 10 5 * * *}", zone = "Asia/Seoul")
@@ -33,9 +35,13 @@ public class ReportPurgeJob {
         lock.runExclusively("report-purge", Duration.ofMinutes(30), this::run);
     }
 
-    /** @return 비운 사건 수 */
-    @Transactional
+    /** @return 비운 사건 수. 두 UPDATE는 한 트랜잭션이다(예약 실행은 자기 호출이라 @Transactional이 걸리지 않아 직접 묶는다). */
     public int run() {
+        Integer n = tx.execute(s -> purge());
+        return n == null ? 0 : n;
+    }
+
+    private int purge() {
         String old = "status <> 'PENDING' AND handled_at < now() - make_interval(days => " + KEEP.toDays() + ")";
         jdbc.update("UPDATE report SET detail = NULL WHERE detail IS NOT NULL AND case_id IN (SELECT id FROM report_case WHERE " + old + ")");
         int n = jdbc.update("UPDATE report_case SET snapshot_title = NULL, snapshot_content = NULL WHERE " + old

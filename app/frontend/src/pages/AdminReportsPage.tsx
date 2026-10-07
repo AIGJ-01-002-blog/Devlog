@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { fullDate, relativeDate } from '../lib/format'
 import { adminApi, reasonSummary, STATUS_LABEL, type CaseRow } from '../lib/moderation'
 import { Link, useLocation } from '../lib/router'
@@ -11,6 +11,9 @@ export function AdminReportsPage() {
   const [cursor, setCursor] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
+  // 탭을 바꾼 뒤 늦게 온 이전 탭의 응답은 버린다
+  const current = useRef(tab)
+  current.current = tab
 
   useEffect(() => { document.title = '신고 관리 - devlog' }, [])
 
@@ -18,12 +21,13 @@ export function AdminReportsPage() {
     setError(false)
     try {
       const page = await adminApi.list(tab, from)
+      if (current.current !== tab) return
       setItems((prev) => (from ? [...prev, ...page.items.filter((r) => !prev.some((p) => p.caseId === r.caseId))] : page.items))
       setCursor(page.nextCursor)
     } catch {
-      setError(true)
+      if (current.current === tab) setError(true)
     } finally {
-      setLoaded(true)
+      if (current.current === tab) setLoaded(true)
     }
   }, [tab])
 

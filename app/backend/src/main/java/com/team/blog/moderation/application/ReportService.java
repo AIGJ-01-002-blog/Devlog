@@ -56,13 +56,19 @@ public class ReportService {
 
         // 대기 중 사건은 대상마다 하나 (부분 고유 인덱스). 동시에 온 첫 신고는 한쪽이 기다렸다가 만들어진 사건을 쓴다
         String column = type == ReportTarget.POST ? "post_id" : "comment_id";
-        Long caseId = jdbc.query("INSERT INTO report_case (target_type, " + column + ", target_author_id, snapshot_title, snapshot_content)"
-                        + " VALUES (?, ?, ?, ?, ?) ON CONFLICT (" + column + ") WHERE status = 'PENDING' AND " + column + " IS NOT NULL"
-                        + " DO NOTHING RETURNING id",
-                (rs, i) -> rs.getLong(1), type.name(), cmd.targetId(), t.authorId(), t.title(), t.content()).stream().findFirst().orElse(null);
-        if (caseId == null) {
-            caseId = jdbc.queryForObject("SELECT id FROM report_case WHERE " + column + " = ? AND status = 'PENDING'", Long.class, cmd.targetId());
+        // 이미 있는 대기 사건은 FOR SHARE로 잠가 처리(FOR UPDATE)와 겹치지 않게 한다. 그 사이 처리됐으면 새 사건을 만든다
+        Long caseId = null;
+        for (int attempt = 0; attempt < 3 && caseId == null; attempt++) {
+            caseId = jdbc.query("INSERT INTO report_case (target_type, " + column + ", target_author_id, snapshot_title, snapshot_content)"
+                            + " VALUES (?, ?, ?, ?, ?) ON CONFLICT (" + column + ") WHERE status = 'PENDING' AND " + column + " IS NOT NULL"
+                            + " DO NOTHING RETURNING id",
+                    (rs, i) -> rs.getLong(1), type.name(), cmd.targetId(), t.authorId(), t.title(), t.content()).stream().findFirst().orElse(null);
+            if (caseId == null) {
+                caseId = jdbc.query("SELECT id FROM report_case WHERE " + column + " = ? AND status = 'PENDING' FOR SHARE",
+                        (rs, i) -> rs.getLong(1), cmd.targetId()).stream().findFirst().orElse(null);
+            }
         }
+        if (caseId == null) throw ApiException.conflict("TRY_AGAIN", "잠시 후 다시 시도해 주세요.");
         jdbc.update("INSERT INTO report (case_id, reporter_id, reason, detail) VALUES (?, ?, ?, ?) ON CONFLICT (case_id, reporter_id) DO NOTHING",
                 caseId, reporterId, reason.name(), detail);
     }

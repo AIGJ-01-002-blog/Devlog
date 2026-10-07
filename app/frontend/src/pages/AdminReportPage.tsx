@@ -47,6 +47,8 @@ export function AdminReportPage({ id }: { id: string }) {
       setMessage({ ok: true, text: ok })
     } catch (e) {
       setMessage({ ok: false, text: e instanceof ApiError ? (e.errors[0]?.message ?? e.message) : '처리하지 못했어요.' })
+      // 숨김·반려는 끝났고 정지만 실패했을 수 있어 지금 상태를 다시 읽는다
+      adminApi.detail(c.caseId).then(setC).catch(() => {})
     } finally {
       setBusy(false)
     }
