@@ -23,5 +23,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // theme.test.ts가 styles.css 원문(?raw)을 읽는다
+    css: { include: [/styles\.css/] },
   },
 })
