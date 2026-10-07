@@ -21,7 +21,7 @@ import com.team.blog.shared.error.NotFoundException;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
 
-/** 시리즈 (024). 읽기는 보는 사람마다 달라 공유 캐시에 두지 않고, 친구·주인 응답은 어디에도 저장하지 않는다 (docs/06 R-5). */
+/** 시리즈 (024). 읽기는 보는 사람마다 달라 공유 캐시에 두지 않고(private), 친구·주인 응답은 어디에도 저장하지 않는다 (docs/06 R-5). */
 @RestController
 public class SeriesController {
     private final SeriesQuery query;
@@ -100,7 +100,7 @@ public class SeriesController {
     }
 
     private static CacheControl privateOrNoStore(boolean personal) {
-        return personal ? CacheControl.noStore().cachePrivate() : CacheControl.noCache();
+        return personal ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate();
     }
 
     private static long parseId(String raw) {

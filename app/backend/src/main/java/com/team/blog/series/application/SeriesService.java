@@ -14,7 +14,7 @@ import com.team.blog.shared.error.NotFoundException;
 
 /**
  * 시리즈 만들기·이름 바꾸기·지우기와 글 넣기·빼기·순서 (024 US1·US3). 모두 본인 것만, 남의 것이면 404 (FR-007).
- * 잠금 순서는 글 → 시리즈로 같아 서로 기다리다 멈추지 않는다.
+ * 잠금 순서는 글 → 시리즈(번호 순)로 같아 서로 기다리다 멈추지 않는다.
  */
 @Service
 public class SeriesService {
@@ -82,7 +82,12 @@ public class SeriesService {
             if (post.isEmpty()) throw new NotFoundException();
             List<Long> current = jdbc.queryForList("SELECT series_id FROM series_post WHERE post_id = ?", Long.class, postId);
             if (seriesId != null && current.contains(seriesId)) return;
-            if (seriesId != null) lockSeries(memberId, seriesId);
+            // 원래 시리즈와 옮길 시리즈를 번호 순으로 함께 잠근다. 서로 반대로 옮기는 두 요청이 엇갈려 기다리지 않게
+            List<Long> touched = new java.util.ArrayList<>(current);
+            if (seriesId != null) touched.add(seriesId);
+            List<Long> locked = jdbc.queryForList("SELECT id FROM series WHERE id = ANY (?) AND member_id = ? ORDER BY id FOR UPDATE",
+                    Long.class, touched.toArray(Long[]::new), memberId);
+            if (seriesId != null && !locked.contains(seriesId)) throw new NotFoundException();
             if (!current.isEmpty()) {
                 jdbc.update("DELETE FROM series_post WHERE post_id = ?", postId);
                 jdbc.update("UPDATE series SET updated_at = now() WHERE id = ?", current.getFirst());
