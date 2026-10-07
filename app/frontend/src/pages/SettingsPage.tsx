@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type Rea
 import { Avatar } from '../components/Avatar'
 import { ImageCropper } from '../components/ImageCropper'
 import { PasswordRules } from '../components/PasswordRules'
+import { SocialLinksForm } from '../components/SocialLinksForm'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { fieldErrors } from '../lib/fieldErrors'
@@ -15,6 +16,7 @@ import { Link } from '../lib/router'
 import { LINK_POLL_MS, linkTimeLeft, telegramApi, type TelegramLink, type TelegramStatus } from '../lib/telegram'
 import type { FriendOverview, FriendPerson, Visibility } from '../lib/types'
 import { DEFAULT_VISIBILITY_CHANGED } from '../lib/visibility'
+import type { SocialLinks } from '../lib/socialLinks'
 
 interface Settings {
   handle: string
@@ -30,6 +32,7 @@ interface Settings {
   defaultVisibility: Visibility
   lastActiveVisible: boolean
   aiAgreed: boolean
+  socialLinks: SocialLinks
 }
 
 interface Profile { nickname: string; nicknameNextChangeableAt: string | null; bio: string | null; profileImageUrl: string | null }
@@ -60,6 +63,7 @@ export function SettingsPage() {
     <main className="container narrow">
       <h1 className="page-title">설정</h1>
       <ProfileSection settings={settings} onSaved={(p) => setSettings({ ...settings, ...p })} />
+      <SocialLinksForm initial={settings.socialLinks} onSaved={(l) => setSettings({ ...settings, socialLinks: l })} />
       <FriendsSection />
       <NotificationsSection />
       <TelegramSection />

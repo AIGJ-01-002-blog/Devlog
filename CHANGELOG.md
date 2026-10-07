@@ -6,6 +6,20 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.20.0] - 2026-10-08
+
+블로그 소셜 정보 (spec 043).
+
+### 추가
+- 설정 [소셜 정보]: 이메일·GitHub·X·Facebook·홈페이지를 저장하면 블로그 머리에 링크로 보인다. 프로필 주소를 붙여 넣으면 아이디만 꺼내 저장한다
+- `PUT /api/me/social-links`, 블로그 프로필·설정 응답의 `socialLinks`, 테이블 `member_social_link`(V10)
+
+### 바뀜
+- 탈퇴 정리 때 소셜 정보도 지운다
+
+### 테스트
+- `SocialLinksTest` 3개, `SocialLinks.test.tsx` 4개
+
 ## [1.19.0] - 2026-10-08
 
 블로그 소개 탭 (spec 042).

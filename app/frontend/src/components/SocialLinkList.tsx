@@ -1,0 +1,22 @@
+import { SOCIAL_FIELDS, type SocialLinks } from '../lib/socialLinks'
+
+/**
+ * 블로그 머리의 소셜 정보 (spec 043). 값이 있는 것만 보인다.
+ * rel="me"로 블로그 주인의 다른 계정임을 알리고, 외부 사이트라 nofollow·noopener를 붙인다.
+ */
+export function SocialLinkList({ links }: { links: SocialLinks | undefined }) {
+  const shown = SOCIAL_FIELDS.filter((f) => links?.[f.kind])
+  if (!shown.length) return null
+  return (
+    <ul className="social-links" aria-label="소셜 정보">
+      {shown.map((f) => {
+        const value = links![f.kind]!
+        return (
+          <li key={f.kind}>
+            <a href={f.href(value)} rel="me nofollow noopener noreferrer" title={value}>{f.label}</a>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}

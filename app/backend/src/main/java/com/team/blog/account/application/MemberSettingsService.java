@@ -23,14 +23,16 @@ public class MemberSettingsService {
     private final AuthIdentityRepository identities;
     private final ProfileService profiles;
     private final AgreementService agreements;
+    private final SocialLinks socialLinks;
     private final Clock clock;
 
     public MemberSettingsService(MemberRepository members, AuthIdentityRepository identities, ProfileService profiles,
-                                 AgreementService agreements, Clock clock) {
+                                 AgreementService agreements, SocialLinks socialLinks, Clock clock) {
         this.members = members;
         this.identities = identities;
         this.profiles = profiles;
         this.agreements = agreements;
+        this.socialLinks = socialLinks;
         this.clock = clock;
     }
 
@@ -41,7 +43,7 @@ public class MemberSettingsService {
     public record Settings(String handle, String nickname, Instant nicknameNextChangeableAt, String bio, String profileImageUrl,
                            String email, boolean emailVerified, String provider, boolean hasPassword,
                            PreviousLogin previousLogin, String defaultVisibility, boolean lastActiveVisible, boolean aiAgreed,
-                           Terms terms) {}
+                           Terms terms, SocialLinks.Links socialLinks) {}
 
     public record PreviousLogin(Instant at, String provider) {}
 
@@ -58,7 +60,8 @@ public class MemberSettingsService {
                 me.provider(), identity != null && identity.getPasswordHash() != null,
                 new PreviousLogin(me.previousLoginAt(), me.provider()), m.getDefaultVisibility().name(), m.isLastActiveVisible(),
                 agreements.hasAgreed(me.id(), AgreementType.AI),
-                new Terms(t.termsVersion(), t.termsEffectiveDate(), t.privacyVersion(), t.privacyEffectiveDate()));
+                new Terms(t.termsVersion(), t.termsEffectiveDate(), t.privacyVersion(), t.privacyEffectiveDate()),
+                socialLinks.of(me.id()));
     }
 
     @Transactional
