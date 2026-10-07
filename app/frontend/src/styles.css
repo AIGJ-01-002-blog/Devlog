@@ -162,7 +162,7 @@ img { max-width: 100%; }
 .header-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
 .logo { font-family: var(--mono); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
-.header-write .short { display: none; }
+.header-write .short, .header-write .icon { display: none; }
 /* 좁은 화면: 헤더가 한 줄에 들어가게 간격과 글자를 줄인다 (테마 버튼 추가 뒤 375px 기준) */
 @media (max-width: 480px) {
   .logo { font-size: 1.125rem; }
@@ -171,6 +171,15 @@ img { max-width: 100%; }
   .header-actions .btn-outline, .header-actions .btn-dark { padding: 0 8px; }
   .header-write .long { display: none; }
   .header-write .short { display: inline; }
+}
+/* 320px 화면: 테마 버튼까지 한 줄에 들어가게 [글쓰기]를 연필 아이콘으로 */
+@media (max-width: 360px) {
+  .header-inner { padding: 0 10px; }
+  .logo { font-size: 1rem; }
+  .header-actions { gap: 0; }
+  .header-actions > * { flex-shrink: 0; }
+  .header-write .short { display: none; }
+  .header-write .icon { display: inline; }
 }
 .menu { position: relative; }
 .menu-button { display: flex; align-items: center; gap: 4px; background: none; border: 0; cursor: pointer; padding: 0; }

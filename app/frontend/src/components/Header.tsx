@@ -34,7 +34,7 @@ export function Header() {
           {member ? (
             <>
               <NotificationBell />
-              <Link to="/write" className="btn btn-outline header-write" aria-label="새 글 작성"><span className="long">새 글 작성</span><span className="short" aria-hidden="true">글쓰기</span></Link>
+              <Link to="/write" className="btn btn-outline header-write" aria-label="새 글 작성"><span className="long">새 글 작성</span><span className="short" aria-hidden="true">글쓰기</span><span className="icon" aria-hidden="true">✏️</span></Link>
               <div className="menu" ref={menuRef}>
                 <button type="button" className="menu-button" aria-haspopup="menu" aria-expanded={open}
                         onClick={() => setOpen((o) => !o)}>
