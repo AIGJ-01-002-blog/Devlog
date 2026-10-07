@@ -196,3 +196,5 @@ blog:
   telegram:
     enabled: ${TELEGRAM_ENABLED:true}
     bot-token: ${TELEGRAM_BOT_TOKEN:}
+    # ADMINS(기본, 관리자만) 또는 MEMBERS(회원 누구나)
+    audience: ${TELEGRAM_AUDIENCE:ADMINS}

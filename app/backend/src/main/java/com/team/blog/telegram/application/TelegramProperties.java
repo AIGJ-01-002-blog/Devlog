@@ -13,6 +13,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param linkTtl        연결 코드 유효 시간 (FR-002)
  * @param memoDailyLimit 회원당 하루 메모 수 (US3)
  * @param memoMaxChars   메모 최대 글자 수
+ * @param audience       누가 연결할 수 있는지. 기본은 관리자만(민서님 전용으로 시작), MEMBERS면 회원 누구나
  */
 @ConfigurationProperties("blog.telegram")
 public record TelegramProperties(@DefaultValue("true") boolean enabled,
@@ -22,15 +23,23 @@ public record TelegramProperties(@DefaultValue("true") boolean enabled,
                                  @DefaultValue("true") boolean poll,
                                  @DefaultValue("10m") Duration linkTtl,
                                  @DefaultValue("20") int memoDailyLimit,
-                                 @DefaultValue("4000") int memoMaxChars) {
+                                 @DefaultValue("4000") int memoMaxChars,
+                                 @DefaultValue("ADMINS") Audience audience) {
+
+    public enum Audience { ADMINS, MEMBERS }
 
     public boolean available() {
         return enabled && botToken != null && !botToken.isBlank();
     }
 
+    /** 이 조건을 member 별칭 m에 붙이면 연결할 수 있는 회원만 남는다 */
+    public String audienceSql() {
+        return audience == Audience.MEMBERS ? "TRUE" : "m.role = 'ADMIN'";
+    }
+
     /** 토큰이 로그·오류 화면에 찍히지 않게 한다 (FR-007). */
     @Override
     public String toString() {
-        return "TelegramProperties[enabled=" + enabled + ", configured=" + available() + "]";
+        return "TelegramProperties[enabled=" + enabled + ", configured=" + available() + ", audience=" + audience + "]";
     }
 }

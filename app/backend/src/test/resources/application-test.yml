@@ -36,6 +36,7 @@ blog:
   telegram:
     bot-token: test-bot-token
     poll: false
+    audience: MEMBERS
   media:
     profile-cleanup-cron: "-"
     post-image-cleanup-cron: "-"

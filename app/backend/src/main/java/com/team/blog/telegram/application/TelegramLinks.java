@@ -54,7 +54,7 @@ public class TelegramLinks {
     public record Linked(long chatId, boolean notifications) {}
 
     public Status status(long memberId) {
-        Optional<String> bot = props.available() ? api.botUsername() : Optional.empty();
+        Optional<String> bot = allowed(memberId) ? api.botUsername() : Optional.empty();
         List<Status> rows = jdbc.query("SELECT notify, linked_at FROM member_telegram WHERE member_id = ?",
                 (rs, i) -> new Status(bot.isPresent(), bot.orElse(null), true, rs.getBoolean(1), rs.getTimestamp(2).toInstant()), memberId);
         return rows.isEmpty() ? new Status(bot.isPresent(), bot.orElse(null), false, false, null) : rows.getFirst();
@@ -62,6 +62,9 @@ public class TelegramLinks {
 
     /** 새 연결 주소. 전에 받은 코드는 무효가 된다. */
     public Link issue(long memberId) {
+        if (props.available() && !allowed(memberId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "TELEGRAM_NOT_ALLOWED", "텔레그램 연결은 아직 일부 계정만 쓸 수 있어요.");
+        }
         String bot = props.available() ? api.botUsername().orElse(null) : null;
         if (bot == null) throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "TELEGRAM_UNAVAILABLE", "지금은 텔레그램을 연결할 수 없어요.");
         byte[] raw = new byte[18];
@@ -86,8 +89,8 @@ public class TelegramLinks {
         redis.delete(MEMBER_CODE_PREFIX + memberId);
         return Optional.ofNullable(tx.execute(s -> {
             List<String> nick = jdbc.queryForList("""
-                    SELECT nickname FROM member WHERE id = ? AND status <> 'WITHDRAWN' AND deleted_at IS NULL FOR UPDATE
-                    """, String.class, memberId);
+                    SELECT nickname FROM member m WHERE id = ? AND status <> 'WITHDRAWN' AND deleted_at IS NULL AND %s FOR UPDATE
+                    """.formatted(props.audienceSql()), String.class, memberId);
             if (nick.isEmpty()) return null;
             jdbc.update("DELETE FROM member_telegram WHERE chat_id = ? AND member_id <> ?", chatId, memberId);
             jdbc.update("""
@@ -113,12 +116,20 @@ public class TelegramLinks {
         return status(memberId);
     }
 
+    /** 연결할 수 있는 회원인지 (audience). 대상이 줄면 남은 연결도 쓰지 않는다 */
+    public boolean allowed(long memberId) {
+        return props.available() && Boolean.TRUE.equals(jdbc.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM member m WHERE m.id = ? AND " + props.audienceSql() + ")", Boolean.class, memberId));
+    }
+
     public Optional<Linked> chatOf(long memberId) {
-        return jdbc.query("SELECT chat_id, notify FROM member_telegram WHERE member_id = ?",
+        return jdbc.query("SELECT t.chat_id, t.notify FROM member_telegram t JOIN member m ON m.id = t.member_id WHERE t.member_id = ? AND "
+                        + props.audienceSql(),
                 (rs, i) -> new Linked(rs.getLong(1), rs.getBoolean(2)), memberId).stream().findFirst();
     }
 
     public Optional<Long> memberOf(long chatId) {
-        return jdbc.queryForList("SELECT member_id FROM member_telegram WHERE chat_id = ?", Long.class, chatId).stream().findFirst();
+        return jdbc.queryForList("SELECT t.member_id FROM member_telegram t JOIN member m ON m.id = t.member_id WHERE t.chat_id = ? AND "
+                + props.audienceSql(), Long.class, chatId).stream().findFirst();
     }
 }
