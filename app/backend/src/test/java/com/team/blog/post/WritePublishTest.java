@@ -53,6 +53,18 @@ class WritePublishTest extends IntegrationTest {
                 .path("id").asLong();
     }
 
+    /** 제목만 있는 임시글 (빈 임시글은 [새 글]이 다시 쓰므로 여러 개가 필요할 때). */
+    long newPost(Session s, String title) throws Exception {
+        return read(s.http().perform(asJson(post("/api/posts"), Map.of("title", title, "contentMd", ""))).andExpect(status().isCreated()).andReturn())
+                .path("id").asLong();
+    }
+
+    /** 오래된 빈 임시글 (정리 작업 확인용). */
+    long insertEmptyDraft(Session s) {
+        return jdbc.queryForObject("INSERT INTO post (author_id, title, content_md, status, visibility) VALUES (?, '', '', 'DRAFT', 'PUBLIC') RETURNING id",
+                Long.class, s.memberId());
+    }
+
     ResultActions autosave(Session s, long id, String title, String content, long base) throws Exception {
         return s.http().perform(asJson(put("/api/posts/" + id + "/autosave"),
                 Map.of("title", title, "contentMd", content, "baseVersion", base)));
@@ -295,12 +307,27 @@ class WritePublishTest extends IntegrationTest {
     }
 
     @Test
+    void 새_글을_여러_번_열어도_아무것도_안_쓴_임시글은_하나다() throws Exception {
+        Session s = signup(uniqueLogin("reuse"));
+        long first = newPost(s);
+        assertThat(newPost(s)).isEqualTo(first);
+        // 자동 저장 중인 글은 빈 글이 아니다
+        autosave(s, first, "", "쓰는 중", 0).andExpect(status().isOk());
+        long second = newPost(s);
+        assertThat(second).isNotEqualTo(first);
+        // 다른 사람의 빈 임시글은 쓰지 않는다
+        Session other = signup(uniqueLogin("reuse2"));
+        assertThat(newPost(other)).isNotEqualTo(second);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM post WHERE author_id = ?", Integer.class, s.memberId())).isEqualTo(2);
+    }
+
+    @Test
     void 비어_있고_24시간_지난_임시글만_정리된다() throws Exception {
         Session s = signup(uniqueLogin("cleanup"));
-        long empty = newPost(s);
-        long recent = newPost(s);
-        long written = newPost(s);
-        long autosaving = newPost(s);
+        long empty = insertEmptyDraft(s);
+        long recent = insertEmptyDraft(s);
+        long written = insertEmptyDraft(s);
+        long autosaving = insertEmptyDraft(s);
         save(s, written, "", "내용 있음", 0).andExpect(status().isOk());
         autosave(s, autosaving, "", "자동 저장만 있음", 0).andExpect(status().isOk());
         Timestamp old = Timestamp.from(Instant.now().minus(25, ChronoUnit.HOURS));
@@ -424,7 +451,7 @@ class WritePublishTest extends IntegrationTest {
     void 내_글_관리는_탭별로_20개씩_넘기고_첫_요청에만_개수를_준다() throws Exception {
         Session s = signup(uniqueLogin("manage"));
         List<Long> ids = new ArrayList<>();
-        for (int i = 0; i < 23; i++) ids.add(newPost(s));
+        for (int i = 0; i < 23; i++) ids.add(newPost(s, "임시 " + i));
         long pub = ids.get(0);
         publish(s, pub, "발행", "본문", "PRIVATE", 0, null).andExpect(status().isOk());
         JsonNode first = read(s.http().perform(get("/api/me/posts")).andExpect(status().isOk()).andReturn());

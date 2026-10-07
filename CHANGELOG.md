@@ -8,6 +8,12 @@ main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/r
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-07
+
+### 고침
+- [새 글]을 열 때마다 빈 임시글이 하나씩 생기던 것: 아직 아무것도 쓰지 않은 임시글이 있으면 그 글을 이어 쓴다(자동 저장 중인 글은 제외)
+- 로컬 실행 안내(`app/compose.yaml`)에 `SITE_BASE_URL=http://localhost:5173`을 넣어 인증·재설정 메일 링크가 개발 화면을 가리키게 했다
+
 ### 추가
 - CI/CD: 줄 커버리지 40% 기준(JaCoCo), 배포 헬스 체크 실패 시 자동 롤백과 롤백 시험, Discord 배포·리뷰 알림과 SonarQube(레포 변수로 켜고 끔), PR 템플릿, CodeRabbit 설정
 
