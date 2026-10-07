@@ -56,6 +56,11 @@ public class SpaShell {
     }
 
     public String render(HeadMeta meta, String bodyHtml, Object initialData) {
+        return render(meta, bodyHtml, initialData, "/rss");
+    }
+
+    /** @param rssPath 이 화면의 RSS 주소 (026). 수집하는 화면에만 붙인다 */
+    public String render(HeadMeta meta, String bodyHtml, Object initialData, String rssPath) {
         StringBuilder head = new StringBuilder();
         head.append("<title>").append(esc(meta.title())).append("</title>\n");
         if (meta.description() != null && !meta.description().isBlank()) {
@@ -64,6 +69,9 @@ public class SpaShell {
         if (!meta.indexable()) head.append("<meta name=\"robots\" content=\"noindex, nofollow\">\n");
         if (meta.indexable() && meta.canonical() != null) {
             head.append("<link rel=\"canonical\" href=\"").append(esc(meta.canonical())).append("\">\n");
+            if (rssPath != null) {
+                head.append("<link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS\" href=\"").append(esc(rssPath)).append("\">\n");
+            }
             head.append("<meta property=\"og:type\" content=\"").append(esc(meta.ogType())).append("\">\n");
             head.append("<meta property=\"og:url\" content=\"").append(esc(meta.canonical())).append("\">\n");
             head.append("<meta property=\"og:title\" content=\"").append(esc(meta.title())).append("\">\n");

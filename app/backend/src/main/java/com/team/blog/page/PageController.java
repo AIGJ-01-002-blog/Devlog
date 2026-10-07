@@ -181,7 +181,7 @@ public class PageController {
                 null, null, q == null || q.isBlank()); // 블로그 안 검색 결과는 수집 거부 (014 FR-022)
         return html(HttpStatus.OK, shell.render(meta, body, filter == null
                         ? Map.of("page", "blog", "profile", p, "feed", first, "blogTags", blogTags)
-                        : Map.of("page", "blog", "profile", p, "feed", first, "blogTags", blogTags, "tag", filter)),
+                        : Map.of("page", "blog", "profile", p, "feed", first, "blogTags", blogTags, "tag", filter), "/@" + p.handle() + "/rss"),
                 first.friendsView() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate());
     }
 

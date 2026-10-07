@@ -53,6 +53,7 @@ export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'pos
             {' · '}<Link to={`/@${profile.handle}/followers`}>팔로워 <b>{profile.followerCount}</b></Link>
             {' · '}<Link to={`/@${profile.handle}/following`}>팔로잉 <b>{profile.followingCount}</b></Link>
             {lastActiveLabel(profile.lastActiveDaysAgo) && <> · 최근 활동 {lastActiveLabel(profile.lastActiveDaysAgo)}</>}
+            {' · '}<a href={`/@${profile.handle}/rss`} type="application/rss+xml" title="RSS 리더로 이 블로그의 새 글 받기">RSS</a>
           </p>
           {!profile.mine && <div className="blog-actions row">
           <FollowButton handle={profile.handle} following={profile.following}

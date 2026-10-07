@@ -38,4 +38,12 @@ public class MemberQueryService {
         if (handle == null) return Optional.empty();
         return members.findByHandle(handle.toLowerCase(Locale.ROOT)).map(MemberSummary::of);
     }
+
+    /** 공개 화면용: 탈퇴했거나 정리된(deleted) 회원은 없는 것으로 본다. */
+    public Optional<MemberSummary> findActiveByHandle(String handle) {
+        if (handle == null) return Optional.empty();
+        return members.findByHandle(handle.toLowerCase(Locale.ROOT))
+                .filter(m -> m.getWithdrawnAt() == null && m.getDeletedAt() == null)
+                .map(MemberSummary::of);
+    }
 }
