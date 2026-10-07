@@ -36,5 +36,5 @@ specify version
 | spec | 범위 | 상태 |
 |---|---|---|
 | `001-auth-ownership` | GitHub 가입·로그인, 블로그 주소·닉네임, 소유 권한, 내 글 관리(본인 글만) | spec 작성됨 |
-| `002-write-publish` | Markdown 작성·임시저장·발행·공개 범위 | 예정 |
-| `003-read-share` | 홈·개인 블로그·글 상세·링크 미리보기 | 예정 |
+| `002-write-publish` | Markdown 작성·서버 자동 저장·발행·공개 범위 | spec 작성됨 |
+| `003-read-share` | 홈·개인 블로그·글 상세·링크 미리보기 | spec 작성됨 |
