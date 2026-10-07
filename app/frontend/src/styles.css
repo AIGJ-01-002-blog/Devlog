@@ -258,7 +258,8 @@ select { width: auto; }
   display: flex; flex-direction: column; background: var(--color-surface); border-radius: var(--radius);
   box-shadow: var(--shadow); overflow: hidden; transition: transform 0.25s, box-shadow 0.25s;
 }
-.card:hover { transform: translateY(-8px); box-shadow: 0 12px 20px var(--shadow-color); }
+/* 키보드로 카드 안 링크에 들어와도 마우스를 올린 것과 똑같이 떠오른다 */
+.card:hover, .card:focus-within { transform: translateY(-8px); box-shadow: 0 12px 20px var(--shadow-color); }
 .card-thumb { display: block; aspect-ratio: 16 / 9; width: 100%; overflow: hidden; background: var(--color-surface-2); }
 .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .card-thumb-empty {
@@ -723,4 +724,12 @@ a.attachment-name:hover { color: var(--color-brand); }
   .toc-inner a:hover { color: var(--color-text); }
   .toc-inner a.active { color: var(--color-text); font-weight: 600; transform: scale(1.03); transform-origin: left; }
 }
-@media (prefers-reduced-motion: reduce) { .toc-inner a { transition: none; } .toc-inner a.active { transform: none; } }
+
+/* 움직임 줄이기: 운영체제에서 켠 사람에게는 화면 전체에서 움직이는 효과를 끄고, 카드·목차의 위치·크기 변화도 하지 않는다 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important; animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important; scroll-behavior: auto !important;
+  }
+  .card:hover, .card:focus-within, .toc-inner a.active { transform: none; }
+}
