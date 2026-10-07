@@ -7,6 +7,7 @@ import { Comments } from '../components/Comments'
 import { AttachmentList } from '../components/AttachmentList'
 import { LikeButton } from '../components/LikeButton'
 import { SeriesBox } from '../components/SeriesBox'
+import { ShareButton } from '../components/ShareButton'
 import { Toc } from '../components/Toc'
 import { readingMinutes } from '../lib/toc'
 import { api, ApiError, takeInitialData } from '../lib/api'
@@ -156,6 +157,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
         <div className="post-stats muted">
           <LikeButton postId={post.id} mine={post.mine} initial={{ liked: post.liked, likeCount: post.likeCount }}
             onChange={(l) => setPost((p) => p && { ...p, liked: l.liked, likeCount: l.likeCount })} />
+          {post.visibility !== 'PRIVATE' && <ShareButton path={post.url} title={post.title} />}
           <span>댓글 {compactNumber(post.commentCount)}</span>
           <span className="view-count" tabIndex={0} title={VIEW_HINT} aria-label={`조회 ${post.viewCount}회, ${VIEW_HINT}`}>
             조회 {compactNumber(post.viewCount)}
