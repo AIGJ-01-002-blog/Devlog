@@ -28,9 +28,12 @@ import com.team.blog.support.IntegrationTest;
 
 /** spec 010 인수 시나리오: 발행할 때 태그 달기(US1), 거부(US2), 태그별 목록(US3), 자동완성(US4), 블로그 필터(US5). */
 class TagTest extends IntegrationTest {
-    /** 테스트마다 겹치지 않는 태그 이름 조각 (전체 태그 목록·자동완성은 모든 테스트가 같은 DB를 쓴다). */
+    /**
+     * 테스트마다 겹치지 않는 태그 이름 조각 (전체 태그 목록·자동완성은 모든 테스트가 같은 DB를 쓴다).
+     * 10진수만 붙인다. 36진수는 가끔 금칙어 철자를 만들어 발행이 400으로 거절됐다.
+     */
     static String unique(String base) {
-        return base + Long.toString(System.nanoTime(), 36);
+        return base + System.nanoTime();
     }
 
     long draft(Session s, String title) throws Exception {
