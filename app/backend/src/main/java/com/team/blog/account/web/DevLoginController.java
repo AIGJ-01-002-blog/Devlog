@@ -1,0 +1,43 @@
+package com.team.blog.account.web;
+
+import java.util.Map;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.team.blog.account.application.SocialProfile;
+import com.team.blog.account.domain.AuthProvider;
+import com.team.blog.shared.web.SafeRedirects;
+
+/**
+ * 개발·E2E 전용 로그인. GitHub 앱 키 없이 GitHub 인증 결과를 흉내 내 실제와 같은 가입·로그인 흐름을 탄다.
+ * blog.dev-login.enabled=true 일 때만 존재한다 (운영에서는 꺼져 있어 404).
+ */
+@RestController
+@ConditionalOnProperty(name = "blog.dev-login.enabled", havingValue = "true")
+public class DevLoginController {
+    private final LoginFlow loginFlow;
+
+    public DevLoginController(LoginFlow loginFlow) {
+        this.loginFlow = loginFlow;
+    }
+
+    public record DevLoginRequest(String provider, String providerUserId, String login, String name, String email,
+                                  String redirect) {}
+
+    @PostMapping("/api/dev/login")
+    public Map<String, String> login(@RequestBody DevLoginRequest body, HttpServletRequest request, HttpServletResponse response) {
+        AuthProvider provider = body.provider() == null ? AuthProvider.GITHUB : AuthProvider.valueOf(body.provider());
+        if (body.redirect() != null) {
+            request.getSession(true).setAttribute(LoginFlow.REDIRECT_KEY, SafeRedirects.sanitize(body.redirect()));
+        }
+        String target = loginFlow.complete(new SocialProfile(provider, body.providerUserId(), body.login(), body.name(),
+                body.email(), null), request, response);
+        return Map.of("redirect", target);
+    }
+}

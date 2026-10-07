@@ -1,0 +1,41 @@
+# 기능 spec 목록
+
+`docs/`의 요구사항·설계 문서를 Spec Kit spec으로 옮긴 목록이다. 우선순위 단계는 MVP → MVP 직후(Tier A 나머지) →
+다음 단계(Tier B) → 이후 단계(Tier C) 순이다. 각 spec의 상세 수치와 완료 기준은 근거 문서를 따른다.
+
+| spec | 기능 | 기능 ID | 우선순위 단계 | 근거 문서 |
+|---|---|---|---|---|
+| [001-auth-ownership](./001-auth-ownership/spec.md) | GitHub 가입·로그인, 블로그 주소·닉네임, 소유 권한, 내 글 관리(본인 글만) | C-AUTH-1(일부), C-AUTH-2(닉네임), C-OWN-1, C-MANAGE-1(일부) | MVP | 07, 08, 09, 41, 42 |
+| [002-write-publish](./002-write-publish/spec.md) | Markdown 작성·미리보기, 서버 자동 저장, 발행·다시 발행, 공개 범위 | C-POST-1, C-POST-2(일부), C-POST-3, C-POST-4 | MVP | 04, 05, 06, 12 |
+| [003-read-share](./003-read-share/spec.md) | 글 상세·링크 미리보기, 홈 최신 글, 개인 블로그 | C-READ-1, C-READ-2, C-BLOG-1 | MVP | 10, 40 |
+| [004-email-google-login](./004-email-google-login/spec.md) | 이메일 가입·인증·비밀번호, Google 로그인 | C-AUTH-1(나머지) | MVP 직후 (Tier A 나머지) | 07, 08, 11 |
+| [005-profile-settings](./005-profile-settings/spec.md) | 프로필(소개·사진)·계정 설정 | C-AUTH-2 | MVP 직후 (Tier A 나머지) | 11, 09 |
+| [006-offline-autosave](./006-offline-autosave/spec.md) | 브라우저 저장·오프라인 복구 | C-POST-2(나머지) | MVP 직후 (Tier A 나머지) | 04 |
+| [007-delete-trash-manage](./007-delete-trash-manage/spec.md) | 글 삭제·휴지통·복구, 내 글 관리 전체 | C-POST-5, C-MANAGE-1(나머지) | MVP 직후 (Tier A 나머지) | 13, 41 |
+| [008-friends-activity](./008-friends-activity/spec.md) | 친구 맺기, 최근 활동 표시, (선택) 친구 공개 | C-FRIEND-1, C-ACT-1 | MVP 직후 (Tier A 나머지) | 06, 07, 11 |
+| [009-image-upload](./009-image-upload/spec.md) | 사진 업로드·썸네일·정리 | C-IMG-1 | 다음 단계 (Tier B) | 23, 04, 05, 10 |
+| [010-tags](./010-tags/spec.md) | 태그·태그별 목록 | C-TAG-1 | 다음 단계 (Tier B) | 22 |
+| [011-comments](./011-comments/spec.md) | 댓글·답글 | C-CMT-1 | 다음 단계 (Tier B) | 21 |
+| [012-likes](./012-likes/spec.md) | 글 좋아요 | C-LIKE-1 | 다음 단계 (Tier B) | 30 |
+| [013-view-count](./013-view-count/spec.md) | 조회수 | C-VIEW-1 | 다음 단계 (Tier B) | 31, 40 |
+| [014-search](./014-search/spec.md) | 검색 | Tier C | 이후 단계 (Tier C) | 33 |
+| [015-notifications](./015-notifications/spec.md) | 인앱 알림 | Tier C | 이후 단계 (Tier C) | 25, 20 |
+| [016-follow-feed](./016-follow-feed/spec.md) | 팔로우·피드 | Tier C | 이후 단계 (Tier C) | 24 |
+| [017-trending](./017-trending/spec.md) | 트렌딩 | Tier C | 이후 단계 (Tier C) | 32 |
+| [018-ai-tag-suggest](./018-ai-tag-suggest/spec.md) | AI 태그 추천 | Tier C | 이후 단계 (Tier C) | 34 |
+| [019-report-hide](./019-report-hide/spec.md) | 신고·관리자 숨김·정지 | Tier C | 이후 단계 (Tier C) | 43 |
+| [020-withdraw](./020-withdraw/spec.md) | 회원 탈퇴 | Tier C (데이터 정책은 확정) | 이후 단계 (Tier C) | 44, 13 |
+| [021-dark-mode](./021-dark-mode/spec.md) | 다크 모드 | Tier C | 이후 단계 (Tier C) | 45 |
+
+## 여러 spec에 걸치는 문서
+
+별도 spec이 아니라 헌법과 각 spec의 요구사항에 반영되어 있다.
+
+| 문서 | 반영 위치 |
+|---|---|
+| 01 공통 요구사항 | 헌법(공통 원칙·기술 제약), 모든 spec의 기능 ID와 범위 |
+| 02 아키텍처, 03·51 ERD | 헌법 기술 제약, 각 spec의 plan 단계 근거 |
+| 12 본문 정화 | 002(작성), 011(댓글)과 헌법 원칙 III |
+| 20 도메인 사건 | 헌법 원칙 IV, 015 알림과 사건을 내는 각 spec |
+| 42 권한 매트릭스 | 헌법 원칙 II, 모든 spec의 권한 요구사항 |
+| 52 기능 총정리 | 이 목록의 기준 |
