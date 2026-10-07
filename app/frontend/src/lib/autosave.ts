@@ -95,6 +95,21 @@ export class Autosaver {
     this.clear()
   }
 
+  /** 연결이 돌아왔을 때: 기다리던 재시도를 바로 한다 (006 FR-005). */
+  retryNow(): void {
+    if (this.stopped || this.conflict || this.inFlight) return
+    if (same(this.content, this.sentContent)) return
+    this.failures = 0
+    this.schedule(0)
+  }
+
+  /** 다시 열었을 때 기기 내용과 서버 내용의 출발점이 다르면 처음부터 충돌이다 (006 FR-008). 서버 전송만 멈춘다. */
+  markConflict(server: ServerContent): void {
+    this.conflict = true
+    this.clear()
+    this.o.onState({ kind: 'conflict', server })
+  }
+
   stop(): void {
     this.stopped = true
     this.clear()
