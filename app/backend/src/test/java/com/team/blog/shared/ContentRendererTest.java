@@ -35,8 +35,8 @@ class ContentRendererTest extends IntegrationTest {
     void setUp() {
         // 작성자 7이 올린 사진은 myKey 하나뿐이라고 가정한다
         renderer = new ContentRenderer(imageUrls, (uploader, keys) -> {
-            Set<String> owned = new HashSet<>();
-            if (uploader == AUTHOR && keys.contains(myKey)) owned.add(myKey);
+            java.util.Map<String, String> owned = new java.util.HashMap<>();
+            if (uploader == AUTHOR && keys.contains(myKey)) owned.put(myKey, null);
             return owned;
         }, props, "http://localhost:8080");
         cdn = imageUrls.publicBaseUrl() + "/";

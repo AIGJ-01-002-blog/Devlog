@@ -20,6 +20,7 @@ public record BlogProperties(
         Nickname nickname,
         @DefaultValue Post post,
         @DefaultValue Feed feed,
+        @DefaultValue Image image,
         @DefaultValue DevLogin devLogin) {
 
     public record Site(String baseUrl, @DefaultValue("devlog") String name, @DefaultValue("/og-default.png") String defaultOgImage) {}
@@ -60,6 +61,15 @@ public record BlogProperties(
                        @DefaultValue("10") int maxTags) {}
 
     public record Feed(@DefaultValue("9") int pageSize, @DefaultValue("20") int managePageSize) {}
+
+    /**
+     * 본문 사진 (009, docs/23 §3). 공개 주소(public-base-url)는 ImageUrls가 따로 읽는다.
+     * @param quota      1인 사진 저장 공간 (원본 + 썸네일, 프로필 사진 포함)
+     * @param dailyLimit 하루(한국 0시 기준) 업로드 장수. 실패한 업로드도 센다
+     */
+    public record Image(@DefaultValue("1GB") org.springframework.util.unit.DataSize quota,
+                        @DefaultValue("200") int dailyLimit,
+                        @DefaultValue("20") int perMinute) {}
 
     public record DevLogin(@DefaultValue("false") boolean enabled) {}
 }

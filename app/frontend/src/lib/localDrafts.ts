@@ -35,7 +35,10 @@ export interface PendingImage {
   id: string
   memberId: number
   postId: number
+  /** 올릴 사진 (이미 줄이고 다시 그린 것) */
   blob: Blob
+  /** 목록 카드용 썸네일 */
+  thumb?: Blob
   createdAt: number
 }
 
@@ -153,6 +156,16 @@ export const localDrafts = {
     if (!db) return false
     await run('pendingImages', 'readwrite', (s) => s.put(img))
     return true
+  },
+
+  /** 이 글의 업로드 대기 사진 (009 FR-017). */
+  async pendingImagesFor(memberId: number, postId: number): Promise<PendingImage[]> {
+    const all = (await run<PendingImage[]>('pendingImages', 'readonly', (s) => s.index('member').getAll(memberId))) ?? []
+    return all.filter((p) => p.postId === postId)
+  },
+
+  async removePendingImage(id: string): Promise<void> {
+    await run('pendingImages', 'readwrite', (s) => s.delete(id))
   },
 
   /** 로그아웃 (FR-017): 그 회원의 작성 데이터·백업·대기 사진을 모두 지운다. */

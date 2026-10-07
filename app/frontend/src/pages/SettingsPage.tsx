@@ -9,6 +9,7 @@ import { friendsApi, lastActiveLabel } from '../lib/friends'
 import { clock, fullDate, monthDay } from '../lib/format'
 import { checkSourceFile, decodeFile, renderSquare, uploadProfileImage, type Crop } from '../lib/image'
 import { passwordOk } from '../lib/password'
+import { formatBytes, storageUsage, type StorageUsage } from '../lib/postImages'
 import { Link } from '../lib/router'
 import type { FriendOverview, FriendPerson, Visibility } from '../lib/types'
 
@@ -254,6 +255,8 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
           <label><input type="radio" name="defaultVisibility" checked={settings.defaultVisibility === 'PUBLIC'} onChange={() => changeVisibility('PUBLIC')} /> 전체 공개</label>
           <label><input type="radio" name="defaultVisibility" checked={settings.defaultVisibility === 'PRIVATE'} onChange={() => changeVisibility('PRIVATE')} /> 나만 보기</label>
         </dd>
+        <dt>사진 저장 공간</dt>
+        <dd><StorageMeter /></dd>
         <dt>최근 활동</dt>
         <dd>
           <label><input type="checkbox" checked={settings.lastActiveVisible} onChange={(e) => changeLastActive(e.target.checked)} /> 최근 활동을 친구에게 보이기</label>
@@ -402,5 +405,23 @@ function FriendsSection() {
       )}
       {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
     </section>
+  )
+}
+
+/** 사진 저장 공간 (009 US5). 지운 사진의 공간은 정리 작업이 실제로 지울 때(7일 뒤) 돌아온다. */
+function StorageMeter() {
+  const [u, setU] = useState<StorageUsage | null>(null)
+  useEffect(() => { storageUsage().then(setU).catch(() => undefined) }, [])
+  if (!u) return <span className="muted small">불러오는 중…</span>
+  const ratio = Math.min(1, u.usedBytes / u.quotaBytes)
+  return (
+    <div>
+      <div className={`storage-bar${ratio > 0.9 ? ' warn' : ''}`} role="meter" aria-valuemin={0} aria-valuemax={u.quotaBytes}
+           aria-valuenow={u.usedBytes} aria-label="사진 저장 공간 사용량">
+        <span style={{ width: `${(ratio * 100).toFixed(1)}%` }} />
+      </div>
+      <span className="small">{formatBytes(u.usedBytes)} / {formatBytes(u.quotaBytes)}</span>
+      <span className="muted small"> · 오늘 {u.todayCount}/{u.dailyLimit}장 · 지운 사진의 공간은 7일 뒤 돌아와요</span>
+    </div>
   )
 }

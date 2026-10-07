@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Avatar } from '../components/Avatar'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { clock, compactNumber, fullDate, monthDay, relativeDate } from '../lib/format'
+import { enhanceGifs } from '../lib/gifPlayer'
 import { highlightWithin } from '../lib/highlight'
 import { useAuth } from '../lib/auth'
 import { setFlash } from '../lib/flash'
@@ -33,6 +34,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
     if (post) {
       document.title = `${post.title} - ${post.author.nickname}`
       void highlightWithin(bodyRef.current)
+      enhanceGifs(bodyRef.current)
     }
   }, [post])
 
