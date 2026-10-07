@@ -53,6 +53,8 @@ public abstract class IntegrationTest {
         // AI 태그 추천(018)은 가짜 공급자로 켠다
         r.add("blog.ai.gemini.base-url", FakeAi.INSTANCE::baseUrl);
         r.add("blog.ai.local.base-url", FakeAi.INSTANCE::baseUrl);
+        // 텔레그램(023)은 가짜 봇 서버로
+        r.add("blog.telegram.base-url", FakeTelegram.INSTANCE::baseUrl);
     }
 
     @BeforeEach

@@ -95,7 +95,8 @@ kubectl -n blog rollout status deploy/blog-app
 | Secret | `BLOG_SECRET_ENV` | 고른 overlay의 `secret.env` 내용 전체 (Environment Secret으로 overlay마다 따로 둘 수 있음) | 배포 실패 |
 | Secret | `SMTP_PASSWORD` | 운영 Gmail(devlogauth@gmail.com)의 앱 비밀번호 16자리. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어씀 | 메일 안 감(인증 메일 보관만) |
 | Secret | `DISCORD_WEBHOOK_URL`, `DISCORD_PR_WEBHOOK_URL` | Discord 웹훅 주소 | 알림만 안 감 |
-| Secret | `TELEGRAM_BOT_TOKEN` | 텔레그램 @BotFather → `/newbot`이 준 토큰 | 텔레그램 알림 안 감 |
+| Secret | `TELEGRAM_BOT_TOKEN` | 텔레그램 @BotFather → `/newbot`이 준 토큰. `APP_TELEGRAM_BOT_TOKEN`이 없으면 앱 봇(023)도 이 봇을 쓴다 | 텔레그램 알림 안 감 |
+| Secret | `APP_TELEGRAM_BOT_TOKEN` | 사용자용 앱 봇(023)을 배포 알림 봇과 나눌 때만. 있으면 `BLOG_SECRET_ENV`의 `TELEGRAM_BOT_TOKEN`을 덮어씀 | 배포 알림 봇을 같이 씀 |
 | Secret | `TELEGRAM_CHAT_ID` | 알림 받을 대화방 ID (봇에게 말을 건 뒤 `https://api.telegram.org/bot<토큰>/getUpdates`의 `chat.id`) | 텔레그램 알림 안 감 |
 | Secret | `SONAR_TOKEN` | SonarCloud(sonarcloud.io → My Account → Security) 토큰 | 품질 검사 건너뜀 |
 | Secret | `SONAR_HOST_URL` | 학교 SonarQube를 쓸 때만 `http://s4.java21.net:9000` | SonarCloud 사용 |

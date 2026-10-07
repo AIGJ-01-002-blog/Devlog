@@ -13,6 +13,7 @@ import { passwordOk } from '../lib/password';
 import { MUTABLE_TYPES, notificationsApi } from '../lib/notifications';
 import { formatBytes, storageUsage } from '../lib/postImages';
 import { Link } from '../lib/router';
+import { LINK_POLL_MS, linkTimeLeft, telegramApi } from '../lib/telegram';
 import { DEFAULT_VISIBILITY_CHANGED } from '../lib/visibility';
 const PROVIDER_NAMES = { GITHUB: 'GitHub', GOOGLE: 'Google', LOCAL: '이메일' };
 const BIO_MAX = 200;
@@ -32,7 +33,7 @@ export function SettingsPage() {
         return _jsx("main", { className: "container narrow", children: _jsx("p", { className: "error center", children: "\uC124\uC815\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. \uC0C8\uB85C\uACE0\uCE68\uD574 \uC8FC\uC138\uC694." }) });
     if (!settings)
         return _jsx("main", { className: "container narrow", children: _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" }) });
-    return (_jsxs("main", { className: "container narrow", children: [_jsx("h1", { className: "page-title", children: "\uC124\uC815" }), _jsx(ProfileSection, { settings: settings, onSaved: (p) => setSettings({ ...settings, ...p }) }), _jsx(FriendsSection, {}), _jsx(NotificationsSection, {}), _jsx(AccountSection, { settings: settings, onChange: setSettings }), settings.hasPassword && _jsx(PasswordSection, {}), _jsx("section", { className: "settings-section withdraw-link", children: _jsx(Link, { to: "/settings/withdraw", className: "btn btn-text danger", children: "\uD68C\uC6D0 \uD0C8\uD1F4" }) })] }));
+    return (_jsxs("main", { className: "container narrow", children: [_jsx("h1", { className: "page-title", children: "\uC124\uC815" }), _jsx(ProfileSection, { settings: settings, onSaved: (p) => setSettings({ ...settings, ...p }) }), _jsx(FriendsSection, {}), _jsx(NotificationsSection, {}), _jsx(TelegramSection, {}), _jsx(AccountSection, { settings: settings, onChange: setSettings }), settings.hasPassword && _jsx(PasswordSection, {}), _jsx("section", { className: "settings-section withdraw-link", children: _jsx(Link, { to: "/settings/withdraw", className: "btn btn-text danger", children: "\uD68C\uC6D0 \uD0C8\uD1F4" }) })] }));
 }
 function ProfileSection({ settings, onSaved }) {
     const { me, refresh } = useAuth();
@@ -229,6 +230,71 @@ function NotificationsSection() {
         }
     };
     return (_jsxs("section", { className: "settings-section", id: "notifications", children: [_jsx("h2", { children: "\uC54C\uB9BC" }), muted && (_jsx("ul", { className: "notification-settings", children: MUTABLE_TYPES.map(({ type, label }) => (_jsx("li", { children: _jsxs("label", { children: [_jsx("input", { type: "checkbox", checked: !muted.includes(type), onChange: (e) => toggle(type, e.target.checked) }), " ", label] }) }, type))) })), _jsx("p", { className: "muted small", children: "\uC6B4\uC601 \uC54C\uB9BC(\uC2E0\uACE0 \uACB0\uACFC\u00B7\uC228\uAE40)\uC740 \uB04C \uC218 \uC5C6\uC5B4\uC694. \uB048 \uC54C\uB9BC\uC740 \uADF8\uB3D9\uC548 \uC313\uC774\uC9C0 \uC54A\uC544\uC694." }), message && _jsx("p", { className: message.ok ? 'ok' : 'error', role: "status", children: message.text })] }));
+}
+/**
+ * 텔레그램 (023): 1회용 주소로 연결하고, 새 알림 받기를 켜고 끈다. 연결하면 봇에게 보낸 메모가 임시글이 된다.
+ * 서버에 봇이 없으면(available=false) 항목을 숨긴다. 주소를 연 뒤에는 연결될 때까지 상태를 다시 읽는다.
+ */
+function TelegramSection() {
+    const [status, setStatus] = useState(null);
+    const [link, setLink] = useState(null);
+    const [now, setNow] = useState(() => Date.now());
+    const [busy, setBusy] = useState(false);
+    const [message, setMessage] = useState(null);
+    useEffect(() => { telegramApi.status().then(setStatus).catch(() => setStatus(null)); }, []);
+    // 연결 주소가 살아 있는 동안만 상태를 다시 읽는다
+    useEffect(() => {
+        if (!link)
+            return;
+        const timer = window.setInterval(async () => {
+            setNow(Date.now());
+            if (!linkTimeLeft(link.expiresAt)) {
+                setLink(null);
+                return;
+            }
+            try {
+                const s = await telegramApi.status();
+                if (s.linked) {
+                    setStatus(s);
+                    setLink(null);
+                    setMessage({ ok: true, text: '텔레그램과 연결했어요.' });
+                }
+            }
+            catch { /* 다음 차례에 다시 읽는다 */ }
+        }, LINK_POLL_MS);
+        return () => window.clearInterval(timer);
+    }, [link]);
+    if (!status?.available)
+        return null;
+    const run = async (fn, fail) => {
+        setBusy(true);
+        setMessage(null);
+        try {
+            await fn();
+        }
+        catch {
+            setMessage({ ok: false, text: fail });
+        }
+        finally {
+            setBusy(false);
+        }
+    };
+    const connect = () => run(async () => {
+        const l = await telegramApi.link();
+        setNow(Date.now());
+        setLink(l);
+    }, '연결 주소를 만들지 못했어요. 다시 시도해 주세요.');
+    const toggle = (on) => run(async () => {
+        setStatus(await telegramApi.setNotifications(on));
+        setMessage({ ok: true, text: '저장했어요.' });
+    }, '바꾸지 못했어요. 다시 시도해 주세요.');
+    const disconnect = () => run(async () => {
+        await telegramApi.unlink();
+        setStatus({ ...status, linked: false, linkedAt: null });
+        setMessage({ ok: true, text: '연결을 끊었어요.' });
+    }, '연결을 끊지 못했어요. 다시 시도해 주세요.');
+    const left = link ? linkTimeLeft(link.expiresAt, now) : null;
+    return (_jsxs("section", { className: "settings-section", id: "telegram", children: [_jsx("h2", { children: "\uD154\uB808\uADF8\uB7A8" }), status.linked ? (_jsxs(_Fragment, { children: [_jsxs("p", { children: [status.botUsername ? _jsxs(_Fragment, { children: ["@", status.botUsername] }) : '봇', "\uACFC \uC5F0\uACB0\uB3FC \uC788\uC5B4\uC694", status.linkedAt && _jsxs("span", { className: "muted small", children: [" \u00B7 ", fullDate(status.linkedAt), "\uBD80\uD130"] })] }), _jsxs("label", { children: [_jsx("input", { type: "checkbox", checked: status.notifications, disabled: busy, onChange: (e) => toggle(e.target.checked) }), " \uC0C8 \uC54C\uB9BC\uC744 \uD154\uB808\uADF8\uB7A8\uC73C\uB85C \uBC1B\uAE30"] }), _jsx("p", { className: "muted small", children: "\uBD07\uC5D0\uAC8C \uBCF4\uB0B8 \uBA54\uBAA8\uB294 \uC784\uC2DC\uAE00\uB85C \uC800\uC7A5\uB3FC\uC694. AI \uC0AC\uC6A9\uC5D0 \uB3D9\uC758\uD588\uC73C\uBA74 \uB2E4\uB4EC\uC5B4\uC11C \uC800\uC7A5\uD574\uC694." }), _jsx("button", { type: "button", className: "btn btn-text danger", disabled: busy, onClick: disconnect, children: "\uC5F0\uACB0 \uB04A\uAE30" })] })) : (_jsxs(_Fragment, { children: [_jsx("p", { className: "muted small", children: "\uC5F0\uACB0\uD558\uBA74 \uC0C8 \uC54C\uB9BC\uC744 \uD154\uB808\uADF8\uB7A8\uC73C\uB85C \uBC1B\uACE0, \uBD07\uC5D0\uAC8C \uBCF4\uB0B8 \uBA54\uBAA8\uB97C \uC784\uC2DC\uAE00\uB85C \uC800\uC7A5\uD560 \uC218 \uC788\uC5B4\uC694." }), link && left ? (_jsxs("p", { children: [_jsx("a", { className: "btn btn-primary", href: link.url, target: "_blank", rel: "noopener noreferrer", children: "\uD154\uB808\uADF8\uB7A8 \uC5F4\uAE30" }), ' ', _jsxs("span", { className: "muted small", children: [left, " \uC5F4\uBA74 \uC790\uB3D9\uC73C\uB85C \uC5F0\uACB0\uB3FC\uC694."] })] })) : (_jsx("button", { type: "button", className: "btn", disabled: busy, onClick: connect, children: link ? '주소 다시 만들기' : '연결하기' }))] })), message && _jsx("p", { className: message.ok ? 'ok' : 'error', role: "status", children: message.text })] }));
 }
 function FriendsSection() {
     const [data, setData] = useState(null);

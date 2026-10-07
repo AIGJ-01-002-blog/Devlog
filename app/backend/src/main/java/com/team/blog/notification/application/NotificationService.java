@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -30,13 +31,16 @@ public class NotificationService {
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
     private final PostAccessPolicy policy;
+    private final ApplicationEventPublisher events;
 
-    public NotificationService(JdbcTemplate jdbc, PlatformTransactionManager txManager, PostAccessPolicy policy) {
+    public NotificationService(JdbcTemplate jdbc, PlatformTransactionManager txManager, PostAccessPolicy policy,
+                               ApplicationEventPublisher events) {
         this.jdbc = jdbc;
         // 커밋 뒤(afterCommit)에 같은 스레드에서 불려도 끝난 트랜잭션에 묻히지 않게 항상 새 트랜잭션으로 쓴다
         this.tx = new TransactionTemplate(txManager);
         this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.policy = policy;
+        this.events = events;
     }
 
     /**
@@ -269,10 +273,13 @@ public class NotificationService {
                 """, (rs, i) -> rs.getLong(1), receiverId, postId).stream().findFirst().orElse(null);
     }
 
+    /** 새 알림 행. 커밋 뒤 다른 전달 수단(023 텔레그램)이 받도록 사건을 낸다. 묶음에 사람이 더해질 때는 내지 않는다. */
     private long insert(long receiverId, NotificationType type, Timestamp at) {
-        return jdbc.queryForObject("""
+        long id = jdbc.queryForObject("""
                 INSERT INTO notification (receiver_id, type, created_at, updated_at) VALUES (?, ?, ?, ?) RETURNING id
                 """, Long.class, receiverId, type.name(), at, at);
+        events.publishEvent(new NotificationCreated(id, receiverId, type));
+        return id;
     }
 
     private void lock(long receiverId, NotificationType type, long target) {

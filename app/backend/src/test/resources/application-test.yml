@@ -32,6 +32,10 @@ blog:
       timeout: 2s
     local:
       timeout: 2s
+  # 텔레그램 (023): 주소는 가짜 봇 서버(IntegrationTest), 업데이트는 테스트가 직접 넣는다
+  telegram:
+    bot-token: test-bot-token
+    poll: false
   media:
     profile-cleanup-cron: "-"
     post-image-cleanup-cron: "-"

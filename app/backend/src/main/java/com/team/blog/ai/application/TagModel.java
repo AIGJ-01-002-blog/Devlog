@@ -2,7 +2,7 @@ package com.team.blog.ai.application;
 
 import java.util.List;
 
-/** 태그를 만들어 주는 AI 공급자 하나 (018 FR-014). 글 내용·열쇠값은 로그에 남기지 않는다(FR-033). */
+/** AI 공급자 하나 (018 FR-014, 023). 글 내용·열쇠값은 로그에 남기지 않는다(FR-033). */
 public interface TagModel {
     Provider provider();
 
@@ -12,7 +12,15 @@ public interface TagModel {
     int maxChars();
 
     /** @return 형식 검사를 통과한 원래 태그 목록(최대 5개). 정규화·걸러내기는 부르는 쪽이 한다. */
-    List<String> suggest(Prompt prompt) throws ModelException;
+    default List<String> suggest(Prompt prompt) throws ModelException {
+        return TagPrompt.parse(complete(prompt, TagPrompt.SCHEMA, 200, 0.2));
+    }
+
+    /**
+     * 응답 형식(JSON Schema)을 건 생성 한 번 (023 메모 다듬기도 쓴다).
+     * @return 모델이 낸 글자. 비어 있으면 null
+     */
+    String complete(Prompt prompt, String schema, int maxTokens, double temperature) throws ModelException;
 
     enum Provider { GEMINI, LOCAL }
 

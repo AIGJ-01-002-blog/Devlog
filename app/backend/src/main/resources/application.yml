@@ -192,3 +192,7 @@ blog:
     retention: 90d
     max-per-member: 1000
     cleanup-cron: "0 30 4 * * *"
+  # 텔레그램 연결 (spec 023): 봇 토큰이 비어 있거나 TELEGRAM_ENABLED=false면 꺼진다. 알림 보내기·메모로 임시글
+  telegram:
+    enabled: ${TELEGRAM_ENABLED:true}
+    bot-token: ${TELEGRAM_BOT_TOKEN:}

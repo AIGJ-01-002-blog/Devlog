@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -72,24 +73,7 @@ public class NotificationQuery {
 
     public record Settings(Set<NotificationType> muted) {}
 
-    public long unreadCount(long memberId) {
-        Long n = jdbc.queryForObject("SELECT count(*) FROM notification WHERE receiver_id = ? AND read_at IS NULL", Long.class, memberId);
-        return n == null ? 0 : n;
-    }
-
-    /** 마지막 갱신 시각 최신순, 같으면 번호 큰 순 (FR-030). */
-    public Page page(long memberId, String cursor, int size) {
-        String list = "notifications:" + memberId;
-        List<Object> args = new ArrayList<>(List.of(memberId));
-        String after = "";
-        long[] k = cursors.decode(cursor, list, 2);
-        if (k != null) {
-            after = " AND (n.updated_at, n.id) < (?, ?)";
-            args.add(Timestamp.from(Times.fromEpochMicros(k[0])));
-            args.add(k[1]);
-        }
-        args.add(size + 1);
-        List<Row> rows = jdbc.query("""
+    private static final String SELECT = """
                 SELECT n.id, n.type, n.read_at, n.updated_at,
                        nc.comment_id, c.content AS comment_content, c.deleted_at IS NOT NULL OR c.hidden_at IS NOT NULL AS comment_gone,
                        p.id AS post_id, p.title, p.author_id, p.status, p.visibility,
@@ -113,6 +97,32 @@ public class NotificationQuery {
                 LEFT JOIN LATERAL (SELECT x.actor_id, count(*) OVER () AS actor_count FROM notification_actor x
                                    WHERE x.notification_id = n.id ORDER BY x.created_at DESC, x.actor_id DESC LIMIT 1) a ON true
                 LEFT JOIN member am ON am.id = COALESCE(a.actor_id, c.author_id, CASE WHEN n.type = 'NEW_POST' THEN p.author_id END)
+            """;
+
+    /** 알림 하나를 화면 목록과 같은 판정으로 (023 텔레그램 FR-005). 그 사이 지워졌으면 비어 있다. */
+    public Optional<Item> find(long memberId, long id) {
+        return jdbc.query(SELECT + "                WHERE n.receiver_id = ? AND n.id = ?", this::row, memberId, id).stream()
+                .findFirst().map(r -> item(r, memberId));
+    }
+
+    public long unreadCount(long memberId) {
+        Long n = jdbc.queryForObject("SELECT count(*) FROM notification WHERE receiver_id = ? AND read_at IS NULL", Long.class, memberId);
+        return n == null ? 0 : n;
+    }
+
+    /** 마지막 갱신 시각 최신순, 같으면 번호 큰 순 (FR-030). */
+    public Page page(long memberId, String cursor, int size) {
+        String list = "notifications:" + memberId;
+        List<Object> args = new ArrayList<>(List.of(memberId));
+        String after = "";
+        long[] k = cursors.decode(cursor, list, 2);
+        if (k != null) {
+            after = " AND (n.updated_at, n.id) < (?, ?)";
+            args.add(Timestamp.from(Times.fromEpochMicros(k[0])));
+            args.add(k[1]);
+        }
+        args.add(size + 1);
+        List<Row> rows = jdbc.query(SELECT + """
                 WHERE n.receiver_id = ?""" + after + """
 
                 ORDER BY n.updated_at DESC, n.id DESC LIMIT ?
