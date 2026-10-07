@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- 회원
 CREATE TABLE member (
     id                     bigint GENERATED ALWAYS AS IDENTITY,
-    handle                 varchar(39) NOT NULL,
+    handle                 varchar(23) NOT NULL,
     nickname               varchar(10) NULL,
     nickname_changed_at    timestamptz NULL,
     bio                    varchar(200) NULL,
@@ -23,7 +23,7 @@ CREATE TABLE member (
     deleted_at             timestamptz NULL,
     PRIMARY KEY (id),
     CONSTRAINT uq_member_handle UNIQUE (handle),
-    CONSTRAINT ck_member_handle CHECK (handle ~ '^((go|gi)-)?[a-z0-9][a-z0-9_]{1,34}[a-z0-9]$'),
+    CONSTRAINT ck_member_handle CHECK (handle ~ '^((go|gi)-)?[a-z0-9][a-z0-9_]{1,18}[a-z0-9]$' AND handle !~ '^(go|gi)_'),
     CONSTRAINT ck_member_nickname CHECK (nickname ~ '^[가-힣a-zA-Z0-9]{2,10}$' AND nickname ~ '[가-힣a-zA-Z]'),
     CONSTRAINT ck_member_bio CHECK (bio IS NULL OR char_length(bio) <= 200),
     CONSTRAINT ck_member_role CHECK (role IN ('USER', 'ADMIN')),
