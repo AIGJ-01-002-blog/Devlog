@@ -21,6 +21,7 @@ import org.springframework.web.util.UriUtils;
 import com.team.blog.comment.application.CommentQuery;
 import com.team.blog.discovery.application.FeedQuery;
 import com.team.blog.follow.application.FollowQuery;
+import com.team.blog.trending.application.TrendingService;
 import com.team.blog.discovery.application.PostDetailQuery;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
@@ -52,9 +53,12 @@ public class PageController {
     private final CommentQuery comments;
     private final SearchQuery search;
     private final FollowQuery follows;
+    private final TrendingService trending;
 
     public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
-                          TagController tagApi, CommentQuery comments, SearchQuery search, FollowQuery follows) {
+                          TagController tagApi, CommentQuery comments, SearchQuery search, FollowQuery follows,
+                          TrendingService trending) {
+        this.trending = trending;
         this.follows = follows;
         this.comments = comments;
         this.search = search;
@@ -127,7 +131,16 @@ public class PageController {
     }
 
     @GetMapping({"/", "/index.html"})
-    public ResponseEntity<String> home() {
+    public ResponseEntity<String> home(@RequestParam(required = false) String tab) {
+        if ("trending".equals(tab)) {
+            // 트렌딩 탭 (017): 첫 9개를 함께 내려준다. 순위표 문제로 바로 계산한 결과면 저장하지 않는다
+            TrendingService.Page t = trending.page(null);
+            FeedQuery.Page asFeed = new FeedQuery.Page(t.items(), t.nextCursor());
+            String body = "<main><h1>트렌딩</h1>" + cards(asFeed) + "</main>";
+            HeadMeta meta = HeadMeta.site(site.name(), "최근 7일 동안 반응이 많은 글", absolute("/?tab=trending"), absolute(site.defaultOgImage()));
+            return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "home", "trending", asFeed)),
+                    t.temporary() ? CacheControl.noStore() : CacheControl.noCache());
+        }
         FeedQuery.Page first = feed.home(null);
         String body = "<main><h1>" + SpaShell.esc(site.name()) + "</h1>" + cards(first) + "</main>";
         HeadMeta meta = HeadMeta.site(site.name(), "개발자가 Markdown으로 글을 쓰고 나누는 블로그", absolute("/"), absolute(site.defaultOgImage()));

@@ -159,6 +159,10 @@ blog:
   search:
     recent-window: 3000
     per-minute: 30
+  # 트렌딩 (spec 017): 10분마다 한 서버가 상위 100개 순위표를 만들어 30분 보관
+  trending:
+    cron: "0 */10 * * * *"
+    keep: 30m
   # 알림 (spec 015): 커밋 뒤 따로 처리. 90일·1인 1,000개 보관, 매일 04:30(KST) 정리
   notification:
     async: true

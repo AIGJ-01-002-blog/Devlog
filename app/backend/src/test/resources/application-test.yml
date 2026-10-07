@@ -12,12 +12,15 @@ blog:
     trash-purge-cron: "-"
   view:
     flush-interval: 1h
-  # 최근창을 줄여 인덱스 후보 경로도 시험한다 (014)
-  # 알림은 같은 스레드에서 바로 만든다(결과를 기다리지 않게). 정리 작업은 테스트가 직접 부른다
+  # 알림 정리 작업은 테스트가 직접 부른다. 알림 자체는 운영과 같이 비동기(IntegrationTest.drain으로 기다림)
   notification:
     cleanup-cron: "-"
+  # 최근창을 줄여 인덱스 후보 경로도 시험한다 (014)
   search:
     recent-window: 5
+  # 순위표는 테스트가 직접 만든다 (017)
+  trending:
+    cron: "-"
   media:
     profile-cleanup-cron: "-"
     post-image-cleanup-cron: "-"

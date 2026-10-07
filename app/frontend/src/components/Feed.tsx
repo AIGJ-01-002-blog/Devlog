@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { api } from '../lib/api'
+import { api, ApiError } from '../lib/api'
 import type { Card, FeedPage } from '../lib/types'
 import { PostCard } from './PostCard'
 
@@ -31,6 +31,7 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
   const [loaded, setLoaded] = useState(restored.current != null || initial != null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
   const state = useRef({ items, cursor })
   const firstPage = useRef(onFirstPage)
   firstPage.current = onFirstPage
@@ -39,6 +40,7 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
   const load = useCallback(async (next: string | null) => {
     setLoading(true)
     setError(false)
+    if (next) setNotice(null)
     try {
       const page = await api<FeedPage>(next ? `${endpoint}${endpoint.includes('?') ? '&' : '?'}cursor=${encodeURIComponent(next)}` : endpoint)
       if (!next) firstPage.current?.(page)
@@ -49,7 +51,14 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
       })
       setCursor(page.nextCursor)
       setLoaded(true)
-    } catch {
+    } catch (e) {
+      // 보던 순위표가 만료됨 (017 트렌딩): 안내 뒤 최신 순위를 처음부터 다시 받는다
+      if (next && e instanceof ApiError && e.status === 410) {
+        setNotice(e.message || '순위가 새로 바뀌었어요.')
+        window.scrollTo(0, 0)
+        setLoading(false)
+        return load(null)
+      }
       setError(true)
     } finally {
       setLoading(false)
@@ -76,6 +85,7 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
   if (loaded && items.length === 0 && !error) return <div className="empty">{empty}</div>
   return (
     <section>
+      {notice && <p className="feed-notice" role="status">{notice}</p>}
       <div className="card-grid">
         {items.map((c) => <PostCard key={c.id} card={c} showAuthor={showAuthor} />)}
       </div>
