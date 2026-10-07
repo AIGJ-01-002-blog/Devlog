@@ -12,7 +12,10 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.team.blog.shared.error.ApiException;
 
 /**
  * Redis 세션 저장소가 멈췄을 때 세션을 읽지 못한 요청을 비로그인으로 처리한다 (docs/02 §2-1, 001 FR-020).
@@ -75,9 +78,11 @@ public class ResilientSessionFilter extends OncePerRequestFilter {
         }
     }
 
-    public static class SessionUnavailableException extends RuntimeException {
+    /** 새 세션이 필요한 요청(가입·로그인 등)을 "잠시 후 다시 시도"로 거부한다. 서버 고장(500)으로 기록하지 않는다. */
+    public static class SessionUnavailableException extends ApiException {
         public SessionUnavailableException(Throwable cause) {
-            super("세션 저장소를 사용할 수 없어요", cause);
+            super(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE", "잠시 후 다시 시도해 주세요.");
+            initCause(cause);
         }
     }
 }
