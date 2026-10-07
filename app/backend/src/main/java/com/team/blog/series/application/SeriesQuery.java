@@ -135,7 +135,7 @@ public class SeriesQuery {
 
     private Optional<Scope> scope(String handle, Long viewerId) {
         return feed.ownerId(handle).map(ownerId -> {
-            boolean mine = viewerId != null && viewerId == ownerId;
+            boolean mine = ownerId.equals(viewerId); // 둘 다 Long이라 == 는 참조 비교
             boolean friend = !mine && viewerId != null && FriendsVisibilityRule.areFriends(jdbc, ownerId, viewerId);
             return new Scope(ownerId, mine, friend);
         });

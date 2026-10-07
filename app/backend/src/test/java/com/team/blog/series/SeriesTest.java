@@ -109,6 +109,8 @@ class SeriesTest extends IntegrationTest {
 
     @Test
     void 독자는_읽을_수_있는_글만으로_순서와_목록을_본다() throws Exception {
+        // 회원 번호가 Long 캐시(-128~127) 밖이어야 번호 비교 실수를 잡는다
+        jdbc.execute("SELECT setval(pg_get_serial_sequence('member', 'id'), GREATEST(5000, (SELECT max(id) FROM member)))");
         Session author = signup(uniqueLogin("srr")), friend = signup(uniqueLogin("srf")), stranger = signup(uniqueLogin("srs"));
         befriend(author, friend);
         long sid = create(author, "모음").path("id").asLong();
