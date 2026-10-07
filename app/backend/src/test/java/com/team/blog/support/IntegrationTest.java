@@ -50,6 +50,9 @@ public abstract class IntegrationTest {
         r.add("spring.datasource.password", Containers.POSTGRES::getPassword);
         r.add("spring.data.redis.host", Containers.REDIS::getHost);
         r.add("spring.data.redis.port", () -> Containers.REDIS.getMappedPort(6379));
+        // AI 태그 추천(018)은 가짜 공급자로 켠다
+        r.add("blog.ai.gemini.base-url", FakeAi.INSTANCE::baseUrl);
+        r.add("blog.ai.local.base-url", FakeAi.INSTANCE::baseUrl);
     }
 
     @BeforeEach

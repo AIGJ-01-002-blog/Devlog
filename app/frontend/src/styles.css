@@ -537,3 +537,14 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .home-tabs { margin-top: 24px; }
 .trending-hint { margin: -12px 0 20px; }
 .feed-notice { padding: 10px 14px; margin: 0 0 16px; background: var(--surface-2); border-radius: var(--radius); }
+
+/* AI 태그 추천 (spec 018) */
+.ai-tags { margin: 8px 0 16px; display: grid; gap: 8px; }
+.ai-tags-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ai-tags-result { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tag-chip.ai-tag { padding: 0 10px; border-color: var(--border-2); cursor: pointer; font: inherit; font-size: 0.875rem; }
+.tag-chip.ai-tag:hover, .tag-chip.ai-tag:focus-visible { border-color: var(--primary); }
+.ai-consent { padding: 12px 14px; border: 1px solid var(--border-2); border-radius: var(--radius); background: var(--surface-2); }
+.ai-consent h3 { margin: 0 0 8px; font-size: 1rem; }
+.ai-consent ul { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 4px; }
+.ai-consent-actions { display: flex; gap: 8px; }
