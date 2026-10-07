@@ -702,3 +702,18 @@ a.attachment-name:hover { color: var(--color-brand); }
 .series-no { font-weight: 700; color: var(--color-text-muted); min-width: 2em; padding-top: 8px; }
 .series-edit li { padding: 8px 0; border-bottom: 1px solid var(--color-border); }
 .series-edit .grow { flex: 1; }
+
+/* 글 목차 (025): 본문 오른쪽 바깥, 넓은 화면에서만 */
+.post { position: relative; }
+.post-body :is(h2, h3, h4)[id] { scroll-margin-top: 96px; }
+.toc { display: none; }
+@media (min-width: 1280px) {
+  .toc { display: block; position: absolute; top: 0; bottom: 0; left: 100%; margin-left: 48px; width: 240px; }
+  .toc-inner { position: sticky; top: 112px; max-height: calc(100vh - 160px); overflow-y: auto; list-style: none; margin: 0;
+               padding: 4px 0 4px 12px; border-left: 2px solid var(--color-border); font-size: 0.875rem; line-height: 1.6; }
+  .toc-inner li { margin: 4px 0; }
+  .toc-inner a { color: var(--color-text-muted); text-decoration: none; display: block; transition: color 0.15s, transform 0.15s; }
+  .toc-inner a:hover { color: var(--color-text); }
+  .toc-inner a.active { color: var(--color-text); font-weight: 600; transform: scale(1.03); transform-origin: left; }
+}
+@media (prefers-reduced-motion: reduce) { .toc-inner a { transition: none; } .toc-inner a.active { transform: none; } }
