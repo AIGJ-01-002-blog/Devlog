@@ -7,6 +7,7 @@ import { Comments } from '../components/Comments'
 import { AttachmentList } from '../components/AttachmentList'
 import { LikeButton } from '../components/LikeButton'
 import { AdjacentPosts } from '../components/AdjacentPosts'
+import { SocialLinkList } from '../components/SocialLinkList'
 import { SeriesBox } from '../components/SeriesBox'
 import { ShareButton } from '../components/ShareButton'
 import { Toc } from '../components/Toc'
@@ -171,6 +172,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           <div>
             <Link to={`/@${post.author.handle}`}><b>{post.author.nickname}</b> <span className="muted">@{post.author.handle}</span></Link>
             {post.author.bio && <p className="bio">{post.author.bio}</p>}
+            <SocialLinkList links={post.author.socialLinks} />
           </div>
           {!post.mine && <FollowButton handle={post.author.handle} following={post.author.following} />}
         </footer>

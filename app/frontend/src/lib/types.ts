@@ -104,7 +104,11 @@ export interface PostDetail {
   viewCount: number
   likeCount: number
   commentCount: number
-  author: { id: number; handle: string; nickname: string; bio: string | null; profileImageUrl: string | null; following: boolean }
+  author: {
+    id: number; handle: string; nickname: string; bio: string | null; profileImageUrl: string | null; following: boolean
+    /** 글 아래 작성자 영역의 소셜 정보 (044). 값이 있는 칸만 온다 */
+    socialLinks?: SocialLinks
+  }
   /** 내가 눌렀는지. 비회원·작성자는 false */
   liked: boolean
   mine: boolean

@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.team.blog.account.application.SocialLinks;
 import com.team.blog.account.domain.Visibility;
 import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.post.access.ReadablePost;
@@ -33,10 +34,12 @@ public class PostDetailQuery {
     private final RenderedHtmlCache htmlCache;
     private final ContentRenderer renderer;
     private final TagQuery tags;
+    private final SocialLinks socialLinks;
 
     public PostDetailQuery(JdbcTemplate jdbc, PostAccessPolicy policy, ImageUrls imageUrls, AutosaveStore autosaves,
-                           RenderedHtmlCache htmlCache, ContentRenderer renderer, TagQuery tags) {
+                           RenderedHtmlCache htmlCache, ContentRenderer renderer, TagQuery tags, SocialLinks socialLinks) {
         this.tags = tags;
+        this.socialLinks = socialLinks;
         this.jdbc = jdbc;
         this.policy = policy;
         this.imageUrls = imageUrls;
@@ -45,8 +48,12 @@ public class PostDetailQuery {
         this.renderer = renderer;
     }
 
-    /** @param following 보는 사람이 작성자를 팔로우 중인지 (016 FR-008, 작성자 영역 버튼) */
-    public record Author(long id, String handle, String nickname, String bio, String profileImageUrl, boolean following) {}
+    /**
+     * @param following   보는 사람이 작성자를 팔로우 중인지 (016 FR-008, 작성자 영역 버튼)
+     * @param socialLinks 글 아래 작성자 영역의 소셜 정보 (spec 044)
+     */
+    public record Author(long id, String handle, String nickname, String bio, String profileImageUrl, boolean following,
+                         SocialLinks.Links socialLinks) {}
 
     /** 작성자에게만 채운다. 독자에게는 null. */
     /** @param hiddenReason 숨긴 글이면 숨김 사유 코드 (019 FR-021) */
@@ -107,7 +114,8 @@ public class PostDetailQuery {
         return Optional.of(new Detail(r.id, "/@" + r.handle + "/posts/" + r.id, r.title, html, renderer.excerpt(head),
                 imageUrls.urlOf(r.thumbnailKey), r.status, r.visibility, r.publishedAt, r.firstPublicAt, r.editedAt, r.viewCount,
                 r.likeCount, r.commentCount,
-                new Author(r.authorId, r.handle, r.nickname, r.bio, imageUrls.urlOf(r.profileImageKey), !mine && follows(viewer, r.authorId)),
+                new Author(r.authorId, r.handle, r.nickname, r.bio, imageUrls.urlOf(r.profileImageKey), !mine && follows(viewer, r.authorId),
+                        socialLinks.of(r.authorId)),
                 mine, owner,
                 r.status == PostStatus.PUBLISHED ? tags.tagsOf(r.id) : List.of(), !mine && likedBy(viewer, r.id)));
     }
