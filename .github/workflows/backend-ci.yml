@@ -33,8 +33,26 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - name: 테스트
+      - name: 테스트 + 커버리지 기준 (줄 40%)
         run: ./mvnw -B -ntp verify
+      - name: 커버리지 보고서
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: app/backend/target/site/jacoco
+          if-no-files-found: ignore
+      # 레포 변수 SONAR_ENABLED=true이고 SONAR_TOKEN·SONAR_HOST_URL이 있을 때만 (학교 SonarQube: s4.java21.net:9000)
+      - name: SonarQube 분석
+        if: vars.SONAR_ENABLED == 'true' && github.event_name == 'push'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then echo "SonarQube 비밀값이 없어 건너뜁니다."; exit 0; fi
+          ./mvnw -B -ntp org.sonarsource.scanner.maven:sonar-maven-plugin:5.2.0.4988:sonar \
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY || 'aigj-01-002-blog' }} \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
       - name: 실패한 테스트 보고서
         if: failure()
         uses: actions/upload-artifact@v4

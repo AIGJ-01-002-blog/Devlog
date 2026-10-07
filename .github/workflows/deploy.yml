@@ -12,12 +12,17 @@ on:
         description: "학교 NHN 클러스터에 배포 (KUBECONFIG·BLOG_SECRET_ENV Secret 필요)"
         type: boolean
         default: false
+      rollback_test:
+        description: "존재하지 않는 이미지로 롤백 테스트 (배포는 실패하고 직전 버전으로 돌아가야 정상)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/blog-app
+  # GHCR 이미지 이름은 소문자만 된다 (조직 이름 AIGJ-01-002-blog → aigj-01-002-blog)
+  IMAGE_NAME: blog-app
   KUSTOMIZE_VERSION: "5.7.1"
   KUBECONFORM_VERSION: "0.7.0"
 
@@ -45,12 +50,13 @@ jobs:
     name: 이미지 빌드
     needs: validate
     runs-on: ubuntu-latest
-    if: hashFiles('app/backend/**') != ''
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
+      - name: 이미지 이름 정하기
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${IMAGE_NAME}" >> "$GITHUB_ENV"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         if: github.event_name != 'pull_request'
@@ -77,6 +83,8 @@ jobs:
     environment: nhn   # 보호 규칙(승인자)을 걸 수 있다
     steps:
       - uses: actions/checkout@v4
+      - name: 이미지 이름 정하기
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${IMAGE_NAME}" >> "$GITHUB_ENV"
       - name: 도구 설치
         run: |
           curl -sSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin
@@ -89,12 +97,20 @@ jobs:
           printf '%s' "$KUBECONFIG_CONTENT" > "$RUNNER_TEMP/kubeconfig"
           printf '%s\n' "$BLOG_SECRET_ENV" > deploy/k8s/overlays/nhn/secret.env
           echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
-      - name: 배포
-        run: |
-          cd deploy/k8s/overlays/nhn
-          kustomize edit set image "blog-app=${IMAGE}:${GITHUB_SHA}"
-          kustomize build . | kubectl apply --server-side -f -
-          kubectl -n blog rollout status deploy/blog-app --timeout=5m
+      - name: 배포 (헬스 체크 실패 시 직전 버전으로 자동 롤백)
+        env:
+          ROLLBACK_TEST: ${{ inputs.rollback_test }}
+          ROLLOUT_TIMEOUT: ${{ vars.ROLLOUT_TIMEOUT_SECONDS || '300' }}
+        run: deploy/scripts/rollout.sh
       - name: 정리
         if: always()
         run: rm -f deploy/k8s/overlays/nhn/secret.env "$RUNNER_TEMP/kubeconfig"
+      - name: Discord 알림
+        if: always() && vars.DISCORD_ENABLED == 'true'
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          title: "${{ vars.SERVICE_NAME || github.event.repository.name }} 배포 ${{ job.status == 'success' && '성공' || '실패' }}"
+          description: "커밋 ${{ github.sha }} · 실행자 ${{ github.actor }}"
+          color: ${{ job.status == 'success' && '3066993' || '15158332' }}
+          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

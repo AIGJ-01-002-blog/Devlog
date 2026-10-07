@@ -41,15 +41,34 @@ kubectl apply -k .
 kubectl -n blog rollout status deploy/blog-app
 ```
 
-## CI (`.github/workflows/deploy.yml`)
+## CI/CD
 
-| 단계 | 언제 | 하는 일 |
+민서님 이전 프로젝트 CI/CD 템플릿(PR 검사 → 이미지 → 배포 → 헬스 체크·자동 롤백 → Discord 알림)을 쿠버네티스 방식으로 옮겼다.
+
+| 워크플로 | 언제 | 하는 일 |
 |---|---|---|
-| 매니페스트 검증 | PR·main 푸시 | 비밀값 검사, `kustomize build` + `kubeconform` (local·nhn) |
-| 이미지 빌드 | `app/backend`가 있을 때 | PR은 빌드만, main은 `ghcr.io/<owner>/blog-app:<커밋>`으로 올림 |
-| NHN 배포 | Actions에서 수동 실행(`deploy` 체크) | 저장소 Secret `KUBECONFIG`와 `BLOG_SECRET_ENV`(secret.env 내용 전체)로 배포 |
+| `backend-ci.yml` | PR·main (백엔드 변경) | `./mvnw verify`: 테스트 + JaCoCo 줄 커버리지 40% 기준, 보고서 업로드, (선택) SonarQube |
+| `frontend-ci.yml` | PR·main (화면 변경) | 타입 검사, 테스트, 빌드 |
+| `deploy.yml` | PR·main·수동 | 매니페스트 검증 + 비밀값 검사 → 이미지 빌드(main은 GHCR에 올림) → 수동 실행 시 배포 |
+| `pr-review-notify.yml` | PR이 리뷰 가능해질 때 | Discord 리뷰 요청 알림 |
+| `release.yml` | CHANGELOG 버전이 main에 들어올 때 | 태그와 GitHub Release |
 
-배포 단계는 GitHub Environment `nhn`을 쓰므로 승인자 보호 규칙을 걸 수 있다.
+배포는 `deploy/scripts/rollout.sh`가 한다. 새 이미지로 바꾼 뒤 모든 파드가 준비(`/actuator/health/readiness` UP)되기를 기다리고, 시간(`ROLLOUT_TIMEOUT_SECONDS`, 기본 300초) 안에 안 되면 `kubectl rollout undo`로 직전 버전으로 되돌린다. 새 파드가 준비되기 전에는 옛 파드를 내리지 않으므로(`maxUnavailable: 0`) 되돌리는 동안에도 서비스는 끊기지 않는다. Actions → 블로그 배포 → Run workflow에서 `rollback_test`를 켜면 없는 이미지로 배포해 롤백을 시험한다.
+
+### 저장소 설정 (Settings → Secrets and variables → Actions)
+
+| 종류 | 이름 | 값 | 없으면 |
+|---|---|---|---|
+| Secret | `KUBECONFIG` | 클러스터 접속 파일 내용 | 배포 실패 |
+| Secret | `BLOG_SECRET_ENV` | `secret.env` 내용 전체 | 배포 실패 |
+| Secret | `DISCORD_WEBHOOK_URL`, `DISCORD_PR_WEBHOOK_URL` | Discord 웹훅 주소 | 알림만 안 감 |
+| Secret | `SONAR_TOKEN`, `SONAR_HOST_URL` | 학교 SonarQube(`http://s4.java21.net:9000`) 토큰·주소 | 품질 검사 건너뜀 |
+| Variable | `DISCORD_ENABLED` | `true`면 알림 켬 | 꺼짐 |
+| Variable | `SONAR_ENABLED` | `true`면 SonarQube 켬 | 꺼짐 |
+| Variable | `SERVICE_NAME` | 알림에 보일 이름 | 레포 이름 |
+| Variable | `ROLLOUT_TIMEOUT_SECONDS` | 배포 대기 초 | 300 |
+
+배포 잡은 GitHub Environment `nhn`을 쓰므로 Settings → Environments에서 승인자를 걸 수 있다. AI 리뷰는 [CodeRabbit 앱](https://github.com/apps/coderabbitai)을 설치하면 `.coderabbit.yaml`(한국어, 경로별 리뷰 기준)을 읽는다.
 
 ## 로컬에서 검증
 
@@ -62,6 +81,7 @@ kubectl -n blog port-forward svc/blog-app 8080:80
 ```
 
 2026-10-07 검증 결과 (k3s v1.33.4, 클라우드 세션):
+- `rollout.sh`: v0.2.0 정상 배포, 롤백 시험(없는 이미지) 때 60초 뒤 직전 버전으로 되돌아가고 그동안 옛 파드가 계속 응답
 - `kustomize build` + `kubeconform -strict`: local 17개, nhn 10개 리소스 모두 통과
 - local 배포: PostgreSQL 17·Redis 7.4·MinIO(pgsty/silo)·앱 자리 이미지 모두 Running, 앱 파드에서 세 서비스 접속과 환경 변수 주입 확인
 - `V1__schema_docs51.sql`을 클러스터 안 PostgreSQL 17에 적용해 테이블 20개 생성 확인

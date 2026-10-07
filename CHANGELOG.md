@@ -8,6 +8,12 @@ main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/r
 
 ## [Unreleased]
 
+### 추가
+- CI/CD: 줄 커버리지 40% 기준(JaCoCo), 배포 헬스 체크 실패 시 자동 롤백과 롤백 시험, Discord 배포·리뷰 알림과 SonarQube(레포 변수로 켜고 끔), PR 템플릿, CodeRabbit 설정
+
+### 수정
+- 배포 워크플로: GHCR 이미지 이름을 소문자로, 배포 때 새 이미지 태그가 실제로 적용되도록 고침, 잡 조건의 hashFiles 제거
+
 ## [0.4.0] - 2026-10-07
 
 GitHub 계정이 없어도 이메일이나 Google로 가입·로그인할 수 있다 (spec 004).
