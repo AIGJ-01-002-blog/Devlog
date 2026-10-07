@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ConflictDialog } from '../components/ConflictDialog'
+import { Modal } from '../components/Modal'
 import { AiTagSuggest } from '../components/AiTagSuggest'
 import { AttachmentEditor } from '../components/AttachmentEditor'
 import { SeriesPicker } from '../components/SeriesPicker'
@@ -353,70 +354,66 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
       </div>
 
       {showPublish && (
-        <div className="dialog-backdrop" role="presentation">
-          <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="publish-title">
-            <h2 id="publish-title">{view.status === 'PUBLISHED' ? '다시 발행' : '발행'}</h2>
-            <fieldset className="field">
-              <legend>공개 범위</legend>
-              <label><input type="radio" name="visibility" checked={visibility === 'PUBLIC'} onChange={() => setVisibility('PUBLIC')} /> 🌐 전체 공개</label>
-              <label><input type="radio" name="visibility" checked={visibility === 'FRIENDS'} onChange={() => setVisibility('FRIENDS')} /> 👥 친구에게만</label>
-              <label><input type="radio" name="visibility" checked={visibility === 'PRIVATE'} onChange={() => setVisibility('PRIVATE')} /> 🔒 비공개 (나만 보기)</label>
-            </fieldset>
-            {visibility === 'FRIENDS' && <NoFriendsHint onPublic={() => setVisibility('PUBLIC')} />}
-            <TagInput value={tags} onChange={(t) => { setTags(t); setErrors((m) => withoutTagErrors(m)) }} errors={tagErrors(errors)} />
-            <AiTagSuggest postId={view.id} title={title} content={content} tags={tags}
-                          onAdd={(t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)) }} />
-            {Object.keys(withoutTagErrors(errors)).length > 0 && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
-            {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
-            <AltTexts content={content} open={showAlts} onOpen={() => setShowAlts(true)}
-                      localUrls={images.localUrls.current} onChange={(i, alt) => setContent((c) => setAlt(c, i, alt))} />
-            {pendingIds(content).length > 0 && <p className="error small">업로드가 끝나지 않은 사진이 있어요. 다 올라간 뒤 발행할 수 있어요.</p>}
-            <footer className="dialog-footer">
-              <button type="button" className="btn btn-text" onClick={() => setShowPublish(false)} disabled={publishing}>취소</button>
-              <button type="button" className="btn btn-primary" onClick={publish} disabled={publishing}>
-                {publishing ? '발행 중…' : '발행하기'}
-              </button>
-            </footer>
-          </div>
-        </div>
+        <Modal labelledBy="publish-title" onClose={() => { if (!publishing) setShowPublish(false) }}>
+          <h2 id="publish-title">{view.status === 'PUBLISHED' ? '다시 발행' : '발행'}</h2>
+          <fieldset className="field">
+            <legend>공개 범위</legend>
+            <label><input type="radio" name="visibility" checked={visibility === 'PUBLIC'} onChange={() => setVisibility('PUBLIC')} /> 🌐 전체 공개</label>
+            <label><input type="radio" name="visibility" checked={visibility === 'FRIENDS'} onChange={() => setVisibility('FRIENDS')} /> 👥 친구에게만</label>
+            <label><input type="radio" name="visibility" checked={visibility === 'PRIVATE'} onChange={() => setVisibility('PRIVATE')} /> 🔒 비공개 (나만 보기)</label>
+          </fieldset>
+          {visibility === 'FRIENDS' && <NoFriendsHint onPublic={() => setVisibility('PUBLIC')} />}
+          <TagInput value={tags} onChange={(t) => { setTags(t); setErrors((m) => withoutTagErrors(m)) }} errors={tagErrors(errors)} />
+          <AiTagSuggest postId={view.id} title={title} content={content} tags={tags}
+                        onAdd={(t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)) }} />
+          {Object.keys(withoutTagErrors(errors)).length > 0 && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
+          {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
+          <AltTexts content={content} open={showAlts} onOpen={() => setShowAlts(true)}
+                    localUrls={images.localUrls.current} onChange={(i, alt) => setContent((c) => setAlt(c, i, alt))} />
+          {pendingIds(content).length > 0 && <p className="error small">업로드가 끝나지 않은 사진이 있어요. 다 올라간 뒤 발행할 수 있어요.</p>}
+          <footer className="dialog-footer">
+            <button type="button" className="btn btn-text" onClick={() => setShowPublish(false)} disabled={publishing}>취소</button>
+            <button type="button" className="btn btn-primary" onClick={publish} disabled={publishing}>
+              {publishing ? '발행 중…' : '발행하기'}
+            </button>
+          </footer>
+        </Modal>
       )}
 
       {showBackups && (
-        <div className="dialog-backdrop" role="presentation">
-          <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="backups-title">
-            <h2 id="backups-title">이 기기 백업</h2>
-            <p className="muted small">[저장된 내용 불러오기]를 고를 때 편집 중이던 내용이에요. 7일 동안 이 브라우저에만 남아요.</p>
-            <ul className="backup-list">
-              {backups.map((b) => (
-                <li key={b.at}>
-                  <div>
-                    <b>{b.title || '제목 없음'}</b> <span className="muted small">{new Date(b.at).toLocaleString('ko-KR')}</span>
-                    <p className="small muted backup-excerpt">{b.contentMd.slice(0, 120)}</p>
-                  </div>
-                  <div className="row">
-                    <button type="button" className="btn btn-outline" onClick={async () => {
-                      // 지금 내용도 백업해 두고 바꾼다: 어느 쪽도 모르게 사라지지 않게 (FR-013)
-                      const mine = { memberId, postId: view.id, ...current(), at: Date.now() }
-                      if (mine.title !== b.title || mine.contentMd !== b.contentMd) await localDrafts.addBackup(mine)
-                      setTitle(b.title)
-                      setContent(b.contentMd)
-                      setBackups(await localDrafts.backups(memberId, view.id))
-                      setShowBackups(false)
-                      setNotice('백업한 내용을 불러왔어요. 바로 전 내용도 백업해 두었어요.')
-                    }}>불러오기</button>
-                    <button type="button" className="btn btn-text" onClick={async () => {
-                      await localDrafts.removeBackup(b)
-                      setBackups((list) => list.filter((x) => x !== b))
-                    }}>지우기</button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <footer className="dialog-footer">
-              <button type="button" className="btn btn-text" onClick={() => setShowBackups(false)}>닫기</button>
-            </footer>
-          </div>
-        </div>
+        <Modal labelledBy="backups-title" onClose={() => setShowBackups(false)}>
+          <h2 id="backups-title">이 기기 백업</h2>
+          <p className="muted small">[저장된 내용 불러오기]를 고를 때 편집 중이던 내용이에요. 7일 동안 이 브라우저에만 남아요.</p>
+          <ul className="backup-list">
+            {backups.map((b) => (
+              <li key={b.at}>
+                <div>
+                  <b>{b.title || '제목 없음'}</b> <span className="muted small">{new Date(b.at).toLocaleString('ko-KR')}</span>
+                  <p className="small muted backup-excerpt">{b.contentMd.slice(0, 120)}</p>
+                </div>
+                <div className="row">
+                  <button type="button" className="btn btn-outline" onClick={async () => {
+                    // 지금 내용도 백업해 두고 바꾼다: 어느 쪽도 모르게 사라지지 않게 (FR-013)
+                    const mine = { memberId, postId: view.id, ...current(), at: Date.now() }
+                    if (mine.title !== b.title || mine.contentMd !== b.contentMd) await localDrafts.addBackup(mine)
+                    setTitle(b.title)
+                    setContent(b.contentMd)
+                    setBackups(await localDrafts.backups(memberId, view.id))
+                    setShowBackups(false)
+                    setNotice('백업한 내용을 불러왔어요. 바로 전 내용도 백업해 두었어요.')
+                  }}>불러오기</button>
+                  <button type="button" className="btn btn-text" onClick={async () => {
+                    await localDrafts.removeBackup(b)
+                    setBackups((list) => list.filter((x) => x !== b))
+                  }}>지우기</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <footer className="dialog-footer">
+            <button type="button" className="btn btn-text" onClick={() => setShowBackups(false)}>닫기</button>
+          </footer>
+        </Modal>
       )}
 
       {showConflict && conflictServer && (

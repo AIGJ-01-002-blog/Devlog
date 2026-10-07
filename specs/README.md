@@ -39,6 +39,7 @@
 | [032-image-dimensions](./032-image-dimensions/spec.md) | 본문 사진 자리 먼저 잡기 | 2026-10-08 추가 (최적화) | 이후 단계 (Tier C) | 2 |
 | [033-client-ip-hardening](./033-client-ip-hardening/spec.md) | 사용자 IP 판정 다지기 | 2026-10-08 추가 (테스트 보강) | 이후 단계 (Tier C) | 2 |
 | [034-framework-error-status](./034-framework-error-status/spec.md) | 요청 쪽 오류를 서버 오류로 보지 않기 | 2026-10-08 추가 (테스트 보강) | 이후 단계 (Tier C) | 2 |
+| [035-modal-focus](./035-modal-focus/spec.md) | 대화상자 초점 다루기 | 2026-10-08 추가 (접근성) | 이후 단계 (Tier C) | 2 |
 
 ## 여러 spec에 걸치는 문서
 
