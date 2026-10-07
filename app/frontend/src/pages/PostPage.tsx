@@ -3,7 +3,10 @@ import { Avatar } from '../components/Avatar'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { clock, compactNumber, fullDate, monthDay, relativeDate } from '../lib/format'
 import { highlightWithin } from '../lib/highlight'
+import { useAuth } from '../lib/auth'
+import { setFlash } from '../lib/flash'
 import { Link, navigate } from '../lib/router'
+import { TRASH_CONFIRM, trashedMessage, trashPost } from '../lib/trash'
 import type { PostDetail, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 
@@ -13,6 +16,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
   const [missing, setMissing] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
+  const { me } = useAuth()
 
   useEffect(() => {
     if (post && String(post.id) === id) return
@@ -54,6 +58,17 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
     setNotice('변경을 취소했어요.')
   }
 
+  const remove = async () => {
+    if (!confirm(TRASH_CONFIRM)) return
+    try {
+      const r = await trashPost(post.id, me?.member?.id)
+      setFlash(trashedMessage(r))
+      navigate('/manage/posts?tab=trash', { replace: true })
+    } catch (e) {
+      setNotice(e instanceof ApiError ? e.message : '삭제하지 못했어요. 잠시 뒤 다시 시도해 주세요.')
+    }
+  }
+
   const date = post.firstPublicAt ?? post.publishedAt
   return (
     <main className="container narrow">
@@ -85,6 +100,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
                 <option value="PUBLIC">🌐 전체 공개</option>
                 <option value="PRIVATE">🔒 비공개</option>
               </select>
+              <button type="button" className="btn btn-text danger" onClick={remove}>삭제</button>
             </span>
           )}
         </div>

@@ -29,4 +29,15 @@ public class AutosaveCleanupListener {
             log.warn("자동 저장 키를 정리하지 못했습니다 (post {}). TTL이 지나면 사라집니다: {}", e.postId(), ex.getMessage());
         }
     }
+
+    /** 완전 삭제된 글의 자동 저장 키도 커밋 뒤 지운다 (007). */
+    @TransactionalEventListener
+    public void on(PostLifecycleEvents.PostPurged e) {
+        try {
+            autosave.delete(e.postId());
+            autosave.removeDirty(e.postId());
+        } catch (RuntimeException ex) {
+            log.warn("자동 저장 키를 정리하지 못했습니다 (post {}). TTL이 지나면 사라집니다: {}", e.postId(), ex.getMessage());
+        }
+    }
 }

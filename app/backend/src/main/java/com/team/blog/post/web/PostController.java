@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.team.blog.account.domain.Visibility;
 import com.team.blog.post.application.PostCommandService;
 import com.team.blog.post.application.PostEditorQuery;
+import com.team.blog.post.application.PostTrashService;
 import com.team.blog.post.application.PublishCommand;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.error.ApiException;
@@ -38,12 +39,15 @@ public class PostController {
 
     private final PostCommandService commands;
     private final PostEditorQuery editor;
+    private final PostTrashService trash;
     private final RateLimiter rateLimiter;
     private final BlogProperties.Post rules;
 
-    public PostController(PostCommandService commands, PostEditorQuery editor, RateLimiter rateLimiter, BlogProperties props) {
+    public PostController(PostCommandService commands, PostEditorQuery editor, PostTrashService trash,
+                          RateLimiter rateLimiter, BlogProperties props) {
         this.commands = commands;
         this.editor = editor;
+        this.trash = trash;
         this.rateLimiter = rateLimiter;
         this.rules = props.post();
     }
@@ -107,6 +111,26 @@ public class PostController {
     public PostCommandService.VisibilityResult visibility(@CurrentMember MemberPrincipal me, @PathVariable long postId,
                                                           @RequestBody VisibilityRequest body) {
         return commands.changeVisibility(me.id(), postId, parseVisibility(body.visibility(), false));
+    }
+
+    /** [삭제] → 휴지통 (007). 빈 임시글은 바로 지워진다. 같은 요청을 다시 보내도 결과가 같다. */
+    @DeleteMapping("/{postId}")
+    public PostTrashService.TrashResult trash(@CurrentMember MemberPrincipal me, @PathVariable long postId) {
+        rateLimiter.check("post-delete:" + me.id(), 60, Duration.ofMinutes(1));
+        return trash.trash(me.id(), postId);
+    }
+
+    @PostMapping("/{postId}/restore")
+    public PostTrashService.RestoreResult restore(@CurrentMember MemberPrincipal me, @PathVariable long postId) {
+        rateLimiter.check("post-delete:" + me.id(), 60, Duration.ofMinutes(1));
+        return trash.restore(me.id(), postId);
+    }
+
+    @DeleteMapping("/{postId}/permanent")
+    public ResponseEntity<Void> purge(@CurrentMember MemberPrincipal me, @PathVariable long postId) {
+        rateLimiter.check("post-delete:" + me.id(), 60, Duration.ofMinutes(1));
+        trash.purge(me.id(), postId);
+        return ResponseEntity.noContent().build();
     }
 
     private static long requireVersion(Long v) {
