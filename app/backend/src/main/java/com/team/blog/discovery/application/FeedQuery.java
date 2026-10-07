@@ -11,6 +11,8 @@ import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.team.blog.friend.application.FriendQuery;
+import com.team.blog.friend.application.FriendService;
 import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.cursor.CursorCodec;
@@ -38,10 +40,14 @@ public class FeedQuery {
     private final ImageUrls imageUrls;
     private final ContentRenderer renderer;
     private final int pageSize;
+    private final FriendService friends;
+    private final FriendQuery friendQuery;
 
     public FeedQuery(JdbcTemplate jdbc, CursorCodec cursors, ImageUrls imageUrls, ContentRenderer renderer,
-                     BlogProperties props) {
+                     BlogProperties props, FriendService friends, FriendQuery friendQuery) {
         this.jdbc = jdbc;
+        this.friends = friends;
+        this.friendQuery = friendQuery;
         this.cursors = cursors;
         this.imageUrls = imageUrls;
         this.renderer = renderer;
@@ -55,8 +61,16 @@ public class FeedQuery {
 
     public record Page(List<Card> items, String nextCursor) {}
 
+    /**
+     * @param friendship        보는 사람 기준 친구 관계 (NONE·SENT·RECEIVED·FRIENDS). 비회원·본인이면 null
+     * @param lastActiveDaysAgo 친구이고 양쪽 모두 공개 설정을 켰을 때만 0~7 (008 FR-009·FR-010)
+     */
     public record BlogProfile(long id, String handle, String nickname, String bio, String profileImageUrl,
-                              long publicPostCount, boolean mine) {}
+                              long publicPostCount, boolean mine, String friendship, Integer lastActiveDaysAgo) {
+        BlogProfile withFriendship(String relation, Integer days) {
+            return new BlogProfile(id, handle, nickname, bio, profileImageUrl, publicPostCount, mine, relation, days);
+        }
+    }
 
     public Page home(String cursor) {
         return list("home", null, cursor);
@@ -78,8 +92,9 @@ public class FeedQuery {
                 WHERE m.handle = ? AND m.withdrawn_at IS NULL AND m.deleted_at IS NULL
                 """, (rs, i) -> new BlogProfile(rs.getLong("id"), rs.getString("handle"), rs.getString("nickname"),
                 rs.getString("bio"), imageUrls.urlOf(rs.getString("profile_image_key")), rs.getLong("post_count"),
-                viewerId != null && viewerId == rs.getLong("id")), handle);
-        return rows.stream().findFirst();
+                viewerId != null && viewerId == rs.getLong("id"), null, null), handle);
+        return rows.stream().findFirst().map(p -> viewerId == null || p.mine() ? p
+                : p.withFriendship(friends.relation(viewerId, p.id()).name(), friendQuery.lastActiveDaysAgo(viewerId, p.id()).orElse(null)));
     }
 
     private Optional<Long> findBlogOwner(String handle) {

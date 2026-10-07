@@ -8,8 +8,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.session.web.http.SessionRepositoryFilter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.team.blog.account.web.ActivityInterceptor;
 import com.team.blog.shared.security.CurrentMemberArgumentResolver;
 import com.team.blog.shared.security.ResilientSessionFilter;
 
@@ -17,9 +19,16 @@ import com.team.blog.shared.security.ResilientSessionFilter;
 @EnableScheduling
 public class WebConfig implements WebMvcConfigurer {
     private final CurrentMemberArgumentResolver currentMemberResolver;
+    private final ActivityInterceptor activityInterceptor;
 
-    public WebConfig(CurrentMemberArgumentResolver currentMemberResolver) {
+    public WebConfig(CurrentMemberArgumentResolver currentMemberResolver, ActivityInterceptor activityInterceptor) {
         this.currentMemberResolver = currentMemberResolver;
+        this.activityInterceptor = activityInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(activityInterceptor).excludePathPatterns("/assets/**", "/media/**", "/actuator/**");
     }
 
     @Override

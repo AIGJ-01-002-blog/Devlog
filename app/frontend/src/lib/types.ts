@@ -53,6 +53,27 @@ export interface BlogProfile {
   profileImageUrl: string | null
   publicPostCount: number
   mine: boolean
+  /** 보는 사람 기준 친구 관계. 비회원·본인이면 null */
+  friendship: FriendRelation | null
+  /** 친구이고 양쪽 모두 공개 설정을 켰을 때만 0~7 (7 = 1주 이상) */
+  lastActiveDaysAgo: number | null
+}
+
+export type FriendRelation = 'NONE' | 'SENT' | 'RECEIVED' | 'FRIENDS'
+
+export interface FriendPerson {
+  handle: string
+  nickname: string
+  profileImageUrl: string | null
+  since: string
+  lastActiveDaysAgo: number | null
+}
+
+export interface FriendOverview {
+  friends: FriendPerson[]
+  received: FriendPerson[]
+  sent: FriendPerson[]
+  lastActiveVisible: boolean
 }
 
 export interface PostDetail {

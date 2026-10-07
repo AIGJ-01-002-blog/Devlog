@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { Avatar } from '../components/Avatar'
 import { ImageCropper } from '../components/ImageCropper'
 import { PasswordRules } from '../components/PasswordRules'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { fieldErrors } from '../lib/fieldErrors'
+import { friendsApi, lastActiveLabel } from '../lib/friends'
 import { clock, fullDate, monthDay } from '../lib/format'
 import { checkSourceFile, decodeFile, renderSquare, uploadProfileImage, type Crop } from '../lib/image'
 import { passwordOk } from '../lib/password'
-import type { Visibility } from '../lib/types'
+import { Link } from '../lib/router'
+import type { FriendOverview, FriendPerson, Visibility } from '../lib/types'
 
 interface Settings {
   handle: string
@@ -22,6 +24,7 @@ interface Settings {
   hasPassword: boolean
   previousLogin: { at: string | null; provider: string }
   defaultVisibility: Visibility
+  lastActiveVisible: boolean
   aiAgreed: boolean
 }
 
@@ -53,6 +56,7 @@ export function SettingsPage() {
     <main className="container narrow">
       <h1 className="page-title">설정</h1>
       <ProfileSection settings={settings} onSaved={(p) => setSettings({ ...settings, ...p })} />
+      <FriendsSection />
       <AccountSection settings={settings} onChange={setSettings} />
       {settings.hasPassword && <PasswordSection />}
     </main>
@@ -212,6 +216,18 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
     }
   }
 
+  const changeLastActive = async (visible: boolean) => {
+    const before = settings
+    onChange({ ...settings, lastActiveVisible: visible })
+    try {
+      await api('/api/me/settings', { method: 'PATCH', body: { lastActiveVisible: visible } })
+      setMessage({ ok: true, text: visible ? '친구에게 최근 활동을 보여요.' : '이제 친구에게 최근 활동이 보이지 않고, 나도 친구들의 최근 활동을 볼 수 없어요.' })
+    } catch {
+      onChange(before)
+      setMessage({ ok: false, text: '바꾸지 못했어요. 다시 시도해 주세요.' })
+    }
+  }
+
   const withdrawAi = async () => {
     if (!window.confirm('AI 기능 동의를 철회할까요? 다음에 AI 기능을 쓰려면 다시 동의해야 해요.')) return
     try {
@@ -237,6 +253,11 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
         <dd role="radiogroup" aria-labelledby="default-visibility" className="row">
           <label><input type="radio" name="defaultVisibility" checked={settings.defaultVisibility === 'PUBLIC'} onChange={() => changeVisibility('PUBLIC')} /> 전체 공개</label>
           <label><input type="radio" name="defaultVisibility" checked={settings.defaultVisibility === 'PRIVATE'} onChange={() => changeVisibility('PRIVATE')} /> 나만 보기</label>
+        </dd>
+        <dt>최근 활동</dt>
+        <dd>
+          <label><input type="checkbox" checked={settings.lastActiveVisible} onChange={(e) => changeLastActive(e.target.checked)} /> 최근 활동을 친구에게 보이기</label>
+          <span className="muted small"> 끄면 나도 친구들의 최근 활동을 볼 수 없어요.</span>
         </dd>
         {settings.aiAgreed && (
           <>
@@ -303,6 +324,83 @@ function PasswordSection() {
         {done && <p className="ok" role="status">비밀번호를 바꿨어요. 다른 기기에서는 로그아웃됐어요.</p>}
         <div><button className="btn btn-primary" disabled={submitting || !current || !passwordOk(password) || password !== confirm}>비밀번호 변경</button></div>
       </form>
+    </section>
+  )
+}
+
+/** 친구 (008 US1·US2): 받은 요청 수락·거절, 친구 목록과 최근 활동, 보낸 요청 취소. 처리해도 상대에게 알리지 않는다. */
+function FriendsSection() {
+  const [data, setData] = useState<FriendOverview | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  useEffect(() => { friendsApi.overview().then(setData).catch(() => setMessage({ ok: false, text: '친구 목록을 불러오지 못했어요.' })) }, [])
+
+  const act = async (handle: string, fn: () => Promise<unknown>, text: string) => {
+    setBusy(handle)
+    try {
+      await fn()
+      setData(await friendsApi.overview())
+      setMessage({ ok: true, text })
+    } catch (e) {
+      setMessage({ ok: false, text: e instanceof ApiError ? e.message : '처리하지 못했어요. 다시 시도해 주세요.' })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  if (!data) return message ? <section className="settings-section"><h2>친구</h2><p className="error">{message.text}</p></section> : null
+  const row = (p: FriendPerson, actions: ReactNode, extra?: string | null) => (
+    <li key={p.handle} className="friend-row">
+      <Link to={`/@${p.handle}`} className="friend-who">
+        <Avatar src={p.profileImageUrl} name={p.nickname} seed={p.handle} size={32} />
+        <span><b>{p.nickname}</b> <span className="muted small">@{p.handle}</span></span>
+      </Link>
+      {extra && <span className="muted small">{extra}</span>}
+      <span className="friend-row-actions">{actions}</span>
+    </li>
+  )
+  return (
+    <section className="settings-section">
+      <h2>친구</h2>
+      {data.received.length > 0 && (
+        <>
+          <h3>받은 친구 요청 {data.received.length}</h3>
+          <ul className="friend-list">
+            {data.received.map((p) => row(p, <>
+              <button type="button" className="btn btn-primary" disabled={busy === p.handle}
+                      onClick={() => act(p.handle, () => friendsApi.accept(p.handle), `${p.nickname}님과 친구가 됐어요.`)}>수락</button>
+              <button type="button" className="btn btn-text" disabled={busy === p.handle}
+                      onClick={() => act(p.handle, () => friendsApi.remove(p.handle), '요청을 거절했어요.')}>거절</button>
+            </>))}
+          </ul>
+        </>
+      )}
+      <h3>친구 {data.friends.length}</h3>
+      {data.friends.length === 0
+        ? <p className="muted small">아직 친구가 없어요. 다른 사람의 블로그에서 [친구 요청]을 보내 보세요.</p>
+        : (
+          <ul className="friend-list">
+            {data.friends.map((p) => row(p,
+              <button type="button" className="btn btn-text" disabled={busy === p.handle} onClick={() => {
+                if (confirm(`${p.nickname}님과 친구를 끊을까요? 상대에게 알림은 가지 않아요.`)) {
+                  void act(p.handle, () => friendsApi.remove(p.handle), '친구를 끊었어요.')
+                }
+              }}>친구 끊기</button>,
+              lastActiveLabel(p.lastActiveDaysAgo) && `최근 활동 ${lastActiveLabel(p.lastActiveDaysAgo)}`))}
+          </ul>
+        )}
+      {data.sent.length > 0 && (
+        <>
+          <h3>보낸 요청 {data.sent.length}</h3>
+          <ul className="friend-list">
+            {data.sent.map((p) => row(p,
+              <button type="button" className="btn btn-text" disabled={busy === p.handle}
+                      onClick={() => act(p.handle, () => friendsApi.remove(p.handle), '요청을 취소했어요.')}>요청 취소</button>))}
+          </ul>
+        </>
+      )}
+      {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
     </section>
   )
 }
