@@ -323,7 +323,8 @@ select { width: auto; }
 .markdown code { font-family: var(--mono); font-size: 0.85em; padding: 0.15em 0.4em; border-radius: 3px; background: var(--color-surface-2); }
 .markdown pre { padding: 16px; border-radius: var(--radius); background: var(--color-code-bg); overflow-x: auto; line-height: 1.5; }
 .markdown pre code { padding: 0; background: none; font-size: 0.875rem; }
-.markdown img { display: block; margin: 1.5em auto; max-height: 80vh; }
+/* 서버가 적은 가로·세로로 자리를 먼저 잡는다. 폭이 줄면 비율대로 줄고, 높이 제한에 걸리면 찌그러지지 않고 안에 맞춘다 */
+.markdown img { display: block; margin: 1.5em auto; max-height: 80vh; height: auto; object-fit: contain; }
 .markdown table { border-collapse: collapse; display: block; overflow-x: auto; margin: 1em 0; }
 .markdown th, .markdown td { border: 1px solid var(--color-border); padding: 6px 12px; }
 .markdown hr { border: 0; border-top: 1px solid var(--color-border); margin: 2em 0; }
