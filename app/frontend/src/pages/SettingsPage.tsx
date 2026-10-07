@@ -9,6 +9,7 @@ import { friendsApi, lastActiveLabel } from '../lib/friends'
 import { clock, fullDate, monthDay } from '../lib/format'
 import { checkSourceFile, decodeFile, renderSquare, uploadProfileImage, type Crop } from '../lib/image'
 import { passwordOk } from '../lib/password'
+import { MUTABLE_TYPES, notificationsApi, type MutableType } from '../lib/notifications'
 import { formatBytes, storageUsage, type StorageUsage } from '../lib/postImages'
 import { Link } from '../lib/router'
 import type { FriendOverview, FriendPerson, Visibility } from '../lib/types'
@@ -59,6 +60,7 @@ export function SettingsPage() {
       <h1 className="page-title">설정</h1>
       <ProfileSection settings={settings} onSaved={(p) => setSettings({ ...settings, ...p })} />
       <FriendsSection />
+      <NotificationsSection />
       <AccountSection settings={settings} onChange={setSettings} />
       {settings.hasPassword && <PasswordSection />}
     </main>
@@ -334,6 +336,51 @@ function PasswordSection() {
 }
 
 /** 친구 (008 US1·US2): 받은 요청 수락·거절, 친구 목록과 최근 활동, 보낸 요청 취소. 처리해도 상대에게 알리지 않는다. */
+/** 알림 끄기 (015 US5). 바로 저장하고, 실패하면 되돌린다. 운영 알림은 목록에 없다(끌 수 없음). */
+function NotificationsSection() {
+  const [muted, setMuted] = useState<MutableType[] | null>(null)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  useEffect(() => {
+    notificationsApi.settings().then((s) => setMuted(s.muted)).catch(() => setMessage({ ok: false, text: '알림 설정을 불러오지 못했어요.' }))
+  }, [])
+
+  useEffect(() => {
+    if (muted && location.hash === '#notifications') document.getElementById('notifications')?.scrollIntoView()
+  }, [muted])
+
+  const toggle = async (type: MutableType, on: boolean) => {
+    if (!muted) return
+    const before = muted
+    const next = on ? muted.filter((t) => t !== type) : [...muted, type]
+    setMuted(next)
+    try {
+      setMuted((await notificationsApi.saveSettings(next)).muted)
+      setMessage({ ok: true, text: '저장했어요.' })
+    } catch {
+      setMuted(before)
+      setMessage({ ok: false, text: '바꾸지 못했어요. 다시 시도해 주세요.' })
+    }
+  }
+
+  return (
+    <section className="settings-section" id="notifications">
+      <h2>알림</h2>
+      {muted && (
+        <ul className="notification-settings">
+          {MUTABLE_TYPES.map(({ type, label }) => (
+            <li key={type}>
+              <label><input type="checkbox" checked={!muted.includes(type)} onChange={(e) => toggle(type, e.target.checked)} /> {label}</label>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="muted small">운영 알림(신고 결과·숨김)은 끌 수 없어요. 끈 알림은 그동안 쌓이지 않아요.</p>
+      {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
+    </section>
+  )
+}
+
 function FriendsSection() {
   const [data, setData] = useState<FriendOverview | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
