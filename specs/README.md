@@ -45,6 +45,7 @@
 | [038-social-email-rules](./038-social-email-rules/spec.md) | 소셜 로그인 이메일을 가입과 같은 규칙으로 | 2026-10-08 추가 (버그) | 이후 단계 (Tier C) | 2 |
 | [039-share-link](./039-share-link/spec.md) | 글 공유 버튼 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 2 |
 | [040-adjacent-posts](./040-adjacent-posts/spec.md) | 이전·다음 글 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 2 |
+| [041-mail-failure-log](./041-mail-failure-log/spec.md) | 메일 발송 실패 기록에서 받는 사람 주소 빼기 | 2026-10-08 추가 (테스트 보강) | 이후 단계 (Tier C) | 2 |
 
 ## 여러 spec에 걸치는 문서
 
