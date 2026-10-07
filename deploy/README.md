@@ -98,4 +98,13 @@ kubectl -n blog port-forward svc/blog-app 8080:80
 | `ollama.java21.net`, `owui.java21.net` (443) | 프록시 403 |
 | `s3.java21.net:8000` (PostgreSQL), `220.67.216.14:6379` (Redis), `s4.java21.net` 5672·15672·9000·9200·5601, `s4.java21.net:13306` | TCP 연결 시간 초과 |
 
-클라우드 환경의 Network access를 Full로 바꾸면 다시 확인한다. 민서님 Mac과 학교 클러스터에서는 외부 주소로 바로 접속된다.
+2026-10-07 민서님이 집 인터넷(외부망)의 Mac에서 다시 확인한 결과, 학교 쪽 방화벽도 외부 접속을 막고 있다.
+
+| 대상 | 외부망 결과 |
+|---|---|
+| `storage.java21.net` http 80 | 열림 (200). https 443은 거절 → MinIO 주소는 `http://storage.java21.net` |
+| `s3.java21.net:8000` (PostgreSQL), `220.67.216.14:6379` (Redis) | 닫힘 |
+| `s4.java21.net` 5672·15672 (RabbitMQ), 9200 (ES, No route to host), 5601, 9000, 13306 | 닫힘 |
+| `ollama.java21.net:443` | 닫힘 |
+
+PostgreSQL·Redis·RabbitMQ·Elasticsearch·Ollama는 학교 내부망이나 VPN에서만 열려 있는 것으로 보인다(추정). 그래서 클라우드 환경 Network access를 Full로 바꿔도 MinIO 말고는 닿지 않을 수 있다. `overlays/nhn`은 학교 내부망 안의 클러스터나 VPN이 연결된 환경에서만 그대로 동작한다.
