@@ -1,8 +1,14 @@
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-/** 상자 안에서 Tab으로 갈 수 있는 요소들 (문서 순서) */
+/** 상자 안에서 Tab으로 갈 수 있는 요소들 (문서 순서). 이름이 같은 라디오 묶음은 브라우저처럼 한 자리로 센다 */
 export function focusables(root: HTMLElement): HTMLElement[] {
-  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => !el.hidden && !el.closest('[aria-hidden="true"]'))
+  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => {
+    if (el.hidden || el.closest('[aria-hidden="true"]')) return false
+    if (!(el instanceof HTMLInputElement) || el.type !== 'radio' || !el.name || el.checked) return true
+    // 고른 것이 있으면 그것만, 없으면 묶음의 첫 라디오만 Tab 자리다
+    const group = [...root.querySelectorAll<HTMLInputElement>('input[type="radio"]')].filter((r) => r.name === el.name)
+    return !group.some((r) => r.checked) && group[0] === el
+  })
 }
 
 /**

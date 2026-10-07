@@ -43,6 +43,16 @@ describe('trapFocus', () => {
         document.getElementById('a').focus();
         expect(key('Tab').defaultPrevented).toBe(false);
     });
+    it('고른 라디오에서 Shift+Tab을 눌러도 대화상자 밖으로 나가지 않는다', () => {
+        const { dialog } = setup(`<input type="radio" name="r" value="a" id="ra"><input type="radio" name="r" value="b" id="rb">
+      <button id="ok">확인</button>`);
+        trapFocus(dialog, () => { });
+        const rb = document.getElementById('rb');
+        rb.checked = true;
+        rb.focus();
+        expect(key('Tab', true).defaultPrevented).toBe(true);
+        expect(document.activeElement?.id).toBe('ok');
+    });
     it('초점이 밖으로 새어 나가 있으면 Tab으로 다시 안으로 들인다', () => {
         const { dialog } = setup('<input id="a"><button id="b">확인</button>');
         trapFocus(dialog, () => { });
@@ -78,6 +88,11 @@ describe('trapFocus', () => {
     });
 });
 describe('focusables', () => {
+    it('라디오 묶음은 고른 것 하나, 고른 게 없으면 첫 것만 센다', () => {
+        document.body.innerHTML = `<div id="r"><input type="radio" name="a" id="a1"><input type="radio" name="a" id="a2">
+      <input type="radio" name="b" id="b1"><input type="radio" name="b" id="b2" checked><input type="radio" id="solo"></div>`;
+        expect(focusables(document.getElementById('r')).map((e) => e.id)).toEqual(['a1', 'b2', 'solo']);
+    });
     it('숨겨진 것과 막힌 것, tabindex=-1은 빼고 문서 순서로 준다', () => {
         document.body.innerHTML = `<div id="r"><a href="/a" id="1">a</a><a id="no-href">b</a><button id="2">c</button>
       <button disabled>d</button><span tabindex="-1">e</span><span tabindex="0" id="3">f</span>

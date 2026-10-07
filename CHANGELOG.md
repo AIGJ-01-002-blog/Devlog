@@ -18,7 +18,7 @@ main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/r
 - 네 곳에 따로 적던 대화상자 틀을 `Modal` 하나로 모았다
 
 ### 테스트
-- `modalFocus.test.ts` 7개, `Modal.test.tsx` 2개
+- `modalFocus.test.ts` 9개(라디오 묶음 포함), `Modal.test.tsx` 2개
 
 ## [1.16.7] - 2026-10-08
 
