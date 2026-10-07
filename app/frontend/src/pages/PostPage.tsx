@@ -7,6 +7,7 @@ import { highlightWithin } from '../lib/highlight'
 import { useAuth } from '../lib/auth'
 import { setFlash } from '../lib/flash'
 import { Link, navigate } from '../lib/router'
+import { tagPath } from '../lib/tags'
 import { TRASH_CONFIRM, trashedMessage, trashPost } from '../lib/trash'
 import type { PostDetail, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
@@ -106,6 +107,11 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
             </span>
           )}
         </div>
+        {post.tags.length > 0 && (
+          <ul className="post-tags" aria-label="태그">
+            {post.tags.map((t) => <li key={t}><Link to={tagPath(t)} className="tag-link">#{t}</Link></li>)}
+          </ul>
+        )}
         <div className="post-body markdown" ref={bodyRef} dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
         <div className="post-stats muted">
           <span>♥ {compactNumber(post.likeCount)}</span>

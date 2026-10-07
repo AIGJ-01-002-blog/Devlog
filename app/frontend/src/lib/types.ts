@@ -94,6 +94,8 @@ export interface PostDetail {
   author: { id: number; handle: string; nickname: string; bio: string | null; profileImageUrl: string | null }
   mine: boolean
   owner: { editing: boolean; editingSavedAt: string | null; hidden: boolean } | null
+  /** 입력한 순서 (010) */
+  tags: string[]
 }
 
 export interface EditorView {
@@ -109,6 +111,8 @@ export interface EditorView {
   publishedAt: string | null
   firstPublicAt: string | null
   editedAt: string | null
+  /** 지금 달린 태그. 다시 발행할 때 미리 채운다 (010) */
+  tags: string[]
 }
 
 export interface ServerContent {

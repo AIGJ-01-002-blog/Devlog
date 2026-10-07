@@ -13,6 +13,7 @@ import com.team.blog.post.access.Viewer;
 import com.team.blog.shared.error.NotFoundException;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
+import com.team.blog.tag.application.TagNormalizer;
 
 /** 읽기 API: 홈 목록, 개인 블로그, 글 상세 (docs/10 §4-2, docs/40). size 파라미터는 받지 않는다(9개 고정). */
 @RestController
@@ -38,8 +39,11 @@ public class DiscoveryController {
     }
 
     @GetMapping("/api/members/{handle}/posts")
-    public ResponseEntity<FeedQuery.Page> blog(@PathVariable String handle, @RequestParam(required = false) String cursor) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(feed.blog(handle, cursor));
+    public ResponseEntity<FeedQuery.Page> blog(@PathVariable String handle, @RequestParam(required = false) String cursor,
+                                               @RequestParam(required = false) String tag) {
+        // 블로그 안 태그 필터 (010 FR-031). 형식에 맞지 않는 태그는 404
+        String name = tag == null || tag.isEmpty() ? null : TagNormalizer.canonical(tag).orElseThrow(NotFoundException::new);
+        return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(feed.blog(handle, name, cursor));
     }
 
     /** 상세는 보는 사람마다 달라 공유 캐시에 넣지 않고, 공개가 아닌 글은 어디에도 저장하지 않는다 (docs/40 R-9). */

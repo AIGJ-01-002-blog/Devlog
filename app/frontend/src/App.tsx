@@ -12,6 +12,8 @@ import { ManagePage } from './pages/ManagePage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { PostPage } from './pages/PostPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { TagPage } from './pages/TagPage'
+import { TagsPage } from './pages/TagsPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { SignupEmailPage } from './pages/SignupEmailPage'
@@ -37,6 +39,8 @@ function route(path: string): ReactNode {
   if (path === '/') return <HomePage />
   if ((p = match('/@:handle/posts/:id', path))) return <PostPage key={`${p.handle}/${p.id}`} handle={p.handle} id={p.id} />
   if ((p = match('/@:handle', path))) return <BlogPage key={p.handle} handle={p.handle} />
+  if (path === '/tags') return <TagsPage />
+  if ((p = match('/tags/:name', path))) return <TagPage key={p.name} name={p.name} />
   if (path === '/login') return <LoginPage />
   if (path === '/signup') return <SignupEmailPage />
   if (path === '/signup/social') return <SignupSocialPage />

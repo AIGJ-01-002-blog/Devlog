@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.util.UriUtils;
 
 import com.team.blog.discovery.application.FeedQuery;
 import com.team.blog.discovery.application.PostDetailQuery;
@@ -21,6 +23,9 @@ import com.team.blog.post.domain.PostStatus;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
+import com.team.blog.tag.application.TagNormalizer;
+import com.team.blog.tag.application.TagQuery;
+import com.team.blog.tag.web.TagController;
 
 /**
  * 화면 주소를 React 앱으로 연결하면서, 링크 미리보기·검색 엔진이 읽을 머리말과 첫 화면 HTML을 서버에서 채운다.
@@ -36,12 +41,53 @@ public class PageController {
     private final FeedQuery feed;
     private final PostDetailQuery details;
     private final BlogProperties.Site site;
+    private final TagQuery tags;
+    private final TagController tagApi;
 
-    public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props) {
+    public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
+                          TagController tagApi) {
         this.shell = shell;
         this.feed = feed;
         this.details = details;
         this.site = props.site();
+        this.tags = tags;
+        this.tagApi = tagApi;
+    }
+
+    /** 태그 주소: 이름을 경로 조각으로 인코딩한다. #은 %23, +·.은 그대로 (docs/22 §5). */
+    public static String tagPath(String name) {
+        return "/tags/" + UriUtils.encodePathSegment(name, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    @GetMapping("/tags")
+    public ResponseEntity<String> tagIndex() {
+        var top = tags.top(100);
+        StringBuilder body = new StringBuilder("<main><h1>태그</h1>");
+        if (top.isEmpty()) body.append("<p>아직 태그가 없어요.</p>");
+        else {
+            body.append("<ul>");
+            top.forEach(t -> body.append("<li><a href=\"").append(SpaShell.esc(tagPath(t.name()))).append("\">#")
+                    .append(SpaShell.esc(t.name())).append("</a> ").append(t.postCount()).append("</li>"));
+            body.append("</ul>");
+        }
+        body.append("</main>");
+        HeadMeta meta = HeadMeta.site("태그 - " + site.name(), "공개 글에 쓰인 태그", absolute("/tags"), absolute(site.defaultOgImage()));
+        return html(HttpStatus.OK, shell.render(meta, body.toString(), Map.of("page", "tags", "tags", top)), CacheControl.noCache());
+    }
+
+    /** 태그별 목록 (010 FR-019~FR-022): 형식 안 맞음 404, 정규화 안 된 주소 301, 공개 글 없으면 200 + 빈 상태. */
+    @GetMapping("/tags/{name}")
+    public ResponseEntity<String> tag(@PathVariable String name) {
+        var canonical = TagNormalizer.canonical(name);
+        if (canonical.isEmpty()) return notFound();
+        if (!canonical.get().equals(name)) return redirect(HttpStatus.MOVED_PERMANENTLY, tagPath(canonical.get()));
+        TagController.TagPage page = tagApi.page(name, null);
+        String body = "<main><h1>#" + SpaShell.esc(name) + "</h1><p>공개 글 " + page.postCount() + "</p>"
+                + (page.items().isEmpty() ? "<p>아직 이 태그로 공개된 글이 없어요.</p>"
+                : cards(new FeedQuery.Page(page.items(), page.nextCursor()))) + "</main>";
+        HeadMeta meta = HeadMeta.site("#" + name + " - " + site.name(), "#" + name + " 태그가 달린 글", absolute(tagPath(name)),
+                absolute(site.defaultOgImage()));
+        return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "tag", "tag", page)), CacheControl.noCache());
     }
 
     @GetMapping({"/", "/index.html"})
@@ -53,20 +99,36 @@ public class PageController {
     }
 
     @GetMapping("/@{handle}")
-    public ResponseEntity<String> blog(@PathVariable String handle, @CurrentMember(required = false) MemberPrincipal me) {
+    public ResponseEntity<String> blog(@PathVariable String handle, @RequestParam(required = false) String tag,
+                                       @CurrentMember(required = false) MemberPrincipal me) {
         if (!HANDLE_CHARS.matcher(handle).matches()) return notFound();
-        if (!handle.equals(handle.toLowerCase())) return redirect(HttpStatus.MOVED_PERMANENTLY, "/@" + handle.toLowerCase());
+        String tagQuery = tag == null || tag.isEmpty() ? "" : "?tag=" + java.net.URLEncoder.encode(tag, java.nio.charset.StandardCharsets.UTF_8);
+        if (!handle.equals(handle.toLowerCase())) return redirect(HttpStatus.MOVED_PERMANENTLY, "/@" + handle.toLowerCase() + tagQuery);
+        // 블로그 안 태그 필터 (010 FR-031): 형식 안 맞음 404, 정규화 안 된 값 301
+        String filter = null;
+        if (!tagQuery.isEmpty()) {
+            var canonical = TagNormalizer.canonical(tag);
+            if (canonical.isEmpty()) return notFound();
+            if (!canonical.get().equals(tag)) {
+                return redirect(HttpStatus.MOVED_PERMANENTLY, "/@" + handle + "?tag="
+                        + java.net.URLEncoder.encode(canonical.get(), java.nio.charset.StandardCharsets.UTF_8));
+            }
+            filter = tag;
+        }
         var profile = feed.profile(handle, me == null ? null : me.id());
         if (profile.isEmpty()) return notFound();
         FeedQuery.BlogProfile p = profile.get();
-        FeedQuery.Page first = feed.blog(handle, null);
+        FeedQuery.Page first = feed.blog(handle, filter, null);
+        var blogTags = tags.blogTags(p.id());
         String body = "<main><header><h1>" + SpaShell.esc(p.nickname()) + "</h1><p>@" + SpaShell.esc(p.handle()) + "</p>"
                 + (p.bio() == null ? "" : "<p>" + SpaShell.esc(p.bio()) + "</p>") + "</header>" + cards(first) + "</main>";
         String description = p.bio() == null || p.bio().isBlank() ? p.nickname() + "의 블로그" : truncate(p.bio(), 160);
         HeadMeta meta = new HeadMeta(p.nickname() + " (@" + p.handle() + ") - " + site.name(), description,
                 absolute("/@" + p.handle()), "profile", p.profileImageUrl() != null ? p.profileImageUrl() : absolute(site.defaultOgImage()),
                 null, null, true);
-        return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "blog", "profile", p, "feed", first)),
+        return html(HttpStatus.OK, shell.render(meta, body, filter == null
+                        ? Map.of("page", "blog", "profile", p, "feed", first, "blogTags", blogTags)
+                        : Map.of("page", "blog", "profile", p, "feed", first, "blogTags", blogTags, "tag", filter)),
                 CacheControl.noCache().cachePrivate());
     }
 
@@ -123,6 +185,11 @@ public class PageController {
             sb.append(" · 수정됨 <time datetime=\"").append(d.editedAt()).append("\">").append(DATE.format(d.editedAt())).append("</time>");
         }
         sb.append("</p>");
+        if (!d.tags().isEmpty()) {
+            sb.append("<ul class=\"post-tags\">");
+            d.tags().forEach(t -> sb.append("<li><a href=\"").append(SpaShell.esc(tagPath(t))).append("\">#").append(SpaShell.esc(t)).append("</a></li>"));
+            sb.append("</ul>");
+        }
         sb.append("<div class=\"post-body\">").append(d.contentHtml()).append("</div>"); // 발행 때 정화한 HTML
         sb.append("</article></main>");
         return sb.toString();
