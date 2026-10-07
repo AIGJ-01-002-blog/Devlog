@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
     ResponseEntity<ErrorResponse> handleUnknown(Exception e) {
         // 스프링이 상태를 정해 둔 요청 쪽 오류(406·413 등)는 서버 고장이 아니다. 그 상태 그대로 돌려주고 오류 로그를 남기지 않는다.
         if (e instanceof org.springframework.web.ErrorResponse framework && framework.getStatusCode().is4xxClientError()) {
-            return clientError(framework.getStatusCode());
+            return clientError(framework);
         }
         // 받을 쪽이 이미 연결을 끊었다. 쓸 곳이 없으니 아무것도 하지 않는다.
         if (e instanceof AsyncRequestNotUsableException) return null;
@@ -73,11 +73,14 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of("INTERNAL_ERROR", "잠시 후 다시 시도해 주세요."));
     }
 
-    private static ResponseEntity<ErrorResponse> clientError(HttpStatusCode status) {
+    private static ResponseEntity<ErrorResponse> clientError(org.springframework.web.ErrorResponse framework) {
+        HttpStatusCode status = framework.getStatusCode();
+        // 스프링이 붙여 둔 헤더(406의 Accept, 405의 Allow 등)는 그대로 전한다
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(status).headers(framework.getHeaders());
         // 406은 요청이 받겠다는 형식으로 오류 본문을 쓸 수 없으므로 상태만 보낸다
-        if (status.value() == HttpStatus.NOT_ACCEPTABLE.value()) return ResponseEntity.status(status).build();
+        if (status.value() == HttpStatus.NOT_ACCEPTABLE.value()) return response.build();
         HttpStatus known = HttpStatus.resolve(status.value());
-        return ResponseEntity.status(status)
+        return response
                 .body(ErrorResponse.of(known == null ? "BAD_REQUEST" : known.name(), "요청 형식이 올바르지 않아요."));
     }
 }

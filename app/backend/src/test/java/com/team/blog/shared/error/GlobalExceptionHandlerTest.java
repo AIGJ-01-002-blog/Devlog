@@ -5,20 +5,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.server.ResponseStatusException;
 
 /** spec 034: 스프링이 정한 요청 쪽 오류는 500이 아니라 그 상태로, 끊긴 연결은 조용히 넘긴다. */
+@ExtendWith(OutputCaptureExtension.class)
 class GlobalExceptionHandlerTest {
     final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
-    void notAcceptableKeepsItsStatusWithoutBody() {
-        ResponseEntity<ErrorResponse> r = handler.handleUnknown(new HttpMediaTypeNotAcceptableException(List.of()));
+    void notAcceptableKeepsItsStatusAndAcceptHeaderWithoutBody() {
+        ResponseEntity<ErrorResponse> r = handler.handleUnknown(new HttpMediaTypeNotAcceptableException(List.of(MediaType.APPLICATION_JSON)));
         assertThat(r.getStatusCode()).isEqualTo(HttpStatus.NOT_ACCEPTABLE);
+        assertThat(r.getHeaders().getAccept()).containsExactly(MediaType.APPLICATION_JSON);
         assertThat(r.getBody()).isNull();
     }
 
@@ -47,8 +53,9 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void disconnectedClientGetsNothing() {
+    void disconnectedClientGetsNothingAndNoErrorLog(CapturedOutput output) {
         assertThat(handler.handleUnknown(new AsyncRequestNotUsableException("Broken pipe"))).isNull();
+        assertThat(output.getAll()).doesNotContain("GlobalExceptionHandler");
     }
 
     @Test
