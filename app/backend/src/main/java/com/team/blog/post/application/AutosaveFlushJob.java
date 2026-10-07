@@ -60,6 +60,23 @@ public class AutosaveFlushJob {
         return flushed;
     }
 
+    /**
+     * 한 글의 자동 저장분을 바로 DB에 반영한다 (휴지통으로 옮기기 직전, 007 FR-005). 호출한 쪽 트랜잭션에 참여한다.
+     * @return 반영했으면 true
+     */
+    public boolean flushPost(long postId) {
+        Optional<AutosaveStore.Snapshot> snap;
+        try {
+            snap = autosave.read(postId);
+        } catch (RuntimeException e) {
+            // Redis가 멈춰도 삭제는 막지 않는다. 마지막 자동 저장분은 DB에 반영된 것까지만 남는다
+            log.warn("자동 저장분을 읽지 못해 반영 없이 진행합니다 (post {}): {}", postId, e.getMessage());
+            return false;
+        }
+        if (snap.isEmpty()) return false;
+        return flush(postId, snap.get());
+    }
+
     private boolean flush(long postId, AutosaveStore.Snapshot s) {
         Timestamp now = Timestamp.from(Times.now(clock));
         Boolean done = tx.execute(st -> {
