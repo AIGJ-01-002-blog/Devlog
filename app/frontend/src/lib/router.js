@@ -1,6 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // 작은 라우터: History API + 경로 패턴. 서버가 같은 주소를 그리므로(SSR 머리말) 주소 규칙은 서버와 같다.
 import { useEffect, useState } from 'react';
+import { focusMain } from './focusMain';
 const listeners = new Set();
 export function navigate(to, options = {}) {
     if (options.replace)
@@ -52,6 +53,8 @@ export function Link({ to, children, onClick, ...rest }) {
             return;
         navigate(to);
         window.scrollTo(0, 0);
+        // 새 화면이 그려진 뒤 본문으로 초점을 옮긴다 (화면 읽기 프로그램이 새 화면부터 읽게)
+        requestAnimationFrame(() => focusMain());
     };
     return (_jsx("a", { href: to, onClick: handle, ...rest, children: children }));
 }

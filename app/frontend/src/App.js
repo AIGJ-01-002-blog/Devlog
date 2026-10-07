@@ -2,6 +2,7 @@ import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-run
 import { Suspense, useEffect } from 'react';
 import { Flash } from './components/Flash';
 import { Header } from './components/Header';
+import { SkipLink } from './components/SkipLink';
 import { VerifyBanner } from './components/VerifyBanner';
 import { loginPath, useAuth } from './lib/auth';
 import { match, navigate, useLocation } from './lib/router';
@@ -42,7 +43,7 @@ const WithdrawnPage = lazyPage(() => import('./pages/WithdrawnPage'), 'Withdrawn
 const WithdrawPage = lazyPage(() => import('./pages/WithdrawPage'), 'WithdrawPage');
 export function App() {
     const { path } = useLocation();
-    return (_jsxs(_Fragment, { children: [!path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: _jsx(PageErrorBoundary, { path: path, children: _jsx(Suspense, { fallback: _jsx(Loading, {}), children: route(path) }) }) }) })] }));
+    return (_jsxs(_Fragment, { children: [_jsx(SkipLink, {}), !path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: _jsx(PageErrorBoundary, { path: path, children: _jsx(Suspense, { fallback: _jsx(Loading, {}), children: route(path) }) }) }) })] }));
 }
 function route(path) {
     let p;
