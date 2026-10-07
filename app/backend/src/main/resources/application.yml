@@ -1,0 +1,97 @@
+spring:
+  application:
+    name: blog
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/blog}
+    username: ${DB_USERNAME:blog}
+    password: ${DB_PASSWORD:blog}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        default_batch_fetch_size: 100
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 1s
+      connect-timeout: 1s
+  session:
+    timeout: 14d
+    redis:
+      namespace: blog:session
+      repository-type: indexed
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID:local-dev-client}
+            client-secret: ${GITHUB_CLIENT_SECRET:local-dev-secret}
+            scope: read:user,user:email
+  servlet:
+    multipart:
+      enabled: false
+  mvc:
+    problemdetails:
+      enabled: false
+
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: ${COOKIE_SECURE:false}
+        same-site: lax
+        name: BLOGSESSION
+  max-http-request-header-size: 16KB
+  tomcat:
+    max-swallow-size: 2MB
+    max-http-form-post-size: 1MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+blog:
+  site:
+    base-url: ${SITE_BASE_URL:http://localhost:8080}
+    name: devlog
+    default-og-image: /og-default.png
+  web:
+    # 로드 밸런서(신뢰 프록시) 내부 대역. 이 대역에서 온 요청만 X-Forwarded-For를 믿는다 (docs/02 §5 H4)
+    trusted-proxies: ${TRUSTED_PROXIES:}
+  agreements:
+    terms-version: "2026-10-07"
+    terms-effective-date: "2026-10-07"
+    privacy-version: "2026-10-07"
+    privacy-effective-date: "2026-10-07"
+  auth:
+    pending-signup-ttl: 10m
+    login-rate-limit-per-minute: 20
+    availability-rate-limit-per-minute: 30
+  handle:
+    auto-body-max-length: 16
+    reserved: [admin, administrator, root, system, official, support, help, about, terms, privacy,
+               api, login, logout, signup, settings, me, write, search, tag, tags, notifications, manage,
+               static, assets, images, mail, www, blog, user, users, "null", undefined, devlog, teamblog]
+  nickname:
+    change-cooldown: 30d
+    reserved: [관리자, 운영자, 운영진, 운영팀, 고객센터, 공식, 매니저, 스태프,
+               admin, administrator, official, staff, manager, system, root]
+  cursor:
+    secret: ${CURSOR_SECRET:local-cursor-secret-change-me}
+  dev-login:
+    enabled: ${DEV_LOGIN_ENABLED:false}

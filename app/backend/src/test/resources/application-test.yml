@@ -1,0 +1,9 @@
+blog:
+  dev-login:
+    enabled: true
+  cursor:
+    secret: test-cursor-secret
+logging:
+  level:
+    root: WARN
+    com.team.blog: INFO
