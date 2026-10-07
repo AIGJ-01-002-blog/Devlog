@@ -14,9 +14,12 @@ describe('loadOrReload', () => {
   })
 
   it('처음 실패하면 한 번만 새로 고친다', async () => {
-    const s = memory(); const reload = vi.fn()
+    const s = memory()
+    let reloaded!: () => void
+    const done = new Promise<void>((r) => { reloaded = r })
+    const reload = vi.fn(() => reloaded())
     void loadOrReload(() => Promise.reject(new Error('404')), s, reload)
-    await Promise.resolve(); await Promise.resolve()
+    await done
     expect(reload).toHaveBeenCalledTimes(1)
     expect(s.getItem('lazy-page-reloaded')).toBe('1')
   })

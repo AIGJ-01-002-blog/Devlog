@@ -9,16 +9,17 @@ type Storage = Pick<globalThis.Storage, 'getItem' | 'setItem' | 'removeItem'>
  * 한 번만 새로 고쳐 새 버전을 받는다. 새로 고친 뒤에도 실패하면(진짜 네트워크 오류) 오류를 그대로 낸다.
  */
 export async function loadOrReload<T>(load: () => Promise<T>, storage: Storage | null, reload: () => void): Promise<T> {
+  let mod: T
   try {
-    const mod = await load()
-    storage?.removeItem(RELOAD_KEY)
-    return mod
+    mod = await load()
   } catch (e) {
     if (!storage || storage.getItem(RELOAD_KEY)) throw e
     storage.setItem(RELOAD_KEY, '1')
     reload()
     return new Promise<T>(() => {}) // 새로 고치는 동안 대기 화면을 유지한다
   }
+  try { storage?.removeItem(RELOAD_KEY) } catch { /* 표시를 못 지워도 화면은 이미 받았다 */ }
+  return mod
 }
 
 function session(): Storage | null {

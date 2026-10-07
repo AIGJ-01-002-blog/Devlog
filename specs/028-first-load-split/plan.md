@@ -4,6 +4,7 @@
 | 파일 | 역할 |
 |---|---|
 | `lib/lazyPage.ts` | 화면 묶음 받기가 실패하면(새 배포로 예전 파일이 사라짐) 탭당 한 번만 새로 고친다. 또 실패하면 오류를 그대로 낸다 |
+| `components/PageErrorBoundary.tsx` | 새로 고친 뒤에도 못 받으면 그 자리에만 안내와 [다시 시도]. 주소가 바뀌면 걷힌다 |
 | `App.tsx` | 읽기 외 화면 17개를 `lazyPage`(`React.lazy`)로 바꾸고, 라우트 전체를 `Suspense`(대기 화면은 기존 "불러오는 중…")로 감싼다 |
 
 ## 결정
@@ -14,4 +15,4 @@
 
 ## 확인
 - `vite build` 결과 첫 묶음 432KB → 305KB(gzip 128KB → 94KB). 글쓰기 묶음 46KB, 설정 20KB는 따로 받는다.
-- `tsc -b`, `vitest` 264개(`lazyPage.test.ts` 추가)
+- `tsc -b`, `vitest` 266개(`lazyPage.test.ts`, `PageErrorBoundary.test.tsx` 추가)

@@ -19,6 +19,7 @@ import { TagPage } from './pages/TagPage'
 import { TagsPage } from './pages/TagsPage'
 import { withdrawnRedirect } from './lib/withdraw'
 import { lazyPage } from './lib/lazyPage'
+import { PageErrorBoundary } from './components/PageErrorBoundary'
 
 // 글 읽기(홈·글·블로그·태그·검색·피드)는 첫 묶음에 두고, 쓰기·설정·가입·관리자 화면은 처음 열 때 받는다.
 // 독자가 받는 첫 JS를 줄이려는 것이다 (spec 028).
@@ -47,7 +48,7 @@ export function App() {
       {!path.startsWith('/write') && path !== '/account/restore' && <Header />}
       {path !== '/verify-email' && <VerifyBanner />}
       <Flash path={path} />
-      <WithdrawnGate path={path}><AgreementGate path={path}><Suspense fallback={<Loading />}>{route(path)}</Suspense></AgreementGate></WithdrawnGate>
+      <WithdrawnGate path={path}><AgreementGate path={path}><PageErrorBoundary path={path}><Suspense fallback={<Loading />}>{route(path)}</Suspense></PageErrorBoundary></AgreementGate></WithdrawnGate>
     </>
   )
 }
