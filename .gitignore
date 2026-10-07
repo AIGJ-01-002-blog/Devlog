@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 빌드 결과 (Spring Boot: Maven / Gradle)
+target/
+build/
+out/
+.gradle/
+
+# 로그·환경 변수 (비밀값은 커밋하지 않음)
+*.log
+.env
+.env.*
+!.env.example
+
+# cmux/Codex가 저장소 안에 만드는 찌꺼기 폴더 (틸드가 풀리지 않은 것)
+~/
