@@ -712,6 +712,18 @@ a.attachment-name:hover { color: var(--color-brand); }
 .series-edit li { padding: 8px 0; border-bottom: 1px solid var(--color-border); }
 .series-edit .grow { flex: 1; }
 
+/* 이전·다음 글 (040): 넓은 화면은 좌우, 좁은 화면은 위아래. 한쪽만 있어도 제자리(다음 글은 오른쪽) */
+.adjacent-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 32px 0 0; }
+.adjacent-posts .adjacent { display: flex; flex-direction: column; gap: 4px; padding: 14px 18px; border-radius: 8px;
+  background: var(--color-surface-2); color: inherit; text-decoration: none; min-width: 0; }
+.adjacent-posts .adjacent b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adjacent-posts .adjacent:hover b, .adjacent-posts .adjacent:focus-visible b { text-decoration: underline; }
+.adjacent-posts .next { grid-column: 2; text-align: right; }
+@media (max-width: 600px) {
+  .adjacent-posts { grid-template-columns: 1fr; }
+  .adjacent-posts .next { grid-column: 1; }
+}
+
 /* 글 목차 (025): 본문 오른쪽 바깥, 넓은 화면에서만 */
 .post { position: relative; }
 .post-body :is(h2, h3, h4)[id] { scroll-margin-top: 96px; }

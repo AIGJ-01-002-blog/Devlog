@@ -6,6 +6,17 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.18.0] - 2026-10-08
+
+이전·다음 글 (spec 040).
+
+### 추가
+- 글 상세 아래 작성자 소개 밑에 같은 작성자의 이전 글·다음 글 링크. 보는 사람이 그 블로그에서 보는 순서를 따른다(친구는 친구 공개 글 포함)
+- `GET /api/posts/{postId}/adjacent`
+
+### 테스트
+- `AdjacentPostTest` 3개, `AdjacentPosts.test.tsx` 3개
+
 ## [1.17.0] - 2026-10-08
 
 글 공유 버튼 (spec 039).

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team.blog.discovery.application.AdjacentPostQuery;
 import com.team.blog.discovery.application.FeedQuery;
 import com.team.blog.discovery.application.PostDetailQuery;
 import com.team.blog.post.access.Viewer;
@@ -20,10 +21,12 @@ import com.team.blog.tag.application.TagNormalizer;
 public class DiscoveryController {
     private final FeedQuery feed;
     private final PostDetailQuery details;
+    private final AdjacentPostQuery adjacent;
 
-    public DiscoveryController(FeedQuery feed, PostDetailQuery details) {
+    public DiscoveryController(FeedQuery feed, PostDetailQuery details, AdjacentPostQuery adjacent) {
         this.feed = feed;
         this.details = details;
+        this.adjacent = adjacent;
     }
 
     @GetMapping("/api/posts")
@@ -64,6 +67,16 @@ public class DiscoveryController {
         PostDetailQuery.Detail d = details.find(id, Viewer.of(me)).orElseThrow(NotFoundException::new);
         CacheControl cc = d.publiclyVisible() ? CacheControl.noCache().cachePrivate() : CacheControl.noStore().cachePrivate();
         return ResponseEntity.ok().cacheControl(cc).body(d);
+    }
+
+    /** 글 상세 아래의 이전·다음 글 (spec 040). 읽을 수 없는 글이면 404, 친구 목록 기준이면 저장하지 않는다. */
+    @GetMapping("/api/posts/{postId}/adjacent")
+    public ResponseEntity<AdjacentPostQuery.Adjacent> adjacent(@PathVariable String postId,
+                                                               @CurrentMember(required = false) MemberPrincipal me) {
+        AdjacentPostQuery.Adjacent a = adjacent.find(parseId(postId), Viewer.of(me)).orElseThrow(NotFoundException::new);
+        return ResponseEntity.ok()
+                .cacheControl(a.friendsView() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate())
+                .body(a);
     }
 
     static long parseId(String raw) {

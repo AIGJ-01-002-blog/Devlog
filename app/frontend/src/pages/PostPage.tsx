@@ -6,6 +6,7 @@ import { FollowButton } from '../components/FollowButton'
 import { Comments } from '../components/Comments'
 import { AttachmentList } from '../components/AttachmentList'
 import { LikeButton } from '../components/LikeButton'
+import { AdjacentPosts } from '../components/AdjacentPosts'
 import { SeriesBox } from '../components/SeriesBox'
 import { ShareButton } from '../components/ShareButton'
 import { Toc } from '../components/Toc'
@@ -173,6 +174,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           </div>
           {!post.mine && <FollowButton handle={post.author.handle} following={post.author.following} />}
         </footer>
+        {post.status === 'PUBLISHED' && <AdjacentPosts key={`adjacent-${post.id}-${post.visibility}`} postId={post.id} />}
       </article>
       {post.status === 'PUBLISHED' && (
         <Comments key={post.id} postId={post.id} initial={boot?.post.id === post.id ? boot.comments ?? null : null}
