@@ -148,7 +148,7 @@ img { max-width: 100%; }
   background: var(--color-bg); border: 1px solid var(--color-focus);
 }
 .skip-link:focus { top: 8px; }
-main:focus { outline: none; }
+#main-content:focus, main:focus { outline: none; }
 
 /* 레이아웃 */
 .container { width: 100%; max-width: 1728px; margin: 0 auto; padding: 0 16px; }

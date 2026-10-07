@@ -53,7 +53,7 @@ export function Link({ to, children, onClick, ...rest }: { to: string; children:
     if (leaveGuard && !leaveGuard()) return
     navigate(to)
     window.scrollTo(0, 0)
-    // 새 화면이 그려진 뒤 본문으로 초점을 옮긴다 (화면 읽기 프로그램이 새 화면부터 읽게)
+    // 본문 자리는 화면을 불러오는 동안에도 남아 있으므로, 불러오는 중이어도 초점이 새 화면으로 이어진다
     requestAnimationFrame(() => focusMain())
   }
   return (
