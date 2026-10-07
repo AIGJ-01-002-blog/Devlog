@@ -1,5 +1,7 @@
 // 작은 라우터: History API + 경로 패턴. 서버가 같은 주소를 그리므로(SSR 머리말) 주소 규칙은 서버와 같다.
 import { useEffect, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from 'react'
+import { focusMain } from './focusMain'
+import { requestPageAnnouncement } from './announcePage'
 
 type Listener = () => void
 const listeners = new Set<Listener>()
@@ -51,7 +53,10 @@ export function Link({ to, children, onClick, ...rest }: { to: string; children:
     e.preventDefault()
     if (leaveGuard && !leaveGuard()) return
     navigate(to)
+    requestPageAnnouncement()
     window.scrollTo(0, 0)
+    // 본문 자리는 화면을 불러오는 동안에도 남아 있으므로, 불러오는 중이어도 초점이 새 화면으로 이어진다
+    requestAnimationFrame(() => focusMain())
   }
   return (
     <a href={to} onClick={handle} {...rest}>
