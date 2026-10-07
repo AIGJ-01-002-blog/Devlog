@@ -1,6 +1,7 @@
 # 로컬 개발용 의존 서비스. 앱 기본 설정(application.yml)의 주소·계정과 맞춘다.
 #   docker compose -f app/compose.yaml up -d
-#   cd app/backend && DEV_LOGIN_ENABLED=true ./mvnw spring-boot:run
+#   cd app/backend && DEV_LOGIN_ENABLED=true SITE_BASE_URL=http://localhost:5173 ./mvnw spring-boot:run
+#     (SITE_BASE_URL: 인증·재설정 메일 링크가 개발 화면 5173을 가리키게. 보낸 메일은 /api/dev/mails, 백엔드를 다시 켜면 비워짐)
 #   cd app/frontend && npm install && npm run dev   # http://localhost:5173 (API는 8080으로 넘김)
 # 로컬 전용 값이다. 학교 인프라 접속 정보는 여기에 쓰지 않는다.
 services:

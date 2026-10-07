@@ -93,11 +93,32 @@ public class PostCommandService {
     /** [새 글] 또는 충돌 창의 [새 임시글로 따로 저장]. 공개 범위는 본인의 기본 공개 범위로 시작한다 (docs/06 V-4). */
     public Created create(long memberId, String rawTitle, String rawContent) {
         PostInput in = PostInput.forSave(rawTitle, rawContent, rules);
+        if (in.title().isBlank() && in.contentMd().isBlank()) {
+            Optional<Created> reused = reusableEmptyDraft(memberId);
+            if (reused.isPresent()) return reused.get();
+        }
         return tx.execute(s -> {
             Visibility v = members.findById(memberId).map(m -> m.getDefaultVisibility()).orElseThrow(NotFoundException::new);
             Post p = posts.save(Post.newDraft(memberId, v, in.title(), in.contentMd(), Times.now(clock)));
             return new Created(p.getId(), p.getEditVersion(), p.getVisibility());
         });
+    }
+
+    /**
+     * [새 글]을 열 때마다 빈 임시글이 쌓이지 않게, 아직 아무것도 쓰지 않은 임시글이 있으면 그 글을 돌려준다.
+     * 자동 저장 버퍼에 쓰던 내용이 있으면 빈 글이 아니므로 건너뛴다. Redis를 확인할 수 없으면 새로 만든다.
+     */
+    private Optional<Created> reusableEmptyDraft(long memberId) {
+        for (long id : posts.findEmptyDraftIds(memberId)) {
+            try {
+                if (autosave.exists(id)) continue;
+            } catch (RuntimeException e) {
+                return Optional.empty();
+            }
+            Optional<Post> p = posts.findOwn(id, memberId);
+            if (p.isPresent()) return Optional.of(new Created(id, p.get().getEditVersion(), p.get().getVisibility()));
+        }
+        return Optional.empty();
     }
 
     /**

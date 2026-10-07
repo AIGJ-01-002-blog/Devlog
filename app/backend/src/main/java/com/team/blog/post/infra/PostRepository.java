@@ -19,4 +19,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("select p from Post p where p.id = :id and p.authorId = :authorId and p.deletedAt is null")
     Optional<Post> findOwn(long id, long authorId);
+
+    /** 아직 아무것도 쓰지 않은 임시글 (최근 것부터). [새 글]을 다시 눌렀을 때 새로 만들지 않고 이어 쓴다. */
+    @Query(value = """
+            SELECT id FROM post
+            WHERE author_id = :authorId AND status = 'DRAFT' AND deleted_at IS NULL
+              AND btrim(title) = '' AND btrim(content_md) = ''
+            ORDER BY id DESC LIMIT 5""", nativeQuery = true)
+    java.util.List<Long> findEmptyDraftIds(long authorId);
 }
