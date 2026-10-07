@@ -29,9 +29,13 @@ import { SignupSocialPage } from './pages/SignupSocialPage';
 import { TermsPage } from './pages/TermsPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { NewPostPage, WritePage } from './pages/WritePage';
+import { RestorePage } from './pages/RestorePage';
+import { WithdrawnPage } from './pages/WithdrawnPage';
+import { WithdrawPage } from './pages/WithdrawPage';
+import { withdrawnRedirect } from './lib/withdraw';
 export function App() {
     const { path } = useLocation();
-    return (_jsxs(_Fragment, { children: [!path.startsWith('/write') && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx(AgreementGate, { path: path, children: route(path) })] }));
+    return (_jsxs(_Fragment, { children: [!path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: route(path) }) })] }));
 }
 function route(path) {
     let p;
@@ -81,6 +85,12 @@ function route(path) {
         return _jsx(RequireLogin, { children: _jsx(NotificationsPage, {}) });
     if (path === '/settings')
         return _jsx(RequireLogin, { children: _jsx(SettingsPage, {}) });
+    if (path === '/settings/withdraw')
+        return _jsx(RequireLogin, { children: _jsx(WithdrawPage, {}) });
+    if (path === '/withdrawn')
+        return _jsx(WithdrawnPage, {});
+    if (path === '/account/restore')
+        return _jsx(RequireLogin, { children: _jsx(RestorePage, {}) });
     if (path === '/admin/reports')
         return _jsx(RequireAdmin, { children: _jsx(AdminReportsPage, {}) });
     if ((p = match('/admin/reports/:id', path)))
@@ -108,6 +118,18 @@ function RequireAdmin({ children }) {
         return _jsx(RequireLogin, { children: children });
     if (me.member?.role !== 'ADMIN')
         return _jsx(NotFoundPage, {});
+    return _jsx(_Fragment, { children: children });
+}
+/** 탈퇴 유예 회원은 복구 화면만 쓴다 (020 FR-016, 서버도 403 ACCOUNT_WITHDRAWN으로 막는다). */
+function WithdrawnGate({ path, children }) {
+    const { me, loading } = useAuth();
+    const to = loading ? null : withdrawnRedirect(me?.authenticated ? me.member?.status : undefined, path);
+    useEffect(() => {
+        if (to)
+            navigate(to, { replace: true });
+    }, [to]);
+    if (to)
+        return null;
     return _jsx(_Fragment, { children: children });
 }
 /** 재동의가 필요하면 동의 화면만 쓸 수 있다 (서버도 403 AGREEMENT_REQUIRED로 막는다). */

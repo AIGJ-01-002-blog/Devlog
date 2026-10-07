@@ -48,6 +48,15 @@ public class RateLimiter {
         }
     }
 
+    /** 센 수를 지운다 (탈퇴 정리 020 FR-025). Redis 장애면 창이 끝날 때 저절로 사라진다. */
+    public void forget(String key) {
+        try {
+            redis.delete("rl:" + key);
+        } catch (RuntimeException e) {
+            // 키는 창 길이만큼만 산다
+        }
+    }
+
     public void check(String key, int limit, Duration window) {
         if (!tryAcquire(key, limit, window)) throw new TooManyRequestsException(window.toSeconds());
     }

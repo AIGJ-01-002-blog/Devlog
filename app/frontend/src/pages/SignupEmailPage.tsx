@@ -31,6 +31,7 @@ export function SignupEmailPage() {
   const [nickCheck, setNickCheck] = useState<Check | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [emailTaken, setEmailTaken] = useState(false)
+  const [withdrawnAccount, setWithdrawnAccount] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const timers = useRef<{ s?: number; h?: number; n?: number }>({})
 
@@ -81,6 +82,7 @@ export function SignupEmailPage() {
     setSubmitting(true)
     setErrors({})
     setEmailTaken(false)
+    setWithdrawnAccount(false)
     try {
       await api('/api/auth/redirect', { method: 'POST', body: { redirect } })
       const r = await api<{ handle: string; redirect: string }>('/api/auth/signup/email', {
@@ -92,6 +94,8 @@ export function SignupEmailPage() {
     } catch (err) {
       if (err instanceof ApiError && err.code === 'EMAIL_TAKEN') {
         setEmailTaken(true)
+      } else if (err instanceof ApiError && err.code === 'WITHDRAWN_ACCOUNT') {
+        setWithdrawnAccount(true)
       } else if (err instanceof ApiError && err.code === 'HANDLE_TAKEN') {
         const s = (err.details as { suggestion?: string } | null)?.suggestion
         setErrors({ handleBody: `이미 쓰는 주소예요.${s ? ` "${s}"는 어때요?` : ''}` })
@@ -114,8 +118,16 @@ export function SignupEmailPage() {
         <label className="field">
           <span>이메일</span>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254}
-                 autoComplete="email" required aria-invalid={!!errors.email || emailTaken} />
+                 autoComplete="email" required aria-invalid={!!errors.email || emailTaken || withdrawnAccount} />
           {errors.email && <small className="error">{errors.email}</small>}
+          {withdrawnAccount && (
+            <div className="banner banner-warn" role="alert">
+              탈퇴 신청한 계정이 있어요. 로그인하면 복구할 수 있어요.
+              <div className="banner-actions">
+                <Link to="/login" className="btn btn-outline">로그인</Link>
+              </div>
+            </div>
+          )}
           {emailTaken && (
             <div className="banner banner-warn" role="alert">
               이미 가입된 이메일이에요.

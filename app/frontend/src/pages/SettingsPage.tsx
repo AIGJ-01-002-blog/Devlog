@@ -63,6 +63,9 @@ export function SettingsPage() {
       <NotificationsSection />
       <AccountSection settings={settings} onChange={setSettings} />
       {settings.hasPassword && <PasswordSection />}
+      <section className="settings-section withdraw-link">
+        <Link to="/settings/withdraw" className="btn btn-text danger">회원 탈퇴</Link>
+      </section>
     </main>
   )
 }

@@ -104,6 +104,14 @@ public class PostTrashService {
         return Boolean.TRUE.equals(done);
     }
 
+    /** 탈퇴 30일 뒤 정리(020 FR-025 (10)): 휴지통을 포함한 그 회원의 글 전부. 정리 배치의 트랜잭션 안에서 부른다. */
+    void purgeAllOf(long authorId) {
+        Instant now = Times.now(clock);
+        for (long postId : jdbc.queryForList("SELECT id FROM post WHERE author_id = ? ORDER BY id FOR UPDATE", Long.class, authorId)) {
+            purgeLocked(postId, authorId, Reason.WITHDRAW, now);
+        }
+    }
+
     /** 탈퇴 정리(020)도 같은 절차를 쓴다. 행을 잠근 트랜잭션 안에서 부른다. */
     void purgeLocked(long postId, long authorId, Reason reason, Instant now) {
         purgeExtensions.forEach(e -> e.beforePurge(postId));

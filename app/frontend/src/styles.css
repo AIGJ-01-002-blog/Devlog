@@ -106,6 +106,8 @@ img { max-width: 100%; }
 .btn-primary { background: var(--primary); color: #fff; }
 .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
 :root[data-theme="dark"] .btn-primary { color: #121212; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover:not(:disabled) { filter: brightness(0.92); }
 .btn-dark { background: var(--text); color: var(--bg); }
 .btn-outline { background: transparent; border-color: var(--text); }
 .btn-outline:hover:not(:disabled) { background: var(--text); color: var(--bg); }
@@ -564,3 +566,13 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .report-lines, .suspension-history { padding-left: 20px; }
 .admin .check { display: block; margin: 12px 0; }
 .suspend-form .btn, .admin-section > .btn { margin-top: 8px; }
+
+/* 회원 탈퇴·복구 (020) */
+.withdraw-link { border-bottom: 0; }
+.withdraw-link .btn { padding: 0; }
+.withdraw-facts { margin: 0 0 16px; padding-left: 20px; line-height: 1.7; }
+.withdraw-page .check { display: block; margin: 12px 0 0; }
+.withdraw-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 24px 0; }
+.restore-actions { justify-content: center; margin-top: 24px; }
+.auth-page.restore-page { max-width: 480px; }
+.nowrap { white-space: nowrap; }

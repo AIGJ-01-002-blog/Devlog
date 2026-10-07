@@ -71,6 +71,28 @@ public class AccountMails {
                 """.formatted(base));
     }
 
+    /** 탈퇴 접수 (020 FR-015). 본인이 하지 않은 탈퇴를 알아챌 수 있게 복구 방법을 함께 적는다. */
+    public Mail withdrawn(String to, String handle, String restoreBy) {
+        return new Mail(to, "[" + site + "] 탈퇴 신청이 접수됐어요", """
+                @%s 계정의 탈퇴 신청이 접수됐어요. 모든 기기에서 로그아웃됐고, 블로그와 글은 다른 사람에게 보이지 않아요.
+
+                %s까지 다시 로그인하면 [복구하기]로 모두 되돌릴 수 있어요. 그 뒤에는 글·사진이 완전히 지워져요.
+                %s/login
+
+                본인이 신청하지 않았다면 바로 로그인해 복구하고 비밀번호를 바꿔 주세요.
+                """.formatted(handle, restoreBy, base));
+    }
+
+    /** 복구 완료 (020 FR-019). */
+    public Mail restored(String to, String handle) {
+        return new Mail(to, "[" + site + "] 계정이 복구됐어요", """
+                @%s 계정이 복구됐어요. 블로그와 글이 다시 보여요.
+
+                본인이 복구하지 않았다면 바로 비밀번호를 바꿔 주세요.
+                %s/settings
+                """.formatted(handle, base));
+    }
+
     private static String names(List<AuthProvider> providers) {
         return providers.stream().distinct().map(p -> switch (p) {
             case GOOGLE -> "Google";

@@ -22,6 +22,7 @@ import com.team.blog.account.application.AgreementService;
 import com.team.blog.account.application.MemberSettingsService;
 import com.team.blog.account.application.NicknameService;
 import com.team.blog.account.application.ProfileService;
+import com.team.blog.account.application.WithdrawalService;
 import com.team.blog.account.domain.AgreementType;
 import com.team.blog.account.domain.Visibility;
 import com.team.blog.media.ProfileImages;
@@ -39,14 +40,42 @@ public class MeController {
     private final ProfileImages profileImages;
     private final MemberSettingsService settings;
     private final AgreementService agreements;
+    private final WithdrawalService withdrawals;
 
     public MeController(NicknameService nicknameService, ProfileService profileService, ProfileImages profileImages,
-                        MemberSettingsService settings, AgreementService agreements) {
+                        MemberSettingsService settings, AgreementService agreements, WithdrawalService withdrawals) {
         this.nicknameService = nicknameService;
         this.profileService = profileService;
         this.profileImages = profileImages;
         this.settings = settings;
         this.agreements = agreements;
+        this.withdrawals = withdrawals;
+    }
+
+    /** 탈퇴 안내 숫자(020 FR-003)와, 탈퇴 신청한 계정이면 복구 기한(FR-016). 유예 중에도 열린다. */
+    @GetMapping("/withdrawal")
+    public WithdrawalService.Summary withdrawal(@CurrentMember MemberPrincipal me) {
+        return withdrawals.summary(me.id());
+    }
+
+    public record WithdrawResult(java.time.Instant restoreBy) {}
+
+    /** 탈퇴 신청 (020 FR-002·FR-009). 지금 기기를 포함해 모든 기기에서 로그아웃된다. */
+    @PostMapping("/withdrawal")
+    public WithdrawResult withdraw(@CurrentMember MemberPrincipal me, @RequestBody WithdrawalService.Request body,
+                                   HttpServletRequest request) {
+        java.time.Instant restoreBy = withdrawals.withdraw(me.id(), body);
+        jakarta.servlet.http.HttpSession session = request.getSession(false);
+        if (session != null) session.invalidate();
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        return new WithdrawResult(restoreBy);
+    }
+
+    /** [복구하기] (020 FR-017). */
+    @PostMapping("/restore")
+    public ResponseEntity<Void> restore(@CurrentMember MemberPrincipal me) {
+        withdrawals.restore(me.id());
+        return ResponseEntity.noContent().build();
     }
 
     public record NicknameRequest(String nickname) {}
