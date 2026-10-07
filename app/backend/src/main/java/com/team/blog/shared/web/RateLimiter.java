@@ -38,6 +38,16 @@ public class RateLimiter {
         }
     }
 
+    /** 지금까지 센 수. 모르면(Redis 장애) 0. */
+    public long count(String key) {
+        try {
+            String v = redis.opsForValue().get("rl:" + key);
+            return v == null ? 0 : Long.parseLong(v);
+        } catch (RuntimeException e) {
+            return 0;
+        }
+    }
+
     public void check(String key, int limit, Duration window) {
         if (!tryAcquire(key, limit, window)) throw new TooManyRequestsException(window.toSeconds());
     }

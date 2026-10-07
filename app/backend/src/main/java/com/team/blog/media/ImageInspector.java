@@ -93,6 +93,48 @@ public final class ImageInspector {
         }
     }
 
+    /**
+     * GIF 프레임 수 (009 FR-029). 그림을 풀지 않고 블록 머리만 따라가며 이미지 서술자를 센다.
+     * @return 프레임 수, 형식이 깨졌으면 -1. limit을 넘으면 그 즉시 limit + 1을 돌려준다
+     */
+    public static int gifFrames(byte[] b, int limit) {
+        try {
+            int pos = 13;
+            int flags = b[10] & 0xFF;
+            if ((flags & 0x80) != 0) pos += 3 * (1 << ((flags & 0x07) + 1));
+            int frames = 0;
+            while (pos < b.length) {
+                int block = b[pos] & 0xFF;
+                if (block == 0x3B) return frames; // 끝
+                if (block == 0x21) { // 확장 블록
+                    pos = skipSubBlocks(b, pos + 2);
+                } else if (block == 0x2C) { // 이미지 서술자 = 한 장면
+                    if (++frames > limit) return frames;
+                    int f = b[pos + 9] & 0xFF;
+                    pos += 10;
+                    if ((f & 0x80) != 0) pos += 3 * (1 << ((f & 0x07) + 1));
+                    pos = skipSubBlocks(b, pos + 1); // LZW 최소 코드 크기 다음부터 데이터
+                } else {
+                    return -1;
+                }
+                if (pos < 0) return -1;
+            }
+            return frames > 0 ? frames : -1; // 끝 표시가 없어도 읽은 장면까지는 인정한다
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return -1;
+        }
+    }
+
+    private static int skipSubBlocks(byte[] b, int pos) {
+        while (true) {
+            int len = b[pos] & 0xFF;
+            pos += 1;
+            if (len == 0) return pos;
+            pos += len;
+            if (pos > b.length) return -1;
+        }
+    }
+
     private static Optional<ImageInfo> valid(String type, String ext, int w, int h, boolean meta) {
         if (w <= 0 || h <= 0) return Optional.empty();
         return Optional.of(new ImageInfo(type, ext, w, h, meta));

@@ -25,6 +25,31 @@ public final class TestImages {
         return encode("gif", w, h);
     }
 
+    /** 여러 장면 GIF (ImageIO 연속 쓰기). */
+    public static byte[] animatedGif(int w, int h, int frames) {
+        try {
+            var writer = ImageIO.getImageWritersByFormatName("gif").next();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try (var ios = ImageIO.createImageOutputStream(out)) {
+                writer.setOutput(ios);
+                writer.prepareWriteSequence(null);
+                for (int i = 0; i < frames; i++) {
+                    BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+                    var g = img.createGraphics();
+                    g.setColor(new Color((i * 37) % 256, 80, 160));
+                    g.fillRect(0, 0, w, h);
+                    g.dispose();
+                    writer.writeToSequence(new javax.imageio.IIOImage(img, null, null), null);
+                }
+                writer.endWriteSequence();
+            }
+            writer.dispose();
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     /** SOI 바로 뒤에 EXIF(APP1) 구간을 끼워 넣은 JPEG: 촬영 위치 같은 사진 정보가 남은 파일. */
     public static byte[] jpegWithExif(int w, int h) {
         byte[] jpeg = jpeg(w, h);

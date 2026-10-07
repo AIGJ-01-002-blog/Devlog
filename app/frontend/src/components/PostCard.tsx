@@ -8,7 +8,7 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
   return (
     <article className="card">
       <Link to={card.url} className="card-thumb" tabIndex={-1} aria-hidden="true">
-        {card.thumbnailUrl ? <img src={card.thumbnailUrl} alt="" loading="lazy" /> : <span className="card-thumb-empty" />}
+        {card.thumbnailUrl ? <img src={card.thumbnailUrl} alt={card.title} loading="lazy" /> : <span className="card-thumb-empty" />}
       </Link>
       <div className="card-body">
         <h2 className="card-title"><Link to={card.url}>{card.title}</Link></h2>

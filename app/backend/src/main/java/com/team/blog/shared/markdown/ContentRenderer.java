@@ -3,7 +3,7 @@ package com.team.blog.shared.markdown;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,7 +58,7 @@ import com.team.blog.shared.config.BlogProperties;
 @Component
 public class ContentRenderer {
     /** 렌더링·정화 규칙을 바꾸면 올린다. 배치가 render_version이 낮은 글을 다시 렌더링한다 (docs/12 §7-7). */
-    public static final int RENDER_VERSION = 1;
+    public static final int RENDER_VERSION = 2; // 2: GIF는 첫 장면 + 원본 링크 (009)
 
     private static final List<Extension> EXT = List.of(
             TablesExtension.create(), StrikethroughExtension.create(), TaskListItemsExtension.create(),
@@ -67,6 +67,7 @@ public class ContentRenderer {
     private static final Pattern HEADING_ID = Pattern.compile("h-[\\p{L}\\p{N}_-]{1,100}");
     private static final Pattern LANG = Pattern.compile("language-[a-z0-9+#-]{1,20}");
     private static final Pattern SPACES = Pattern.compile("\\s+");
+    static final String GIF_LABEL = "움직이는 이미지 재생";
 
     private final ImageUrls imageUrls;
     private final ImageOwnership ownership;
@@ -166,8 +167,8 @@ public class ContentRenderer {
                 visitChildren(img);
             }
         });
-        Set<String> owned = keysInOrder.isEmpty() ? Set.of() : ownership.ownedBy(authorId, new LinkedHashSet<>(keysInOrder));
-        List<String> ownedInOrder = new ArrayList<>(new LinkedHashSet<>(keysInOrder.stream().filter(owned::contains).toList()));
+        Map<String, String> owned = keysInOrder.isEmpty() ? Map.of() : ownership.ownedBy(authorId, new LinkedHashSet<>(keysInOrder));
+        List<String> ownedInOrder = new ArrayList<>(new LinkedHashSet<>(keysInOrder.stream().filter(owned::containsKey).toList()));
 
         transform(doc, owned);
         String excerpt = excerptOf(doc);
@@ -175,7 +176,7 @@ public class ContentRenderer {
         return new RenderedContent(html, excerpt, List.copyOf(ownedInOrder), RENDER_VERSION);
     }
 
-    private void transform(Node doc, Set<String> owned) {
+    private void transform(Node doc, Map<String, String> owned) {
         doc.accept(new AbstractVisitor() {
             int depth;
 
@@ -198,8 +199,22 @@ public class ContentRenderer {
             @Override
             public void visit(Image img) {
                 String key = imageUrls.keyOf(img.getDestination());
-                if (key != null && owned.contains(key)) {
-                    img.setDestination(imageUrls.urlOf(key)); // 옛 주소로 쓴 사진도 지금 공개 주소로
+                if (key != null && owned.containsKey(key)) {
+                    String original = imageUrls.urlOf(key); // 옛 주소로 쓴 사진도 지금 공개 주소로
+                    String thumb = owned.get(key);
+                    if (key.endsWith(".gif") && thumb != null && !(img.getParent() instanceof Link)) {
+                        // GIF: 처음엔 첫 장면 + 원본 링크. 화면 스크립트가 누르면 재생으로 바꾸고, 스크립트가 없으면 새 탭에서 원본 (FR-030)
+                        String alt = textOf(img);
+                        String label = alt.isBlank() ? GIF_LABEL : alt;
+                        Link link = new Link(original, label);
+                        Image still = new Image(imageUrls.urlOf(thumb), null);
+                        still.appendChild(new Text(label));
+                        link.appendChild(still);
+                        img.insertAfter(link);
+                        img.unlink();
+                        return;
+                    }
+                    img.setDestination(original);
                     return;
                 }
                 Link link = new Link(img.getDestination(), img.getTitle());

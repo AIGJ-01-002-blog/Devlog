@@ -6,6 +6,8 @@ import { useAuth } from '../lib/auth'
 import { clock } from '../lib/format'
 import { highlightWithin } from '../lib/highlight'
 import { localDrafts, type LocalBackup, type LocalDraft } from '../lib/localDrafts'
+import { ALT_SOFT_LIMIT, bodyImages, formatBytes, forPreview, pendingIds, restorePendingInPreview, setAlt } from '../lib/postImages'
+import { useImageUploads } from '../lib/useImageUploads'
 import { decideRestore } from '../lib/restore'
 import { navigate, setLeaveGuard } from '../lib/router'
 import type { EditorView, ServerContent, Visibility } from '../lib/types'
@@ -65,8 +67,42 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
   const [showPublish, setShowPublish] = useState(false)
   const [visibility, setVisibility] = useState<Visibility>(view.visibility)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showAlts, setShowAlts] = useState(false)
+  const [dragging, setDragging] = useState(false)
   const saver = useRef<Autosaver | null>(null)
   const previewRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLTextAreaElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const contentRef = useRef(content)
+  contentRef.current = content
+  const getContent = useCallback(() => contentRef.current, [])
+  const images = useImageUploads(memberId, view.id, getContent, (update) => setContent((c) => {
+    const next = update(c)
+    contentRef.current = next
+    return next
+  }))
+
+  /** 커서 자리에 원문을 넣는다(사진 업로드 대기 표시). 선택한 글자가 있으면 바꾼다. */
+  const insertAtCursor = useCallback((text: string) => {
+    const el = bodyRef.current
+    setContent((c) => {
+      const start = el ? el.selectionStart : c.length
+      const end = el ? el.selectionEnd : c.length
+      const before = c.slice(0, start)
+      const lead = before && !before.endsWith('\n') ? '\n' : ''
+      const next = before + lead + text + c.slice(end)
+      contentRef.current = next
+      const caret = start + lead.length + text.length
+      requestAnimationFrame(() => { if (el) { el.selectionStart = el.selectionEnd = caret } })
+      return next
+    })
+  }, [])
+
+  const addFiles = (list: FileList | File[] | null | undefined) => {
+    const files = [...(list ?? [])].filter((f) => f.type.startsWith('image/'))
+    if (files.length) void images.add(files, insertAtCursor)
+    return files.length > 0
+  }
 
   if (saver.current == null) {
     saver.current = new Autosaver({ title: view.title, contentMd: view.contentMd }, view.version, {
@@ -85,13 +121,15 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     const s = saver.current!
     const ok = await localDrafts.put({
       memberId, postId: view.id, title: latest.current.title, contentMd: latest.current.content,
-      baseVersion: s.version, unsynced: s.hasUnsaved || s.isConflict, pendingImages: [], savedAt: Date.now(),
+      baseVersion: s.version, unsynced: s.hasUnsaved || s.isConflict, pendingImages: pendingIds(latest.current.content),
+      savedAt: Date.now(),
     })
     setLocalStored(ok)
   }, [memberId, view.id])
 
   useEffect(() => {
     saver.current?.change({ title, contentMd: content })
+    images.refreshCount()
     setLocalStored(false)
     const t = setTimeout(() => void storeLocal(), LOCAL_IDLE_MS)
     return () => clearTimeout(t)
@@ -137,8 +175,9 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
   useEffect(() => {
     const t = setTimeout(() => {
       if (!content.trim()) return setPreview('')
-      api<{ html: string }>('/api/markdown/preview', { method: 'POST', body: { contentMd: content } })
-        .then((r) => { setPreview(r.html); setPreviewError(null) })
+      // 업로드 대기 사진은 이 기기 사진으로 보여 준다 (FR-016)
+      api<{ html: string }>('/api/markdown/preview', { method: 'POST', body: { contentMd: forPreview(content) } })
+        .then((r) => { setPreview(restorePendingInPreview(r.html, images.localUrls.current)); setPreviewError(null) })
         .catch((e) => setPreviewError(e instanceof ApiError ? e.message : '미리보기를 만들지 못했어요.'))
     }, 500)
     return () => clearTimeout(t)
@@ -230,6 +269,10 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
             <button type="button" role="tab" aria-selected={tab === 'write'} onClick={() => setTab('write')}>쓰기</button>
             <button type="button" role="tab" aria-selected={tab === 'preview'} onClick={() => setTab('preview')}>미리보기</button>
           </div>
+          <button type="button" className="btn btn-text" onClick={() => fileRef.current?.click()}
+                  title="jpg·png·gif·webp, 10MB까지. 움직이는 webp·png는 첫 장면만 남아요.">🖼 사진</button>
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden
+                 onChange={(e) => { addFiles(e.target.files); e.target.value = '' }} />
           <button type="button" className="btn btn-outline" onClick={() => saveNow()}>저장</button>
           {backups.length > 0 && (
             <button type="button" className="btn btn-text" onClick={() => setShowBackups(true)}>이 기기 백업 {backups.length}</button>
@@ -251,6 +294,23 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           <button type="button" className="btn btn-text" aria-label="닫기" onClick={() => setNotice(null)}>✕</button>
         </div>
       )}
+      {images.waiting > 0 && (
+        <div className="banner banner-warn" role="status">
+          {images.uploading > 0 ? `사진 ${images.waiting}장을 올리는 중…` : `⚠ 업로드 대기 사진 ${images.waiting}장 — 연결되면 자동으로 올려요. 다 올라가야 발행할 수 있어요.`}
+          {images.uploading === 0 && <button type="button" className="btn btn-text" onClick={() => void images.retryAll()}>다시 시도</button>}
+        </div>
+      )}
+      {images.error && (
+        <div className="banner banner-warn" role="alert">
+          {images.error}
+          <button type="button" className="btn btn-text" aria-label="닫기" onClick={images.clearError}>✕</button>
+        </div>
+      )}
+      {images.usage && images.usage.usedBytes > images.usage.quotaBytes * 0.9 && (
+        <p className="muted small editor-note">
+          사진 저장 공간: 남은 공간 약 {formatBytes(Math.max(0, images.usage.quotaBytes - images.usage.usedBytes))}
+        </p>
+      )}
       {view.status === 'PUBLISHED' && (
         <p className="muted small editor-note">발행한 글을 고치는 중이에요. 다시 발행할 때까지 독자에게는 이전 발행본이 보여요.</p>
       )}
@@ -259,9 +319,20 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           <input className="editor-title" placeholder="제목을 입력하세요" value={title} maxLength={100}
                  onChange={(e) => setTitle(e.target.value)} aria-label="제목" aria-invalid={!!errors.title} />
           {errors.title && <small className="error">{errors.title}</small>}
-          <textarea className="editor-body" placeholder="Markdown으로 내용을 쓰세요…" value={content}
+          <textarea ref={bodyRef} className={`editor-body${dragging ? ' dragging' : ''}`}
+                    placeholder="Markdown으로 내용을 쓰세요… 사진은 붙여 넣거나 끌어 놓으세요" value={content}
                     onChange={(e) => setContent(e.target.value)} aria-label="본문" aria-invalid={!!errors.contentMd}
-                    spellCheck={false} />
+                    spellCheck={false}
+                    onPaste={(e) => { if (addFiles(e.clipboardData?.files)) e.preventDefault() }}
+                    onDragOver={(e) => { if (e.dataTransfer?.types.includes('Files')) { e.preventDefault(); setDragging(true) } }}
+                    onDragLeave={() => setDragging(false)}
+                    onDrop={(e) => {
+                      setDragging(false)
+                      if (e.dataTransfer?.files.length) {
+                        e.preventDefault()
+                        addFiles(e.dataTransfer.files)
+                      }
+                    }} />
           {errors.contentMd && <small className="error">{errors.contentMd}</small>}
         </section>
         <section className="editor-preview" aria-label="미리보기">
@@ -281,6 +352,9 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
               <label><input type="radio" name="visibility" checked={visibility === 'PRIVATE'} onChange={() => setVisibility('PRIVATE')} /> 🔒 비공개 (나만 보기)</label>
             </fieldset>
             {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
+            <AltTexts content={content} open={showAlts} onOpen={() => setShowAlts(true)}
+                      localUrls={images.localUrls.current} onChange={(i, alt) => setContent((c) => setAlt(c, i, alt))} />
+            {pendingIds(content).length > 0 && <p className="error small">업로드가 끝나지 않은 사진이 있어요. 다 올라간 뒤 발행할 수 있어요.</p>}
             <footer className="dialog-footer">
               <button type="button" className="btn btn-text" onClick={() => setShowPublish(false)} disabled={publishing}>취소</button>
               <button type="button" className="btn btn-primary" onClick={publish} disabled={publishing}>
@@ -356,6 +430,40 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           }} />
       )}
     </main>
+  )
+}
+
+/** 발행 설정 창의 대체글 넣기 (009 US3). 없어도 발행은 막지 않는다. */
+function AltTexts({ content, open, onOpen, localUrls, onChange }: {
+  content: string; open: boolean; onOpen: () => void; localUrls: Map<string, string>; onChange: (index: number, alt: string) => void
+}) {
+  const list = bodyImages(content)
+  const missing = list.filter((i) => !i.alt.trim()).length
+  if (list.length === 0) return null
+  if (!open) {
+    return missing > 0 ? (
+      <p className="small">
+        대체글이 없는 사진이 {missing}장 있어요 <button type="button" className="btn btn-text" onClick={onOpen}>대체글 넣기</button>
+      </p>
+    ) : null
+  }
+  return (
+    <fieldset className="field alt-texts">
+      <legend>사진 대체글</legend>
+      <p className="muted small">사진을 볼 수 없는 분께 읽어 줄 설명이에요.</p>
+      {list.map((img) => {
+        const src = img.src.startsWith('local:') ? localUrls.get(img.src.slice(6)) : img.src
+        return (
+          <label key={img.index} className="alt-row">
+            {src ? <img src={src} alt="" className="alt-thumb" /> : <span className="alt-thumb" />}
+            <span className="alt-input">
+              <input value={img.alt} placeholder="예: 로그인 화면의 오류 메시지" onChange={(e) => onChange(img.index, e.target.value)} />
+              {img.alt.length > ALT_SOFT_LIMIT && <small className="muted">짧게 쓰면 더 듣기 편해요 ({img.alt.length}자)</small>}
+            </span>
+          </label>
+        )
+      })}
+    </fieldset>
   )
 }
 

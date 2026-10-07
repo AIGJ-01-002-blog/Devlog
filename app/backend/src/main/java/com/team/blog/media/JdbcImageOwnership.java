@@ -1,8 +1,8 @@
 package com.team.blog.media;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -19,10 +19,16 @@ class JdbcImageOwnership implements ImageOwnership {
     }
 
     @Override
-    public Set<String> ownedBy(long uploaderId, Collection<String> keys) {
-        if (keys.isEmpty()) return Set.of();
-        return new HashSet<>(jdbc.queryForList(
-                "SELECT storage_key FROM resource WHERE uploader_id = ? AND kind = 'IMAGE' AND storage_key = ANY (?)",
-                String.class, uploaderId, keys.toArray(String[]::new)));
+    public Map<String, String> ownedBy(long uploaderId, Collection<String> keys) {
+        Map<String, String> owned = new HashMap<>();
+        if (keys.isEmpty()) return owned;
+        jdbc.query("""
+                SELECT r.storage_key, ri.thumb_storage_key FROM resource r
+                LEFT JOIN resource_image ri ON ri.resource_id = r.id
+                WHERE r.uploader_id = ? AND r.kind = 'IMAGE' AND r.storage_key = ANY (?)
+                """, rs -> {
+            owned.put(rs.getString(1), rs.getString(2));
+        }, uploaderId, keys.toArray(String[]::new));
+        return owned;
     }
 }
