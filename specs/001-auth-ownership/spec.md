@@ -9,7 +9,7 @@
 **Input**: User description: "개발자가 GitHub 계정으로 가입·로그인해 고유한 블로그 주소(/@handle)를 갖고, 자기 글만 고칠 수
 있으며, 내 글 관리에서 자기 글을 모아 보는 기능. 상세 규칙은 docs/07-auth.md, docs/08-blog-address.md,
 docs/09-nickname.md, docs/42-permission-matrix.md, docs/41-manage-posts.md를 따른다. MVP 첫 릴리스는 GitHub
-로그인만 제공하고 이메일·Google은 같은 구조로 다음에 붙인다(추천안, 확정 대기)."
+로그인만 제공하고 이메일·Google은 같은 구조로 다음에 붙인다(2026-10-07 확정)."
 
 **관련 기능 ID**: C-AUTH-1(GitHub 범위), C-AUTH-2(닉네임 변경만), C-OWN-1, C-MANAGE-1
 
@@ -218,9 +218,9 @@ docs/09-nickname.md, docs/42-permission-matrix.md, docs/41-manage-posts.md를 �
 
 ## Assumptions
 
-- **A-1 (확정 대기)**: MVP 첫 릴리스의 로그인 수단은 GitHub 단독이다. 팀 공통 기준(이메일+Google+GitHub)으로 정해지면
-  이메일 가입·인증·비밀번호 규칙과 Google 로그인을 별도 사용자 이야기로 추가한다(`docs/07` §3·§4·§5).
-- **A-2 (확정 대기)**: 친구 맺기·최근 활동 표시(C-FRIEND-1, C-ACT-1)는 MVP 직후로 미루며 이번 범위가 아니다.
+- **A-1 (2026-10-07 확정)**: MVP 첫 릴리스의 로그인 수단은 GitHub 단독이다. 이메일 가입·인증·비밀번호 규칙과 Google
+  로그인(`docs/07` §3·§4·§5)은 MVP 직후 같은 구조로 별도 spec에서 추가한다.
+- **A-2 (2026-10-07 확정)**: 친구 맺기·최근 활동 표시(C-FRIEND-1, C-ACT-1)는 MVP 직후로 미루며 이번 범위가 아니다.
 - **A-3**: GitHub 계정에 인증된 대표 이메일이 없으면 가입을 막고 안내한다. docs/07 §5는 이 경우 이메일 입력·인증을
   제안하지만, 이메일 인증 흐름은 A-1에 따라 이번 범위 밖이므로 그것이 들어올 때 함께 다룬다.
 - **A-4**: 소셜 프로필 사진 복사, 프로필 소개·사진 수정, 비밀번호 관련 기능, 회원 탈퇴, 관리자의 정지 처리, 네이버
