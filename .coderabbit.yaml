@@ -1,0 +1,30 @@
+# CodeRabbit AI 리뷰 설정. 레포에 CodeRabbit GitHub 앱을 설치하면 PR마다 이 파일을 읽는다.
+# (민서님 이전 프로젝트 CI 템플릿과 같은 방식: 한국어 리뷰 + 팀 설계 규칙을 리뷰 기준으로)
+language: ko-KR
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!**/package-lock.json"
+    - "!specs/**"
+  path_instructions:
+    - path: "app/backend/**/*.java"
+      instructions: >-
+        헌법(.specify/memory/constitution.md)과 docs/ 설계 문서를 기준으로 본다.
+        N+1 쿼리, 트랜잭션 경계, 권한 확인(작성자 본인·관리자), 비공개 글 노출, 입력 검증을 우선 확인한다.
+    - path: "app/backend/src/main/resources/db/migration/**"
+      instructions: >-
+        이미 배포된 마이그레이션 파일을 고치지 않는지, 새 파일 번호가 이어지는지, 데이터 손실이 없는지 본다.
+    - path: "app/frontend/**"
+      instructions: >-
+        사용자 입력을 HTML로 직접 넣지 않는지(XSS), 상태를 바꾸는 요청에 CSRF 토큰을 보내는지 본다.
+    - path: "deploy/**"
+      instructions: >-
+        비밀값이 커밋되지 않았는지, 컨테이너가 루트로 돌지 않는지, 프로브와 리소스 제한이 있는지 본다.
+    - path: ".github/workflows/**"
+      instructions: >-
+        PR 제목·본문 같은 외부 입력을 run 스크립트에 직접 넣지 않는지, 권한(permissions)이 최소인지 본다.

@@ -1,0 +1,22 @@
+# PR이 리뷰 가능한 상태가 되면 Discord에 알린다. 레포 변수 DISCORD_ENABLED=true일 때만 동작.
+name: PR 리뷰 요청 알림
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: vars.DISCORD_ENABLED == 'true' && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ secrets.DISCORD_PR_WEBHOOK_URL || secrets.DISCORD_WEBHOOK_URL }}
+          title: "리뷰 요청: ${{ github.event.pull_request.title }}"
+          description: "#${{ github.event.pull_request.number }} · ${{ github.event.pull_request.user.login }} · ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}"
+          url: ${{ github.event.pull_request.html_url }}
