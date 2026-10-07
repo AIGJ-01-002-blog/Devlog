@@ -50,6 +50,12 @@ public class DiscoveryController {
                 .body(page);
     }
 
+    /** 내가 좋아한 글 (027). 개인 목록이라 어디에도 저장하지 않는다. */
+    @GetMapping("/api/me/liked-posts")
+    public ResponseEntity<FeedQuery.Page> liked(@CurrentMember MemberPrincipal me, @RequestParam(required = false) String cursor) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore().cachePrivate()).body(feed.liked(me.id(), cursor));
+    }
+
     /** 상세는 보는 사람마다 달라 공유 캐시에 넣지 않고, 공개가 아닌 글은 어디에도 저장하지 않는다 (docs/40 R-9). */
     @GetMapping("/api/posts/{postId}")
     public ResponseEntity<PostDetailQuery.Detail> detail(@PathVariable String postId,

@@ -10,6 +10,7 @@ import { match, navigate, useLocation } from './lib/router'
 import { AgreementsPage } from './pages/AgreementsPage'
 import { BlogPage } from './pages/BlogPage'
 import { SeriesPage } from './pages/SeriesPage'
+import { LikedPage } from './pages/LikedPage'
 import { FeedPage } from './pages/FeedPage'
 import { FollowsPage } from './pages/FollowsPage'
 import { HomePage } from './pages/HomePage'
@@ -71,6 +72,7 @@ function route(path: string): ReactNode {
   if ((p = match('/write/:id', path))) return <RequireLogin><WritePage key={p.id} id={p.id} /></RequireLogin>
   if (path === '/manage/posts') return <RequireLogin><ManagePage /></RequireLogin>
   if (path === '/feed') return <RequireLogin><FeedPage /></RequireLogin>
+  if (path === '/lists/liked') return <RequireLogin><LikedPage /></RequireLogin>
   if (path === '/notifications') return <RequireLogin><NotificationsPage /></RequireLogin>
   if (path === '/settings') return <RequireLogin><SettingsPage /></RequireLogin>
   if (path === '/settings/withdraw') return <RequireLogin><WithdrawPage /></RequireLogin>

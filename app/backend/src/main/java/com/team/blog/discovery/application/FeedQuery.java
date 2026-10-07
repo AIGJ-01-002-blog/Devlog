@@ -195,6 +195,33 @@ public class FeedQuery {
         return list("feed:" + memberId, null, null, cursor, false, memberId);
     }
 
+    /**
+     * 좋아한 글 (027 US1): 좋아요를 누른 최신순, 9개씩. 지금 읽을 수 있는 글만(공개 글, 친구 공개 글은 아직 친구일 때).
+     * 순서·커서는 좋아요 행으로 정하고(ix_post_like_member), 카드는 번호로 한 번 더 읽는다.
+     */
+    public Page liked(long memberId, String cursor) {
+        String listName = "liked:" + memberId;
+        StringBuilder sql = new StringBuilder("""
+                SELECT l.post_id, l.created_at FROM post_like l JOIN post p ON p.id = l.post_id JOIN member m ON m.id = p.author_id
+                WHERE l.member_id = ? AND """).append(' ').append(FRIENDS_BLOG_CONDITION).append("""
+                 AND (p.visibility = 'PUBLIC' OR EXISTS (SELECT 1 FROM friendship f WHERE f.status = 'ACCEPTED'
+                      AND f.member_a_id = LEAST(p.author_id, l.member_id) AND f.member_b_id = GREATEST(p.author_id, l.member_id)))
+                """);
+        List<Object> args = new ArrayList<>(List.of(memberId));
+        if (cursor != null && !cursor.isBlank()) {
+            long[] k = cursors.decode(cursor, listName, 2);
+            sql.append(" AND (l.created_at, l.post_id) < (?, ?)");
+            args.add(Timestamp.from(Times.fromEpochMicros(k[0])));
+            args.add(k[1]);
+        }
+        sql.append(" ORDER BY l.created_at DESC, l.post_id DESC LIMIT ").append(pageSize + 1);
+        List<long[]> rows = jdbc.query(sql.toString(), (rs, i) -> new long[] {rs.getLong(1),
+                Times.toEpochMicros(rs.getTimestamp(2).toInstant())}, args.toArray());
+        CursorCodec.Page<long[]> page = CursorCodec.page(rows, pageSize, r -> cursors.encode(listName, r[1], r[0]));
+        // 친구 공개 글이 섞일 수 있어 응답을 저장하지 않는다
+        return new Page(cards(page.items().stream().map(r -> r[0]).toList(), FRIENDS_BLOG_CONDITION), page.nextCursor(), true);
+    }
+
     private Page list(String listName, Long authorId, String tag, String cursor, boolean friendsView) {
         return list(listName, authorId, tag, cursor, friendsView, null);
     }
