@@ -51,6 +51,21 @@ describe('styles.css 토큰', () => {
         }
         expect(dark).toContain('--color-bg: #121212;');
     });
+    it('흐린 글자도 배경·보조 배경 위에서 4.5:1 이상이다 (WCAG AA)', () => {
+        const value = (lines, name) => lines.find((l) => l.startsWith(name + ':')).split(':')[1].trim().replace(';', '');
+        const lum = (hex) => {
+            const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+            return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+        };
+        const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+        for (const re of [/:root, \[data-theme="light"\] \{\n([\s\S]*?)\n\}/, /:root\[data-theme="dark"\] \{\n([\s\S]*?)\n\}/]) {
+            const lines = block(re);
+            const muted = value(lines, '--color-text-muted');
+            for (const bg of ['--color-bg', '--color-surface', '--color-surface-2']) {
+                expect(ratio(muted, value(lines, bg)), bg).toBeGreaterThanOrEqual(4.5);
+            }
+        }
+    });
     it('토큰 밖에서는 색 값을 직접 쓰지 않는다 (FR-013)', () => {
         const outside = css.replace(/:root, \[data-theme="light"\] \{[\s\S]*?\n\}/, '').replace(/:root\[data-theme="dark"\] \{[\s\S]*?\n\}/, '')
             .replace(/@media \(prefers-color-scheme: dark\) \{[\s\S]*?\n\}/, '');
