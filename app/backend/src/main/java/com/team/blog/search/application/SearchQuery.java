@@ -20,6 +20,7 @@ import com.team.blog.shared.cursor.CursorCodec;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.markdown.ContentRenderer;
 import com.team.blog.shared.markdown.ImageUrls;
+import com.team.blog.shared.text.BioText;
 import com.team.blog.shared.time.Times;
 
 /**
@@ -151,7 +152,7 @@ public class SearchQuery {
                 ORDER BY (lower(m.nickname) = lower(?) OR m.handle = lower(?)) DESC, m.nickname, m.id
                 LIMIT ?
                 """, (rs, i) -> new Person(rs.getLong("id"), rs.getString("handle"), rs.getString("nickname"),
-                firstLine(rs.getString("bio")), imageUrls.urlOf(rs.getString("profile_image_key"))),
+                BioText.firstLine(rs.getString("bio")), imageUrls.urlOf(rs.getString("profile_image_key"))),
                 like, like, q, q, PEOPLE_LIMIT);
         return new PeoplePage(q, people, null);
     }
@@ -263,11 +264,5 @@ public class SearchQuery {
         });
         // 두 쿼리 사이에 비공개·휴지통으로 바뀐 글은 빠진다. 순서는 찾은 순서 그대로
         return found.stream().map(f -> byId.get(f.id())).filter(java.util.Objects::nonNull).toList();
-    }
-
-    private static String firstLine(String bio) {
-        if (bio == null || bio.isBlank()) return null;
-        String line = bio.strip().lines().findFirst().orElse("").strip();
-        return line.codePointCount(0, line.length()) <= 100 ? line : line.substring(0, line.offsetByCodePoints(0, 100)) + "…";
     }
 }

@@ -7,7 +7,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.team.blog.comment.application.CommentEvents;
+import com.team.blog.follow.application.FollowEvents;
 import com.team.blog.like.application.LikeEvents;
+import com.team.blog.post.application.PostEvents;
 
 /**
  * 출처 기능의 사건을 커밋 뒤 따로 받아 알림을 만든다 (015 FR-041·FR-042). 롤백된 변경으로는 사건이 오지 않는다.
@@ -47,6 +49,24 @@ class NotificationEventListener {
     @TransactionalEventListener
     public void on(LikeEvents.PostUnliked e) {
         run("unlike", () -> notifications.postUnliked(e.postId(), e.authorId(), e.likerId()));
+    }
+
+    @Async(NotificationAsyncConfig.EXECUTOR)
+    @TransactionalEventListener
+    public void on(FollowEvents.Followed e) {
+        run("follow", () -> notifications.followed(e.followerId(), e.followeeId(), e.at()));
+    }
+
+    @Async(NotificationAsyncConfig.EXECUTOR)
+    @TransactionalEventListener
+    public void on(FollowEvents.Unfollowed e) {
+        run("unfollow", () -> notifications.unfollowed(e.followerId(), e.followeeId()));
+    }
+
+    @Async(NotificationAsyncConfig.EXECUTOR)
+    @TransactionalEventListener
+    public void on(PostEvents.PostFirstPublic e) {
+        run("new-post", () -> notifications.newPost(e.postId(), e.authorId(), e.at()));
     }
 
     private static void run(String kind, Runnable work) {

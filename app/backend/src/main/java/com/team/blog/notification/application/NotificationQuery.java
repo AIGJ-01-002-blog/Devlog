@@ -186,6 +186,8 @@ public class NotificationQuery {
                 default -> link = base;
             }
         }
+        // 새 팔로워는 글이 없고 대표 팔로워의 블로그로 간다
+        if (r.type() == NotificationType.FOLLOW && actor != null && !actor.withdrawn()) link = "/@" + actor.handle();
         return new Item(r.id(), r.type(), r.read(), r.at(), actor, others, post, preview, link);
     }
 

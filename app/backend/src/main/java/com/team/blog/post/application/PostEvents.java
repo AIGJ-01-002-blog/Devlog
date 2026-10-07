@@ -17,6 +17,12 @@ public final class PostEvents {
     /** 다시 발행. */
     public record PostEdited(long postId, long authorId, Visibility visibility, long version, Instant at) {}
 
+    /**
+     * 처음으로 "발행 + 전체 공개"가 됨. 글마다 한 번뿐이다(first_public_at이 비어 있다가 채워질 때). 발행·공개 범위 변경 어느 쪽에서든
+     * 생길 수 있고, 새 글 알림(015 FR-004·FR-045)이 받는다.
+     */
+    public record PostFirstPublic(long postId, long authorId, Instant at) {}
+
     /** 공개 범위만 바뀜 (다시 발행 아님). */
     public record PostVisibilityChanged(long postId, long authorId, Visibility from, Visibility to, Instant at) {}
 }

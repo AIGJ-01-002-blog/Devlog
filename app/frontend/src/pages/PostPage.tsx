@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Avatar } from '../components/Avatar'
+import { FollowButton } from '../components/FollowButton'
 import { Comments } from '../components/Comments'
 import { LikeButton } from '../components/LikeButton'
 import { api, ApiError, takeInitialData } from '../lib/api'
@@ -141,6 +142,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
             <Link to={`/@${post.author.handle}`}><b>{post.author.nickname}</b> <span className="muted">@{post.author.handle}</span></Link>
             {post.author.bio && <p className="bio">{post.author.bio}</p>}
           </div>
+          {!post.mine && <FollowButton handle={post.author.handle} following={post.author.following} />}
         </footer>
       </article>
       {post.status === 'PUBLISHED' && (

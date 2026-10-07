@@ -9,11 +9,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -38,6 +40,7 @@ public abstract class IntegrationTest {
     @Autowired protected MockMvc mvc;
     @Autowired protected JdbcTemplate jdbc;
     @Autowired protected StringRedisTemplate redis;
+    @Autowired @Qualifier("notificationExecutor") private ThreadPoolTaskExecutor notifier;
     protected final JsonMapper json = JsonMapper.builder().build();
 
     @DynamicPropertySource
@@ -50,9 +53,21 @@ public abstract class IntegrationTest {
     }
 
     @BeforeEach
-    void resetRateLimits() {
+    protected void resetRateLimits() {
         var keys = redis.keys("rl:*");
         if (keys != null && !keys.isEmpty()) redis.delete(keys);
+    }
+
+    /**
+     * 알림은 운영과 같이 커밋 뒤 다른 스레드에서 만든다(같은 스레드면 동시 요청이 연결을 둘씩 잡아 풀이 막힌다).
+     * 사건은 응답 전에 대기열에 들어가므로, 읽기 전에 대기열이 빌 때까지 기다리면 결과가 정해진다.
+     */
+    protected void drain() throws InterruptedException {
+        long until = System.currentTimeMillis() + 10_000;
+        while (notifier.getQueueSize() > 0 || notifier.getActiveCount() > 0) {
+            if (System.currentTimeMillis() > until) throw new AssertionError("알림 처리가 끝나지 않았습니다");
+            Thread.sleep(5);
+        }
     }
 
     /** 테스트마다 겹치지 않는 GitHub 아이디. */

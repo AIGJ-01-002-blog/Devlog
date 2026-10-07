@@ -62,6 +62,11 @@ export interface BlogProfile {
   friendship: FriendRelation | null
   /** 친구이고 양쪽 모두 공개 설정을 켰을 때만 0~7 (7 = 1주 이상) */
   lastActiveDaysAgo: number | null
+  /** 탈퇴 신청한 회원을 뺀 수 (016 FR-011). 비회원도 본다 */
+  followerCount: number
+  followingCount: number
+  /** 보는 사람이 팔로우 중인지. 비회원·본인이면 false */
+  following: boolean
 }
 
 export type FriendRelation = 'NONE' | 'SENT' | 'RECEIVED' | 'FRIENDS'
@@ -96,7 +101,7 @@ export interface PostDetail {
   viewCount: number
   likeCount: number
   commentCount: number
-  author: { id: number; handle: string; nickname: string; bio: string | null; profileImageUrl: string | null }
+  author: { id: number; handle: string; nickname: string; bio: string | null; profileImageUrl: string | null; following: boolean }
   /** 내가 눌렀는지. 비회원·작성자는 false */
   liked: boolean
   mine: boolean

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Avatar } from '../components/Avatar'
 import { Feed } from '../components/Feed'
+import { FollowButton } from '../components/FollowButton'
 import { SearchBox } from '../components/SearchBox'
 import { parseSort } from '../lib/search'
 import { PostResults } from './SearchPage'
@@ -45,15 +46,21 @@ export function BlogPage({ handle }: { handle: string }) {
           <h1>{profile.nickname}</h1>
           <p className="muted">@{profile.handle}</p>
           {profile.bio && <p className="bio">{profile.bio}</p>}
-          <p className="muted small">
-            글 {profile.publicPostCount}개
+          <p className="muted small blog-stats">
+            공개 글 {profile.publicPostCount}
+            {' · '}<Link to={`/@${profile.handle}/followers`}>팔로워 <b>{profile.followerCount}</b></Link>
+            {' · '}<Link to={`/@${profile.handle}/following`}>팔로잉 <b>{profile.followingCount}</b></Link>
             {lastActiveLabel(profile.lastActiveDaysAgo) && <> · 최근 활동 {lastActiveLabel(profile.lastActiveDaysAgo)}</>}
           </p>
-          {!profile.mine && <FriendButton profile={profile} onChange={(f) => {
-            setProfile({ ...profile, friendship: f, lastActiveDaysAgo: null })
+          {!profile.mine && <div className="blog-actions row">
+          <FollowButton handle={profile.handle} following={profile.following}
+            onChange={(st) => setProfile((p) => p && { ...p, following: st.following, followerCount: st.followerCount })} />
+          <FriendButton profile={profile} onChange={(f) => {
+            setProfile((p) => p && { ...p, friendship: f, lastActiveDaysAgo: null })
             // 친구가 되면 최근 활동을 다시 받아 온다 (서버가 조건을 판단한다)
             if (f === 'FRIENDS') void api<BlogProfile>(`/api/members/${encodeURIComponent(handle)}`).then(setProfile).catch(() => {})
-          }} />}
+          }} />
+          </div>}
         </div>
       </header>
       <SearchBox initial={q} placeholder={`${profile.nickname}님의 글 검색`} onSearch={searchIn} />

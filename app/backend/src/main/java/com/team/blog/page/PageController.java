@@ -6,6 +6,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +20,7 @@ import org.springframework.web.util.UriUtils;
 
 import com.team.blog.comment.application.CommentQuery;
 import com.team.blog.discovery.application.FeedQuery;
+import com.team.blog.follow.application.FollowQuery;
 import com.team.blog.discovery.application.PostDetailQuery;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
@@ -48,9 +51,11 @@ public class PageController {
     private final TagController tagApi;
     private final CommentQuery comments;
     private final SearchQuery search;
+    private final FollowQuery follows;
 
     public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
-                          TagController tagApi, CommentQuery comments, SearchQuery search) {
+                          TagController tagApi, CommentQuery comments, SearchQuery search, FollowQuery follows) {
+        this.follows = follows;
         this.comments = comments;
         this.search = search;
         this.shell = shell;
@@ -164,6 +169,29 @@ public class PageController {
                 first.friendsView() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate());
     }
 
+    /** 팔로워·팔로잉 목록 (016 US3). 누구나 보지만 보는 사람마다 버튼 상태가 달라 공유 캐시에 넣지 않는다. 얇은 목록이라 수집하지 않는다. */
+    @GetMapping({"/@{handle}/followers", "/@{handle}/following"})
+    public ResponseEntity<String> follows(@PathVariable String handle, HttpServletRequest request,
+                                          @CurrentMember(required = false) MemberPrincipal me) {
+        if (!HANDLE_CHARS.matcher(handle).matches()) return notFound();
+        boolean followers = request.getRequestURI().endsWith("/followers");
+        if (!handle.equals(handle.toLowerCase())) {
+            return redirect(HttpStatus.MOVED_PERMANENTLY, "/@" + handle.toLowerCase() + (followers ? "/followers" : "/following"));
+        }
+        var profile = feed.profile(handle, me == null ? null : me.id());
+        if (profile.isEmpty()) return notFound();
+        FeedQuery.BlogProfile p = profile.get();
+        FollowQuery.Page first = follows.list(handle, followers ? FollowQuery.Direction.FOLLOWERS : FollowQuery.Direction.FOLLOWING,
+                null, me == null ? null : me.id());
+        String title = p.nickname() + (followers ? "님의 팔로워" : "님이 팔로우하는 사람");
+        StringBuilder body = new StringBuilder("<main><h1>").append(SpaShell.esc(title)).append("</h1><ul>");
+        first.items().forEach(x -> body.append("<li><a href=\"/@").append(SpaShell.esc(x.handle())).append("\">")
+                .append(SpaShell.esc(x.nickname())).append(" @").append(SpaShell.esc(x.handle())).append("</a></li>"));
+        body.append("</ul></main>");
+        return html(HttpStatus.OK, shell.render(HeadMeta.privatePage(site.name(), title), body.toString(),
+                Map.of("page", "follows", "profile", p, "follows", first)), CacheControl.noCache().cachePrivate());
+    }
+
     @GetMapping("/@{handle}/posts/{postId}")
     public ResponseEntity<String> post(@PathVariable String handle, @PathVariable String postId,
                                        @CurrentMember(required = false) MemberPrincipal me) {
@@ -195,7 +223,7 @@ public class PageController {
     }
 
     /** 로그인이 필요하거나 개인적인 화면: 같은 껍데기, 수집 거부, 저장 안 함. React가 그린다. */
-    @GetMapping({"/login", "/signup", "/signup/social", "/forgot-password", "/reset-password", "/verify-email", "/agreements", "/write", "/write/{id}", "/manage/posts", "/settings", "/notifications", "/terms", "/privacy",
+    @GetMapping({"/login", "/signup", "/signup/social", "/forgot-password", "/reset-password", "/verify-email", "/agreements", "/write", "/write/{id}", "/manage/posts", "/settings", "/notifications", "/feed", "/terms", "/privacy",
             "/settings/{section}"})
     public ResponseEntity<String> app() {
         return html(HttpStatus.OK, shell.render(HeadMeta.privatePage(site.name(), null), "", Map.of("page", "app")),

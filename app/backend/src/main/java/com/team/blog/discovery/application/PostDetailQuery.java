@@ -45,7 +45,8 @@ public class PostDetailQuery {
         this.renderer = renderer;
     }
 
-    public record Author(long id, String handle, String nickname, String bio, String profileImageUrl) {}
+    /** @param following 보는 사람이 작성자를 팔로우 중인지 (016 FR-008, 작성자 영역 버튼) */
+    public record Author(long id, String handle, String nickname, String bio, String profileImageUrl, boolean following) {}
 
     /** 작성자에게만 채운다. 독자에게는 null. */
     public record OwnerInfo(boolean editing, Instant editingSavedAt, boolean hidden) {}
@@ -103,8 +104,15 @@ public class PostDetailQuery {
         return Optional.of(new Detail(r.id, "/@" + r.handle + "/posts/" + r.id, r.title, html, renderer.excerpt(head),
                 imageUrls.urlOf(r.thumbnailKey), r.status, r.visibility, r.publishedAt, r.firstPublicAt, r.editedAt, r.viewCount,
                 r.likeCount, r.commentCount,
-                new Author(r.authorId, r.handle, r.nickname, r.bio, imageUrls.urlOf(r.profileImageKey)), mine, owner,
+                new Author(r.authorId, r.handle, r.nickname, r.bio, imageUrls.urlOf(r.profileImageKey), !mine && follows(viewer, r.authorId)),
+                mine, owner,
                 r.status == PostStatus.PUBLISHED ? tags.tagsOf(r.id) : List.of(), !mine && likedBy(viewer, r.id)));
+    }
+
+    private boolean follows(Viewer viewer, long authorId) {
+        if (viewer.memberId() == null) return false;
+        return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM follow WHERE follower_id = ? AND followee_id = ?)",
+                Boolean.class, viewer.memberId(), authorId));
     }
 
     /** 글 상세가 처음 열릴 때 "내가 눌렀는지" (012 FR-015, PK 조회 1번). */
