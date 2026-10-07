@@ -6,6 +6,11 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [Unreleased]
+
+### 추가
+- 쿠버네티스 배포 구성(`deploy/`): kustomize base + 학교 NHN 인프라 overlay + 로컬 검증 overlay, 앱 Dockerfile, 비밀값 커밋 검사, 배포 워크플로(PR #4)
+
 ## [0.1.0] - 2026-10-07
 
 블로그 앱 백엔드 첫 릴리스 (spec 001~003, PR #2·#3).

@@ -20,3 +20,7 @@ out/
 
 # cmux/Codex가 저장소 안에 만드는 찌꺼기 폴더 (틸드가 풀리지 않은 것)
 ~/
+
+# 배포 비밀값 (예시는 secret.env.example)
+deploy/k8s/overlays/*/secret.env
+kubeconfig*

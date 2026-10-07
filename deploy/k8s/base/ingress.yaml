@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blog-app
+  annotations:
+    # 본문 최대 100,000자 + 여유. 사진은 Presigned URL로 저장소에 직접 올라가므로 앱을 거치지 않는다.
+    nginx.ingress.kubernetes.io/proxy-body-size: 2m
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: blog.example.com   # overlay에서 실제 주소로 바꾼다
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blog-app
+                port:
+                  name: http
