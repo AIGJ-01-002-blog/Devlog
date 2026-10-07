@@ -3,8 +3,9 @@ kind: Ingress
 metadata:
   name: blog-app
   annotations:
-    # 본문 최대 100,000자 + 여유. 사진은 Presigned URL로 저장소에 직접 올라가므로 앱을 거치지 않는다.
-    nginx.ingress.kubernetes.io/proxy-body-size: 2m
+    # 사진(원본 10MB + 썸네일 1MB)과 첨부파일(20MB)이 앱을 거쳐 올라간다(학교 저장소가 http만 열려 있어 서버 경유).
+    # 크기 상한은 앱이 요청마다 따로 검사한다(글 본문 2MB, 사진 11MB, 첨부 20MB).
+    nginx.ingress.kubernetes.io/proxy-body-size: 21m
 spec:
   ingressClassName: nginx
   rules:

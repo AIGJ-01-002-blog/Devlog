@@ -668,3 +668,19 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .restore-actions { justify-content: center; margin-top: 24px; }
 .auth-page.restore-page { max-width: 480px; }
 .nowrap { white-space: nowrap; }
+
+/* 첨부파일 (022) */
+.attachments { margin-top: 32px; border-top: 1px solid var(--color-border); padding-top: 16px; }
+.attachments h2 { font-size: 1rem; margin: 0 0 8px; }
+.attachments-edit { flex: none; margin-top: 12px; padding: 12px 0; max-height: 40vh; overflow-y: auto; }
+.attachments-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.attachments-head h2 { margin: 0; }
+.attachment-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.attachment-list li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--color-border); min-width: 0; }
+.attachment-list li:last-child { border-bottom: 0; }
+.attachment-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.attachment-name { color: var(--color-text); }
+a.attachment-name:hover { color: var(--color-brand); }
+.attachment-actions { display: flex; gap: 2px; flex: none; }
+.attachment-actions .btn-text { padding: 0 6px; }
+.attachment-pending .attachment-name { color: var(--color-text-muted); }

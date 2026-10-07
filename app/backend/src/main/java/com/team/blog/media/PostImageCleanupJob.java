@@ -24,6 +24,8 @@ import com.team.blog.shared.time.Times;
  * "쓰지 않는다" = 어떤 발행 글에도 연결되지 않았고(post_image), 올린 사람의 글·작업본 원문 어디에도 키가 없음.
  * 원문까지 확인하므로 아직 발행하지 않은 임시글·수정 중인 작업본의 사진은 지워지지 않는다(연결은 발행 때만 만든다).
  * 그 위에 기간 조건: 올리고 한 번도 연결되지 않은 사진은 24시간, 연결이 끊긴 사진은 끊긴 지 7일.
+ * <p>
+ * 첨부파일(022 FR-014)도 같은 기간으로 지운다. 첨부는 편집 화면에서 바꿀 때마다 바로 연결되므로 post_file만 본다.
  */
 @Component
 public class PostImageCleanupJob {
@@ -34,12 +36,14 @@ public class PostImageCleanupJob {
 
     /** 행 하나를 잠그며 다시 확인한다. 다른 정리가 잡고 있으면 건너뛴다. */
     private static final String UNUSED = """
-            r.storage_key LIKE 'images/%'
-            AND ((r.detached_at IS NULL AND r.created_at < ?) OR r.detached_at < ?)
-            AND NOT EXISTS (SELECT 1 FROM post_image pi WHERE pi.resource_id = r.id)
-            AND NOT EXISTS (SELECT 1 FROM post p WHERE p.author_id = r.uploader_id AND strpos(p.content_md, r.storage_key) > 0)
-            AND NOT EXISTS (SELECT 1 FROM post_draft d JOIN post p ON p.id = d.post_id
-                            WHERE p.author_id = r.uploader_id AND strpos(d.content_md, r.storage_key) > 0)
+            ((r.detached_at IS NULL AND r.created_at < ?) OR r.detached_at < ?)
+            AND ((r.storage_key LIKE 'images/%'
+                  AND NOT EXISTS (SELECT 1 FROM post_image pi WHERE pi.resource_id = r.id)
+                  AND NOT EXISTS (SELECT 1 FROM post p WHERE p.author_id = r.uploader_id AND strpos(p.content_md, r.storage_key) > 0)
+                  AND NOT EXISTS (SELECT 1 FROM post_draft d JOIN post p ON p.id = d.post_id
+                                  WHERE p.author_id = r.uploader_id AND strpos(d.content_md, r.storage_key) > 0))
+              OR (r.storage_key LIKE 'files/%'
+                  AND NOT EXISTS (SELECT 1 FROM post_file pf WHERE pf.resource_id = r.id)))
             """;
 
     private final JdbcTemplate jdbc;
