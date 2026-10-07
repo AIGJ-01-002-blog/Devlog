@@ -32,6 +32,7 @@
 | [025-toc-reading-time](./025-toc-reading-time/spec.md) | 글 목차·읽는 시간 | 2026-10-08 추가 (velog 비교) | 이후 단계 (Tier C) | 03 |
 | [026-rss](./026-rss/spec.md) | RSS 구독 (블로그별·전체) | 2026-10-08 추가 (velog 비교) | 이후 단계 (Tier C) | 03 |
 | [027-liked-posts](./027-liked-posts/spec.md) | 좋아한 글 모아 보기 | 2026-10-08 추가 (velog 비교) | 이후 단계 (Tier C) | 12 |
+| [028-first-load-split](./028-first-load-split/spec.md) | 첫 화면 JS 줄이기 | 2026-10-08 추가 (최적화) | 이후 단계 (Tier C) | 2 |
 
 ## 여러 spec에 걸치는 문서
 

@@ -1,13 +1,9 @@
-import { AdminMemberPage } from './pages/AdminMemberPage'
-import { AdminReportPage } from './pages/AdminReportPage'
-import { AdminReportsPage } from './pages/AdminReportsPage'
-import { useEffect, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { Flash } from './components/Flash'
 import { Header } from './components/Header'
 import { VerifyBanner } from './components/VerifyBanner'
 import { loginPath, useAuth } from './lib/auth'
 import { match, navigate, useLocation } from './lib/router'
-import { AgreementsPage } from './pages/AgreementsPage'
 import { BlogPage } from './pages/BlogPage'
 import { SeriesPage } from './pages/SeriesPage'
 import { LikedPage } from './pages/LikedPage'
@@ -15,25 +11,33 @@ import { FeedPage } from './pages/FeedPage'
 import { FollowsPage } from './pages/FollowsPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
-import { ManagePage } from './pages/ManagePage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { PostPage } from './pages/PostPage'
 import { SearchPage } from './pages/SearchPage'
-import { SettingsPage } from './pages/SettingsPage'
 import { TagPage } from './pages/TagPage'
 import { TagsPage } from './pages/TagsPage'
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
-import { ResetPasswordPage } from './pages/ResetPasswordPage'
-import { SignupEmailPage } from './pages/SignupEmailPage'
-import { SignupSocialPage } from './pages/SignupSocialPage'
-import { TermsPage } from './pages/TermsPage'
-import { VerifyEmailPage } from './pages/VerifyEmailPage'
-import { NewPostPage, WritePage } from './pages/WritePage'
-import { RestorePage } from './pages/RestorePage'
-import { WithdrawnPage } from './pages/WithdrawnPage'
-import { WithdrawPage } from './pages/WithdrawPage'
 import { withdrawnRedirect } from './lib/withdraw'
+
+// 글 읽기(홈·글·블로그·태그·검색·피드)는 첫 묶음에 두고, 쓰기·설정·가입·관리자 화면은 처음 열 때 받는다.
+// 독자가 받는 첫 JS를 줄이려는 것이다 (spec 028).
+const AdminMemberPage = lazy(() => import('./pages/AdminMemberPage').then((m) => ({ default: m.AdminMemberPage })))
+const AdminReportPage = lazy(() => import('./pages/AdminReportPage').then((m) => ({ default: m.AdminReportPage })))
+const AdminReportsPage = lazy(() => import('./pages/AdminReportsPage').then((m) => ({ default: m.AdminReportsPage })))
+const AgreementsPage = lazy(() => import('./pages/AgreementsPage').then((m) => ({ default: m.AgreementsPage })))
+const ManagePage = lazy(() => import('./pages/ManagePage').then((m) => ({ default: m.ManagePage })))
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
+const SignupEmailPage = lazy(() => import('./pages/SignupEmailPage').then((m) => ({ default: m.SignupEmailPage })))
+const SignupSocialPage = lazy(() => import('./pages/SignupSocialPage').then((m) => ({ default: m.SignupSocialPage })))
+const TermsPage = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsPage })))
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage })))
+const NewPostPage = lazy(() => import('./pages/WritePage').then((m) => ({ default: m.NewPostPage })))
+const WritePage = lazy(() => import('./pages/WritePage').then((m) => ({ default: m.WritePage })))
+const RestorePage = lazy(() => import('./pages/RestorePage').then((m) => ({ default: m.RestorePage })))
+const WithdrawnPage = lazy(() => import('./pages/WithdrawnPage').then((m) => ({ default: m.WithdrawnPage })))
+const WithdrawPage = lazy(() => import('./pages/WithdrawPage').then((m) => ({ default: m.WithdrawPage })))
 
 export function App() {
   const { path } = useLocation()
@@ -42,7 +46,7 @@ export function App() {
       {!path.startsWith('/write') && path !== '/account/restore' && <Header />}
       {path !== '/verify-email' && <VerifyBanner />}
       <Flash path={path} />
-      <WithdrawnGate path={path}><AgreementGate path={path}>{route(path)}</AgreementGate></WithdrawnGate>
+      <WithdrawnGate path={path}><AgreementGate path={path}><Suspense fallback={<Loading />}>{route(path)}</Suspense></AgreementGate></WithdrawnGate>
     </>
   )
 }
@@ -84,19 +88,23 @@ function route(path: string): ReactNode {
   return <NotFoundPage />
 }
 
+function Loading() {
+  return <main className="container"><p className="muted center">불러오는 중…</p></main>
+}
+
 function RequireLogin({ children }: { children: ReactNode }) {
   const { me, loading } = useAuth()
   useEffect(() => {
     if (!loading && !me?.authenticated) navigate(loginPath(), { replace: true })
   }, [loading, me])
-  if (loading || !me?.authenticated) return <main className="container"><p className="muted center">불러오는 중…</p></main>
+  if (loading || !me?.authenticated) return <Loading />
   return <>{children}</>
 }
 
 /** 관리자 화면: 서버가 비회원은 로그인으로, 일반 회원은 404로 보내므로 여기서는 화면 안에서 옮겨 온 경우만 막는다. */
 function RequireAdmin({ children }: { children: ReactNode }) {
   const { me, loading } = useAuth()
-  if (loading) return <main className="container"><p className="muted center">불러오는 중…</p></main>
+  if (loading) return <Loading />
   if (!me?.authenticated) return <RequireLogin>{children}</RequireLogin>
   if (me.member?.role !== 'ADMIN') return <NotFoundPage />
   return <>{children}</>
