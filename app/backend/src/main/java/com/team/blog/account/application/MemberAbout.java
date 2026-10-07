@@ -40,17 +40,16 @@ public class MemberAbout {
 
     /** 탈퇴한 회원이나 없는 주소면 비어 있다 (블로그와 같이 404). */
     public Optional<About> of(String handle, Long viewerId) {
-        record Row(long memberId, String contentMd, Long version, Timestamp updatedAt) {}
+        record Row(long memberId, String contentMd, Timestamp updatedAt) {}
         return jdbc.query("""
-                SELECT m.id, a.content_md, a.edit_version, a.updated_at
+                SELECT m.id, a.content_md, a.updated_at
                 FROM member m LEFT JOIN member_about a ON a.member_id = m.id
                 WHERE m.handle = ? AND m.withdrawn_at IS NULL AND m.deleted_at IS NULL
-                """, (rs, i) -> new Row(rs.getLong("id"), rs.getString("content_md"),
-                (Long) rs.getObject("edit_version", Long.class), rs.getTimestamp("updated_at")), handle)
+                """, (rs, i) -> new Row(rs.getLong("id"), rs.getString("content_md"), rs.getTimestamp("updated_at")), handle)
                 .stream().findFirst().map(r -> {
                     boolean mine = viewerId != null && viewerId == r.memberId();
                     if (r.contentMd() == null) return new About(null, mine ? "" : null, null, mine);
-                    String html = htmlCache.html(RenderedHtmlCache.aboutKey(r.memberId(), r.version()), r.memberId(), r.contentMd());
+                    String html = htmlCache.html(RenderedHtmlCache.aboutKey(r.memberId(), r.contentMd()), r.memberId(), r.contentMd());
                     return new About(html, mine ? r.contentMd() : null, r.updatedAt().toInstant(), mine);
                 });
     }
@@ -70,7 +69,7 @@ public class MemberAbout {
         jdbc.update("""
                 INSERT INTO member_about (member_id, content_md) VALUES (?, ?)
                 ON CONFLICT (member_id) DO UPDATE
-                SET content_md = EXCLUDED.content_md, edit_version = member_about.edit_version + 1, updated_at = CURRENT_TIMESTAMP
+                SET content_md = EXCLUDED.content_md, updated_at = CURRENT_TIMESTAMP
                 """, memberId, md);
     }
 }

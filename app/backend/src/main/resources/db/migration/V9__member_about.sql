@@ -3,16 +3,13 @@
 CREATE TABLE member_about (
     member_id              bigint NOT NULL,
     content_md             text NOT NULL,
-    edit_version           bigint NOT NULL DEFAULT 1,
     updated_at             timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (member_id),
     CONSTRAINT fk_member_about_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE,
-    CONSTRAINT ck_member_about_content CHECK (length(btrim(content_md)) > 0 AND char_length(content_md) <= 10000),
-    CONSTRAINT ck_member_about_version CHECK (edit_version > 0)
+    CONSTRAINT ck_member_about_content CHECK (length(btrim(content_md)) > 0 AND char_length(content_md) <= 10000)
 );
 
 COMMENT ON TABLE member_about IS '블로그 소개 (회원당 하나, 마크다운)';
 COMMENT ON COLUMN member_about.member_id IS '회원 번호';
 COMMENT ON COLUMN member_about.content_md IS '소개 원문 (마크다운, 10000자까지)';
-COMMENT ON COLUMN member_about.edit_version IS '고칠 때마다 1씩 늘어나는 번호 (렌더링 캐시 키)';
 COMMENT ON COLUMN member_about.updated_at IS '마지막 수정 일시';

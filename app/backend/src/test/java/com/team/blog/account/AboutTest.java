@@ -55,12 +55,15 @@ class AboutTest extends IntegrationTest {
         // 고치면 새 내용을 보인다 (캐시 키가 바뀜)
         save(me, "고친 소개").andExpect(status().isNoContent());
         assertThat(about(null, me.handle()).path("html").asString()).contains("고친 소개").doesNotContain("안녕하세요");
-        assertThat(jdbc.queryForObject("SELECT edit_version FROM member_about WHERE member_id = ?", Long.class, me.memberId())).isEqualTo(2L);
 
         // 비우면 지운다
         save(me, "   ").andExpect(status().isNoContent());
         assertThat(about(null, me.handle()).has("html")).isFalse();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM member_about WHERE member_id = ?", Long.class, me.memberId())).isZero();
+
+        // 지운 뒤 다시 써도 예전 소개가 캐시에서 나오지 않는다 (리뷰 지적: 행을 새로 만들면 버전이 처음으로 돌아갔다)
+        save(me, "다시 쓴 소개").andExpect(status().isNoContent());
+        assertThat(about(null, me.handle()).path("html").asString()).contains("다시 쓴 소개").doesNotContain("안녕하세요");
     }
 
     @Test
