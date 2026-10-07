@@ -174,7 +174,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           </div>
           {!post.mine && <FollowButton handle={post.author.handle} following={post.author.following} />}
         </footer>
-        {post.status === 'PUBLISHED' && <AdjacentPosts key={`adjacent-${post.id}`} postId={post.id} />}
+        {post.status === 'PUBLISHED' && <AdjacentPosts key={`adjacent-${post.id}-${post.visibility}`} postId={post.id} />}
       </article>
       {post.status === 'PUBLISHED' && (
         <Comments key={post.id} postId={post.id} initial={boot?.post.id === post.id ? boot.comments ?? null : null}
