@@ -12,6 +12,9 @@ blog:
     trash-purge-cron: "-"
   view:
     flush-interval: 1h
+  # 최근창을 줄여 인덱스 후보 경로도 시험한다 (014)
+  search:
+    recent-window: 5
   media:
     profile-cleanup-cron: "-"
     post-image-cleanup-cron: "-"

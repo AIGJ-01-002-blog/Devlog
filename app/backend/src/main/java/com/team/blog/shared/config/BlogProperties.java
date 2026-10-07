@@ -22,7 +22,8 @@ public record BlogProperties(
         @DefaultValue Feed feed,
         @DefaultValue Image image,
         @DefaultValue DevLogin devLogin,
-        @DefaultValue View view) {
+        @DefaultValue View view,
+        @DefaultValue Search search) {
 
     public record Site(String baseUrl, @DefaultValue("devlog") String name, @DefaultValue("/og-default.png") String defaultOgImage) {}
 
@@ -85,4 +86,11 @@ public record BlogProperties(
                        @DefaultValue("60") int perMinute,
                        @DefaultValue("bot|crawl|spider|slurp|preview|facebookexternalhit|embedly|whatsapp|telegrambot|discordbot|slackbot|slack-imgproxy|kakaotalk-scrap|headless|curl|wget|python-requests|httpclient")
                        String botPattern) {}
+
+    /**
+     * 검색 (spec 014, docs/33 §4·§5).
+     * @param recentWindow 먼저 찾아볼 최근 공개 글 수. 여기서 모자라면 인덱스로 전체에서 찾는다
+     * @param perMinute    같은 방문자 1분 검색 횟수
+     */
+    public record Search(@DefaultValue("3000") int recentWindow, @DefaultValue("30") int perMinute) {}
 }

@@ -41,6 +41,8 @@ export interface Card {
   commentCount: number
   likeCount: number
   author: CardAuthor
+  /** 검색 결과면 검색어 주변 문장 (mark 외 태그 없음, 014) */
+  snippetHtml?: string | null
 }
 
 export interface FeedPage {

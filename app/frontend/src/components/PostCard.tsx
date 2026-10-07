@@ -13,7 +13,10 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
       </Link>
       <div className="card-body">
         <h2 className="card-title"><Link to={card.url}>{card.title}</Link></h2>
-        <p className="card-excerpt">{card.excerpt ?? ''}</p>
+        {card.snippetHtml != null
+          // 서버가 전부 이스케이프하고 검색어에만 <mark>를 붙인 문장이다 (014 FR-019)
+          ? <p className="card-excerpt card-snippet" dangerouslySetInnerHTML={{ __html: card.snippetHtml }} />
+          : <p className="card-excerpt">{card.excerpt ?? ''}</p>}
         <div className="card-meta">
           {card.visibility === 'FRIENDS' && (
             <><span className="badge" title="친구에게만 보이는 글">{VISIBILITY_ICON.FRIENDS} {VISIBILITY_LABEL.FRIENDS}</span>{' · '}</>

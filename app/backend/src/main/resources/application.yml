@@ -155,3 +155,7 @@ blog:
     max-per-window: ${VIEW_MAX_PER_WINDOW:1}
     per-minute: 60
     flush-interval: 60s
+  # 검색 (spec 014): 최근 공개 글 recent-window개 안에서 먼저 찾고, 모자라면 인덱스로 전체에서 찾는다
+  search:
+    recent-window: 3000
+    per-minute: 30
