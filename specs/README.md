@@ -34,6 +34,7 @@
 | [027-liked-posts](./027-liked-posts/spec.md) | 좋아한 글 모아 보기 | 2026-10-08 추가 (velog 비교) | 이후 단계 (Tier C) | 12 |
 | [028-first-load-split](./028-first-load-split/spec.md) | 첫 화면 JS 줄이기 | 2026-10-08 추가 (최적화) | 이후 단계 (Tier C) | 2 |
 | [029-keyboard-reader-a11y](./029-keyboard-reader-a11y/spec.md) | 키보드·화면 읽기 프로그램 이동 개선 | 2026-10-08 추가 (최적화) | 이후 단계 (Tier C) | 42 |
+| [030-static-delivery](./030-static-delivery/spec.md) | 화면 파일 캐시와 응답 압축 | 2026-10-08 추가 (최적화) | 이후 단계 (Tier C) | 2 |
 
 ## 여러 spec에 걸치는 문서
 
