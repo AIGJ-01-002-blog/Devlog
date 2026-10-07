@@ -1,6 +1,10 @@
 package com.team.blog.shared.markdown;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.HexFormat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +33,24 @@ public class RenderedHtmlCache {
         return "render:post:" + postId + ":" + editVersion + ":" + ContentRenderer.RENDER_VERSION;
     }
 
+    /**
+     * 블로그 소개 (042). 원문 해시를 키로 써서, 지웠다가 다시 써도(행이 새로 생겨도) 예전 HTML을 다시 꺼내지 않는다.
+     */
+    public static String aboutKey(long memberId, String contentMd) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(contentMd.getBytes(StandardCharsets.UTF_8));
+            return "render:about:" + memberId + ":" + HexFormat.of().formatHex(digest, 0, 16) + ":" + ContentRenderer.RENDER_VERSION;
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e); // 모든 JVM에 있는 알고리즘
+        }
+    }
+
     public String html(long postId, long editVersion, long authorId, String contentMd) {
-        String key = key(postId, editVersion);
+        return html(key(postId, editVersion), authorId, contentMd);
+    }
+
+    /** @param key 원문이 바뀌면 달라지는 키 ({@link #key}, {@link #aboutKey}) */
+    public String html(String key, long authorId, String contentMd) {
         try {
             String cached = redis.opsForValue().get(key);
             if (cached != null) return cached;

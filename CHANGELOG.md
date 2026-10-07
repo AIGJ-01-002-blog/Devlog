@@ -6,6 +6,21 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.19.0] - 2026-10-08
+
+블로그 소개 탭 (spec 042).
+
+### 추가
+- 블로그 [소개] 탭(`/@아이디/about`): 마크다운 소개를 글과 같은 규칙으로 보여 주고, 본인은 그 자리에서 쓰고 고친다(10,000자까지, 비우면 삭제)
+- `GET /api/members/{handle}/about`, `PUT /api/me/about`, 테이블 `member_about`(V9)
+
+### 바뀜
+- 쓰지 않는 사진 정리가 소개에 쓴 사진은 지우지 않는다
+- 탈퇴 정리 때 소개도 지운다
+
+### 테스트
+- `AboutTest` 4개, `PostImageTest` 정리 경우 1개, `BlogAbout.test.tsx` 4개
+
 ## [1.18.1] - 2026-10-08
 
 메일 발송 실패 기록에서 받는 사람 주소 빼기 (spec 041).

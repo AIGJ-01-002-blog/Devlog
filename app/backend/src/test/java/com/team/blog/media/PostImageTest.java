@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
@@ -223,6 +224,7 @@ class PostImageTest extends IntegrationTest {
         String unused = keyOf(uploaded(s, TestImages.png(50, 50)).path("url").asString());
         String fresh = keyOf(uploaded(s, TestImages.png(51, 50)).path("url").asString());
         String inDraft = keyOf(uploaded(s, TestImages.png(52, 50)).path("url").asString());
+        String inAbout = keyOf(uploaded(s, TestImages.png(56, 50)).path("url").asString());
         String detachedOld = keyOf(uploaded(s, TestImages.png(53, 50)).path("url").asString());
         String detachedRecent = keyOf(uploaded(s, TestImages.png(54, 50)).path("url").asString());
         JsonNode linkedUp = uploaded(s, TestImages.png(55, 50));
@@ -233,11 +235,15 @@ class PostImageTest extends IntegrationTest {
         s.http().perform(asJson(post("/api/posts"), Map.of("title", "임시", "contentMd", "![](" + imageUrls.urlOf(inDraft) + ")")))
                 .andExpect(status().isCreated());
         publish(s, "![](" + linkedUp.path("url").asString() + ")");
+        // 블로그 소개에만 든 사진 (042)
+        s.http().perform(asJson(put("/api/me/about"), Map.of("contentMd", "![](" + imageUrls.urlOf(inAbout) + ")")))
+                .andExpect(status().isNoContent());
 
         Instant old = now.minus(3, ChronoUnit.DAYS);
         age(unused, old, null);
         age(fresh, now.minus(2, ChronoUnit.HOURS), null);
         age(inDraft, old, null);
+        age(inAbout, old, null);
         age(detachedOld, now.minus(20, ChronoUnit.DAYS), now.minus(8, ChronoUnit.DAYS));
         age(detachedRecent, now.minus(20, ChronoUnit.DAYS), now.minus(3, ChronoUnit.DAYS));
         age(linked, now.minus(20, ChronoUnit.DAYS), null);
@@ -248,6 +254,7 @@ class PostImageTest extends IntegrationTest {
         assertThat(exists(detachedOld)).isFalse();
         assertThat(exists(fresh)).isTrue();
         assertThat(exists(inDraft)).isTrue();
+        assertThat(exists(inAbout)).isTrue();
         assertThat(exists(detachedRecent)).isTrue();
         assertThat(exists(linked)).isTrue();
         mvc.perform(get("/media/" + unused)).andExpect(status().isNotFound());

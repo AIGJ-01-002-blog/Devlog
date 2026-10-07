@@ -712,6 +712,13 @@ a.attachment-name:hover { color: var(--color-brand); }
 .series-edit li { padding: 8px 0; border-bottom: 1px solid var(--color-border); }
 .series-edit .grow { flex: 1; }
 
+/* 블로그 소개 (042) */
+.blog-about { margin: 24px 0; }
+.about-editor { width: 100%; min-height: 16rem; padding: 12px; font: inherit; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1.6;
+  border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); color: inherit; resize: vertical; }
+.about-actions { justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.about-actions .danger { color: var(--color-danger); }
+
 /* 이전·다음 글 (040): 넓은 화면은 좌우, 좁은 화면은 위아래. 한쪽만 있어도 제자리(다음 글은 오른쪽) */
 .adjacent-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 32px 0 0; }
 .adjacent-posts .adjacent { display: flex; flex-direction: column; gap: 4px; padding: 14px 18px; border-radius: 8px;

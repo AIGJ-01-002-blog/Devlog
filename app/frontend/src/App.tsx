@@ -68,6 +68,7 @@ function route(path: string): ReactNode {
   if ((p = match('/@:handle/following', path))) return <FollowsPage key={`${p.handle}/g`} handle={p.handle} direction="following" />
   if ((p = match('/@:handle/series/:slug', path))) return <SeriesPage key={`${p.handle}/s/${p.slug}`} handle={p.handle} slug={p.slug} />
   if ((p = match('/@:handle/series', path))) return <BlogPage key={p.handle} handle={p.handle} tab="series" />
+  if ((p = match('/@:handle/about', path))) return <BlogPage key={p.handle} handle={p.handle} tab="about" />
   if ((p = match('/@:handle', path))) return <BlogPage key={p.handle} handle={p.handle} />
   if (path === '/search') return <SearchPage />
   if (path === '/tags') return <TagsPage />

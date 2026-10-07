@@ -61,6 +61,8 @@ function route(path) {
         return _jsx(SeriesPage, { handle: p.handle, slug: p.slug }, `${p.handle}/s/${p.slug}`);
     if ((p = match('/@:handle/series', path)))
         return _jsx(BlogPage, { handle: p.handle, tab: "series" }, p.handle);
+    if ((p = match('/@:handle/about', path)))
+        return _jsx(BlogPage, { handle: p.handle, tab: "about" }, p.handle);
     if ((p = match('/@:handle', path)))
         return _jsx(BlogPage, { handle: p.handle }, p.handle);
     if (path === '/search')
