@@ -627,6 +627,9 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .btn-small { padding: 4px 12px; font-size: 0.875rem; }
 .blog-stats a { color: inherit; }
 .blog-stats a:hover { color: var(--color-brand); }
+.social-links { display: flex; flex-wrap: wrap; gap: 4px 12px; list-style: none; margin: 8px 0 0; padding: 0; font-size: 0.875rem; }
+.social-links a { color: var(--color-text-muted); }
+.social-links a:hover, .social-links a:focus-visible { color: var(--color-brand); }
 .tabs a[aria-current="page"], .tabs button[aria-selected="true"] { color: var(--color-text); border-bottom-color: var(--color-text); }
 .person-list { list-style: none; margin: 0; padding: 0; }
 .person-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--color-border); }

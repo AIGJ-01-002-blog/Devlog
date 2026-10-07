@@ -16,6 +16,7 @@ import com.team.blog.follow.application.FollowQuery;
 import com.team.blog.friend.application.FriendQuery;
 import com.team.blog.friend.application.FriendService;
 import com.team.blog.friend.application.FriendsVisibilityRule;
+import com.team.blog.account.application.SocialLinks;
 import com.team.blog.account.domain.Visibility;
 import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.shared.config.BlogProperties;
@@ -51,10 +52,13 @@ public class FeedQuery {
     private final FriendService friends;
     private final FriendQuery friendQuery;
     private final FollowQuery follows;
+    private final SocialLinks socialLinks;
 
     public FeedQuery(JdbcTemplate jdbc, CursorCodec cursors, ImageUrls imageUrls, ContentRenderer renderer,
-                     BlogProperties props, FriendService friends, FriendQuery friendQuery, FollowQuery follows) {
+                     BlogProperties props, FriendService friends, FriendQuery friendQuery, FollowQuery follows,
+                     SocialLinks socialLinks) {
         this.jdbc = jdbc;
+        this.socialLinks = socialLinks;
         this.follows = follows;
         this.friends = friends;
         this.friendQuery = friendQuery;
@@ -83,25 +87,31 @@ public class FeedQuery {
     /**
      * @param friendship        보는 사람 기준 친구 관계 (NONE·SENT·RECEIVED·FRIENDS). 비회원·본인이면 null
      * @param lastActiveDaysAgo 친구이고 양쪽 모두 공개 설정을 켰을 때만 0~7 (008 FR-009·FR-010)
+     * @param socialLinks       블로그 머리의 소셜 정보 (spec 043). 비회원도 본다
      */
     public record BlogProfile(long id, String handle, String nickname, String bio, String profileImageUrl,
                               long publicPostCount, boolean mine, String friendship, Integer lastActiveDaysAgo,
-                              long followerCount, long followingCount, boolean following) {
+                              long followerCount, long followingCount, boolean following, SocialLinks.Links socialLinks) {
         /** 친구가 보면 친구 공개 글까지 센 수 (docs/06 §3 "블로그 글 수") */
         BlogProfile withPostCount(long count) {
             return new BlogProfile(id, handle, nickname, bio, profileImageUrl, count, mine, friendship, lastActiveDaysAgo,
-                    followerCount, followingCount, following);
+                    followerCount, followingCount, following, socialLinks);
         }
 
         BlogProfile withFriendship(String relation, Integer days) {
             return new BlogProfile(id, handle, nickname, bio, profileImageUrl, publicPostCount, mine, relation, days,
-                    followerCount, followingCount, following);
+                    followerCount, followingCount, following, socialLinks);
         }
 
         /** 팔로워·팔로잉 수는 비회원도 본다 (016 FR-010). following은 보는 사람이 팔로우 중인지. */
         BlogProfile withFollow(FollowQuery.Counts counts, boolean viewerFollows) {
             return new BlogProfile(id, handle, nickname, bio, profileImageUrl, publicPostCount, mine, friendship, lastActiveDaysAgo,
-                    counts.followers(), counts.following(), viewerFollows);
+                    counts.followers(), counts.following(), viewerFollows, socialLinks);
+        }
+
+        BlogProfile withSocialLinks(SocialLinks.Links links) {
+            return new BlogProfile(id, handle, nickname, bio, profileImageUrl, publicPostCount, mine, friendship, lastActiveDaysAgo,
+                    followerCount, followingCount, following, links);
         }
     }
 
@@ -165,9 +175,9 @@ public class FeedQuery {
                 WHERE m.handle = ? AND m.withdrawn_at IS NULL AND m.deleted_at IS NULL
                 """, (rs, i) -> new BlogProfile(rs.getLong("id"), rs.getString("handle"), rs.getString("nickname"),
                 rs.getString("bio"), imageUrls.urlOf(rs.getString("profile_image_key")), rs.getLong("post_count"),
-                viewerId != null && viewerId == rs.getLong("id"), null, null, 0, 0, false), handle);
+                viewerId != null && viewerId == rs.getLong("id"), null, null, 0, 0, false, SocialLinks.Links.EMPTY), handle);
         return rows.stream().findFirst().map(p -> p.withFollow(follows.counts(p.id()),
-                viewerId != null && !p.mine() && follows.isFollowing(viewerId, p.id()))).map(p -> {
+                viewerId != null && !p.mine() && follows.isFollowing(viewerId, p.id())).withSocialLinks(socialLinks.of(p.id()))).map(p -> {
             if (viewerId == null || p.mine()) return p;
             FriendService.Relation relation = friends.relation(viewerId, p.id());
             BlogProfile withRelation = p.withFriendship(relation.name(), friendQuery.lastActiveDaysAgo(viewerId, p.id()).orElse(null));

@@ -1,3 +1,4 @@
+import type { SocialLinks } from './socialLinks'
 export type Visibility = 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
 export type PostStatus = 'DRAFT' | 'PUBLISHED'
 
@@ -67,6 +68,8 @@ export interface BlogProfile {
   followingCount: number
   /** 보는 사람이 팔로우 중인지. 비회원·본인이면 false */
   following: boolean
+  /** 블로그 머리의 소셜 정보 (043). 값이 있는 칸만 온다 */
+  socialLinks?: SocialLinks
 }
 
 export type FriendRelation = 'NONE' | 'SENT' | 'RECEIVED' | 'FRIENDS'

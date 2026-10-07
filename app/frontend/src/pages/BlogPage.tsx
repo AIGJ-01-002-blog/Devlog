@@ -3,6 +3,7 @@ import { Avatar } from '../components/Avatar'
 import { Feed } from '../components/Feed'
 import { FollowButton } from '../components/FollowButton'
 import { SearchBox } from '../components/SearchBox'
+import { SocialLinkList } from '../components/SocialLinkList'
 import { parseSort } from '../lib/search'
 import { PostResults } from './SearchPage'
 import { api, ApiError, takeInitialData } from '../lib/api'
@@ -56,6 +57,7 @@ export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'pos
             {lastActiveLabel(profile.lastActiveDaysAgo) && <> · 최근 활동 {lastActiveLabel(profile.lastActiveDaysAgo)}</>}
             {' · '}<a href={`/@${profile.handle}/rss`} type="application/rss+xml" title="RSS 리더로 이 블로그의 새 글 받기">RSS</a>
           </p>
+          <SocialLinkList links={profile.socialLinks} />
           {!profile.mine && <div className="blog-actions row">
           <FollowButton handle={profile.handle} following={profile.following}
             onChange={(st) => setProfile((p) => p && { ...p, following: st.following, followerCount: st.followerCount })} />
