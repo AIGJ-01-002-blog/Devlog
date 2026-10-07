@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ConflictDialog } from '../components/ConflictDialog'
+import { AiTagSuggest } from '../components/AiTagSuggest'
 import { TagInput } from '../components/TagInput'
 import { api, ApiError } from '../lib/api'
 import { Autosaver, type Content, type SaveState } from '../lib/autosave'
@@ -11,7 +12,7 @@ import { ALT_SOFT_LIMIT, bodyImages, formatBytes, forPreview, pendingIds, restor
 import { useImageUploads } from '../lib/useImageUploads'
 import { decideRestore } from '../lib/restore'
 import { navigate, setLeaveGuard } from '../lib/router'
-import { tagErrors } from '../lib/tags'
+import { addTag, tagErrors } from '../lib/tags'
 import type { EditorView, FriendOverview, ServerContent, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 
@@ -359,6 +360,8 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
             </fieldset>
             {visibility === 'FRIENDS' && <NoFriendsHint onPublic={() => setVisibility('PUBLIC')} />}
             <TagInput value={tags} onChange={(t) => { setTags(t); setErrors((m) => withoutTagErrors(m)) }} errors={tagErrors(errors)} />
+            <AiTagSuggest postId={view.id} title={title} content={content} tags={tags}
+                          onAdd={(t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)) }} />
             {Object.keys(withoutTagErrors(errors)).length > 0 && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
             {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
             <AltTexts content={content} open={showAlts} onOpen={() => setShowAlts(true)}

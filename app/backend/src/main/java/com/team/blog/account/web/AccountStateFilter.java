@@ -45,6 +45,7 @@ public class AccountStateFilter extends OncePerRequestFilter {
             Pattern.compile("^PUT /api/posts/\\d+(/autosave)?$"),
             Pattern.compile("^DELETE /api/posts/\\d+/draft$"),
             Pattern.compile("^POST /api/posts/\\d+/publish$"),
+            Pattern.compile("^POST /api/posts/\\d+/ai-tags$"),
             Pattern.compile("^PATCH /api/posts/\\d+/visibility$"),
             Pattern.compile("^(POST|PUT|PATCH) /api/(posts/\\d+/)?comments(/.*)?$"),
             Pattern.compile("^(PUT|DELETE) /api/posts/\\d+/like$"),

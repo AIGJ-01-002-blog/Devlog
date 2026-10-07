@@ -66,6 +66,12 @@ public class AgreementService {
                         () -> agreements.save(new MemberAgreement(memberId, type, version, now)));
     }
 
+    /** AI 동의 (018 FR-030): 지금 문구 버전과 일자로 기록한다. */
+    @Transactional
+    public void agreeAi(long memberId) {
+        agree(memberId, AgreementType.AI, currentVersion(AgreementType.AI), Times.now(clock));
+    }
+
     @Transactional(readOnly = true)
     public boolean hasAgreed(long memberId, AgreementType type) {
         return agreements.findById(new MemberAgreement.Key(memberId, type))

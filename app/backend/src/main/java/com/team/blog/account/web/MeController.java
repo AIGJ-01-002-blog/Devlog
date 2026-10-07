@@ -110,6 +110,13 @@ public class MeController {
         return changed;
     }
 
+    /** AI 동의 (018 FR-028·FR-030): 지금 문구 버전과 일자를 기록한다. 이미 동의했으면 버전·일자만 새로 쓴다. */
+    @PostMapping("/agreements/ai")
+    public ResponseEntity<Void> agreeAi(@CurrentMember MemberPrincipal me) {
+        agreements.agreeAi(me.id());
+        return ResponseEntity.noContent().build();
+    }
+
     /** AI 동의 철회 (FR-025). 동의 기록이 없어도 같은 결과(204)다. */
     @DeleteMapping("/agreements/ai")
     public ResponseEntity<Void> withdrawAi(@CurrentMember MemberPrincipal me) {
