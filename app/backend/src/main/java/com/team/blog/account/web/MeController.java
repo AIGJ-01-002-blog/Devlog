@@ -1,21 +1,52 @@
 package com.team.blog.account.web;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team.blog.account.application.AgreementService;
+import com.team.blog.account.application.MemberSettingsService;
 import com.team.blog.account.application.NicknameService;
+import com.team.blog.account.application.ProfileService;
+import com.team.blog.account.domain.AgreementType;
+import com.team.blog.account.domain.Visibility;
+import com.team.blog.media.ProfileImages;
+import com.team.blog.shared.error.ApiException;
+import com.team.blog.shared.error.FieldErrorItem;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
 
+/** 내 프로필·설정 (005). 회원 번호를 요청으로 받지 않고 항상 로그인한 본인만 바꾼다 (FR-002). */
 @RestController
 @RequestMapping("/api/me")
 public class MeController {
     private final NicknameService nicknameService;
+    private final ProfileService profileService;
+    private final ProfileImages profileImages;
+    private final MemberSettingsService settings;
+    private final AgreementService agreements;
 
-    public MeController(NicknameService nicknameService) {
+    public MeController(NicknameService nicknameService, ProfileService profileService, ProfileImages profileImages,
+                        MemberSettingsService settings, AgreementService agreements) {
         this.nicknameService = nicknameService;
+        this.profileService = profileService;
+        this.profileImages = profileImages;
+        this.settings = settings;
+        this.agreements = agreements;
     }
 
     public record NicknameRequest(String nickname) {}
@@ -23,5 +54,83 @@ public class MeController {
     @PatchMapping("/nickname")
     public NicknameService.Result changeNickname(@CurrentMember MemberPrincipal me, @RequestBody NicknameRequest body) {
         return nicknameService.change(me.id(), body.nickname());
+    }
+
+    /** 설정 화면 전체 (FR-022·FR-023). 직전 로그인은 본인 세션에서만 나온다. */
+    @GetMapping("/settings")
+    public MemberSettingsService.Settings settings(@CurrentMember MemberPrincipal me) {
+        return settings.of(me);
+    }
+
+    /**
+     * 닉네임·소개·프로필 사진을 한 번에 저장한다 (FR-003). 보낸 칸만 바뀐다. profileImageId를 null로 보내면 기본 이미지.
+     * 칸이 있는지(없음 vs null)를 구분해야 해서 Map으로 받는다.
+     */
+    @PatchMapping("/profile")
+    public ProfileService.Profile updateProfile(@CurrentMember MemberPrincipal me, @RequestBody Map<String, Object> body) {
+        return profileService.update(me.id(), new ProfileService.Patch(
+                body.containsKey("nickname"), stringField(body, "nickname"),
+                body.containsKey("bio"), stringField(body, "bio"),
+                body.containsKey("profileImageId"), longField(body, "profileImageId")));
+    }
+
+    /** 프로필 사진 올리기 (FR-011~FR-013·FR-017). 본문은 사진 그대로(이미 256×256으로 자른 것), 최대 1MB. */
+    @PostMapping("/profile-image")
+    public ResponseEntity<ProfileImages.Uploaded> uploadProfileImage(@CurrentMember MemberPrincipal me, HttpServletRequest request)
+            throws IOException {
+        long declared = request.getContentLengthLong();
+        if (declared > ProfileImages.MAX_BYTES) throw tooLarge();
+        byte[] data;
+        try (InputStream in = request.getInputStream()) {
+            data = in.readNBytes(ProfileImages.MAX_BYTES + 1);
+        }
+        if (data.length > ProfileImages.MAX_BYTES) throw tooLarge();
+        if (data.length == 0) throw ApiException.badRequest("IMAGE_TYPE", "jpg·png·gif·webp 사진만 올릴 수 있어요.");
+        return ResponseEntity.status(HttpStatus.CREATED).body(profileImages.upload(me.id(), data));
+    }
+
+    public record SettingsRequest(String defaultVisibility) {}
+
+    /** 새 글 기본 공개 범위 (FR-024). 이미 있는 글은 바뀌지 않는다. */
+    @PatchMapping("/settings")
+    public Map<String, String> updateSettings(@CurrentMember MemberPrincipal me, @RequestBody SettingsRequest body) {
+        Visibility v = parseVisibility(body.defaultVisibility());
+        settings.changeDefaultVisibility(me.id(), v);
+        return Map.of("defaultVisibility", v.name());
+    }
+
+    /** AI 동의 철회 (FR-025). 동의 기록이 없어도 같은 결과(204)다. */
+    @DeleteMapping("/agreements/ai")
+    public ResponseEntity<Void> withdrawAi(@CurrentMember MemberPrincipal me) {
+        agreements.withdrawAi(me.id());
+        return ResponseEntity.noContent().build();
+    }
+
+    private static Visibility parseVisibility(String raw) {
+        if (raw != null) {
+            try {
+                return Visibility.valueOf(raw.strip().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ignored) {
+                // 아래에서 오류
+            }
+        }
+        throw ApiException.validation(List.of(new FieldErrorItem("defaultVisibility", "INVALID_VISIBILITY", "공개 범위를 골라 주세요.")));
+    }
+
+    private static String stringField(Map<String, Object> body, String name) {
+        Object v = body.get(name);
+        if (v == null || v instanceof String) return (String) v;
+        throw ApiException.validation(List.of(new FieldErrorItem(name, "INVALID_TYPE", "글자로 보내 주세요.")));
+    }
+
+    private static Long longField(Map<String, Object> body, String name) {
+        Object v = body.get(name);
+        if (v == null) return null;
+        if (v instanceof Number n && n.doubleValue() == n.longValue() && n.longValue() > 0) return n.longValue();
+        throw ApiException.validation(List.of(new FieldErrorItem(name, "PROFILE_IMAGE_INVALID", "이 사진은 프로필로 쓸 수 없어요. 다시 올려 주세요.")));
+    }
+
+    private static ApiException tooLarge() {
+        return new ApiException(HttpStatus.PAYLOAD_TOO_LARGE, "IMAGE_TOO_LARGE", "프로필 사진은 1MB까지 올릴 수 있어요.");
     }
 }

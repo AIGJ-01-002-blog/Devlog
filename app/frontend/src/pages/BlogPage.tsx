@@ -23,7 +23,7 @@ export function BlogPage({ handle }: { handle: string }) {
   return (
     <main className="container">
       <header className="blog-profile">
-        <Avatar src={profile.profileImageUrl} name={profile.nickname} size={96} />
+        <Avatar src={profile.profileImageUrl} name={profile.nickname} seed={profile.handle} size={96} />
         <div>
           <h1>{profile.nickname}</h1>
           <p className="muted">@{profile.handle}</p>

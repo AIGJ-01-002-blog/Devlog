@@ -29,7 +29,7 @@ export function Header() {
               <div className="menu" ref={menuRef}>
                 <button type="button" className="menu-button" aria-haspopup="menu" aria-expanded={open}
                         onClick={() => setOpen((o) => !o)}>
-                  <Avatar src={null} name={member.nickname} />
+                  <Avatar src={member.profileImageUrl} name={member.nickname} seed={member.handle} />
                   <span className="sr-only">내 메뉴</span>
                 </button>
                 {open && (

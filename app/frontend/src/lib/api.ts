@@ -36,6 +36,8 @@ function csrfToken(): string | null {
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
+  /** JSON 대신 그대로 보낼 본문(사진 올리기). Content-Type은 Blob의 형식을 쓴다 */
+  rawBody?: Blob
   headers?: Record<string, string>
   keepalive?: boolean
   signal?: AbortSignal
@@ -55,7 +57,8 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     const token = csrfToken()
     if (token) headers['X-XSRF-TOKEN'] = token
   }
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json'
+  if (options.rawBody) headers['Content-Type'] = options.rawBody.type || 'application/octet-stream'
+  else if (options.body !== undefined) headers['Content-Type'] = 'application/json'
 
   let res: Response
   try {
@@ -63,7 +66,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
       method,
       headers,
       credentials: 'same-origin',
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: options.rawBody ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
       keepalive: options.keepalive,
       signal: options.signal,
     })

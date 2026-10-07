@@ -21,6 +21,7 @@ import com.team.blog.account.application.EmailVerification;
 import com.team.blog.account.application.MemberQueryService;
 import com.team.blog.account.application.PendingSignup;
 import com.team.blog.account.application.SignupService;
+import com.team.blog.media.ProfileImages;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.security.CurrentMember;
@@ -36,16 +37,19 @@ public class AuthController {
     private final AgreementService agreementService;
     private final MemberQueryService memberQuery;
     private final EmailVerification verification;
+    private final ProfileImages profileImages;
     private final LoginSessions sessions;
     private final BlogProperties props;
     private final Clock clock;
 
     public AuthController(SignupService signupService, AgreementService agreementService, MemberQueryService memberQuery,
-                          EmailVerification verification, LoginSessions sessions, BlogProperties props, Clock clock) {
+                          EmailVerification verification, ProfileImages profileImages, LoginSessions sessions, BlogProperties props,
+                          Clock clock) {
         this.signupService = signupService;
         this.agreementService = agreementService;
         this.memberQuery = memberQuery;
         this.verification = verification;
+        this.profileImages = profileImages;
         this.sessions = sessions;
         this.props = props;
         this.clock = clock;
@@ -55,7 +59,8 @@ public class AuthController {
     public record MeResponse(boolean authenticated, MemberView member, boolean agreementRequired,
                              PreviousLogin previousLogin, boolean pendingSignup, boolean emailVerified) {}
 
-    public record MemberView(long id, String handle, String nickname, String role, String defaultVisibility, String status) {}
+    public record MemberView(long id, String handle, String nickname, String role, String defaultVisibility, String status,
+                             String profileImageUrl) {}
 
     /** 직전 로그인 (docs/07 §6). at이 null이면 첫 로그인. */
     public record PreviousLogin(Instant at, String provider) {}
@@ -68,7 +73,8 @@ public class AuthController {
             return new MeResponse(false, null, false, null, pending, false);
         }
         MemberView view = memberQuery.findById(principal.id())
-                .map(m -> new MemberView(m.id(), m.handle(), m.nickname(), principal.role(), m.defaultVisibility().name(), m.status().name()))
+                .map(m -> new MemberView(m.id(), m.handle(), m.nickname(), principal.role(), m.defaultVisibility().name(), m.status().name(),
+                        profileImages.currentUrl(m.id()).orElse(null)))
                 .orElse(null);
         return new MeResponse(view != null, view, principal.agreementRequired(),
                 new PreviousLogin(principal.previousLoginAt(), principal.provider()), false,

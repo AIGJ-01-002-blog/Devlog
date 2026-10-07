@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import { setFlash } from '../lib/flash'
+import { copySocialAvatar, socialAvatarSource } from '../lib/image'
 import { navigate } from '../lib/router'
 
 interface Terms { termsVersion: string; termsEffectiveDate: string; privacyVersion: string; privacyEffectiveDate: string }
@@ -21,6 +23,8 @@ export function SignupSocialPage() {
   const [email, setEmail] = useState('')
   const [terms, setTerms] = useState(false)
   const [privacy, setPrivacy] = useState(false)
+  const [usePhoto, setUsePhoto] = useState(true)
+  const [photoBroken, setPhotoBroken] = useState(false)
   const [handleCheck, setHandleCheck] = useState<Check | null>(null)
   const [nickCheck, setNickCheck] = useState<Check | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -62,6 +66,10 @@ export function SignupSocialPage() {
   }
   if (!draft) return <main className="container narrow"><p className="muted center">불러오는 중…</p></main>
 
+  const providerName = draft.provider === 'GITHUB' ? 'GitHub' : 'Google'
+  // 메일 인증 전에는 사진을 올릴 수 없어(005 FR-017) 이메일을 따로 받는 가입은 복사하지 않는다
+  const photo = draft.emailRequired || photoBroken ? null : socialAvatarSource(draft.avatarUrl)
+
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -70,6 +78,9 @@ export function SignupSocialPage() {
       const r = await api<{ handle: string; redirect: string }>('/api/auth/signup', {
         method: 'POST', body: { handleBody: body, nickname, agreeTerms: terms, agreePrivacy: privacy, email: draft.emailRequired ? email : undefined },
       })
+      if (photo && usePhoto && !(await copySocialAvatar(draft.avatarUrl!))) {
+        setFlash('소셜 사진을 가져오지 못했어요. 설정에서 직접 올릴 수 있어요.')
+      }
       await refresh()
       navigate(r.redirect || '/', { replace: true })
     } catch (err) {
@@ -125,6 +136,17 @@ export function SignupSocialPage() {
             {errors.nickname ?? (nickCheck == null ? '2~10자' : nickCheck.available ? '쓸 수 있는 닉네임이에요.' : nickCheck.message)}
           </small>
         </label>
+        {photo && (
+          <label className="field social-photo">
+            <span className="row">
+              <input type="checkbox" checked={usePhoto} onChange={(e) => setUsePhoto(e.target.checked)} />
+              {providerName} 프로필 사진 사용
+            </span>
+            <img src={photo} alt="" width={64} height={64} className="avatar" referrerPolicy="no-referrer"
+                 onError={() => setPhotoBroken(true)} />
+            <small className="muted">가입할 때 한 번 복사해 와요. 나중에 설정에서 바꿀 수 있어요.</small>
+          </label>
+        )}
         <fieldset className="field agreements">
           <label><input type="checkbox" checked={terms && privacy} onChange={(e) => { setTerms(e.target.checked); setPrivacy(e.target.checked) }} /> <b>모두 동의</b></label>
           <label><input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} /> (필수) 이용약관 ({draft.terms.termsEffectiveDate} 시행)</label>
@@ -133,7 +155,7 @@ export function SignupSocialPage() {
         </fieldset>
         {errors.form && <div className="banner banner-warn" role="alert">{errors.form}</div>}
         <button className="btn btn-primary btn-block" disabled={submitting || !terms || !privacy}>
-          {submitting ? '가입하는 중…' : '가입하기'}
+          {submitting ? (photo && usePhoto ? '가입하고 사진을 가져오는 중…' : '가입하는 중…') : '가입하기'}
         </button>
       </form>
     </main>

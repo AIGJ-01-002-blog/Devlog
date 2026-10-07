@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { Flash } from './components/Flash'
 import { Header } from './components/Header'
 import { VerifyBanner } from './components/VerifyBanner'
 import { loginPath, useAuth } from './lib/auth'
@@ -15,6 +16,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { SignupEmailPage } from './pages/SignupEmailPage'
 import { SignupSocialPage } from './pages/SignupSocialPage'
+import { TermsPage } from './pages/TermsPage'
 import { VerifyEmailPage } from './pages/VerifyEmailPage'
 import { NewPostPage, WritePage } from './pages/WritePage'
 
@@ -24,6 +26,7 @@ export function App() {
     <>
       {!path.startsWith('/write') && <Header />}
       {path !== '/verify-email' && <VerifyBanner />}
+      <Flash path={path} />
       <AgreementGate path={path}>{route(path)}</AgreementGate>
     </>
   )
@@ -41,6 +44,8 @@ function route(path: string): ReactNode {
   if (path === '/reset-password') return <ResetPasswordPage />
   if (path === '/verify-email') return <VerifyEmailPage />
   if (path === '/agreements') return <AgreementsPage />
+  if (path === '/terms') return <TermsPage kind="terms" />
+  if (path === '/privacy') return <TermsPage kind="privacy" />
   if (path === '/write') return <RequireLogin><NewPostPage /></RequireLogin>
   if ((p = match('/write/:id', path))) return <RequireLogin><WritePage key={p.id} id={p.id} /></RequireLogin>
   if (path === '/manage/posts') return <RequireLogin><ManagePage /></RequireLogin>

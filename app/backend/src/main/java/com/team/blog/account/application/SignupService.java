@@ -71,7 +71,7 @@ public class SignupService {
         String handle = suggester.suggest(p.provider(), material);
         String nickname = nicknamePolicy.prefill(p.name() != null && !p.name().isBlank() ? p.name() : p.login());
         return new SignupDraft(p.provider(), p.provider().handlePrefix(), HandlePolicy.bodyOf(handle), nickname,
-                p.verifiedEmail(), p.avatarUrl(), p.verifiedEmail() == null);
+                p.verifiedEmail(), SocialAvatar.safeUrl(p.avatarUrl()), p.verifiedEmail() == null);
     }
 
     public MemberPrincipal complete(PendingSignup pending, SignupForm form) {

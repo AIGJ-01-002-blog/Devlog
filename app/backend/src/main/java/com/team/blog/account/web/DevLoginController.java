@@ -41,7 +41,7 @@ public class DevLoginController {
     }
 
     public record DevLoginRequest(String provider, String providerUserId, String login, String name, String email,
-                                  String redirect) {}
+                                  String redirect, String avatarUrl) {}
 
     @PostMapping("/api/dev/login")
     public Map<String, String> login(@RequestBody DevLoginRequest body, HttpServletRequest request, HttpServletResponse response) {
@@ -50,7 +50,7 @@ public class DevLoginController {
             request.getSession(true).setAttribute(LoginFlow.REDIRECT_KEY, SafeRedirects.sanitize(body.redirect()));
         }
         String target = loginFlow.complete(new SocialProfile(provider, body.providerUserId(), body.login(), body.name(),
-                body.email(), null), request, response);
+                body.email(), body.avatarUrl()), request, response);
         return Map.of("redirect", target);
     }
 }

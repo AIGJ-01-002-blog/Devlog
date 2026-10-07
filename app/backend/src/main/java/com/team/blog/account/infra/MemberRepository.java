@@ -3,7 +3,10 @@ package com.team.blog.account.infra;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +14,10 @@ import com.team.blog.account.domain.Member;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByHandle(String handle);
+
+    /** 프로필 저장처럼 한 회원의 여러 칸을 함께 바꿀 때 회원 행을 잠근다 (005 FR-005·FR-015). */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Member> findWithLockById(Long id);
 
     boolean existsByHandle(String handle);
 

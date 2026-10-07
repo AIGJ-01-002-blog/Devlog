@@ -21,7 +21,7 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
       {showAuthor && (
         <footer className="card-footer">
           <Link to={`/@${card.author.handle}`} className="card-author">
-            <Avatar src={card.author.profileImageUrl} name={card.author.nickname} size={24} />
+            <Avatar src={card.author.profileImageUrl} name={card.author.nickname} seed={card.author.handle} size={24} />
             <span>by <b>{card.author.nickname}</b></span>
           </Link>
           <span className="card-likes" aria-label={`좋아요 ${card.likeCount}`}>♥ {card.likeCount}</span>
