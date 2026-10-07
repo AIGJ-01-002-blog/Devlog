@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ConflictDialog } from '../components/ConflictDialog'
 import { AiTagSuggest } from '../components/AiTagSuggest'
+import { AttachmentEditor } from '../components/AttachmentEditor'
 import { TagInput } from '../components/TagInput'
 import { api, ApiError } from '../lib/api'
 import { Autosaver, type Content, type SaveState } from '../lib/autosave'
@@ -340,6 +341,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
                       }
                     }} />
           {errors.contentMd && <small className="error">{errors.contentMd}</small>}
+          <AttachmentEditor postId={view.id} published={view.status === 'PUBLISHED'} />
         </section>
         <section className="editor-preview" aria-label="미리보기">
           <h1 className="post-title">{title || <span className="muted">제목 없음</span>}</h1>

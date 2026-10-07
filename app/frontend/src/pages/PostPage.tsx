@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Avatar } from '../components/Avatar'
 import { FollowButton } from '../components/FollowButton'
 import { Comments } from '../components/Comments'
+import { AttachmentList } from '../components/AttachmentList'
 import { LikeButton } from '../components/LikeButton'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { clock, compactNumber, fullDate, monthDay, relativeDate } from '../lib/format'
@@ -133,6 +134,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           </ul>
         )}
         <div className="post-body markdown" ref={bodyRef} dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
+        <AttachmentList key={post.id} postId={post.id} />
         <div className="post-stats muted">
           <LikeButton postId={post.id} mine={post.mine} initial={{ liked: post.liked, likeCount: post.likeCount }}
             onChange={(l) => setPost((p) => p && { ...p, liked: l.liked, likeCount: l.likeCount })} />
