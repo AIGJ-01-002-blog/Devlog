@@ -41,6 +41,7 @@
 | [034-framework-error-status](./034-framework-error-status/spec.md) | 요청 쪽 오류를 서버 오류로 보지 않기 | 2026-10-08 추가 (테스트 보강) | 이후 단계 (Tier C) | 2 |
 | [035-modal-focus](./035-modal-focus/spec.md) | 대화상자 초점 다루기 | 2026-10-08 추가 (접근성) | 이후 단계 (Tier C) | 2 |
 | [036-session-store-down](./036-session-store-down/spec.md) | 세션 저장소가 멈췄을 때 가입·로그인 응답 | 2026-10-08 추가 (장애 처리) | 이후 단계 (Tier C) | 2 |
+| [037-telegram-token-logs](./037-telegram-token-logs/spec.md) | 잘못 들어간 텔레그램 토큰이 로그에 남지 않게 | 2026-10-08 추가 (보안) | 이후 단계 (Tier C) | 2 |
 
 ## 여러 spec에 걸치는 문서
 
