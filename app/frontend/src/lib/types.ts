@@ -1,0 +1,118 @@
+export type Visibility = 'PUBLIC' | 'PRIVATE'
+export type PostStatus = 'DRAFT' | 'PUBLISHED'
+
+export interface MemberView {
+  id: number
+  handle: string
+  nickname: string
+  role: string
+  defaultVisibility: Visibility
+  status: string
+}
+
+export interface Me {
+  authenticated: boolean
+  member: MemberView | null
+  agreementRequired: boolean
+  previousLogin: { at: string | null; provider: string } | null
+  pendingSignup: boolean
+}
+
+export interface CardAuthor {
+  id: number
+  handle: string
+  nickname: string
+  profileImageUrl: string | null
+}
+
+export interface Card {
+  id: number
+  url: string
+  title: string
+  excerpt: string | null
+  thumbnailUrl: string | null
+  firstPublicAt: string
+  commentCount: number
+  likeCount: number
+  author: CardAuthor
+}
+
+export interface FeedPage {
+  items: Card[]
+  nextCursor: string | null
+}
+
+export interface BlogProfile {
+  id: number
+  handle: string
+  nickname: string
+  bio: string | null
+  profileImageUrl: string | null
+  publicPostCount: number
+  mine: boolean
+}
+
+export interface PostDetail {
+  id: number
+  url: string
+  title: string
+  contentHtml: string
+  excerpt: string | null
+  thumbnailUrl: string | null
+  status: PostStatus
+  visibility: Visibility
+  publishedAt: string | null
+  firstPublicAt: string | null
+  editedAt: string | null
+  viewCount: number
+  likeCount: number
+  commentCount: number
+  author: { id: number; handle: string; nickname: string; bio: string | null; profileImageUrl: string | null }
+  mine: boolean
+  owner: { editing: boolean; editingSavedAt: string | null; hidden: boolean } | null
+}
+
+export interface EditorView {
+  id: number
+  status: PostStatus
+  visibility: Visibility
+  title: string
+  contentMd: string
+  version: number
+  savedAt: string
+  editing: boolean
+  url: string | null
+  publishedAt: string | null
+  firstPublicAt: string | null
+  editedAt: string | null
+}
+
+export interface ServerContent {
+  title: string
+  contentMd: string
+  version: number
+  savedAt: string
+}
+
+export interface ManageItem {
+  id: number
+  title: string
+  status: PostStatus
+  visibility: Visibility | null
+  editing: boolean
+  hidden: boolean
+  updatedAt: string
+  publishedAt: string | null
+  editedAt: string | null
+  deletedAt: string | null
+  purgeAt: string | null
+  viewCount: number
+  likeCount: number
+  commentCount: number
+}
+
+export interface ManagePage {
+  items: ManageItem[]
+  nextCursor: string | null
+  counts: { drafts: number; published: number; trash: number } | null
+}

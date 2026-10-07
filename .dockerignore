@@ -1,0 +1,16 @@
+# 이미지 빌드에 필요 없는 것 (빌드 문맥을 작게)
+**/node_modules
+**/dist
+**/target
+**/build
+.git
+docs
+specs
+verification
+erd
+scripts
+deploy/k8s
+**/*.log
+**/.env
+**/.env.*
+**/secret.env

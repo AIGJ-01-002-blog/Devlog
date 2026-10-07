@@ -128,6 +128,17 @@ class ReadShareTest extends IntegrationTest {
     }
 
     @Test
+    void DB에_반영_전인_자동_저장만_있어도_작성자에게_수정_중으로_보인다() throws Exception {
+        Session s = signup(uniqueLogin("autoedit"));
+        long id = publish(s, "발행본", "발행 본문", "PUBLIC");
+        s.http().perform(asJson(put("/api/posts/" + id + "/autosave"), Map.of("title", "발행본", "contentMd", "자동 저장 본문", "baseVersion", 1)))
+                .andExpect(status().isOk());
+        s.http().perform(get("/api/posts/" + id)).andExpect(jsonPath("$.owner.editing").value(true))
+                .andExpect(jsonPath("$.owner.editingSavedAt").isNotEmpty());
+        mvc.perform(get("/api/posts/" + id)).andExpect(jsonPath("$.owner").doesNotExist());
+    }
+
+    @Test
     void 관리자가_숨긴_글은_작성자에게만_보이고_목록에는_없다() throws Exception {
         Session s = signup(uniqueLogin("hidden"));
         long id = publish(s, "숨김", "본문", "PUBLIC");

@@ -5,9 +5,9 @@
 ## Phase 1: Setup
 
 - [X] T001a `app/backend` Maven 프로젝트(Spring Boot 4.1.1, Java 21)
-- [ ] T001b `app/frontend`(Vite + React + TS) 만들기
+- [x] T001b `app/frontend`(Vite + React + TS) 만들기
 - [X] T002 Flyway `V1__common_schema.sql` = ERD 정본(docs/51, Crowfoot 문서 660과 같은 스키마). 블로그 주소 규칙이 이미 반영되어 V2는 두지 않음
-- [ ] T003a `app/compose.yaml`(PostgreSQL 16, Redis 7)
+- [x] T003a `app/compose.yaml`(PostgreSQL 16, Redis 7)
 - [X] T003b `application.yml` 설정값(약관 버전·예약어·요청 제한·세션 14일)
 - [X] T004 테스트 기반: Testcontainers PostgreSQL·Redis 공용 설정, MockMvc 로그인 헬퍼
 
@@ -46,4 +46,4 @@
 
 ## Phase 6: 화면
 
-- [ ] T025 React: 로그인 화면, 가입 마무리(접두어 고정·0.5초 중복 확인), 재동의, 정지 안내, 프로필 메뉴·로그아웃
+- [x] T025 React: 로그인 화면, 가입 마무리(접두어 고정·0.5초 중복 확인), 재동의, 정지 안내, 프로필 메뉴·로그아웃
