@@ -152,6 +152,8 @@ class EmailAuthTest extends IntegrationTest {
                 .andExpect(jsonPath("$.code").value("EMAIL_NOT_VERIFIED"));
         a.http().perform(asJson(patch("/api/posts/" + postId + "/visibility"), Map.of("visibility", "PRIVATE")))
                 .andExpect(jsonPath("$.code").value("EMAIL_NOT_VERIFIED"));
+        a.http().perform(put("/api/posts/" + postId + "/like").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("EMAIL_NOT_VERIFIED"));
         a.http().perform(delete("/api/posts/" + postId + "/draft").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(jsonPath("$.code").value("EMAIL_NOT_VERIFIED"));
         // 허용: 닉네임 수정, 비밀번호 변경

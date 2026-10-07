@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Avatar } from '../components/Avatar'
 import { Comments } from '../components/Comments'
+import { LikeButton } from '../components/LikeButton'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { clock, compactNumber, fullDate, monthDay, relativeDate } from '../lib/format'
 import { enhanceGifs } from '../lib/gifPlayer'
@@ -124,7 +125,8 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
         )}
         <div className="post-body markdown" ref={bodyRef} dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
         <div className="post-stats muted">
-          <span>♥ {compactNumber(post.likeCount)}</span>
+          <LikeButton postId={post.id} mine={post.mine} initial={{ liked: post.liked, likeCount: post.likeCount }}
+            onChange={(l) => setPost((p) => p && { ...p, liked: l.liked, likeCount: l.likeCount })} />
           <span>댓글 {compactNumber(post.commentCount)}</span>
           <span>조회 {compactNumber(post.viewCount)}</span>
           {date && <span>{fullDate(date)}</span>}
