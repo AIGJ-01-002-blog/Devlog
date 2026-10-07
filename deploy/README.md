@@ -20,8 +20,8 @@ deploy/
 
 | 무엇 | 어디서 | 비고 |
 |---|---|---|
-| PostgreSQL | Crowfoot 발급 DB (`nhnacademy` DB, 스키마 `cf_u25_d1`) | 호스트·비밀번호는 Crowfoot 데이터베이스 탭. 안 되면 학교 PG-SQL `s3.java21.net:8000`. 테이블은 앱 시작 때 Flyway가 만든다 |
-| Redis | `220.67.216.14:6379` | DB 번호는 학번 끝자리 기준(0~56), 지금 18. `FLUSHALL` 금지 |
+| PostgreSQL | Crowfoot 발급 DB (`nhnacademy` DB, 스키마 `cf_u25_d1`) | 호스트·비밀번호는 Crowfoot 데이터베이스 탭. 안 되면 학교 PG-SQL `s3.java21.net:8000`의 2팀 DB(계정은 secret.env에만). 테이블은 앱 시작 때 Flyway가 만든다 |
+| Redis | `220.67.216.14:6379` | DB 번호 8 (318·319는 범위 0~56 밖이라 마지막 대안 8). `FLUSHALL` 금지 |
 | MinIO | `storage.java21.net` | 버킷 `blog-images` |
 | RabbitMQ | `s4.java21.net:5672` | 알림(015) |
 | Elasticsearch | `s4.java21.net:9200` | 검색(014), nori 플러그인 |
@@ -29,7 +29,9 @@ deploy/
 
 앱 쪽 전제: 포트 8080, Spring Boot Actuator의 `/actuator/health/liveness`·`/actuator/health/readiness`(쿠버네티스 안에서 자동으로 열림), 세션은 Redis라 파드를 여러 개 띄워도 된다.
 
-## 학교 클러스터에 배포 (수동)
+## 클러스터에 배포 (수동)
+
+2026-10-07 기준 학교에서 받은 쿠버네티스 클러스터는 없다. 클러스터가 생기면 아래처럼 올린다.
 
 ```bash
 cd deploy/k8s/overlays/nhn
