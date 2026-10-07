@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriUtils;
 
+import com.team.blog.comment.application.CommentQuery;
 import com.team.blog.discovery.application.FeedQuery;
 import com.team.blog.discovery.application.PostDetailQuery;
 import com.team.blog.post.access.Viewer;
@@ -43,9 +44,11 @@ public class PageController {
     private final BlogProperties.Site site;
     private final TagQuery tags;
     private final TagController tagApi;
+    private final CommentQuery comments;
 
     public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
-                          TagController tagApi) {
+                          TagController tagApi, CommentQuery comments) {
+        this.comments = comments;
         this.shell = shell;
         this.feed = feed;
         this.details = details;
@@ -157,7 +160,9 @@ public class PageController {
             meta = new HeadMeta(d.title() + " - " + site.name(), null, null, null, null, null, null, false);
         }
         CacheControl cc = d.publiclyVisible() ? CacheControl.noCache().cachePrivate() : CacheControl.noStore().cachePrivate();
-        return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "post", "post", d)), cc);
+        return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "post", "post", d,
+                // 글 상세를 열면 첫 20개 댓글이 함께 보인다 (011 FR-026)
+                "comments", comments.page(d.id(), Viewer.of(me), null, null, null))), cc);
     }
 
     /** 로그인이 필요하거나 개인적인 화면: 같은 껍데기, 수집 거부, 저장 안 함. React가 그린다. */
