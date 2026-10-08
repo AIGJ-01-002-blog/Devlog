@@ -17,5 +17,6 @@ describe('내 설정 탭 (063)', () => {
         expect(tabFromHash('#telegram')).toBe('notifications');
         expect(tabFromHash('')).toBe('profile');
         expect(tabFromHash('#nope')).toBe('profile');
+        expect(tabFromHash('#%E0')).toBe('profile');
     });
 });

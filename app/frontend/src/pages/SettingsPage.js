@@ -37,7 +37,14 @@ export const SETTINGS_TABS = [
 ];
 const HASH_ALIASES = { telegram: 'notifications', password: 'account', social: 'profile' };
 export function tabFromHash(hash) {
-    const key = decodeURIComponent(hash.replace(/^#/, ''));
+    let key;
+    // 손으로 고친 주소(#%E0 같은 잘못된 인코딩)여도 화면이 깨지지 않게 프로필로 연다
+    try {
+        key = decodeURIComponent(hash.replace(/^#/, ''));
+    }
+    catch {
+        return 'profile';
+    }
     const found = SETTINGS_TABS.find((t) => t.id === key);
     return found ? found.id : HASH_ALIASES[key] ?? 'profile';
 }
