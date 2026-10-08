@@ -363,6 +363,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.27.5 | 2026-10-08 | 部署时等待学校服务器 SSH 隧道打开（修复隧道断开，部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.5) |
 | v1.27.4 | 2026-10-08 | 学校服务器集群通过学校 DNS 解析外部域名（修复域名隧道，部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.4) |
 | v1.27.3 | 2026-10-08 | 让学校服务器上的域名连接（cloudflared）改用 http2，并在失败时输出原因日志（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.3) |
 | v1.27.2 | 2026-10-08 | 源代码与文档仓库分离（文档移至 AIGJ-01-002-blog/docs） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.2) |
