@@ -1,0 +1,66 @@
+# 2개를 띄워 하나가 교체·재시작되는 동안에도 주소가 끊기지 않게 한다(앱과 같은 무중단 원칙).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudflared
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: {type: RuntimeDefault}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudflared
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:2026.9.1
+          args: ["tunnel", "--no-autoupdate", "--metrics", "0.0.0.0:2000", "run"]
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef: {name: cloudflared-token, key: token}
+          ports:
+            - {name: metrics, containerPort: 2000}
+          # /ready는 Cloudflare와 연결이 하나 이상 살아 있을 때만 200. 연결이 잠깐 끊겨도 재시작하지 않게 liveness는 프로세스만 보는 /healthcheck
+          readinessProbe:
+            httpGet: {path: /ready, port: metrics}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /healthcheck, port: metrics}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests: {cpu: 20m, memory: 32Mi}
+            limits: {memory: 128Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cloudflared
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared
