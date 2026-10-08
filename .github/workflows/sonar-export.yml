@@ -10,8 +10,8 @@ on:
         description: 프로젝트 키 (비우면 레포 변수 SONAR_PROJECT_KEY)
         required: false
 
-permissions:
-  contents: read
+# 저장소를 읽지 않고 GITHUB_TOKEN도 쓰지 않는다(아티팩트는 런너 토큰으로 올라감)
+permissions: {}
 
 jobs:
   export:
