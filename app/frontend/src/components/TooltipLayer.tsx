@@ -4,7 +4,7 @@ import { findTipTarget, placeTip, SAVED_TITLE, tipText, TIP_DELAY_MS, TIP_WARM_M
 const TIP_ID = 'app-tooltip'
 
 /**
- * 화면 전체에 하나만 두는 툴팁 (spec 054). 마우스를 올리면 잠깐 뒤에, 키보드로 초점이 오면 바로 띄운다.
+ * 화면 전체에 하나만 두는 툴팁 (spec 055). 마우스를 올리면 잠깐 뒤에, 키보드로 초점이 오면 바로 띄운다.
  * Esc·누르기·스크롤로 닫히고(WCAG 1.4.13), 손가락 터치에서는 띄우지 않는다(누르면 바로 동작해야 하니까).
  */
 export function TooltipLayer() {

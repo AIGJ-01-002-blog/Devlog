@@ -28,6 +28,7 @@ import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
 import com.team.blog.search.application.SearchQuery;
 import com.team.blog.search.web.SearchController;
+import com.team.blog.release.ReleaseNotes;
 import com.team.blog.series.application.SeriesQuery;
 import com.team.blog.account.application.MemberAbout;
 import com.team.blog.shared.config.BlogProperties;
@@ -63,10 +64,12 @@ public class PageController {
     private final TrendingService trending;
     private final SeriesQuery series;
     private final MemberAbout about;
+    private final ReleaseNotes releaseNotes;
 
     public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
                           TagController tagApi, CommentQuery comments, SearchQuery search, FollowQuery follows,
-                          TrendingService trending, SeriesQuery series, MemberAbout about) {
+                          TrendingService trending, SeriesQuery series, MemberAbout about, ReleaseNotes releaseNotes) {
+        this.releaseNotes = releaseNotes;
         this.about = about;
         this.series = series;
         this.trending = trending;
@@ -166,6 +169,18 @@ public class PageController {
         HeadMeta meta = HeadMeta.site("AI에 devlog 연결하기 - " + site.name(), SLOGAN + " devlog MCP로 AI가 개발 일지를 써 줍니다.",
                 absolute("/mcp"), absolute(site.defaultOgImage()));
         return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "mcp")), CacheControl.noCache());
+    }
+
+    /** 릴리스 노트 (054): 누구나 보는 공개 화면. 서버는 최근 버전 제목만 그리고 React가 본문을 그린다. */
+    @GetMapping("/releases")
+    public ResponseEntity<String> releases() {
+        StringBuilder body = new StringBuilder("<main><h1>릴리스 노트</h1><ul>");
+        releaseNotes.all().stream().limit(10).forEach(r -> body.append("<li>v").append(SpaShell.esc(r.version()))
+                .append(r.date() == null ? "" : " · " + SpaShell.esc(r.date())).append("</li>"));
+        body.append("</ul></main>");
+        HeadMeta meta = HeadMeta.site("릴리스 노트 - " + site.name(), "devlog가 버전마다 무엇을 더하고 고쳤는지 모았어요.",
+                absolute("/releases"), absolute(site.defaultOgImage()));
+        return html(HttpStatus.OK, shell.render(meta, body.toString(), Map.of("page", "releases")), CacheControl.noCache());
     }
 
     @GetMapping("/@{handle}")
@@ -323,7 +338,7 @@ public class PageController {
 
     /** 로그인이 필요하거나 개인적인 화면: 같은 껍데기, 수집 거부, 저장 안 함. React가 그린다. */
     @GetMapping({"/login", "/signup", "/signup/social", "/forgot-password", "/reset-password", "/verify-email", "/agreements", "/write", "/write/{id}", "/manage/posts", "/settings", "/notifications", "/feed", "/lists/liked", "/terms", "/privacy",
-            "/settings/{section}", "/oauth/authorize"})
+            "/settings/{section}", "/oauth/authorize", "/support"})
     public ResponseEntity<String> app(@PathVariable(required = false) String id, @PathVariable(required = false) String section) {
         // 글 번호·설정 칸은 React가 주소에서 읽는다. 서버는 같은 껍데기만 준다
         return appShell();

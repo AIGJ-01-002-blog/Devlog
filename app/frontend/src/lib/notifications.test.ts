@@ -37,4 +37,10 @@ describe('notifications', () => {
     expect(messageOf({ ...hidden, hidden: { targetType: 'COMMENT', reason: null, stillHidden: false } }).text)
       .toBe('회원님의 댓글이 운영 정책에 따라 숨겨졌었어요 (지금은 다시 보여요)')
   })
+
+  it('문의 답변 (054)', () => {
+    const sys = { ...base, actor: null, commentPreview: null, post: null, type: 'INQUIRY_ANSWERED' as const }
+    expect(messageOf({ ...sys, inquiry: { id: 3, title: '태그 개수', status: 'CLOSED' } }).text).toBe('남기신 문의「태그 개수」에 답변이 왔어요')
+    expect(messageOf(sys).text).toBe('남기신 문의에 답변이 왔어요')
+  })
 })

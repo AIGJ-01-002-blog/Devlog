@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { applyFormat, MD_TOOLS } from '../lib/mdFormat';
 const MOD = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+';
 /**
- * 본문 위 서식 도구 (spec 054). 버튼마다 툴팁에 이름과 단축키가 보인다.
+ * 본문 위 서식 도구 (spec 055). 버튼마다 툴팁에 이름과 단축키가 보인다.
  * insertText로 바꿔 Ctrl+Z 되돌리기가 한 단계로 남고, 그게 안 되는 환경에서는 onChange로 값을 넘긴다.
  */
 export function applyMdEdit(el, edit, onChange) {

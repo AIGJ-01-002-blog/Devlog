@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { loginPath, useAuth } from '../lib/auth'
-import { Link, navigate } from '../lib/router'
+import { Link, navigate, useLocation } from '../lib/router'
 import { Avatar } from './Avatar'
 import { NotificationBell } from './NotificationBell'
 import { ThemeToggle } from './ThemeToggle'
 
 export function Header() {
   const { me, logout } = useAuth()
+  const { path } = useLocation()
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -50,7 +51,12 @@ export function Header() {
                     <Link to="/lists/liked" role="menuitem">좋아한 글</Link>
                     <Link to="/notifications" role="menuitem">알림</Link>
                     <Link to="/settings" role="menuitem">설정</Link>
+                    {/* 지금 화면 주소를 함께 넘겨 버그가 난 곳을 남긴다 (054) */}
+                    <Link to={path.startsWith('/support') ? '/support' : `/support?from=${encodeURIComponent(path)}`} role="menuitem"
+                          title="궁금한 점·버그·제안을 운영자에게 보내요">문의·신고</Link>
+                    <Link to="/releases" role="menuitem" title="버전마다 바뀐 점을 봐요">릴리스 노트</Link>
                     {member.role === 'ADMIN' && <Link to="/admin/reports" role="menuitem">신고 관리</Link>}
+                    {member.role === 'ADMIN' && <Link to="/admin/inquiries" role="menuitem">문의 관리</Link>}
                     <button type="button" role="menuitem" onClick={async () => {
                       await logout()
                       navigate('/')

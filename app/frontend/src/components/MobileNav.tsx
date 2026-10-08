@@ -20,7 +20,7 @@ const ME = <Icon><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /
 interface Item { to: string; label: string; tip: string; icon: ReactNode; active: (p: string) => boolean }
 
 /**
- * 좁은 화면(640px 이하)의 아래 탭 (spec 054). 머리말에 다 들어가지 않던 검색·피드·태그·AI 연결을
+ * 좁은 화면(640px 이하)의 아래 탭 (spec 055). 머리말에 다 들어가지 않던 검색·피드·태그·AI 연결을
  * 엄지가 닿는 자리로 옮기고, 터치에는 툴팁이 없으니 아이콘 아래에 이름을 늘 보인다. 넓은 화면에서는 CSS로 숨긴다.
  */
 export function MobileNav({ path }: { path: string }) {

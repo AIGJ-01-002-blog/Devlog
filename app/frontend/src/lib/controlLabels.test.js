@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 /**
- * 툴팁·모바일 규칙을 다음 릴리스에서도 지키게 하는 검사 (spec 054).
+ * 툴팁·모바일 규칙을 다음 릴리스에서도 지키게 하는 검사 (spec 055).
  * 글자 없이 아이콘·기호만 있는 버튼과 링크는 이름(aria-label·data-tip·title)이 있어야 한다.
  * 이름이 있으면 TooltipLayer가 마우스·키보드 초점에서 그 이름을 말풍선으로 보여 준다.
  */
@@ -55,7 +55,7 @@ function unnamedIconControls(file, code) {
     visit(sf);
     return bad;
 }
-describe('아이콘 버튼 이름 (054)', () => {
+describe('아이콘 버튼 이름 (055)', () => {
     it('검사할 화면 파일을 읽었다', () => {
         expect(Object.keys(sources).length).toBeGreaterThan(50);
     });

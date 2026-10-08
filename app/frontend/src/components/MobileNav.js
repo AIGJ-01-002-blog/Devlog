@@ -12,7 +12,7 @@ const TAG = _jsxs(Icon, { children: [_jsx("path", { d: "M3 12V4h8l10 10-8 8z" })
 const AI = _jsxs(Icon, { children: [_jsx("path", { d: "M12 3v3M12 18v3M3 12h3M18 12h3" }), _jsx("rect", { x: "7", y: "7", width: "10", height: "10", rx: "2" })] });
 const ME = _jsxs(Icon, { children: [_jsx("circle", { cx: "12", cy: "8", r: "4" }), _jsx("path", { d: "M4 21a8 8 0 0 1 16 0" })] });
 /**
- * 좁은 화면(640px 이하)의 아래 탭 (spec 054). 머리말에 다 들어가지 않던 검색·피드·태그·AI 연결을
+ * 좁은 화면(640px 이하)의 아래 탭 (spec 055). 머리말에 다 들어가지 않던 검색·피드·태그·AI 연결을
  * 엄지가 닿는 자리로 옮기고, 터치에는 툴팁이 없으니 아이콘 아래에 이름을 늘 보인다. 넓은 화면에서는 CSS로 숨긴다.
  */
 export function MobileNav({ path }) {

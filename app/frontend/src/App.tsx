@@ -47,6 +47,10 @@ const WithdrawnPage = lazyPage(() => import('./pages/WithdrawnPage'), 'Withdrawn
 const WithdrawPage = lazyPage(() => import('./pages/WithdrawPage'), 'WithdrawPage')
 const McpPage = lazyPage(() => import('./pages/McpPage'), 'McpPage')
 const OAuthAuthorizePage = lazyPage(() => import('./pages/OAuthAuthorizePage'), 'OAuthAuthorizePage')
+const SupportPage = lazyPage(() => import('./pages/SupportPage'), 'SupportPage')
+const ReleasesPage = lazyPage(() => import('./pages/ReleasesPage'), 'ReleasesPage')
+const AdminInquiriesPage = lazyPage(() => import('./pages/AdminInquiriesPage'), 'AdminInquiriesPage')
+const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage')
 
 export function App() {
   const { path } = useLocation()
@@ -79,6 +83,8 @@ function route(path: string): ReactNode {
   if (path === '/search') return <SearchPage />
   if (path === '/mcp') return <McpPage />
   if (path === '/oauth/authorize') return <RequireLogin><OAuthAuthorizePage /></RequireLogin>
+  if (path === '/support') return <SupportPage />
+  if (path === '/releases') return <ReleasesPage />
   if (path === '/tags') return <TagsPage />
   if ((p = match('/tags/:name', path))) return <TagPage key={p.name} name={p.name} />
   if (path === '/login') return <LoginPage />
@@ -102,6 +108,8 @@ function route(path: string): ReactNode {
   if (path === '/account/restore') return <RequireLogin><RestorePage /></RequireLogin>
   if (path === '/admin/reports') return <RequireAdmin><AdminReportsPage /></RequireAdmin>
   if ((p = match('/admin/reports/:id', path))) return <RequireAdmin><AdminReportPage key={p.id} id={p.id} /></RequireAdmin>
+  if (path === '/admin/inquiries') return <RequireAdmin><AdminInquiriesPage /></RequireAdmin>
+  if ((p = match('/admin/inquiries/:id', path))) return <RequireAdmin><AdminInquiryPage key={p.id} id={p.id} /></RequireAdmin>
   if ((p = match('/admin/members/:handle', path))) return <RequireAdmin><AdminMemberPage key={p.handle} handle={p.handle} /></RequireAdmin>
   return <NotFoundPage />
 }
