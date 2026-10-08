@@ -27,6 +27,14 @@ for pod in $(k -n blog get pods -l app.kubernetes.io/name=blog-app -o name); do
   echo "-- $pod"
   k -n blog logs "$pod" --all-containers --tail=5000 2>&1 | grep -E "의미 검색|임베딩|[Ee]mbed" | tail -10 || true
 done
+# 서버가 500을 낸 원인을 찾을 때 본다. 토큰처럼 보이는 값(dvl_…)은 가린다
+echo "== 앱 로그의 처리하지 못한 오류 (파드별, 최근 3건)"
+for pod in $(k -n blog get pods -l app.kubernetes.io/name=blog-app -o name); do
+  echo "-- $pod"
+  k -n blog logs "$pod" --all-containers --tail=20000 2>&1 \
+    | grep -A12 "처리하지 못한 오류" | grep -vE "^\s+at (org\.springframework|org\.apache|jakarta|java\.base|io\.micrometer)" \
+    | sed -E 's/dvl_[A-Za-z0-9_-]+/dvl_***/g' | tail -45 || true
+done
 # 조회문은 표준 입력으로 넘긴다(따옴표가 겹치지 않게). 공개 조건은 PostAccessPolicy.PUBLIC_LIST_CONDITION과 같다
 psql_read() {
   docker exec -i "$NODE" kubectl -n blog exec -i statefulset/postgres -- \
