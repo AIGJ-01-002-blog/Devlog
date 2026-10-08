@@ -2,7 +2,10 @@
 
 🌐 **한국어**
 
-<img src="app/frontend/public/favicon.svg" alt="devlog" width="72" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
+  <img src="docs/images/logo-light.png" alt="devlog" width="72" />
+</picture>
 
 # devlog
 
