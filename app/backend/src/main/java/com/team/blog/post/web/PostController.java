@@ -54,7 +54,8 @@ public class PostController {
 
     public record ContentRequest(String title, String contentMd, Long baseVersion) {}
 
-    public record PublishRequest(String title, String contentMd, String summary, List<String> tags, String visibility, Long baseVersion) {}
+    public record PublishRequest(String title, String contentMd, String summary, List<String> tags, String visibility, Long baseVersion,
+                                 String thumbnailUrl, Boolean thumbnailHidden) {}
 
     public record VisibilityRequest(String visibility) {}
 
@@ -103,7 +104,8 @@ public class PostController {
                                                     HttpServletRequest request) {
         checkSize(request);
         PublishCommand cmd = new PublishCommand(postId, me.id(), body.title(), body.contentMd(), body.summary(),
-                parseVisibility(body.visibility(), true), body.tags(), requireVersion(body.baseVersion()));
+                parseVisibility(body.visibility(), true), body.tags(), requireVersion(body.baseVersion()),
+                body.thumbnailUrl(), Boolean.TRUE.equals(body.thumbnailHidden()));
         return commands.publish(cmd, me.handle(), key);
     }
 

@@ -174,7 +174,7 @@ class WritePublishTest extends IntegrationTest {
         Session s = signup(uniqueLogin("idem"));
         long id = newPost(s);
         String key = UUID.randomUUID().toString();
-        PublishCommand cmd = new PublishCommand(id, s.memberId(), "동시", "본문", null, Visibility.PUBLIC, List.of(), 0);
+        PublishCommand cmd = new PublishCommand(id, s.memberId(), "동시", "본문", null, Visibility.PUBLIC, List.of(), 0, null, false);
         ExecutorService pool = Executors.newFixedThreadPool(20);
         CountDownLatch start = new CountDownLatch(1);
         Map<String, Integer> outcomes = new ConcurrentHashMap<>();

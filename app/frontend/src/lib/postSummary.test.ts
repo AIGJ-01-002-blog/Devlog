@@ -12,9 +12,10 @@ describe('짧은 소개', () => {
     expect(summaryLength('가\n\n\n나')).toBe(3)
   })
 
-  it('태그·소개 오류는 발행 창 안에 보여 준다', () => {
+  it('태그·소개·썸네일 오류는 발행 창 안에 보여 준다', () => {
     expect(isPublishField('tags[0]')).toBe(true)
     expect(isPublishField('summary')).toBe(true)
+    expect(isPublishField('thumbnail')).toBe(true)
     expect(isPublishField('title')).toBe(false)
   })
 })
