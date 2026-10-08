@@ -363,6 +363,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.27.5 | 2026-10-08 | Deploy waits until the school-server SSH tunnel is open (fixes a dropped tunnel, deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.5) |
 | v1.27.4 | 2026-10-08 | School-server cluster resolves external names through the school DNS (fixes the domain tunnel, deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.4) |
 | v1.27.3 | 2026-10-08 | cloudflared connects over http2 so the domain works from the school server; failure logs on deploy (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.3) |
 | v1.27.2 | 2026-10-08 | Source code and documents split into separate repositories (docs now in AIGJ-01-002-blog/docs) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.2) |

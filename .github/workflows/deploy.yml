@@ -125,10 +125,25 @@ jobs:
           sshpass -e ssh "${ssh_opts[@]}" "$SSH_USER@$HOST" 'cat "$HOME/devlog/kubeconfig.yaml"' \
             | sed -E "s#https://127\.0\.0\.1:[0-9]+#https://127.0.0.1:16443#" > "$RUNNER_TEMP/kubeconfig"
           [ -s "$RUNNER_TEMP/kubeconfig" ] || { echo "::error::학교 서버에 클러스터가 없습니다. Actions → 학교 서버 준비를 먼저 실행하세요"; exit 1; }
-          sshpass -e ssh "${ssh_opts[@]}" -f -N -o ExitOnForwardFailure=yes \
-            -L "16443:127.0.0.1:${API_PORT}" "$SSH_USER@$HOST"
+          # ssh -f는 sshpass가 끝날 때 함께 끊길 수 있다. 터널을 직접 띄우고 포트가 열릴 때까지 기다린다
+          setsid sshpass -e ssh "${ssh_opts[@]}" -N -o ExitOnForwardFailure=yes \
+            -L "16443:127.0.0.1:${API_PORT}" "$SSH_USER@$HOST" </dev/null >"$RUNNER_TEMP/tunnel.log" 2>&1 &
+          tunnel_pid=$!
+          for i in $(seq 1 30); do
+            (exec 3<>/dev/tcp/127.0.0.1/16443) 2>/dev/null && break
+            kill -0 "$tunnel_pid" 2>/dev/null || break
+            sleep 1
+          done
+          if ! (exec 3<>/dev/tcp/127.0.0.1/16443) 2>/dev/null; then
+            echo "::error::학교 서버 SSH 터널이 열리지 않았습니다"; cat "$RUNNER_TEMP/tunnel.log"; exit 1
+          fi
           echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
-          KUBECONFIG="$RUNNER_TEMP/kubeconfig" kubectl get nodes
+          for i in 1 2 3; do
+            KUBECONFIG="$RUNNER_TEMP/kubeconfig" kubectl get nodes && exit 0
+            sleep 5
+          done
+          echo "::error::터널은 열렸지만 쿠버네티스 API가 응답하지 않습니다. Actions → 학교 서버 준비를 다시 실행하세요"
+          cat "$RUNNER_TEMP/tunnel.log"; exit 1
       - name: 접속 정보 준비 (파일은 러너에만 존재)
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
