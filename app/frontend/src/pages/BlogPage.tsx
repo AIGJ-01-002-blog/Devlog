@@ -15,6 +15,14 @@ import type { BlogProfile, FeedPage, FriendRelation } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 import { BlogSeries } from './SeriesPage'
 import { BlogAbout } from '../components/BlogAbout'
+import { NavIcon } from '../components/NavIcons'
+import { avatarColor, AVATAR_COLORS } from '../lib/avatar'
+import { compactNumber } from '../lib/format'
+
+/** 블로그 표지 색(0~3). 같은 블로그는 언제나 같은 색이다. */
+export function blogTone(handle: string): number {
+  return AVATAR_COLORS.indexOf(avatarColor(handle) as (typeof AVATAR_COLORS)[number]) % 4
+}
 
 /** tab: 블로그 글 목록(기본), [시리즈] 탭 (024), [소개] 탭 (042) */
 export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'posts' | 'series' | 'about' }) {
@@ -44,29 +52,40 @@ export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'pos
   if (!profile) return <main className="container"><p className="muted center">불러오는 중…</p></main>
   return (
     <main className="container">
-      <header className="blog-profile">
-        <Avatar src={profile.profileImageUrl} name={profile.nickname} seed={profile.handle} size={96} />
-        <div>
-          <h1>{profile.nickname}</h1>
-          <p className="muted">@{profile.handle}</p>
-          {profile.bio && <p className="bio">{profile.bio}</p>}
-          <p className="muted small blog-stats">
-            공개 글 {profile.publicPostCount}
-            {' · '}<Link to={`/@${profile.handle}/followers`}>팔로워 <b>{profile.followerCount}</b></Link>
-            {' · '}<Link to={`/@${profile.handle}/following`}>팔로잉 <b>{profile.followingCount}</b></Link>
-            {lastActiveLabel(profile.lastActiveDaysAgo) && <> · 최근 활동 {lastActiveLabel(profile.lastActiveDaysAgo)}</>}
-            {' · '}<a href={`/@${profile.handle}/rss`} type="application/rss+xml" title="RSS 리더로 이 블로그의 새 글 받기">RSS</a>
+      <header className="blog-hero">
+        <div className="blog-cover" data-tone={blogTone(profile.handle)} aria-hidden="true" />
+        <div className="blog-hero-body">
+          <div className="blog-hero-top">
+            <span className="blog-avatar"><Avatar src={profile.profileImageUrl} name={profile.nickname} seed={profile.handle} size={112} /></span>
+            <div className="blog-hero-actions">
+              <Link to={`/@${profile.handle}/rss`} className="btn btn-outline btn-icon" aria-label="RSS 구독"
+                    data-tip="RSS 구독: 구독 앱으로 이 블로그의 새 글 받기"><NavIcon name="rss" /></Link>
+              {profile.mine ? <>
+                <Link to="/settings#profile" className="btn btn-outline" data-tip="사진·닉네임·소개 바꾸기">프로필 편집</Link>
+                <Link to="/manage/posts" className="btn btn-outline" data-tip="임시글·발행 글·휴지통 관리">글 관리</Link>
+                <Link to="/write" className="btn btn-primary" data-tip="새 글 쓰기"><NavIcon name="pen" size={16} />새 글</Link>
+              </> : <>
+                <FriendButton profile={profile} onChange={(f) => {
+                  setProfile((p) => p && { ...p, friendship: f, lastActiveDaysAgo: null })
+                  // 친구가 되면 최근 활동을 다시 받아 온다 (서버가 조건을 판단한다)
+                  if (f === 'FRIENDS') void api<BlogProfile>(`/api/members/${encodeURIComponent(handle)}`).then(setProfile).catch(() => {})
+                }} />
+                <FollowButton handle={profile.handle} following={profile.following}
+                  onChange={(st) => setProfile((p) => p && { ...p, following: st.following, followerCount: st.followerCount })} />
+              </>}
+            </div>
+          </div>
+          <h1 className="blog-name">{profile.nickname}</h1>
+          <p className="blog-handle muted">@{profile.handle}
+            {lastActiveLabel(profile.lastActiveDaysAgo) && <span className="blog-active"> · 최근 활동 {lastActiveLabel(profile.lastActiveDaysAgo)}</span>}
           </p>
+          {profile.bio && <p className="bio">{profile.bio}</p>}
           <SocialLinkList links={profile.socialLinks} />
-          {!profile.mine && <div className="blog-actions row">
-          <FollowButton handle={profile.handle} following={profile.following}
-            onChange={(st) => setProfile((p) => p && { ...p, following: st.following, followerCount: st.followerCount })} />
-          <FriendButton profile={profile} onChange={(f) => {
-            setProfile((p) => p && { ...p, friendship: f, lastActiveDaysAgo: null })
-            // 친구가 되면 최근 활동을 다시 받아 온다 (서버가 조건을 판단한다)
-            if (f === 'FRIENDS') void api<BlogProfile>(`/api/members/${encodeURIComponent(handle)}`).then(setProfile).catch(() => {})
-          }} />
-          </div>}
+          <ul className="blog-stats">
+            <li><span className="blog-stat"><b>{compactNumber(profile.publicPostCount)}</b><span>공개 글</span></span></li>
+            <li><Link to={`/@${profile.handle}/followers`} className="blog-stat" data-tip="나를 팔로우하는 사람"><b>{compactNumber(profile.followerCount)}</b><span>팔로워</span></Link></li>
+            <li><Link to={`/@${profile.handle}/following`} className="blog-stat" data-tip="내가 팔로우하는 사람"><b>{compactNumber(profile.followingCount)}</b><span>팔로잉</span></Link></li>
+          </ul>
         </div>
       </header>
       <nav className="blog-tabs" aria-label="블로그 메뉴">

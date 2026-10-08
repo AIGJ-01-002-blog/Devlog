@@ -50,6 +50,7 @@ const OAuthAuthorizePage = lazyPage(() => import('./pages/OAuthAuthorizePage'), 
 const SupportPage = lazyPage(() => import('./pages/SupportPage'), 'SupportPage');
 const ReleasesPage = lazyPage(() => import('./pages/ReleasesPage'), 'ReleasesPage');
 const AdminInquiriesPage = lazyPage(() => import('./pages/AdminInquiriesPage'), 'AdminInquiriesPage');
+const RssGuidePage = lazyPage(() => import('./pages/RssGuidePage'), 'RssGuidePage');
 const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage');
 export function App() {
     const { path } = useLocation();
@@ -69,6 +70,10 @@ function route(path) {
         return _jsx(SeriesPage, { handle: p.handle, slug: p.slug }, `${p.handle}/s/${p.slug}`);
     if ((p = match('/@:handle/series', path)))
         return _jsx(BlogPage, { handle: p.handle, tab: "series" }, p.handle);
+    if ((p = match('/@:handle/rss', path)))
+        return _jsx(RssGuidePage, { handle: p.handle.toLowerCase() }, `${p.handle}/rss`);
+    if (path === '/rss')
+        return _jsx(RssGuidePage, { handle: null });
     if ((p = match('/@:handle/about', path)))
         return _jsx(BlogPage, { handle: p.handle, tab: "about" }, p.handle);
     if ((p = match('/@:handle', path)))

@@ -8,3 +8,16 @@ describe('소개 정리', () => {
     expect(normalizeBio('   ')).toBe('')
   })
 })
+
+describe('내 설정 탭 (062)', () => {
+  it('주소 뒤 #이름으로 탭을 고르고, 모르는 값은 프로필로 연다', async () => {
+    const { tabFromHash, SETTINGS_TABS } = await import('./SettingsPage')
+    expect(SETTINGS_TABS.map((t) => t.id)).toEqual(['profile', 'account', 'notifications', 'friends', 'ai', 'export'])
+    expect(tabFromHash('#ai')).toBe('ai')
+    expect(tabFromHash('#export')).toBe('export')
+    expect(tabFromHash('#notifications')).toBe('notifications')
+    expect(tabFromHash('#telegram')).toBe('notifications')
+    expect(tabFromHash('')).toBe('profile')
+    expect(tabFromHash('#nope')).toBe('profile')
+  })
+})

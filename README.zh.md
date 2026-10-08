@@ -367,6 +367,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.35.0 | 2026-10-08 | 重新排列页眉菜单、分标签的我的设置、重新设计的博客与文章管理、浏览器可读的 RSS 说明页 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.35.0) |
 | v1.34.0 | 2026-10-08 | AI 文章建议（话题结束时建议标题和范围）与可开关的午夜日记 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.34.0) |
 | v1.33.1 | 2026-10-08 | 启动日志显示语义搜索是否开启，集群状态显示嵌入进度 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.1) |
 | v1.33.0 | 2026-10-08 | 修改历史、发布前检查、导出文章为 Markdown | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |

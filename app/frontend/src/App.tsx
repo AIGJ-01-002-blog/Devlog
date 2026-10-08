@@ -50,6 +50,7 @@ const OAuthAuthorizePage = lazyPage(() => import('./pages/OAuthAuthorizePage'), 
 const SupportPage = lazyPage(() => import('./pages/SupportPage'), 'SupportPage')
 const ReleasesPage = lazyPage(() => import('./pages/ReleasesPage'), 'ReleasesPage')
 const AdminInquiriesPage = lazyPage(() => import('./pages/AdminInquiriesPage'), 'AdminInquiriesPage')
+const RssGuidePage = lazyPage(() => import('./pages/RssGuidePage'), 'RssGuidePage')
 const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage')
 
 export function App() {
@@ -78,6 +79,8 @@ function route(path: string): ReactNode {
   if ((p = match('/@:handle/following', path))) return <FollowsPage key={`${p.handle}/g`} handle={p.handle} direction="following" />
   if ((p = match('/@:handle/series/:slug', path))) return <SeriesPage key={`${p.handle}/s/${p.slug}`} handle={p.handle} slug={p.slug} />
   if ((p = match('/@:handle/series', path))) return <BlogPage key={p.handle} handle={p.handle} tab="series" />
+  if ((p = match('/@:handle/rss', path))) return <RssGuidePage key={`${p.handle}/rss`} handle={p.handle.toLowerCase()} />
+  if (path === '/rss') return <RssGuidePage handle={null} />
   if ((p = match('/@:handle/about', path))) return <BlogPage key={p.handle} handle={p.handle} tab="about" />
   if ((p = match('/@:handle', path))) return <BlogPage key={p.handle} handle={p.handle} />
   if (path === '/search') return <SearchPage />

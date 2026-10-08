@@ -7,6 +7,8 @@ import { daysLeft, purgePost, PURGE_CONFIRM, restorePost, TRASH_CONFIRM, trashed
 import type { ManageItem, ManagePage as Page, Visibility } from '../lib/types'
 import { VISIBILITY_ICON, VISIBILITY_LABEL } from '../lib/visibility'
 import { AiProposals } from '../components/AiProposals'
+import { NavIcon, type IconName } from '../components/NavIcons'
+import { coverGlyph, coverTone } from '../components/PostCard'
 
 type Tab = 'drafts' | 'published' | 'trash'
 type CountKey = keyof NonNullable<Page['counts']>
@@ -112,16 +114,29 @@ export function ManagePage() {
     })
   }
 
+  const tabs: { id: Tab; label: string; hint: string; icon: IconName }[] = [
+    { id: 'drafts', label: '임시글', hint: '아직 발행하지 않은 글', icon: 'pen' },
+    { id: 'published', label: '발행 글', hint: '발행한 글과 공개 범위', icon: 'posts' },
+    { id: 'trash', label: '휴지통', hint: '지운 글은 30일 뒤 완전히 지워져요', icon: 'trash' },
+  ]
   return (
-    <main className="container narrow">
-      <div className="row space-between">
-        <h1 className="page-title">내 글 관리</h1>
-        <Link to="/write" className="btn btn-primary">새 글</Link>
-      </div>
-      <div className="tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'drafts'} onClick={() => go('drafts')}>임시글 {counts?.drafts ?? ''}</button>
-        <button type="button" role="tab" aria-selected={tab === 'published'} onClick={() => go('published')}>발행 글 {counts?.published ?? ''}</button>
-        <button type="button" role="tab" aria-selected={tab === 'trash'} onClick={() => go('trash')}>휴지통 {counts?.trash ?? ''}</button>
+    <main className="container manage-page">
+      <header className="manage-head">
+        <div>
+          <h1 className="page-title">내 글 관리</h1>
+          <p className="muted">임시글을 이어 쓰고, 발행한 글의 공개 범위를 바꾸고, 지운 글을 되살려요.</p>
+        </div>
+        <Link to="/write" className="btn btn-primary btn-lg" data-tip="새 글 쓰기"><NavIcon name="pen" size={16} />새 글</Link>
+      </header>
+      <div className="manage-stats" role="tablist" aria-label="글 상태">
+        {tabs.map((t) => (
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={`manage-stat stat-${t.id}`}
+                  data-tip={t.hint} onClick={() => go(t.id)}>
+            <span className="manage-stat-icon"><NavIcon name={t.icon} size={18} /></span>
+            <span className="manage-stat-label">{t.label}</span>
+            <b className="manage-stat-count">{counts ? counts[t.id] : '–'}</b>
+          </button>
+        ))}
       </div>
       {tab === 'drafts' && <AiProposals />}
       {tab === 'trash' && <p className="muted small">휴지통의 글은 30일이 지나면 완전히 지워져요. 다른 사람에게는 보이지 않아요.</p>}
@@ -140,41 +155,49 @@ export function ManagePage() {
       )}
       <ul className="manage-list">
         {items.map((item) => (
-          <li key={item.id} className="manage-item">
-            <div className="manage-main">
-              {item.status === 'PUBLISHED' && item.visibility && (
-                <span className="vis" title={VISIBILITY_LABEL[item.visibility]}>
-                  {VISIBILITY_ICON[item.visibility]}<span className="sr-only">{VISIBILITY_LABEL[item.visibility]}</span>
-                </span>
-              )}
+          <li key={item.id} className={`manage-item${item.hidden ? ' is-hidden' : ''}`}>
+            <span className={`manage-cover card-cover`} data-tone={coverTone(item.id)} aria-hidden="true">
+              <span>{coverGlyph(item.title || '#')}</span>
+            </span>
+            <div className="manage-body">
+              <div className="manage-main">
+                <StatusChip item={item} trash={tab === 'trash'} />
+                {item.editing && <span className="badge">수정 중</span>}
+                {item.hidden && <span className="badge badge-warn">운영 정책에 따라 숨겨짐</span>}
+              </div>
               <span className={item.title ? 'manage-title' : 'manage-title muted'}>{item.title || '(제목 없음)'}</span>
-              {item.editing && <span className="badge">수정 중</span>}
-              {item.hidden && <span className="badge badge-warn">운영 정책에 따라 숨겨짐</span>}
-            </div>
-            <div className="manage-meta muted small">
-              {tab === 'trash' && item.deletedAt && item.purgeAt
-                ? <>삭제 {monthDay(item.deletedAt)} · {daysLeft(item.purgeAt)}일 뒤 완전 삭제</>
-                : item.status === 'DRAFT'
-                ? <>마지막 저장 {isRecent(item.updatedAt) ? relativeDate(item.updatedAt) : `${monthDay(item.updatedAt)} ${clock(item.updatedAt)}`}</>
-                : <>발행 {item.publishedAt && fullDate(item.publishedAt)}{item.editedAt && ` · 수정됨 ${monthDay(item.editedAt)}`} · 👁 {item.viewCount} ♥ {item.likeCount} 💬 {item.commentCount}</>}
+              <div className="manage-meta">
+                {tab === 'trash' && item.deletedAt && item.purgeAt
+                  ? <>삭제 {monthDay(item.deletedAt)} · {daysLeft(item.purgeAt)}일 뒤 완전 삭제</>
+                  : item.status === 'DRAFT'
+                  ? <>마지막 저장 {isRecent(item.updatedAt) ? relativeDate(item.updatedAt) : `${monthDay(item.updatedAt)} ${clock(item.updatedAt)}`}</>
+                  : <>
+                    <span>발행 {item.publishedAt && fullDate(item.publishedAt)}{item.editedAt && ` · 수정됨 ${monthDay(item.editedAt)}`}</span>
+                    <span className="manage-counts">
+                      <span data-tip="조회수"><NavIcon name="eye" size={14} />{item.viewCount}<span className="sr-only">조회</span></span>
+                      <span data-tip="좋아요"><NavIcon name="heart" size={14} />{item.likeCount}<span className="sr-only">좋아요</span></span>
+                      <span data-tip="댓글"><NavIcon name="comment" size={14} />{item.commentCount}<span className="sr-only">댓글</span></span>
+                    </span>
+                  </>}
+              </div>
             </div>
             <div className="manage-actions">
               {tab === 'trash' ? (
                 <>
-                  <button type="button" className="btn btn-text" disabled={busy === item.id} onClick={() => restore(item)}>복구</button>
+                  <button type="button" className="btn btn-outline btn-small" disabled={busy === item.id} onClick={() => restore(item)}>복구</button>
                   <button type="button" className="btn btn-text danger" disabled={busy === item.id} onClick={() => purge(item)}>영구 삭제</button>
                 </>
               ) : item.status === 'DRAFT' ? (
                 <>
-                  <Link to={`/write/${item.id}`} className="btn btn-text">이어 쓰기</Link>
+                  <Link to={`/write/${item.id}`} className="btn btn-outline btn-small">이어 쓰기</Link>
                   <button type="button" className="btn btn-text danger" disabled={busy === item.id} onClick={() => remove(item)}>삭제</button>
                 </>
               ) : (
                 <>
                   <ViewLink id={item.id} />
-                  <Link to={`/write/${item.id}`} className="btn btn-text">{item.editing ? '이어서 수정' : '수정'}</Link>
+                  <Link to={`/write/${item.id}`} className="btn btn-outline btn-small">{item.editing ? '이어서 수정' : '수정'}</Link>
                   {item.editing && <button type="button" className="btn btn-text" onClick={() => discard(item)}>변경 취소</button>}
-                  <select aria-label="공개 범위" value={item.visibility ?? 'PUBLIC'}
+                  <select aria-label="공개 범위" data-tip="누가 볼 수 있는지 바꿔요" value={item.visibility ?? 'PUBLIC'}
                           onChange={(e) => changeVisibility(item, e.target.value as Visibility)}>
                     <option value="PUBLIC">공개</option>
                     <option value="FRIENDS">친구에게만</option>
@@ -186,6 +209,7 @@ export function ManagePage() {
             </div>
           </li>
         ))}
+        {loading && items.length === 0 && [0, 1, 2].map((i) => <li key={`s${i}`} className="manage-item manage-skeleton" aria-hidden="true" />)}
       </ul>
       {!loading && items.length === 0 && (
         <div className="empty">
@@ -198,6 +222,14 @@ export function ManagePage() {
       )}
     </main>
   )
+}
+
+/** 상태 칩: 임시글·공개·친구에게만·나만 보기·휴지통을 색으로 나눠 한눈에 보이게 */
+function StatusChip({ item, trash }: { item: ManageItem; trash: boolean }) {
+  if (trash) return <span className="status-chip st-trash">휴지통</span>
+  if (item.status === 'DRAFT') return <span className="status-chip st-draft">임시글</span>
+  const v = item.visibility ?? 'PUBLIC'
+  return <span className={`status-chip st-${v.toLowerCase()}`}>{VISIBILITY_ICON[v]} {VISIBILITY_LABEL[v]}</span>
 }
 
 function ViewLink({ id }: { id: number }) {

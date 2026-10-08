@@ -365,6 +365,7 @@ npm run dev        # http://localhost:5173
 
 | 버전 | 날짜 | 주요 내용 | 릴리스 노트 |
 | --- | --- | --- | --- |
+| v1.35.0 | 2026-10-08 | 머리말 메뉴 재배치, 옆 탭으로 나눈 내 설정, 새로 꾸민 내 블로그·내 글 관리, 브라우저용 RSS 안내 | [보기](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.35.0) |
 | v1.34.0 | 2026-10-08 | AI 글 제안(주제가 끝나면 제목·범위 제안)과 자정 일기 켜고 끄기 | [보기](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.34.0) |
 | v1.33.1 | 2026-10-08 | 의미 검색 켜짐 여부를 시작 로그에, 클러스터 상태에 임베딩 진행 보기 | [보기](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.1) |
 | v1.33.0 | 2026-10-08 | 글 수정 이력, 발행 전 점검, 내 글 Markdown 내보내기 | [보기](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |

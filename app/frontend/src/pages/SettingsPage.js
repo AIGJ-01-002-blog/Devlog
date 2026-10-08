@@ -1,4 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useRef, useState } from 'react';
 import { ExportSection } from '../components/ExportSection';
 import { AiConnectSection } from '../components/AiConnectSection';
@@ -16,6 +16,7 @@ import { passwordOk } from '../lib/password';
 import { MUTABLE_TYPES, notificationsApi } from '../lib/notifications';
 import { formatBytes, storageUsage } from '../lib/postImages';
 import { Link } from '../lib/router';
+import { NavIcon } from '../components/NavIcons';
 import { LINK_POLL_MS, linkTimeLeft, telegramApi } from '../lib/telegram';
 import { DEFAULT_VISIBILITY_CHANGED } from '../lib/visibility';
 const PROVIDER_NAMES = { GITHUB: 'GitHub', GOOGLE: 'Google', LOCAL: '이메일' };
@@ -25,18 +26,64 @@ const BIO_LINES = 4;
 export const normalizeBio = (s) => s.replace(/\r\n?/g, '\n').normalize('NFC').trim().replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
 /** 소개 글자 수: 서버와 같이 코드 포인트로 센다(이모지 하나 = 1자). */
 const bioLength = (s) => Array.from(s).length;
-/** 설정 (005): 프로필(사진·닉네임·소개를 한 번에 저장)과 계정(읽기 전용 정보·직전 로그인·기본 공개 범위·AI 동의·약관). */
+/** 내 설정 탭 (062). 주소 뒤 #이름으로 바로 열린다(/settings#ai). 예전 항목 주소(#telegram)는 그 항목이 든 탭으로 간다. */
+export const SETTINGS_TABS = [
+    { id: 'profile', label: '프로필', hint: '사진·닉네임·소개·소셜 정보', icon: 'user' },
+    { id: 'account', label: '계정', hint: '로그인·공개 범위·비밀번호·탈퇴', icon: 'lock' },
+    { id: 'notifications', label: '알림', hint: '받을 알림·텔레그램', icon: 'bell' },
+    { id: 'friends', label: '친구', hint: '친구 요청과 친구 목록', icon: 'users' },
+    { id: 'ai', label: 'AI 연결', hint: 'AI 도구에 쓸 토큰', icon: 'ai' },
+    { id: 'export', label: '내보내기', hint: '내 글을 Markdown으로 받기', icon: 'download' },
+];
+const HASH_ALIASES = { telegram: 'notifications', password: 'account', social: 'profile' };
+export function tabFromHash(hash) {
+    const key = decodeURIComponent(hash.replace(/^#/, ''));
+    const found = SETTINGS_TABS.find((t) => t.id === key);
+    return found ? found.id : HASH_ALIASES[key] ?? 'profile';
+}
+/** 내 설정 (005·062): 옆 탭 목록에서 고른 항목 하나만 보인다. 휴대폰에서는 탭 목록이 위에서 옆으로 밀린다. */
 export function SettingsPage() {
     const [settings, setSettings] = useState(null);
     const [error, setError] = useState(false);
+    const [tab, setTab] = useState(() => tabFromHash(location.hash));
     useEffect(() => {
         api('/api/me/settings').then(setSettings).catch(() => setError(true));
     }, []);
+    // 다른 화면의 "설정에서 토큰 만들기"(/settings#ai) 같은 링크와 뒤로 가기를 따른다
+    useEffect(() => {
+        const sync = () => setTab(tabFromHash(location.hash));
+        window.addEventListener('hashchange', sync);
+        window.addEventListener('popstate', sync);
+        return () => {
+            window.removeEventListener('hashchange', sync);
+            window.removeEventListener('popstate', sync);
+        };
+    }, []);
+    const pick = (id) => {
+        if (id === tab)
+            return;
+        history.replaceState(null, '', `/settings#${id}`);
+        setTab(id);
+    };
+    const current = SETTINGS_TABS.find((t) => t.id === tab);
+    let body = null;
     if (error)
-        return _jsx("main", { className: "container narrow", children: _jsx("p", { className: "error center", children: "\uC124\uC815\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. \uC0C8\uB85C\uACE0\uCE68\uD574 \uC8FC\uC138\uC694." }) });
-    if (!settings)
-        return _jsx("main", { className: "container narrow", children: _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" }) });
-    return (_jsxs("main", { className: "container narrow", children: [_jsx("h1", { className: "page-title", children: "\uC124\uC815" }), _jsx(ProfileSection, { settings: settings, onSaved: (p) => setSettings({ ...settings, ...p }) }), _jsx(SocialLinksForm, { initial: settings.socialLinks, onSaved: (l) => setSettings({ ...settings, socialLinks: l }) }), _jsx(FriendsSection, {}), _jsx(NotificationsSection, {}), _jsx(AiConnectSection, {}), _jsx(TelegramSection, {}), _jsx(AccountSection, { settings: settings, onChange: setSettings }), settings.hasPassword && _jsx(PasswordSection, {}), _jsx(ExportSection, {}), _jsx("section", { className: "settings-section withdraw-link", children: _jsx(Link, { to: "/settings/withdraw", className: "btn btn-text danger", children: "\uD68C\uC6D0 \uD0C8\uD1F4" }) })] }));
+        body = _jsx("p", { className: "error center", children: "\uC124\uC815\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. \uC0C8\uB85C\uACE0\uCE68\uD574 \uC8FC\uC138\uC694." });
+    else if (!settings)
+        body = _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" });
+    else if (tab === 'profile')
+        body = _jsxs(_Fragment, { children: [_jsx(ProfileSection, { settings: settings, onSaved: (p) => setSettings({ ...settings, ...p }) }), _jsx(SocialLinksForm, { initial: settings.socialLinks, onSaved: (l) => setSettings({ ...settings, socialLinks: l }) })] });
+    else if (tab === 'account')
+        body = _jsxs(_Fragment, { children: [_jsx(AccountSection, { settings: settings, onChange: setSettings }), settings.hasPassword && _jsx(PasswordSection, {}), _jsxs("section", { className: "settings-section withdraw-link", children: [_jsx("h2", { children: "\uD68C\uC6D0 \uD0C8\uD1F4" }), _jsx("p", { className: "muted small", children: "\uD0C8\uD1F4\uB97C \uC2E0\uCCAD\uD574\uB3C4 30\uC77C \uC548\uC5D0 \uB2E4\uC2DC \uB85C\uADF8\uC778\uD558\uBA74 \uBAA8\uB450 \uBCF5\uAD6C\uD560 \uC218 \uC788\uC5B4\uC694." }), _jsx(Link, { to: "/settings/withdraw", className: "btn btn-text danger", children: "\uD68C\uC6D0 \uD0C8\uD1F4" })] })] });
+    else if (tab === 'notifications')
+        body = _jsxs(_Fragment, { children: [_jsx(NotificationsSection, {}), _jsx(TelegramSection, {})] });
+    else if (tab === 'friends')
+        body = _jsx(FriendsSection, {});
+    else if (tab === 'ai')
+        body = _jsx(AiConnectSection, {});
+    else
+        body = _jsx(ExportSection, {});
+    return (_jsxs("main", { className: "container settings-page", children: [_jsxs("header", { className: "settings-head", children: [_jsx("h1", { className: "page-title", children: "\uB0B4 \uC124\uC815" }), _jsx("p", { className: "muted", children: "\uD504\uB85C\uD544\uACFC \uACC4\uC815, \uC54C\uB9BC, AI \uC5F0\uACB0\uC744 \uD55C\uACF3\uC5D0\uC11C \uBC14\uAFD4\uC694." })] }), _jsxs("div", { className: "settings-layout", children: [_jsx("nav", { className: "settings-nav", "aria-label": "\uC124\uC815 \uD56D\uBAA9", children: SETTINGS_TABS.map((t) => (_jsxs("a", { href: `/settings#${t.id}`, "aria-current": t.id === tab ? 'page' : undefined, "data-tip": t.hint, onClick: (e) => { e.preventDefault(); pick(t.id); }, children: [_jsx(NavIcon, { name: t.icon }), _jsx("span", { children: t.label })] }, t.id))) }), _jsx("div", { className: "settings-panel", "aria-label": current.label, role: "region", children: body })] })] }));
 }
 function ProfileSection({ settings, onSaved }) {
     const { me, refresh } = useAuth();
