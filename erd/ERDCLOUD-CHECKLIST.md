@@ -1,6 +1,6 @@
 # ERD Cloud 확인 체크리스트
 
-ERD Cloud "ai blog"가 **기준(최신)** 이다. 2026-10-06 강성찬 변경(신고 분리·동의·정지 이력, 이름 규칙, 기능 영역 7색) 이후 상태를 [V1](./V1__common_schema.sql)·[51 통합 명세](../docs/51-erd-unified.md)에 반영했다.
+ERD Cloud "ai blog"가 **기준(최신)** 이다. 2026-10-06 강성찬 변경(신고 분리·동의·정지 이력, 이름 규칙, 기능 영역 7색) 이후 상태를 [V1](./V1__common_schema.sql)·[51 통합 명세](https://github.com/AIGJ-01-002-blog/docs/blob/main/design/51-erd-unified.md)에 반영했다.
 
 > 기준 파일: [ERD Cloud 내보내기 원본](./erdcloud-export.sql)(2026-10-07 회의 반영 뒤) · 20개 테이블 · 148개 컬럼 · 관계선 **40개**.
 > 자동 대조 결과 (2026-10-07): 테이블·컬럼(이름·타입·NULL·기본값)·FK 40개 모두 일치. 차이는 ERD Cloud 그리기 제약 4곳뿐이다(아래 "그대로 두는 차이").

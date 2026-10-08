@@ -11,8 +11,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-REPO = "https://github.com/AIGJ-01-002-blog/docs"
-RAW = "https://raw.githubusercontent.com/AIGJ-01-002-blog/docs/main/"
+REPO = "https://github.com/AIGJ-01-002-blog/Devlog"
+RAW = "https://raw.githubusercontent.com/AIGJ-01-002-blog/Devlog/main/"
 IMAGES = (".png", ".webp", ".jpg", ".jpeg", ".gif", ".svg")
 
 

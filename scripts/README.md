@@ -1,9 +1,10 @@
 # 설계 검증 스크립트
 
-문서(`docs/`)에 적힌 SQL·Lua·규칙이 **실제로 문서대로 동작하는지** 확인한다.
+문서(문서 저장소 [AIGJ-01-002-blog/docs](https://github.com/AIGJ-01-002-blog/docs)의 `design/`)에 적힌 SQL·Lua·규칙이 **실제로 문서대로 동작하는지** 확인한다.
 SQL과 Lua는 스크립트에 복사해 두지 않고 **문서에서 직접 꺼내 실행**하므로, 문서를 고치면 검증도 고친 내용으로 돈다.
 
 ```bash
+git clone https://github.com/AIGJ-01-002-blog/docs ../docs   # 처음 한 번, 코드 저장소 옆에
 scripts/check-all.sh        # 전부 실행하고 요약
 ```
 

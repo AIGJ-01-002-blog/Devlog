@@ -4,7 +4,14 @@
 
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-DOCS="${DOCS:-$ROOT/docs}"   # 다른 문서 폴더로 검증하려면 DOCS=경로 scripts/…
+# 설계 문서는 문서 저장소(AIGJ-01-002-blog/docs)의 design/에 있다. 코드 저장소 옆에 받아 두면 그대로 읽는다.
+DOCS="${DOCS:-$ROOT/../docs/design}"   # 다른 곳에 받았으면 DOCS=경로 scripts/…
+require_docs() {   # 문서를 읽는 스크립트가 처음에 부른다
+  [ -d "$DOCS" ] && return 0
+  echo "설계 문서 폴더가 없습니다: $DOCS" >&2
+  echo "  git clone https://github.com/AIGJ-01-002-blog/docs \"$ROOT/../docs\"  (또는 DOCS=문서저장소/design)" >&2
+  exit 2
+}
 EXTRACT="python3 $ROOT/scripts/lib/extract.py"
 V1="${V1:-$ROOT/erd/V1__common_schema.sql}"   # 통합 ERD = 기준 스키마 (2026-10-07)
 PG_IMAGE="${PG_IMAGE:-postgres:18}"

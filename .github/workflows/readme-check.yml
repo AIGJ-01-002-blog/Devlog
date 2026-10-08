@@ -6,7 +6,7 @@ on:
     paths: &paths
       - "README*.md"
       - "CHANGELOG.md"
-      - "docs/images/**"
+      - "assets/images/**"
       - "app/backend/pom.xml"
       - "app/backend/src/main/resources/db/migration/**"
       - "app/frontend/package.json"

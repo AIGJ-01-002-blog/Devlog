@@ -3,8 +3,8 @@
 🌐 **[한국어](./README.md)** | **[English](./README.en.md)** | **[日本語](./README.ja.md)** | **简体中文**
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
-  <img src="docs/images/logo-light.png" alt="devlog" width="72" />
+  <source media="(prefers-color-scheme: dark)" srcset="assets/images/logo-dark.png" />
+  <img src="assets/images/logo-light.png" alt="devlog" width="72" />
 </picture>
 
 # devlog
@@ -14,18 +14,18 @@
 写作 → 自动保存 → 发布 → 阅读 → 互动。面向开发者的 velog 风格博客平台
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/AIGJ-01-002-blog/docs?color=10b981&label=release)](https://github.com/AIGJ-01-002-blog/docs/releases/latest)
-[![Backend CI](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/frontend-ci.yml)
+[![Release](https://img.shields.io/github/v/release/AIGJ-01-002-blog/Devlog?color=10b981&label=release)](https://github.com/AIGJ-01-002-blog/Devlog/releases/latest)
+[![Backend CI](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/frontend-ci.yml)
 [![Domain](https://img.shields.io/badge/domain-devlog.life%20(筹备中)-0ea5e9.svg)](#部署)
 [![Stack](https://img.shields.io/badge/Java%2021%20·%20Spring%20Boot%204.1%20·%20React%2019-f97316.svg)](#技术栈)
 
-[自己运行](#自己运行) · [更新日志](CHANGELOG.md)（韩语） · [版本发布](https://github.com/AIGJ-01-002-blog/docs/releases) · [设计文档](docs/)（韩语） · [功能规格](specs/)（韩语）
+[自己运行](#自己运行) · [更新日志](CHANGELOG.md)（韩语） · [版本发布](https://github.com/AIGJ-01-002-blog/Devlog/releases) · [设计文档](https://github.com/AIGJ-01-002-blog/docs)（韩语） · [功能规格](specs/)（韩语）
 
 </div>
 
 <p align="center">
-  <img src="docs/images/home.webp" alt="devlog 首页，带有最新、热门标签页和文章卡片" width="860" />
+  <img src="assets/images/home.webp" alt="devlog 首页，带有最新、热门标签页和文章卡片" width="860" />
 </p>
 
 名字取自 **development log（开发记录）**。我们已经注册了正式域名 [devlog.life](https://devlog.life)，生产服务器准备就绪后会在这个地址上线。
@@ -95,16 +95,16 @@ cd app/frontend && npm install && npm run dev            # http://localhost:5173
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/editor.webp" alt="编辑器" /><br/><b>写作</b>：Markdown 与实时预览、自动保存、系列、附件</td>
-<td width="50%"><img src="docs/images/post-detail.webp" alt="文章页面" /><br/><b>阅读</b>：目录、阅读时长、标签、代码高亮、切换公开范围</td>
+<td width="50%"><img src="assets/images/editor.webp" alt="编辑器" /><br/><b>写作</b>：Markdown 与实时预览、自动保存、系列、附件</td>
+<td width="50%"><img src="assets/images/post-detail.webp" alt="文章页面" /><br/><b>阅读</b>：目录、阅读时长、标签、代码高亮、切换公开范围</td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/images/blog.webp" alt="个人博客" /><br/><b>个人博客</b>：文章、系列、简介标签页，博客内搜索，按标签统计文章数，RSS</td>
-<td width="50%"><img src="docs/images/notifications.webp" alt="通知" /><br/><b>通知</b>：评论、回复、点赞、关注汇总在一起，也可推送到 Telegram</td>
+<td width="50%"><img src="assets/images/blog.webp" alt="个人博客" /><br/><b>个人博客</b>：文章、系列、简介标签页，博客内搜索，按标签统计文章数，RSS</td>
+<td width="50%"><img src="assets/images/notifications.webp" alt="通知" /><br/><b>通知</b>：评论、回复、点赞、关注汇总在一起，也可推送到 Telegram</td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/images/search.webp" alt="搜索" /><br/><b>搜索</b>：文章与用户标签页、按相关度排序、高亮搜索词</td>
-<td width="50%"><img src="docs/images/home-dark.webp" alt="深色模式" /><br/><b>深色模式</b>：跟随系统、浅色、深色，加载时不闪烁</td>
+<td width="50%"><img src="assets/images/search.webp" alt="搜索" /><br/><b>搜索</b>：文章与用户标签页、按相关度排序、高亮搜索词</td>
+<td width="50%"><img src="assets/images/home-dark.webp" alt="深色模式" /><br/><b>深色模式</b>：跟随系统、浅色、深色，加载时不闪烁</td>
 </tr>
 </table>
 
@@ -142,7 +142,7 @@ cd app/frontend && npm install && npm run dev            # http://localhost:5173
 
 ## 架构
 
-devlog 是一个 **模块化单体**。一个 Spring Boot 应用同时提供 React 界面（静态文件）和 API，功能按包划分为模块。模块之间通过领域事件（例如：收到点赞 → 发送通知）松散地连接。设计依据见 [docs/02-architecture.md](docs/02-architecture.md)（韩语）。
+devlog 是一个 **模块化单体**。一个 Spring Boot 应用同时提供 React 界面（静态文件）和 API，功能按包划分为模块。模块之间通过领域事件（例如：收到点赞 → 发送通知）松散地连接。设计依据见 [docs/02-architecture.md](https://github.com/AIGJ-01-002-blog/docs/blob/main/design/02-architecture.md)（韩语）。
 
 ```mermaid
 flowchart LR
@@ -245,8 +245,8 @@ sequenceDiagram
 | [deploy](deploy) | 部署：Dockerfile、Kubernetes 清单（base、selfhosted、nhn、local），部署、回滚、密钥检查脚本 |
 | [.github](.github) | CI/CD：后端与界面测试、镜像构建与部署、版本发布、Discord 与 Telegram 通知 |
 | [specs](specs) | 功能规格：按 [GitHub Spec Kit](https://github.com/github/spec-kit) 流程编写的各功能 spec、plan、tasks（001~044） |
-| [docs](docs) | 设计文档：通用需求、架构、整合 ERD、各功能设计、权限表 |
-| [erd](erd) · [scripts](scripts) · [verification](verification) | 基准模式及其运行测试、设计验证脚本与报告 |
+| [docs](https://github.com/AIGJ-01-002-blog/docs) | 设计文档：通用需求、架构、整合 ERD、各功能设计、权限表 |
+| [erd](erd) · [scripts](scripts) | 基准模式及其运行测试、设计验证脚本与报告 |
 
 ## 自己运行
 
@@ -359,67 +359,68 @@ npm run dev        # http://localhost:5173
 
 ## 版本发布
 
-遵循 [语义化版本](https://semver.org/lang/zh-CN/)。新增功能时升级次版本号，只有修复时升级修订号，破坏 API 或模式兼容性的变更升级主版本号。[CHANGELOG.md](CHANGELOG.md) 顶部的版本合入 `main` 后，`release.yml` 会创建 git 标签（`vX.Y.Z`）和 [GitHub Release](https://github.com/AIGJ-01-002-blog/docs/releases)。发布说明使用韩语。
+遵循 [语义化版本](https://semver.org/lang/zh-CN/)。新增功能时升级次版本号，只有修复时升级修订号，破坏 API 或模式兼容性的变更升级主版本号。[CHANGELOG.md](CHANGELOG.md) 顶部的版本合入 `main` 后，`release.yml` 会创建 git 标签（`vX.Y.Z`）和 [GitHub Release](https://github.com/AIGJ-01-002-blog/Devlog/releases)。发布说明使用韩语。
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
-| v1.27.1 | 2026-10-08 | 用 Kubernetes（k3d）部署到学校实习服务器（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.27.1) |
-| v1.27.0 | 2026-10-08 | devlog MCP 服务器、ChatGPT・Codex 连接、优先使用家用电脑 AI | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.27.0) |
-| v1.26.1 | 2026-10-08 | 部署时将 Gemini 密钥和家用 PC 的 Ollama 设置传给应用（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.1) |
-| v1.26.0 | 2026-10-08 | 以 MCP 开发日志为中心的首页与 AI 连接指南 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.0) |
-| v1.25.2 | 2026-10-08 | 将文章列表与详情查询移入文章模块整理（行为不变） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.2) |
-| v1.25.1 | 2026-10-08 | 生产数据库改用内置 pgvector 的 PostgreSQL 镜像（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.1) |
-| v1.25.0 | 2026-10-08 | 注册页面将 AI 功能同意改为可选项 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.0) |
-| v1.24.0 | 2026-10-08 | 现代开发者博客外观 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.24.0) |
-| v1.23.2 | 2026-10-08 | 修正生产环境邮件账号地址 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.2) |
-| v1.23.1 | 2026-10-08 | 清理 SonarQube 安全与可靠性问题 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.1) |
-| v1.23.0 | 2026-10-08 | 选择文章缩略图 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.0) |
-| v1.22.3 | 2026-10-08 | 准备 Oracle 免费 VM 生产服务器和 devlog.life 对接（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.3) |
-| v1.22.2 | 2026-10-08 | 数据库备份、无停机部署文档化、没有邮件密码时关闭发送（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.2) |
-| v1.22.1 | 2026-10-08 | 新标志 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.1) |
-| v1.22.0 | 2026-10-08 | 文章简短介绍 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.0) |
-| v1.21.0 | 2026-10-08 | 文章下方显示作者社交信息 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.21.0) |
-| v1.20.0 | 2026-10-08 | 博客社交信息（邮箱、GitHub、X、Facebook、主页） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.20.0) |
-| v1.19.0 | 2026-10-08 | 博客简介标签页 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.19.0) |
-| v1.18.1 | 2026-10-08 | 从邮件发送失败记录中去除收件地址 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.18.1) |
-| v1.18.0 | 2026-10-08 | 上下篇文章 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.18.0) |
-| v1.17.0 | 2026-10-08 | 文章分享按钮 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.17.0) |
-| v1.16.1 ~ v1.16.11 | 2026-10-08 | 性能（首次加载 JS、缓存与压缩、图片占位）、无障碍（跳转链接、对话框焦点、减少动效）、错误处理与日志保护 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.16.11) |
-| v1.16.0 | 2026-10-08 | 点赞文章列表 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.16.0) |
-| v1.15.0 | 2026-10-08 | RSS 订阅（按博客、全站） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.15.0) |
-| v1.14.0 | 2026-10-08 | 目录与阅读时长 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.14.0) |
-| v1.13.0 | 2026-10-08 | 系列 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.13.0) |
-| v1.12.0 | 2026-10-07 | Telegram 关联（接收通知、速记转草稿） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.12.0) |
-| v1.11.0 | 2026-10-07 | 附件 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.11.0) |
-| v1.10.0 | 2026-10-07 | 深色模式 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.10.0) |
+| v1.27.2 | 2026-10-08 | 源代码与文档仓库分离（文档移至 AIGJ-01-002-blog/docs） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.2) |
+| v1.27.1 | 2026-10-08 | 用 Kubernetes（k3d）部署到学校实习服务器（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.1) |
+| v1.27.0 | 2026-10-08 | devlog MCP 服务器、ChatGPT・Codex 连接、优先使用家用电脑 AI | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.0) |
+| v1.26.1 | 2026-10-08 | 部署时将 Gemini 密钥和家用 PC 的 Ollama 设置传给应用（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.26.1) |
+| v1.26.0 | 2026-10-08 | 以 MCP 开发日志为中心的首页与 AI 连接指南 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.26.0) |
+| v1.25.2 | 2026-10-08 | 将文章列表与详情查询移入文章模块整理（行为不变） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.25.2) |
+| v1.25.1 | 2026-10-08 | 生产数据库改用内置 pgvector 的 PostgreSQL 镜像（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.25.1) |
+| v1.25.0 | 2026-10-08 | 注册页面将 AI 功能同意改为可选项 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.25.0) |
+| v1.24.0 | 2026-10-08 | 现代开发者博客外观 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.24.0) |
+| v1.23.2 | 2026-10-08 | 修正生产环境邮件账号地址 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.23.2) |
+| v1.23.1 | 2026-10-08 | 清理 SonarQube 安全与可靠性问题 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.23.1) |
+| v1.23.0 | 2026-10-08 | 选择文章缩略图 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.23.0) |
+| v1.22.3 | 2026-10-08 | 准备 Oracle 免费 VM 生产服务器和 devlog.life 对接（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.3) |
+| v1.22.2 | 2026-10-08 | 数据库备份、无停机部署文档化、没有邮件密码时关闭发送（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.2) |
+| v1.22.1 | 2026-10-08 | 新标志 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.1) |
+| v1.22.0 | 2026-10-08 | 文章简短介绍 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.0) |
+| v1.21.0 | 2026-10-08 | 文章下方显示作者社交信息 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.21.0) |
+| v1.20.0 | 2026-10-08 | 博客社交信息（邮箱、GitHub、X、Facebook、主页） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.20.0) |
+| v1.19.0 | 2026-10-08 | 博客简介标签页 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.19.0) |
+| v1.18.1 | 2026-10-08 | 从邮件发送失败记录中去除收件地址 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.18.1) |
+| v1.18.0 | 2026-10-08 | 上下篇文章 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.18.0) |
+| v1.17.0 | 2026-10-08 | 文章分享按钮 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.17.0) |
+| v1.16.1 ~ v1.16.11 | 2026-10-08 | 性能（首次加载 JS、缓存与压缩、图片占位）、无障碍（跳转链接、对话框焦点、减少动效）、错误处理与日志保护 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.16.11) |
+| v1.16.0 | 2026-10-08 | 点赞文章列表 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.16.0) |
+| v1.15.0 | 2026-10-08 | RSS 订阅（按博客、全站） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.15.0) |
+| v1.14.0 | 2026-10-08 | 目录与阅读时长 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.14.0) |
+| v1.13.0 | 2026-10-08 | 系列 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.13.0) |
+| v1.12.0 | 2026-10-07 | Telegram 关联（接收通知、速记转草稿） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.12.0) |
+| v1.11.0 | 2026-10-07 | 附件 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.11.0) |
+| v1.10.0 | 2026-10-07 | 深色模式 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.10.0) |
 
 <details>
 <summary>更早的版本（v0.1.0 ~ v1.9.0）</summary>
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
-| v1.9.0 | 2026-10-07 | 注销与恢复 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.9.0) |
-| v1.8.0 | 2026-10-07 | 举报、隐藏、封禁 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.8.0) |
-| v1.7.0 | 2026-10-07 | AI 标签推荐 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.7.0) |
-| v1.6.0 | 2026-10-07 | 首页热门标签页 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.6.0) |
-| v1.5.0 | 2026-10-07 | 关注与关注动态 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.5.0) |
-| v1.4.0 | 2026-10-07 | 站内通知 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.4.0) |
-| v1.3.0 | 2026-10-07 | 文章与用户搜索 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.3.0) |
-| v1.2.0 | 2026-10-07 | 浏览数 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.2.0) |
-| v1.1.0 | 2026-10-07 | 点赞 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.1.0) |
-| v1.0.0 | 2026-10-07 | 首个正式版。在集群内部署结构（selfhosted）上验证了完整流程 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.0.0) |
-| v0.12.0 | 2026-10-07 | 仅好友可见 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.12.0) |
-| v0.11.0 | 2026-10-07 | 评论与回复 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.11.0) |
-| v0.10.0 | 2026-10-07 | 标签 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.10.0) |
-| v0.9.0 | 2026-10-07 | 图片与 GIF、集群内部署结构 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.9.0) |
-| v0.8.0 | 2026-10-07 | 好友与最近动态 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.8.0) |
-| v0.7.0 | 2026-10-07 | 回收站保留 30 天 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.7.0) |
-| v0.6.0 | 2026-10-07 | 离线自动保存 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.6.0) |
-| v0.5.0 | 2026-10-07 | 个人资料与设置 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.5.0) |
-| v0.4.0 · v0.4.1 | 2026-10-07 | 邮箱和 Google 注册与登录 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.4.1) |
-| v0.3.0 | 2026-10-07 | 数据库结构规范化（V3） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.3.0) |
-| v0.2.0 | 2026-10-07 | 接入界面（React）。从注册到写作、发布、阅读 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.2.0) |
-| v0.1.0 | 2026-10-07 | 后端首次发布 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.1.0) |
+| v1.9.0 | 2026-10-07 | 注销与恢复 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.9.0) |
+| v1.8.0 | 2026-10-07 | 举报、隐藏、封禁 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.8.0) |
+| v1.7.0 | 2026-10-07 | AI 标签推荐 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.7.0) |
+| v1.6.0 | 2026-10-07 | 首页热门标签页 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.6.0) |
+| v1.5.0 | 2026-10-07 | 关注与关注动态 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.5.0) |
+| v1.4.0 | 2026-10-07 | 站内通知 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.4.0) |
+| v1.3.0 | 2026-10-07 | 文章与用户搜索 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.3.0) |
+| v1.2.0 | 2026-10-07 | 浏览数 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.2.0) |
+| v1.1.0 | 2026-10-07 | 点赞 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.1.0) |
+| v1.0.0 | 2026-10-07 | 首个正式版。在集群内部署结构（selfhosted）上验证了完整流程 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.0.0) |
+| v0.12.0 | 2026-10-07 | 仅好友可见 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.12.0) |
+| v0.11.0 | 2026-10-07 | 评论与回复 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.11.0) |
+| v0.10.0 | 2026-10-07 | 标签 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.10.0) |
+| v0.9.0 | 2026-10-07 | 图片与 GIF、集群内部署结构 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.9.0) |
+| v0.8.0 | 2026-10-07 | 好友与最近动态 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.8.0) |
+| v0.7.0 | 2026-10-07 | 回收站保留 30 天 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.7.0) |
+| v0.6.0 | 2026-10-07 | 离线自动保存 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.6.0) |
+| v0.5.0 | 2026-10-07 | 个人资料与设置 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.5.0) |
+| v0.4.0 · v0.4.1 | 2026-10-07 | 邮箱和 Google 注册与登录 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.4.1) |
+| v0.3.0 | 2026-10-07 | 数据库结构规范化（V3） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.3.0) |
+| v0.2.0 | 2026-10-07 | 接入界面（React）。从注册到写作、发布、阅读 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.2.0) |
+| v0.1.0 | 2026-10-07 | 后端首次发布 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.1.0) |
 
 </details>
 
@@ -427,7 +428,7 @@ npm run dev        # http://localhost:5173
 
 欢迎提交 Bug 报告、功能建议和拉取请求。Issue 和拉取请求用韩语或英语都可以。
 
-- **Bug 与建议**：请写在 [Issue](https://github.com/AIGJ-01-002-blog/docs/issues) 中。附上复现步骤、预期行为、实际行为和截图，能更快修复。
+- **Bug 与建议**：请写在 [Issue](https://github.com/AIGJ-01-002-blog/Devlog/issues) 中。附上复现步骤、预期行为、实际行为和截图，能更快修复。
 - **新增功能**：遵循 [Spec Kit](https://github.com/github/spec-kit) 流程。先在 `specs/NNN-name/` 中写好 spec、plan、tasks，再按规格实现。原则见 [.specify/memory/constitution.md](.specify/memory/constitution.md)。
 - **拉取请求**：请把变更拆小，并附上测试。后端需通过 `./mvnw verify`（行覆盖率 40% 以上），界面需通过 `npm run typecheck && npm test && npm run build`。变更内容写在 [CHANGELOG.md](CHANGELOG.md) 顶部。
 - **密钥**：请不要提交连接信息或密码。`deploy/scripts/check-no-secrets.sh` 会在 CI 中拦截。
