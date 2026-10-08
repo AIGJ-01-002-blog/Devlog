@@ -153,9 +153,9 @@ kubectl -n blog create job pg-backup-now --from=cronjob/pg-backup   # 지금 바
 1. Cloudflare에 devlog.life를 추가하고 가비아 네임서버를 Cloudflare 것으로 바꾼다(사이트가 Active가 될 때까지).
 2. Cloudflare 대시보드 → Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared, 이름 `devlog`.
 3. 설치 화면 명령의 `--token` 뒤 값(또는 `eyJ`로 시작하는 토큰)만 복사해 GitHub Secret `CLOUDFLARE_TUNNEL_TOKEN`에 넣는다. 설치 명령은 실행하지 않는다.
-4. 같은 터널의 Public Hostname에 두 개를 추가한다.
+4. 같은 터널의 Public Hostname을 추가한다.
    - `devlog.life` → Service `HTTP`, `ingress-nginx-controller.ingress-nginx.svc.cluster.local:80`
-   - `www.devlog.life` → 같게 (또는 Cloudflare 리디렉션 규칙으로 devlog.life로 보냄)
+   - `www.devlog.life`는 인그레스에 없으므로 Cloudflare 리디렉션 규칙으로 devlog.life에 보낸다
 5. Actions → 배포 → Run workflow. 앱을 배포한 뒤 토큰으로 Secret `cloudflared-token`을 만들고 cloudflared 2개를 띄운다.
 
 cloudflared는 2개가 각각 Cloudflare에 연결하므로 하나가 재시작돼도 주소는 끊기지 않는다(PDB `minAvailable: 1`). 확인: `kubectl -n blog get pods -l app.kubernetes.io/name=cloudflared`, Cloudflare 터널 상태가 HEALTHY.
