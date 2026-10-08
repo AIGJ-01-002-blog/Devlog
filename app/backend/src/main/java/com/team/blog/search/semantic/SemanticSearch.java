@@ -10,7 +10,9 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -46,6 +48,16 @@ public class SemanticSearch {
         this.props = props;
     }
 
+    /** 시작할 때 의미 검색을 쓰는지 한 줄 남긴다. 운영에서 "왜 임베딩이 안 도는지"를 로그 한 줄로 남긴다 */
+    @EventListener(ApplicationReadyEvent.class)
+    public void logStatus() {
+        if (!client.configured()) {
+            log.info("의미 검색 꺼짐: 임베딩 공급자가 설정되지 않았습니다. 검색은 키워드만 씁니다");
+            return;
+        }
+        log.info("의미 검색 {}: 공급자 {}, 모델 {}", tableReady() ? "켜짐" : "꺼짐(post_embedding 표 없음)", client.provider(), client.model());
+    }
+
     /** 의미 검색을 쓸 수 있게 설정돼 있는지 (공급자가 지금 켜져 있는지는 보지 않는다) */
     public boolean enabled() {
         return client.configured() && tableReady();
@@ -57,7 +69,9 @@ public class SemanticSearch {
             try {
                 ready = Boolean.TRUE.equals(jdbc.queryForObject("SELECT to_regclass('post_embedding') IS NOT NULL", Boolean.class));
             } catch (RuntimeException e) {
-                ready = false;
+                // 조회가 잠깐 실패한 것이면 다음에 다시 본다. 확인된 결과만 기억한다
+                log.warn("post_embedding 표를 확인하지 못했습니다. 다음 검색 때 다시 봅니다: {}", e.getMessage());
+                return false;
             }
             if (!ready) log.info("post_embedding 표가 없어(pgvector 없음) 검색은 키워드만 씁니다");
             tableReady = ready;
