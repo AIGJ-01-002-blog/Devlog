@@ -28,6 +28,8 @@ jobs:
         working-directory: app/backend
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # SonarQube가 줄별 작성자(blame)를 읽게 전체 이력을 받는다
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -44,8 +46,10 @@ jobs:
           if-no-files-found: ignore
       # 레포 변수 SONAR_ENABLED=true이고 SONAR_TOKEN이 있을 때만. 기본은 SonarCloud(https://sonarcloud.io, 변수 SONAR_ORGANIZATION 필요),
       # 학교 SonarQube를 쓰려면 Secret SONAR_HOST_URL=http://s4.java21.net:9000
+      # 품질 서버(학교 SonarQube 등)가 내려가 있어도 빌드·테스트 결과(CI 초록)는 막지 않는다. 실패는 경고로만 남는다
       - name: SonarQube 분석
         if: vars.SONAR_ENABLED == 'true' && github.event_name == 'push'
+        continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
