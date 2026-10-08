@@ -2,6 +2,8 @@ import { Suspense, useEffect, type ReactNode } from 'react'
 import { Flash } from './components/Flash'
 import { Header } from './components/Header'
 import { SkipLink } from './components/SkipLink'
+import { TooltipLayer } from './components/TooltipLayer'
+import { MobileNav } from './components/MobileNav'
 import { PageAnnouncer } from './components/PageAnnouncer'
 import { MAIN_ID } from './lib/focusMain'
 import { VerifyBanner } from './components/VerifyBanner'
@@ -58,6 +60,8 @@ export function App() {
       <div id={MAIN_ID} tabIndex={-1}>
         <WithdrawnGate path={path}><AgreementGate path={path}><PageErrorBoundary path={path}><Suspense fallback={<Loading />}>{route(path)}</Suspense></PageErrorBoundary></AgreementGate></WithdrawnGate>
       </div>
+      {!path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && <MobileNav path={path} />}
+      <TooltipLayer />
     </>
   )
 }

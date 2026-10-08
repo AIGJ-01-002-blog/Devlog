@@ -363,6 +363,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.29.0 | 2026-10-08 | ボタンのツールチップ、モバイルの下部タブ、エディターの書式ツールバー | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.29.0) |
 | v1.28.1 | 2026-10-08 | AI の公開・削除をオンにした後は再接続するよう案内 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.28.1) |
 | v1.28.0 | 2026-10-08 | 設定でオンにすると AI が公開・削除まで可能に（既定はオフ） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.28.0) |
 | v1.27.7 | 2026-10-08 | 学校 MinIO のアドレスを 8000 番ポートに（nhn、デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.7) |

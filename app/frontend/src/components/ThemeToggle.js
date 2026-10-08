@@ -6,5 +6,5 @@ export function ThemeToggle() {
     const [theme, setTheme] = useState(() => readTheme());
     const next = nextTheme(theme);
     const label = `테마: ${THEME_LABEL[theme]} (누르면 ${THEME_LABEL[next]})`;
-    return (_jsx("button", { type: "button", className: "btn btn-text theme-toggle", "aria-label": label, title: label, onClick: () => { applyTheme(next); setTheme(next); }, children: _jsx("span", { "aria-hidden": "true", children: THEME_ICON[theme] }) }));
+    return (_jsx("button", { type: "button", className: "btn btn-text theme-toggle", "aria-label": label, onClick: () => { applyTheme(next); setTheme(next); }, children: _jsx("span", { "aria-hidden": "true", children: THEME_ICON[theme] }) }));
 }

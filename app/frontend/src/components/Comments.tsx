@@ -96,7 +96,7 @@ export function Comments({ postId, initial, onCount }: {
   const ctx: Ctx = { postId, canWrite: page.canWrite, replyingTo, setReplyingTo, highlight, added, removed,
     updated: (c) => setItems((list) => replaceComment(list, c)), setItems }
   return (
-    <section className="comments" aria-labelledby="comments-title">
+    <section className="comments" id="comments" aria-labelledby="comments-title">
       <h2 id="comments-title" className="comments-title">댓글 {count}</h2>
       <WriteBox ctx={ctx} />
       {page.prevCursor && (

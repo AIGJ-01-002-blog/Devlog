@@ -1,4 +1,4 @@
-import { relativeDate } from '../lib/format'
+import { fullDate, relativeDate } from '../lib/format'
 import { Link } from '../lib/router'
 import type { Card } from '../lib/types'
 import { VISIBILITY_ICON, VISIBILITY_LABEL } from '../lib/visibility'
@@ -37,7 +37,7 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
           {card.visibility === 'FRIENDS' && (
             <><span className="badge" title="친구에게만 보이는 글">{VISIBILITY_ICON.FRIENDS} {VISIBILITY_LABEL.FRIENDS}</span>{' · '}</>
           )}
-          <time dateTime={card.firstPublicAt ?? card.publishedAt}>{relativeDate(card.firstPublicAt ?? card.publishedAt)}</time>
+          <time dateTime={card.firstPublicAt ?? card.publishedAt} title={fullDate(card.firstPublicAt ?? card.publishedAt)}>{relativeDate(card.firstPublicAt ?? card.publishedAt)}</time>
           {card.commentCount > 0 && <span> · 댓글 {card.commentCount}</span>}
         </div>
       </div>
@@ -47,7 +47,7 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
             <Avatar src={card.author.profileImageUrl} name={card.author.nickname} seed={card.author.handle} size={24} />
             <span>by <b>{card.author.nickname}</b></span>
           </Link>
-          <span className="card-likes" aria-label={`좋아요 ${card.likeCount}`}>♥ {card.likeCount}</span>
+          <span className="card-likes" aria-label={`좋아요 ${card.likeCount}`} data-tip={`좋아요 ${card.likeCount}개`}>♥ {card.likeCount}</span>
         </footer>
       )}
     </article>

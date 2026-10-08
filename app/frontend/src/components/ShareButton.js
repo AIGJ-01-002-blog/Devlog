@@ -25,5 +25,5 @@ export function ShareButton({ path, title }) {
     };
     const result = shown?.result;
     const message = result ? MESSAGES[result] : undefined;
-    return (_jsxs("span", { className: "share", children: [_jsxs("button", { type: "button", className: "like-button", onClick: press, children: [_jsx("span", { "aria-hidden": "true", children: "\u2197" }), " \uACF5\uC720"] }), _jsx("span", { className: `like-notice${result === 'failed' ? ' error' : ''}`, role: "status", children: message ?? '' })] }));
+    return (_jsxs("span", { className: "share", children: [_jsxs("button", { type: "button", className: "like-button", "data-tip": "\uC774 \uAE00 \uB9C1\uD06C\uB97C \uBCF5\uC0AC\uD558\uAC70\uB098 \uACF5\uC720\uD574\uC694", onClick: press, children: [_jsx("span", { "aria-hidden": "true", children: "\u2197" }), " \uACF5\uC720"] }), _jsx("span", { className: `like-notice${result === 'failed' ? ' error' : ''}`, role: "status", children: message ?? '' })] }));
 }
