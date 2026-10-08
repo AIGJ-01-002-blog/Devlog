@@ -367,6 +367,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.34.0 | 2026-10-08 | AI post proposals (title and scope when a topic ends) and an optional midnight diary | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.34.0) |
 | v1.33.1 | 2026-10-08 | Startup log shows whether semantic search is on; cluster status shows embedding progress | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.1) |
 | v1.33.0 | 2026-10-08 | Revision history, pre-publish check, Markdown export of your posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |
 | v1.32.1 | 2026-10-08 | Read-only "cluster status" workflow for the school-server cluster (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.1) |

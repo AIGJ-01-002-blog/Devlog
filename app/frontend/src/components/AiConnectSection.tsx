@@ -3,7 +3,7 @@ import { ApiError } from '../lib/api'
 import { fullDate, relativeDate } from '../lib/format'
 import { Link } from '../lib/router'
 import {
-  aiPublishApi, claudeCodeCommand, TOKEN_EXPIRY_DAYS, TOKEN_NAME_MAX, tokensApi, type AccessToken, type IssuedToken, type TokenScope,
+  aiDiaryApi, aiPublishApi, claudeCodeCommand, TOKEN_EXPIRY_DAYS, TOKEN_NAME_MAX, tokensApi, type AccessToken, type IssuedToken, type TokenScope,
 } from '../lib/mcp'
 import { CopyCode } from './CopyCode'
 
@@ -115,6 +115,7 @@ export function AiConnectSection() {
       {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
 
       <AiPublishToggle />
+      <AiDiaryToggle />
     </section>
   )
 }
@@ -157,6 +158,49 @@ function AiPublishToggle() {
       </p>
       <p className="muted small ai-publish-reconnect">
         끄면 바로 막혀요. 켠 뒤에는 AI 앱에서 devlog 연결을 다시 시작해야 발행·삭제 도구가 보여요.
+      </p>
+      {error && <p className="error" role="status">{error}</p>}
+    </div>
+  )
+}
+
+/**
+ * "자정에 일기 쓰기" (061). 기본은 꺼짐. 켜면 연결한 AI에 add_note가 열리고, 매일 00:00(KST)에 그날 메모가 일기 임시글로 묶인다.
+ * 발행은 하지 않는다. 끄면 아직 묶지 않은 메모도 지운다.
+ */
+function AiDiaryToggle() {
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => { aiDiaryApi.get().then((s) => setEnabled(s.enabled)).catch(() => setEnabled(null)) }, [])
+
+  const change = async (on: boolean) => {
+    if (!on && !confirm('자정에 일기 쓰기를 끌까요?\n오늘 AI가 남긴 메모도 함께 지워져요. 이미 만든 일기 임시글은 그대로 남아요.')) return
+    setBusy(true)
+    setError(null)
+    try {
+      setEnabled((await aiDiaryApi.set(on)).enabled)
+    } catch {
+      setError('설정을 바꾸지 못했어요. 다시 시도해 주세요.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="ai-publish ai-diary">
+      <h3>자정 일기</h3>
+      <label title="AI를 쓴 날마다 자정에 그날 작업 메모를 일기 임시글로 모아요">
+        <input type="checkbox" checked={enabled === true} disabled={busy || enabled === null} onChange={(e) => change(e.target.checked)} />
+        {' '}자정에 일기 쓰기
+      </label>
+      <p className="muted small">
+        켜면 연결한 AI가 작업을 마칠 때마다 한두 문장 메모를 남기고, 매일 자정(한국 시간)에 그날 메모가 주제별로 묶인 <b>일기 임시글</b>이 돼요.
+        AI를 쓰지 않은 날은 만들지 않고, 발행은 내가 해요.
+      </p>
+      <p className="muted small ai-publish-reconnect">
+        켠 뒤에는 AI 앱에서 devlog 연결을 다시 시작해야 메모 도구가 보여요. 끄면 아직 묶지 않은 메모도 지워요.
       </p>
       {error && <p className="error" role="status">{error}</p>}
     </div>
