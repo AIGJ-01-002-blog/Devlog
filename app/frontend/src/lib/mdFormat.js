@@ -71,13 +71,15 @@ function prefixLines(value, start, end, format, prefix) {
     const numbered = format === 'ol';
     const has = (l) => (numbered ? /^\d+\. /.test(l) : l.startsWith(prefix));
     const all = lines.every((l) => has(l) || l.trim() === '');
-    const next = lines.map((l, i) => {
+    let n = 0;
+    const next = lines.map((l) => {
         if (l.trim() === '' && lines.length > 1)
             return l;
         if (all)
             return numbered ? l.replace(/^\d+\. /, '') : l.slice(prefix.length);
         const base = isHeading ? l.replace(HEADING, '') : l;
-        return (numbered ? `${i + 1}. ` : prefix) + base;
+        // 빈 줄은 번호를 세지 않는다
+        return (numbered ? `${++n}. ` : prefix) + base;
     });
     const insert = next.join('\n');
     // 한 줄이고 고른 글자가 없으면 커서를 줄 끝에 둔다

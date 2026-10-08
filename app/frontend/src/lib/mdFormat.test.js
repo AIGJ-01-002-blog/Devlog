@@ -24,6 +24,7 @@ describe('applyFormat', () => {
         expect(run('x\ny', 0, 3, 'ul').next).toBe('- x\n- y');
         expect(run('x\ny', 0, 3, 'ol').next).toBe('1. x\n2. y');
         expect(run('1. x\n2. y', 0, 9, 'ol').next).toBe('x\ny');
+        expect(run('first\n\nsecond', 0, 13, 'ol').next).toBe('1. first\n\n2. second');
         expect(run('x', 0, 1, 'quote').next).toBe('> x');
     });
     it('링크는 주소 자리를 골라 둔다', () => {

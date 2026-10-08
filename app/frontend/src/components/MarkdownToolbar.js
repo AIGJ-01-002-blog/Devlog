@@ -15,9 +15,9 @@ export function applyMdEdit(el, edit, onChange) {
     catch {
         done = false;
     }
-    if (!done || el.value.slice(edit.from, edit.from + edit.insert.length) !== edit.insert) {
-        onChange(el.value.slice(0, edit.from) + edit.insert + el.value.slice(edit.to));
-    }
+    // insertText가 input 이벤트를 꼭 내지는 않아(MDN) 성공했어도 바뀐 값을 상태에 넘긴다
+    const applied = done && el.value.slice(edit.from, edit.from + edit.insert.length) === edit.insert;
+    onChange(applied ? el.value : el.value.slice(0, edit.from) + edit.insert + el.value.slice(edit.to));
     requestAnimationFrame(() => el.setSelectionRange(edit.selStart, edit.selEnd));
 }
 export function formatTextarea(el, format, onChange) {

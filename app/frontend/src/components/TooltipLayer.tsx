@@ -104,6 +104,8 @@ export function TooltipLayer() {
   // 크기를 재야 자리를 정할 수 있어 그리기 직전에 한 번 더 맞춘다
   useLayoutEffect(() => {
     if (!tip || !ref.current) { setPos(null); return }
+    // 툴팁이 뜬 사이 화면이 바뀌어 대상이 사라졌으면 왼쪽 위에 남기지 않고 닫는다
+    if (!tip.el.isConnected) { setPos(null); setTip(null); return }
     const r = tip.el.getBoundingClientRect()
     const box = ref.current.getBoundingClientRect()
     setPos(placeTip(r, box, { width: window.innerWidth, height: window.innerHeight }))

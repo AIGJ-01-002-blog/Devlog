@@ -120,6 +120,12 @@ export function TooltipLayer() {
             setPos(null);
             return;
         }
+        // 툴팁이 뜬 사이 화면이 바뀌어 대상이 사라졌으면 왼쪽 위에 남기지 않고 닫는다
+        if (!tip.el.isConnected) {
+            setPos(null);
+            setTip(null);
+            return;
+        }
         const r = tip.el.getBoundingClientRect();
         const box = ref.current.getBoundingClientRect();
         setPos(placeTip(r, box, { width: window.innerWidth, height: window.innerHeight }));

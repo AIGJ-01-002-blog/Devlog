@@ -45,7 +45,7 @@ function unnamedIconControls(file, code) {
         const open = ts.isJsxElement(n) ? n.openingElement : ts.isJsxSelfClosingElement(n) ? n : null;
         if (open && CONTROLS.has(open.tagName.getText())) {
             const a = attrs(open);
-            const named = NAMES.some((k) => a.has(k)) || a.has('{...rest}');
+            const named = NAMES.some((k) => a.has(k)) || open.attributes.properties.some(ts.isJsxSpreadAttribute);
             const text = ts.isJsxElement(n) && mayShowText(n.children);
             if (!named && !text)
                 bad.push(`${file}:${sf.getLineAndCharacterOfPosition(open.getStart()).line + 1}`);
@@ -69,5 +69,6 @@ describe('아이콘 버튼 이름 (054)', () => {
         expect(unnamedIconControls('x.tsx', 'const a = <button aria-label="닫기">✕</button>')).toHaveLength(0);
         expect(unnamedIconControls('x.tsx', 'const a = <button>{label}</button>')).toHaveLength(0);
         expect(unnamedIconControls('x.tsx', 'const a = <Link to="/">홈</Link>')).toHaveLength(0);
+        expect(unnamedIconControls('x.tsx', 'const a = <button {...props}>✕</button>')).toHaveLength(0);
     });
 });
