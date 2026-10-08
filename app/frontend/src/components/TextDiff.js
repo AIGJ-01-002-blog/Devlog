@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { diffLines, diffWordsWithSpace } from 'diff';
 import { useMemo } from 'react';
 /**
- * 두 글을 줄 단위로 나란히 비교한다 (충돌 창 docs/04 §2-7, 수정 이력 055). 색만으로 구분하지 않고 −/+ 기호를 붙인다.
+ * 두 글을 줄 단위로 나란히 비교한다 (충돌 창 docs/04 §2-7, 수정 이력 058). 색만으로 구분하지 않고 −/+ 기호를 붙인다.
  * 좁은 화면에서는 두 칸이 위아래로 쌓인다(.diff 미디어 쿼리).
  */
 export function TextDiff({ before, after, beforeLabel, afterLabel }) {

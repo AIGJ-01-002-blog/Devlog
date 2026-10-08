@@ -29,6 +29,7 @@ import com.team.blog.post.application.PostTrashService;
 import com.team.blog.post.application.PublishCommand;
 import com.team.blog.post.domain.PostStatus;
 import com.team.blog.search.application.SearchQuery;
+import com.team.blog.search.application.SearchTerms;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.time.Times;
@@ -41,12 +42,13 @@ import com.team.blog.tag.application.TagQuery;
  * 회원이 웹 설정에서 "AI가 발행·삭제하도록 허용"을 켜면(053) publish_post·delete_post가 열린다.
  * report_bug(054)는 어느 토큰으로나 devlog 도구의 버그를 신고한다. 관리자 토큰에는 문의 관리 도구(list·get·update_inquiry)가 더 보인다.
  * 둘 다 웹의 발행·삭제와 같은 서비스(PostCommandService.publish, PostTrashService.trash)를 그대로 부른다.
- * 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
+ * 발행한 글 고치기·다시 발행, 사진 올리기, 내 글 전체 검색은 060에서 더했다. 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
  */
 @Service
 public class McpTools {
     static final int CALLS_PER_MINUTE = 60;
     static final int WRITES_PER_HOUR = 30;
+    static final int MINE_LIMIT = 20;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.of("Asia/Seoul"));
 
     public record Result(String text, boolean error) {
@@ -97,8 +99,10 @@ public class McpTools {
                     true, DRAFT_SCHEMA),
             new Tool("create_draft", "임시글 만들기",
                     "사용자의 devlog에 새 임시글을 만든다. 공개되지 않으며 사용자가 화면에서 직접 발행한다.", true, DRAFT_SCHEMA),
-            new Tool("update_draft", "임시글 고치기",
-                    "사용자의 임시글(아직 발행하지 않은 글)의 제목이나 본문을 바꾼다. 발행한 글은 고칠 수 없다.", true, """
+            new Tool("update_draft", "글 고치기",
+                    "사용자 글의 제목이나 본문을 바꾼다. 임시글은 그대로 바뀌고, 발행한 글은 웹 편집 화면처럼 '고치는 중' 작업본에만 저장돼 "
+                            + "독자에게는 아직 보이지 않는다. 발행한 글의 고친 내용은 사용자가 편집 화면에서 [다시 발행]하거나, "
+                            + "AI 발행이 허용된 경우 publish_post로 다시 발행해야 공개된다. 고치기 전에 get_post로 지금 내용을 읽는다.", true, """
                     {"type":"object","properties":{
                       "post_id":{"type":"integer"},
                       "title":{"type":"string"},
@@ -109,9 +113,10 @@ public class McpTools {
                     true, """
                     {"type":"object","properties":{"post_id":{"type":"integer"}},"required":["post_id"]}"""),
             new Tool("publish_post", "글 발행하기",
-                    "사용자의 임시글을 바로 발행한다(웹의 [발행하기]와 같다). 사용자가 발행하라고 분명히 말했을 때만 부른다. "
+                    "사용자의 임시글을 바로 발행하거나, 발행한 글을 update_draft로 고친 내용으로 다시 발행한다(웹의 [발행하기]·[다시 발행]과 같다). "
+                            + "사용자가 발행하라고 분명히 말했을 때만 부른다. "
                             + "공개 범위(visibility)를 주지 않으면 그 글에 정해진 공개 범위(보통 회원 기본값)로 발행한다. "
-                            + "tags를 주지 않으면 글에 있던 태그나 AI가 제안한 태그를 쓴다. 이미 발행한 글은 이 도구로 다시 발행하지 않는다. "
+                            + "tags를 주지 않으면 글에 있던 태그나 AI가 제안한 태그를 쓴다. 발행한 글에 고친 내용이 없으면 다시 발행하지 않는다. "
                             + "사용자가 설정 › AI 연결에서 'AI가 발행·삭제하도록 허용'을 켰을 때만 쓸 수 있다.", true, """
                     {"type":"object","properties":{
                       "post_id":{"type":"integer"},
@@ -125,10 +130,11 @@ public class McpTools {
                             + "사용자가 설정 › AI 연결에서 'AI가 발행·삭제하도록 허용'을 켰을 때만 쓸 수 있다.", true, """
                     {"type":"object","properties":{"post_id":{"type":"integer"}},"required":["post_id"]}""", Gate.AI_PUBLISH, true),
             new Tool("search_posts", "글 검색",
-                    "devlog의 공개 글을 검색한다. mine=true면 사용자 본인의 공개 글만 찾는다.", false, """
+                    "devlog의 공개 글을 검색한다. mine=true면 사용자 본인의 글 전체(임시글·비공개·친구 공개·고치는 중인 내용 포함, 휴지통 제외)에서 "
+                            + "최근 수정 순으로 찾는다. '지난번에 쓴 글'을 이어 쓰거나 고칠 때 mine=true로 찾는다.", false, """
                     {"type":"object","properties":{
-                      "query":{"type":"string","description":"검색어"},
-                      "mine":{"type":"boolean","description":"내 글에서만 찾기"}},
+                      "query":{"type":"string","description":"검색어. 띄어 쓴 단어가 모두 들어간 글을 찾는다"},
+                      "mine":{"type":"boolean","description":"내 글 전체에서 찾기"}},
                      "required":["query"]}"""),
             new Tool("get_post", "글 읽기",
                     "글 번호로 제목과 본문 Markdown을 읽는다. 사용자가 웹에서 볼 수 있는 글만 읽을 수 있다(본인 글은 임시글 포함).", false, """
@@ -136,6 +142,21 @@ public class McpTools {
             new Tool("list_my_posts", "내 글 목록",
                     "사용자의 임시글 또는 발행한 글 목록(최근 수정 순, 최대 20개)을 돌려준다.", false, """
                     {"type":"object","properties":{"status":{"type":"string","enum":["drafts","published"],"default":"drafts"}}}"""),
+            new Tool("upload_image", "사진 올리기",
+                    "사진(jpg·png·gif, base64로 2MB까지)을 사용자의 devlog 사진 저장소에 올리고 본문에 넣을 Markdown 이미지 문법을 돌려준다. "
+                            + "돌려받은 문법을 create_draft·update_draft의 본문에 넣는다. 서버가 긴 변 1920px로 줄이고 위치 같은 사진 정보를 지운다. "
+                            + "파일이 크거나 명령줄(curl)을 쓸 수 있으면 create_image_upload_link가 낫다. "
+                            + "비밀번호·토큰·개인 정보가 찍힌 화면은 올리지 않는다.", true, """
+                    {"type":"object","properties":{
+                      "image_base64":{"type":"string","description":"사진 파일을 base64로 바꾼 값 (data:image/png;base64, 머리는 있어도 된다)"},
+                      "alt":{"type":"string","description":"사진 설명(대체 문구). 화면 읽기 프로그램이 읽는다"}},
+                     "required":["image_base64"]}"""),
+            new Tool("create_image_upload_link", "사진 올리기 주소 만들기",
+                    "한 번만 쓸 수 있는 사진 올리기 주소(10분)를 만든다. 사용자 컴퓨터의 사진 파일을 명령줄로 올릴 때 쓴다: "
+                            + "curl -T 파일경로 주소. 응답 JSON의 markdown 값을 본문에 넣는다. 규칙은 upload_image와 같고 10MB까지 올릴 수 있다. "
+                            + "사진 한 장마다 새 주소를 만든다.", true, """
+                    {"type":"object","properties":{
+                      "alt":{"type":"string","description":"사진 설명(대체 문구)"}}}"""),
             new Tool("list_tags", "태그 보기",
                     "사용자가 자주 쓴 태그와 devlog 인기 태그를 돌려준다. 태그를 제안할 때 이 목록의 표기를 따르면 좋다.", false, """
                     {"type":"object","properties":{}}"""),
@@ -181,6 +202,7 @@ public class McpTools {
     private final TagQuery tags;
     private final AiDraftHints hints;
     private final PostTrashService trash;
+    private final McpImages images;
     private final InquiryService inquiries;
     private final RateLimiter rateLimiter;
     private final JdbcTemplate jdbc;
@@ -190,7 +212,7 @@ public class McpTools {
 
     public McpTools(PostCommandService commands, PostEditorQuery editor, MyPostsQuery myPosts, SearchQuery search,
                     PostDetailQuery details, TagQuery tags, AiDraftHints hints, PostTrashService trash, InquiryService inquiries,
-                    RateLimiter rateLimiter, JdbcTemplate jdbc, Clock clock, BlogProperties props) {
+                    McpImages images, RateLimiter rateLimiter, JdbcTemplate jdbc, Clock clock, BlogProperties props) {
         this.commands = commands;
         this.editor = editor;
         this.myPosts = myPosts;
@@ -199,6 +221,7 @@ public class McpTools {
         this.tags = tags;
         this.hints = hints;
         this.trash = trash;
+        this.images = images;
         this.inquiries = inquiries;
         this.rateLimiter = rateLimiter;
         this.jdbc = jdbc;
@@ -247,6 +270,8 @@ public class McpTools {
                 case "get_post" -> getPost(caller, a);
                 case "list_my_posts" -> listMyPosts(caller, a);
                 case "list_tags" -> listTags(caller);
+                case "upload_image" -> uploadImage(caller, a);
+                case "create_image_upload_link" -> createUploadLink(caller, a);
                 case "report_bug" -> reportBug(caller, a);
                 case "list_inquiries" -> listInquiries(a);
                 case "get_inquiry" -> getInquiry(a);
@@ -270,14 +295,21 @@ public class McpTools {
                 + (suggested.isEmpty() ? "" : "\n제안한 태그: " + String.join(", ", suggested)));
     }
 
+    /**
+     * 임시글은 그대로, 발행한 글은 웹 편집 화면처럼 작업본에만 저장한다 (060). 독자는 다시 발행할 때까지 발행본을 본다.
+     * 저장은 웹의 [저장]과 같은 PostCommandService.save라서 사용자가 그 사이 고쳤으면 버전 충돌로 거절된다.
+     */
     private Result updateDraft(AccessTokens.Caller caller, JsonNode a) {
         long id = postId(a);
+        if (!a.has("title") && !a.has("content_md")) return Result.fail("바꿀 제목(title)이나 본문(content_md)을 주세요.");
         PostEditorQuery.EditorView view = editor.open(caller.memberId(), caller.handle(), id);
-        if (view.status() != PostStatus.DRAFT) return Result.fail("발행한 글은 AI가 고칠 수 없어요. devlog 화면에서 고쳐 주세요.");
         String title = a.has("title") ? text(a, "title") : view.title();
         String content = a.has("content_md") ? text(a, "content_md") : view.contentMd();
         commands.save(caller.memberId(), id, title, content, view.version());
-        return Result.ok("임시글 " + id + "번을 고쳤어요. 확인 링크: " + editUrl(id));
+        if (view.status() == PostStatus.DRAFT) return Result.ok("임시글 " + id + "번을 고쳤어요. 확인 링크: " + editUrl(id));
+        return Result.ok("발행한 글 " + id + "번의 고친 내용을 저장했어요. 아직 독자에게는 이전 내용이 보여요.\n"
+                + "사용자가 이 화면에서 확인하고 [다시 발행]을 눌러야 공개돼요: " + editUrl(id)
+                + (caller.aiPublishAllowed() ? "\n사용자가 다시 발행하라고 하면 publish_post로 다시 발행할 수 있어요." : ""));
     }
 
     private Result requestPublish(AccessTokens.Caller caller, JsonNode a) {
@@ -297,7 +329,10 @@ public class McpTools {
     private Result publishPost(AccessTokens.Caller caller, JsonNode a) {
         long id = postId(a);
         PostEditorQuery.EditorView view = editor.open(caller.memberId(), caller.handle(), id);
-        if (view.status() != PostStatus.DRAFT) return Result.fail("이미 발행한 글이에요. 발행한 글의 수정·다시 발행은 devlog 화면에서 해 주세요: " + baseUrl + view.url());
+        boolean republish = view.status() != PostStatus.DRAFT;
+        if (republish && !view.editing()) {
+            return Result.fail("이미 발행한 글이고 고친 내용이 없어요. 고치려면 update_draft로 먼저 고친 뒤 다시 발행해 주세요: " + baseUrl + view.url());
+        }
         Visibility visibility = view.visibility();
         if (a.has("visibility")) {
             visibility = parseVisibility(text(a, "visibility"));
@@ -321,7 +356,8 @@ public class McpTools {
         PostCommandService.PublishResult r = commands.publish(new PublishCommand(id, caller.memberId(), view.title(), view.contentMd(),
                 summary, visibility, tagList, view.version(), view.thumbnailUrl(), view.thumbnailHidden()), caller.handle(), null);
         List<String> saved = editor.open(caller.memberId(), caller.handle(), id).tags();
-        return Result.ok("'" + view.title() + "'을(를) " + visibilityLabel(r.visibility()) + "로 발행했어요: " + baseUrl + r.url()
+        return Result.ok("'" + view.title() + "'을(를) " + visibilityLabel(r.visibility()) + (republish ? "로 다시 발행했어요: " : "로 발행했어요: ")
+                + baseUrl + r.url()
                 + (saved.isEmpty() ? "" : "\n태그: " + String.join(", ", saved)));
     }
 
@@ -355,8 +391,8 @@ public class McpTools {
 
     private Result searchPosts(AccessTokens.Caller caller, JsonNode a) {
         String query = text(a, "query");
-        boolean mine = a.path("mine").asBoolean(false);
-        SearchQuery.PostPage page = search.posts(query, SearchQuery.Sort.RELEVANCE, null, mine ? caller.memberId() : null);
+        if (a.path("mine").asBoolean(false)) return searchMine(caller, query);
+        SearchQuery.PostPage page = search.posts(query, SearchQuery.Sort.RELEVANCE, null, null);
         if ("TOO_SHORT".equals(page.notice())) return Result.fail("검색어가 너무 짧아요. 두 글자 이상으로 찾아 주세요.");
         if (page.items().isEmpty()) return Result.ok("'" + page.query() + "'로 찾은 글이 없어요.");
         StringBuilder out = new StringBuilder("'" + page.query() + "' 검색 결과 " + page.items().size() + "개:\n");
@@ -366,6 +402,58 @@ public class McpTools {
             if (h.snippetHtml() != null) out.append("  ").append(plain(h.snippetHtml())).append('\n');
         }
         return Result.ok(out.toString().stripTrailing());
+    }
+
+    /**
+     * 내 글 전체에서 찾기 (060). 공개 검색(SearchQuery)은 공개 글만 보므로, 본인 글은 여기서 따로 찾는다.
+     * 휴지통만 빼고 임시글·비공개·친구 공개·숨겨진 글과 고치는 중인 작업본까지 본다. 회원 한 명의 글이라 인덱스 없이 훑어도 가볍다.
+     */
+    private Result searchMine(AccessTokens.Caller caller, String query) {
+        SearchTerms terms = SearchTerms.parse(query);
+        if (terms.isEmpty()) return Result.fail("검색어가 너무 짧아요. 두 글자 이상으로 찾아 주세요.");
+        StringBuilder where = new StringBuilder();
+        List<Object> args = new ArrayList<>();
+        args.add(caller.memberId());
+        for (String w : terms.words()) {
+            String p = SearchTerms.likePattern(w);
+            where.append(" AND (p.title ILIKE ? OR p.content_md ILIKE ? OR d.title ILIKE ? OR d.content_md ILIKE ?"
+                    + " OR EXISTS (SELECT 1 FROM post_tag pt JOIN tag g ON g.id = pt.tag_id WHERE pt.post_id = p.id AND g.name ILIKE ?))");
+            for (int i = 0; i < 4; i++) args.add(p);
+            args.add(p.toLowerCase());
+        }
+        args.add(MINE_LIMIT);
+        List<String> lines = jdbc.query("""
+                SELECT p.id, COALESCE(NULLIF(d.title, ''), p.title) AS title, p.status, p.visibility, d.post_id IS NOT NULL AS editing,
+                       GREATEST(p.updated_at, COALESCE(d.updated_at, p.updated_at)) AS at
+                FROM post p LEFT JOIN post_draft d ON d.post_id = p.id
+                WHERE p.author_id = ? AND p.deleted_at IS NULL""" + where + """
+
+                ORDER BY at DESC, p.id DESC LIMIT ?
+                """, (rs, i) -> {
+            boolean draft = PostStatus.DRAFT.name().equals(rs.getString("status"));
+            String title = rs.getString("title");
+            return "- [" + rs.getLong("id") + "] " + (title == null || title.isBlank() ? "(제목 없음)" : title) + " · "
+                    + (draft ? "임시글" : visibilityLabel(Visibility.valueOf(rs.getString("visibility"))))
+                    + (rs.getBoolean("editing") ? " · 고치는 중" : "") + " · 수정 " + DATE.format(rs.getTimestamp("at").toInstant());
+        }, args.toArray());
+        if (lines.isEmpty()) return Result.ok("내 글에서 '" + terms.normalized() + "'로 찾은 글이 없어요.");
+        return Result.ok("내 글에서 '" + terms.normalized() + "' 검색 결과 " + lines.size() + "개 (최근 수정 순"
+                + (lines.size() == MINE_LIMIT ? ", 최대 " + MINE_LIMIT + "개" : "") + "):\n" + String.join("\n", lines)
+                + "\n본문은 get_post로 읽어 주세요.");
+    }
+
+    private Result uploadImage(AccessTokens.Caller caller, JsonNode a) {
+        String data = text(a, "image_base64");
+        if (data.isBlank()) return Result.fail("사진(image_base64)이 필요해요. 큰 사진은 create_image_upload_link로 올려 주세요.");
+        McpImages.Uploaded up = images.uploadBase64(caller.memberId(), data, text(a, "alt"));
+        return Result.ok("사진을 올렸어요 (" + up.width() + "×" + up.height() + "). 본문에 이 줄을 넣어 주세요:\n" + up.markdown());
+    }
+
+    private Result createUploadLink(AccessTokens.Caller caller, JsonNode a) {
+        String url = baseUrl + "/api/mcp/uploads/" + images.createTicket(caller.memberId(), text(a, "alt"));
+        return Result.ok("사진 올리기 주소를 만들었어요. 10분 동안 한 번만 쓸 수 있어요.\n"
+                + "curl -sS -T <사진 파일 경로> " + url + "\n"
+                + "응답 JSON의 markdown 값을 본문에 넣어 주세요. jpg·png·gif, 10MB까지예요.");
     }
 
     private Result getPost(AccessTokens.Caller caller, JsonNode a) {

@@ -35,7 +35,7 @@ export function ExportSection() {
         제목·날짜·태그·시리즈가 파일 맨 위에 적혀 있어 다른 블로그로 옮기거나 백업하기 좋아요.
       </p>
       <button type="button" className="btn btn-outline" onClick={() => void download()} disabled={busy || count === 0}
-              title="발행한 글(posts/)과 임시글(drafts/)을 Markdown zip 파일로 받아요">
+              data-tip="발행한 글(posts/)과 임시글(drafts/)을 Markdown zip 파일로 받아요">
         {busy ? '만드는 중…' : '⬇ Markdown으로 내보내기'}
       </button>
       {message && <p className={message.ok ? 'small' : 'error small'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}

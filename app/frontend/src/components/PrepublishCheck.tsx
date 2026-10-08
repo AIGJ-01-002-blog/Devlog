@@ -9,7 +9,7 @@ export function PrepublishCheck(props: PrepublishInput) {
   const warns = items.filter((i) => i.level === 'warn').length
   return (
     <details className="prepublish" open={warns > 0}>
-      <summary title="발행하기 전에 놓치기 쉬운 것을 훑어봐요. 발행을 막지는 않아요.">
+      <summary data-tip="발행하기 전에 놓치기 쉬운 것을 훑어봐요. 발행을 막지는 않아요.">
         발행 전 점검 {warns > 0 ? <span className="prepublish-count">확인할 것 {warns}개</span> : <span className="muted small">확인할 것 없음</span>}
       </summary>
       <ul>

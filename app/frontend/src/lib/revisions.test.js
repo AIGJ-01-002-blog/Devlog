@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { revisionLabel } from './revisions';
-describe('수정 이력 이름 (055)', () => {
+describe('수정 이력 이름 (058)', () => {
     const item = (no) => ({ no, title: 't', createdAt: '2026-10-08T00:00:00Z', length: 1 });
     it('최근 판과 첫 판을 구분한다', () => {
         expect(revisionLabel(item(3), 3)).toBe('3판 · 지금 발행본');

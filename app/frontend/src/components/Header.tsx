@@ -24,21 +24,21 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <Link to="/" className="logo"><span className="logo-mark" aria-hidden="true" />devlog</Link>
+        <Link to="/" className="logo" data-tip="첫 화면으로"><span className="logo-mark" aria-hidden="true" />devlog</Link>
         <nav className="header-actions">
-          <Link to="/search" className="btn btn-text header-search" aria-label="검색">
+          <Link to="/search" className="btn btn-text header-search header-nav" aria-label="검색" data-tip="글·사람 검색">
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2"
                  strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
           </Link>
-          <Link to="/mcp" className="btn btn-text header-mcp">AI 연결</Link>
-          {member && <Link to="/feed" className="btn btn-text">피드</Link>}
-          <Link to="/tags" className="btn btn-text">태그</Link>
+          <Link to="/mcp" className="btn btn-text header-mcp" data-tip="Claude·ChatGPT 같은 AI 도구에 devlog 연결하기">AI 연결</Link>
+          {member && <Link to="/feed" className="btn btn-text header-nav" data-tip="팔로우한 사람의 새 글">피드</Link>}
+          <Link to="/tags" className="btn btn-text header-nav" data-tip="태그별로 글 모아 보기">태그</Link>
           {member ? (
             <>
               <NotificationBell />
-              <Link to="/write" className="btn btn-outline header-write" aria-label="새 글 작성"><span className="long">새 글 작성</span><span className="short" aria-hidden="true">글쓰기</span><span className="icon" aria-hidden="true">✏️</span></Link>
+              <Link to="/write" className="btn btn-outline header-write" aria-label="새 글 작성" data-tip="새 글 쓰기"><span className="long">새 글 작성</span><span className="short" aria-hidden="true">글쓰기</span><span className="icon" aria-hidden="true">✏️</span></Link>
               <div className="menu" ref={menuRef}>
-                <button type="button" className="menu-button" aria-haspopup="menu" aria-expanded={open}
+                <button type="button" className="menu-button" aria-haspopup="menu" aria-expanded={open} data-tip="내 메뉴: 내 블로그·글 관리·설정·로그아웃"
                         onClick={() => setOpen((o) => !o)}>
                   <Avatar src={member.profileImageUrl} name={member.nickname} seed={member.handle} />
                   <span className="sr-only">내 메뉴</span>
@@ -66,7 +66,7 @@ export function Header() {
               </div>
             </>
           ) : (
-            <Link to={loginPath()} className="btn btn-dark">로그인</Link>
+            <Link to={loginPath()} className="btn btn-dark" data-tip="로그인하고 글쓰기·좋아요·팔로우">로그인</Link>
           )}
           <ThemeToggle />
         </nav>

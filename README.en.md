@@ -117,9 +117,9 @@ If you have agreed to AI use, the AI adds a title and tidies up the text; otherw
 - **Series**: group posts and reorder them. A series box and previous/next links appear above the post.
 - **AI tag suggestions**: up to 5 tags suggested from the title and the start of the body. You are asked to agree to sending text to an external service the first time, and you get 20 suggestions a day.
 - **Post management and trash**: filter by status and visibility, and restore deleted posts within 30 days.
-- **Revision history**: every publish keeps a revision (latest 50). Compare an earlier revision with what you are editing, or load it back into the editor.
-- **Pre-publish check**: the publish dialog reviews the summary, tags, cover image, image alt text, code blocks and empty links, and points out what is easy to miss. It never blocks publishing.
 - **Export my posts**: download all your posts from Settings as a Markdown zip with front matter (title, date, tags, series).
+- **Pre-publish check**: the publish dialog reviews the summary, tags, cover image, image alt text, code blocks and empty links, and points out what is easy to miss. It never blocks publishing.
+- **Revision history**: every publish keeps a revision (latest 50). Compare an earlier revision with what you are editing, or load it back into the editor.
 
 ### Reading and discovery
 
@@ -367,7 +367,9 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
-| v1.30.0 | 2026-10-08 | Revision history, pre-publish check, Markdown export of your posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.30.0) |
+| v1.32.0 | 2026-10-08 | Revision history, pre-publish check, Markdown export of your posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
+| v1.31.0 | 2026-10-08 | Your AI can edit published posts, upload images, and search all your own posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.31.0) |
+| v1.30.0 | 2026-10-08 | Tooltips on buttons, a mobile bottom tab bar, and an editor formatting toolbar | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.30.0) |
 | v1.29.0 | 2026-10-08 | Support inbox, AI bug reports (report_bug), release notes page | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.29.0) |
 | v1.28.1 | 2026-10-08 | Settings tell you to reconnect your AI after enabling publish and delete | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.28.1) |
 | v1.28.0 | 2026-10-08 | Opt-in setting lets your AI publish and delete posts (off by default) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.28.0) |

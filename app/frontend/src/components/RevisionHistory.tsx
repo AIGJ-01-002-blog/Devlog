@@ -6,7 +6,7 @@ import { Modal } from './Modal'
 import { changedLines, TextDiff } from './TextDiff'
 
 /**
- * 글 수정 이력 (055). Crowfoot의 "버전 기록"처럼 발행한 판을 고르고 지금 편집 중인 내용과 비교한다.
+ * 글 수정 이력 (058). Crowfoot의 "버전 기록"처럼 발행한 판을 고르고 지금 편집 중인 내용과 비교한다.
  * [이 판 불러오기]는 편집기 내용만 바꾼다. 평소처럼 저장되고, 다시 발행해야 독자에게 보인다.
  */
 export function RevisionHistory({ postId, current, onLoad, onClose }: {
@@ -49,7 +49,7 @@ export function RevisionHistory({ postId, current, onLoad, onClose }: {
     <Modal labelledBy="revisions-title" onClose={onClose} wide>
       <header className="dialog-header">
         <h2 id="revisions-title">수정 이력</h2>
-        <button type="button" className="btn btn-text" aria-label="수정 이력 닫기" title="닫기" onClick={onClose}>✕</button>
+        <button type="button" className="btn btn-text" aria-label="수정 이력 닫기" data-tip="닫기" onClick={onClose}>✕</button>
       </header>
       <p className="muted small">발행할 때마다 한 판씩 남아요(최근 50판). 판을 고르면 지금 편집 중인 내용과 비교해요.</p>
       {error && <p className="error small" role="alert">{error}</p>}
@@ -62,7 +62,7 @@ export function RevisionHistory({ postId, current, onLoad, onClose }: {
               <li key={it.no}>
                 <button type="button" className={`revision-item${selected?.no === it.no ? ' active' : ''}`}
                         aria-current={selected?.no === it.no ? 'true' : undefined}
-                        title={`${it.no}판과 지금 내용 비교하기`} onClick={() => void pick(it.no)}>
+                        data-tip={`${it.no}판과 지금 내용 비교하기`} onClick={() => void pick(it.no)}>
                   <b>{revisionLabel(it, latestNo)}</b>
                   <span className="muted small">{new Date(it.createdAt).toLocaleString('ko-KR')} · {it.length.toLocaleString('ko-KR')}자</span>
                   <span className="small revision-title">{it.title || '제목 없음'}</span>
@@ -93,7 +93,7 @@ export function RevisionHistory({ postId, current, onLoad, onClose }: {
       <footer className="dialog-footer revisions-footer">
         <button type="button" className="btn btn-text" onClick={onClose}>닫기</button>
         <button type="button" className="btn btn-primary" disabled={!selected || same}
-                title="편집기 내용을 이 판으로 바꿔요. 지금 내용은 이 기기 백업에 남고, 다시 발행해야 독자에게 보여요."
+                data-tip="편집기 내용을 이 판으로 바꿔요. 지금 내용은 이 기기 백업에 남고, 다시 발행해야 독자에게 보여요."
                 onClick={() => selected && onLoad(selected)}>
           {selected ? `${selected.no}판 불러오기` : '판 불러오기'}
         </button>

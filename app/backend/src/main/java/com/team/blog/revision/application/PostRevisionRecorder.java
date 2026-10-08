@@ -11,7 +11,7 @@ import com.team.blog.post.domain.Post;
 import com.team.blog.shared.markdown.RenderedContent;
 
 /**
- * 발행·다시 발행할 때 발행본을 한 판 남긴다 (055, V16 post_revision). 발행 트랜잭션 안에서 돌아 발행과 함께 커밋·롤백된다.
+ * 발행·다시 발행할 때 발행본을 한 판 남긴다 (058, V16 post_revision). 발행 트랜잭션 안에서 돌아 발행과 함께 커밋·롤백된다.
  * 글 행 잠금(findOwnForUpdate) 아래에서 불리므로 판 번호 max+1이 겹치지 않는다.
  */
 @Component

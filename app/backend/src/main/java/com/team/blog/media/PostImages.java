@@ -40,7 +40,7 @@ public class PostImages {
     public static final int MAX_EDGE = 1920;
     public static final int THUMB_WIDTH = 640;
     /** 해상도 폭탄 방지 (FR-006). 브라우저가 줄여 보내므로 정상 사진은 여기에 닿지 않는다. */
-    static final int MAX_PIXELS_EDGE = 10_000;
+    public static final int MAX_PIXELS_EDGE = 10_000;
     static final int MAX_GIF_FRAMES = 300;
     static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter MONTH = DateTimeFormatter.ofPattern("yyyy/MM").withZone(ZoneOffset.UTC);

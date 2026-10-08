@@ -580,7 +580,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
   display: grid; place-items: center; font-size: 22px; pointer-events: none;
 }
 .alt-texts { display: grid; gap: 8px; }
-/* 055 수정 이력: 넓은 화면은 판 목록 | 비교, 좁은 화면은 위아래로 쌓는다 */
+/* 058 수정 이력: 넓은 화면은 판 목록 | 비교, 좁은 화면은 위아래로 쌓는다 */
 .revisions { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; margin-top: 8px; }
 .revision-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow: auto; }
 .revision-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 8px 10px; text-align: left; background: none; color: inherit; border: 1px solid var(--color-border); border-radius: var(--radius); cursor: pointer; font: inherit; }
@@ -690,7 +690,8 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 
 /* 검색 (spec 014) */
 .search-box { display: flex; gap: 8px; margin: 16px 0; }
-.search-box input { flex: 1; min-width: 0; }
+.search-box input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--color-input-border); border-radius: var(--radius); background: var(--color-surface); }
+.search-box .btn { height: 40px; }
 .search-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .search-head .tabs { margin: 8px 0 16px; flex: 1; }
 .search-notice { color: var(--color-text-muted); font-size: 14px; margin: 0 0 16px; }
@@ -1047,4 +1048,64 @@ a.attachment-name:hover { color: var(--color-brand); }
   }
   .card:hover, .card:focus-within, .toc-inner a.active,
   .card:hover .card-thumb img, .card:focus-within .card-thumb img { transform: none; }
+}
+
+/* 툴팁 (055): 화면 전체에 하나. 글자색·배경색을 뒤집어 라이트·다크 모두에서 또렷하게 */
+.tooltip {
+  position: fixed; z-index: 200; max-width: min(280px, calc(100vw - 16px)); padding: 6px 10px; border-radius: 6px;
+  background: var(--color-text); color: var(--color-bg); font-size: 0.8125rem; font-weight: 500; line-height: 1.45;
+  box-shadow: var(--shadow-lg); pointer-events: none; word-break: keep-all; overflow-wrap: anywhere;
+  opacity: 0; transform: translateY(2px); transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.tooltip.shown { opacity: 1; transform: none; }
+.tooltip-bottom { transform: translateY(-2px); }
+#comments { scroll-margin-top: 80px; }
+
+/* 에디터 서식 도구 (055) */
+.md-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; margin: 0 0 12px; padding: 4px 0; border-bottom: 1px solid var(--color-border); }
+.md-tool-wrap { display: inline-flex; align-items: center; gap: 2px; }
+.md-sep { width: 1px; height: 18px; margin: 0 6px; background: var(--color-border); }
+.md-tool {
+  min-width: 36px; height: 36px; padding: 0 8px; border: 0; border-radius: 6px; background: none; cursor: pointer;
+  color: var(--color-text-muted); font-weight: 700; font-size: 0.9375rem; font-family: var(--font);
+}
+.md-tool:hover, .md-tool:focus-visible { background: var(--color-hover); color: var(--color-text); }
+.md-italic { font-style: italic; font-family: Georgia, serif; }
+.md-strike span { text-decoration: line-through; }
+.md-code, .md-codeblock { font-family: var(--mono); font-size: 0.8125rem; }
+.md-h2, .md-h3, .md-h4 { font-size: 0.875rem; }
+
+/* 좁은 화면 아래 탭 (055). 머리말이 비좁던 검색·피드·태그를 엄지 자리로 옮긴다 */
+.mobile-nav { display: none; }
+@media (max-width: 640px) {
+  .header-nav { display: none !important; }
+  .mobile-nav {
+    display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    padding: 0 0 env(safe-area-inset-bottom); background: var(--color-header-bg); border-top: 1px solid var(--color-border);
+    -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px);
+  }
+  .mobile-nav a {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px;
+    font-size: 0.6875rem; font-weight: 600; color: var(--color-text-muted);
+  }
+  .mobile-nav a.on { color: var(--color-brand); }
+  .mobile-nav a:active { background: var(--color-hover); }
+  body { padding-bottom: calc(57px + env(safe-area-inset-bottom)); }
+  /* 머리말 아이콘 버튼은 손가락으로 누르기 쉽게 40px 이상 (WCAG 2.5.8은 24px, 애플·구글 권장은 44·48px) */
+  .header-actions .bell-button, .header-actions .theme-toggle, .header-actions .menu-button {
+    min-width: 40px; min-height: 40px; justify-content: center; align-items: center;
+  }
+  .header-actions .theme-toggle { display: inline-flex; padding: 0; }
+  .header-actions { gap: 4px; }
+  .header-actions .btn-outline, .header-actions .btn-dark { min-height: 36px; }
+  /* 에디터: 도구 줄을 한 줄로 두고 옆으로 밀어 본다 */
+  .md-toolbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 12px; padding: 4px 16px; }
+  .md-toolbar::-webkit-scrollbar { display: none; }
+  .md-tool { min-width: 40px; height: 40px; }
+  .editor-toolbar { padding: 8px 12px; row-gap: 6px; }
+  .editor-toolbar > .row:last-child { width: 100%; flex-wrap: nowrap; }
+  .editor-toolbar > .row:last-child .tabs-mobile { margin-right: auto; }
+  .editor-toolbar .tabs-mobile button, .editor-toolbar .btn { white-space: nowrap; }
+  /* 글 상세 아래 좋아요·공유·신고를 손가락 크기로 */
+  .post-stats .like-button, .post-stats .report-button { min-height: 40px; }
 }

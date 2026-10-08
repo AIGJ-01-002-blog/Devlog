@@ -7,7 +7,7 @@ export function ThemeToggle() {
   const next = nextTheme(theme)
   const label = `테마: ${THEME_LABEL[theme]} (누르면 ${THEME_LABEL[next]})`
   return (
-    <button type="button" className="btn btn-text theme-toggle" aria-label={label} title={label}
+    <button type="button" className="btn btn-text theme-toggle" aria-label={label}
             onClick={() => { applyTheme(next); setTheme(next) }}>
       <span aria-hidden="true">{THEME_ICON[theme]}</span>
     </button>

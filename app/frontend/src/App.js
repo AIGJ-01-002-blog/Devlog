@@ -3,6 +3,8 @@ import { Suspense, useEffect } from 'react';
 import { Flash } from './components/Flash';
 import { Header } from './components/Header';
 import { SkipLink } from './components/SkipLink';
+import { TooltipLayer } from './components/TooltipLayer';
+import { MobileNav } from './components/MobileNav';
 import { PageAnnouncer } from './components/PageAnnouncer';
 import { MAIN_ID } from './lib/focusMain';
 import { VerifyBanner } from './components/VerifyBanner';
@@ -51,7 +53,7 @@ const AdminInquiriesPage = lazyPage(() => import('./pages/AdminInquiriesPage'), 
 const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage');
 export function App() {
     const { path } = useLocation();
-    return (_jsxs(_Fragment, { children: [_jsx(SkipLink, {}), _jsx(PageAnnouncer, {}), !path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx("div", { id: MAIN_ID, tabIndex: -1, children: _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: _jsx(PageErrorBoundary, { path: path, children: _jsx(Suspense, { fallback: _jsx(Loading, {}), children: route(path) }) }) }) }) })] }));
+    return (_jsxs(_Fragment, { children: [_jsx(SkipLink, {}), _jsx(PageAnnouncer, {}), !path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx("div", { id: MAIN_ID, tabIndex: -1, children: _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: _jsx(PageErrorBoundary, { path: path, children: _jsx(Suspense, { fallback: _jsx(Loading, {}), children: route(path) }) }) }) }) }), !path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && _jsx(MobileNav, { path: path }), _jsx(TooltipLayer, {})] }));
 }
 function route(path) {
     let p;
