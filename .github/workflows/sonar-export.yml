@@ -1,0 +1,68 @@
+# SonarQube 이슈·보안 핫스팟 목록 내보내기 (수동 실행: Actions → SonarQube 이슈 내보내기 → Run workflow).
+# 학교 SonarQube는 러너에서만 닿아서, 웹 화면 대신 API로 받아 로그와 아티팩트(sonar-issues)로 남긴다.
+# 토큰은 Secret SONAR_TOKEN, 주소는 Secret SONAR_HOST_URL(분석 단계와 같다). 토큰은 로그에 찍지 않는다.
+name: SonarQube 이슈 내보내기
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: 프로젝트 키 (비우면 레포 변수 SONAR_PROJECT_KEY)
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      PROJECT: ${{ inputs.project || vars.SONAR_PROJECT_KEY || 'aigj-01-002-blog' }}
+    steps:
+      - name: 이슈·핫스팟 받기
+        shell: python
+        run: |
+          import base64, json, os, sys, urllib.parse, urllib.request
+          token, host, project = os.environ["SONAR_TOKEN"], os.environ["SONAR_HOST_URL"].rstrip("/"), os.environ["PROJECT"]
+          if not token or not host:
+              print("::error::Secret SONAR_TOKEN·SONAR_HOST_URL이 필요합니다"); sys.exit(1)
+          auth = "Basic " + base64.b64encode(f"{token}:".encode()).decode()
+
+          def get(path, **params):
+              req = urllib.request.Request(f"{host}{path}?{urllib.parse.urlencode(params)}", headers={"Authorization": auth})
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.load(r)
+
+          def pages(path, key, **params):
+              out, p = [], 1
+              while True:
+                  d = get(path, ps=500, p=p, **params)
+                  out += d[key]
+                  total = d.get("paging", d).get("total", 0)
+                  if len(out) >= total or not d[key]: return out
+                  p += 1
+
+          issues = pages("/api/issues/search", "issues", componentKeys=project, resolved="false")
+          hotspots = pages("/api/hotspots/search", "hotspots", projectKey=project, status="TO_REVIEW")
+          os.makedirs("sonar", exist_ok=True)
+          json.dump(issues, open("sonar/issues.json", "w"), ensure_ascii=False, indent=1)
+          json.dump(hotspots, open("sonar/hotspots.json", "w"), ensure_ascii=False, indent=1)
+
+          def where(x):
+              return f'{x["component"].split(":", 1)[-1]}:{x.get("line", "")}'
+          print(f"프로젝트 {project}: 이슈 {len(issues)}건, 검토할 핫스팟 {len(hotspots)}건")
+          # 로그에서 바로 읽도록 한 줄씩: 영향(품질·심각도) 규칙 위치 메시지
+          for i in sorted(issues, key=lambda x: (x.get("type", ""), x.get("severity", ""), x["rule"])):
+              impacts = ",".join(f'{m["softwareQuality"]}/{m["severity"]}' for m in i.get("impacts", []))
+              print(f'ISSUE\t{i.get("type", "")}\t{i.get("severity", "")}\t{impacts}\t{i["rule"]}\t{where(i)}\t{i["message"]}')
+          for h in hotspots:
+              print(f'HOTSPOT\t{h.get("vulnerabilityProbability", "")}\t{h.get("securityCategory", "")}\t{h.get("ruleKey", "")}\t{where(h)}\t{h["message"]}')
+      - name: 아티팩트로 올리기
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-issues
+          path: sonar/
+          retention-days: 7
