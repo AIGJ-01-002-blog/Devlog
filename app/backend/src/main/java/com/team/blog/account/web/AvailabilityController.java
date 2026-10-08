@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.team.blog.account.application.HandlePolicy;
 import com.team.blog.account.application.HandleSuggester;
+import com.team.blog.account.application.EmailAddress;
 import com.team.blog.account.application.NicknamePolicy;
+import com.team.blog.account.application.SignupEmailCode;
 import com.team.blog.account.infra.MemberRepository;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.security.CurrentMember;
@@ -29,10 +31,12 @@ public class AvailabilityController {
     private final RateLimiter rateLimiter;
     private final ClientIpResolver ipResolver;
     private final int perMinute;
+    private final SignupEmailCode signupCode;
 
     public AvailabilityController(HandlePolicy handlePolicy, HandleSuggester suggester, NicknamePolicy nicknamePolicy,
                                   MemberRepository members, RateLimiter rateLimiter, ClientIpResolver ipResolver,
-                                  BlogProperties props) {
+                                  BlogProperties props, SignupEmailCode signupCode) {
+        this.signupCode = signupCode;
         this.handlePolicy = handlePolicy;
         this.suggester = suggester;
         this.nicknamePolicy = nicknamePolicy;
@@ -71,6 +75,17 @@ public class AvailabilityController {
         rateLimiter.check("avail:ip:" + ipResolver.resolve(request), perMinute, Duration.ofMinutes(1));
         String m = material.length() > 254 ? material.substring(0, 254) : material;
         return new HandleSuggestion(HandlePolicy.bodyOf(suggester.suggest(provider, m)));
+    }
+
+    public record EmailAvailability(boolean available, String code, String message) {}
+
+    /** 가입 화면 아이디(이메일) 확인 (spec 065). 가입 응답(EMAIL_TAKEN)과 같은 노출 범위이고 IP 제한을 함께 쓴다. */
+    @GetMapping("/api/emails/availability")
+    public EmailAvailability email(@RequestParam String email, HttpServletRequest request) {
+        rateLimiter.check("avail:ip:" + ipResolver.resolve(request), perMinute, Duration.ofMinutes(1));
+        SignupEmailCode.EmailState state = signupCode.state(EmailAddress.normalize(email));
+        return state == SignupEmailCode.EmailState.AVAILABLE ? new EmailAvailability(true, null, null)
+                : new EmailAvailability(false, state.name(), state.message());
     }
 
     public record NicknameAvailability(boolean available, String code, String message) {}

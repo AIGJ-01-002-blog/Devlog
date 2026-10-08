@@ -29,6 +29,9 @@ blog:
     purge-cron: "-"
   account:
     withdraw-purge-cron: "-"
+  # 가입 화면 인증번호(065)는 SignupEmailCodeTest가 켜서 본다. 다른 시험은 가입 뒤 링크 인증(004)을 탄다
+  auth:
+    signup-email-code: "off"
   # AI 태그 추천 (018): 주소는 가짜 공급자(IntegrationTest), 열쇠값은 시험용.
   # 기존 시험은 외부 AI 먼저를 본다. 집 PC 먼저(운영 기본)는 AiLocalFirstTest가 본다
   ai:

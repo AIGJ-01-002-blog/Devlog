@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.38.0 | 2026-10-09 | 注册页面检查账号(邮箱)并用邮件验证码完成验证 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.38.0) |
 | v1.37.2 | 2026-10-09 | 请求头值无效(如带换行的令牌)时返回 400 和提示，而不是 500 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.2) |
 | v1.37.1 | 2026-10-08 | /mcp 指南新增 Claude 应用连接器的连接方法 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.1) |
 | v1.37.0 | 2026-10-08 | 重新排列页眉菜单、分标签的我的设置、重新设计的博客与文章管理、浏览器可读的 RSS 说明页 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.0) |

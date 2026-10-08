@@ -44,6 +44,7 @@ public class EmailAccountService {
     private final PasswordEncoder encoder;
     private final SocialLoginService loginService;
     private final EmailVerification verification;
+    private final SignupEmailCode signupCode;
     private final LoginAttempts attempts;
     private final TransactionTemplate tx;
     private final Clock clock;
@@ -53,7 +54,7 @@ public class EmailAccountService {
     public EmailAccountService(MemberRepository members, AuthIdentityRepository identities, AgreementService agreements,
                                HandlePolicy handlePolicy, HandleSuggester suggester, NicknamePolicy nicknamePolicy,
                                PasswordPolicy passwordPolicy, PasswordEncoder encoder, SocialLoginService loginService,
-                               EmailVerification verification, LoginAttempts attempts, TransactionTemplate tx, Clock clock) {
+                               EmailVerification verification, SignupEmailCode signupCode, LoginAttempts attempts, TransactionTemplate tx, Clock clock) {
         this.members = members;
         this.identities = identities;
         this.agreements = agreements;
@@ -64,6 +65,7 @@ public class EmailAccountService {
         this.encoder = encoder;
         this.loginService = loginService;
         this.verification = verification;
+        this.signupCode = signupCode;
         this.attempts = attempts;
         this.tx = tx;
         this.clock = clock;
@@ -75,7 +77,11 @@ public class EmailAccountService {
     public record EmailSignupForm(String email, String handleBody, String password, String passwordConfirm,
                                   String nickname, boolean agreeTerms, boolean agreePrivacy, boolean agreeAi) {}
 
-    public MemberPrincipal signup(EmailSignupForm form) {
+    /**
+     * @param verifiedEmail 이 브라우저가 가입 화면에서 인증번호로 확인한 이메일 (spec 065). 인증번호가 필요한데
+     *                      가입 이메일과 다르면 가입하지 않는다. 맞으면 인증된 채로 가입되어 링크 메일을 보내지 않는다
+     */
+    public MemberPrincipal signup(EmailSignupForm form, String verifiedEmail) {
         String email = EmailAddress.normalize(form.email());
         String body = form.handleBody() == null ? "" : form.handleBody().strip().toLowerCase(java.util.Locale.ROOT);
         String nickname = NicknamePolicy.normalize(form.nickname());
@@ -93,6 +99,10 @@ public class EmailAccountService {
         if (nickCode != null) errors.add(new FieldErrorItem("nickname", nickCode.name(), nickCode.message()));
         if (!form.agreeTerms()) errors.add(new FieldErrorItem("agreeTerms", "AGREEMENT_REQUIRED", "이용약관에 동의해 주세요."));
         if (!form.agreePrivacy()) errors.add(new FieldErrorItem("agreePrivacy", "AGREEMENT_REQUIRED", "개인정보 처리방침에 동의해 주세요."));
+        boolean verified = emailOk && email.equals(verifiedEmail);
+        if (emailOk && signupCode.required() && !verified) {
+            errors.add(new FieldErrorItem("email", "EMAIL_NOT_VERIFIED", "이메일 인증을 먼저 마쳐 주세요."));
+        }
         if (!errors.isEmpty()) throw ApiException.validation(errors);
         var existing = identities.findByProviderAndProviderUserId(AuthProvider.LOCAL, email);
         if (existing.isPresent()) {
@@ -107,7 +117,7 @@ public class EmailAccountService {
         String handle = AuthProvider.LOCAL.handlePrefix() + body;
         MemberPrincipal principal;
         try {
-            principal = tx.execute(status -> create(email, hash, handle, nickname, form.agreeAi()));
+            principal = tx.execute(status -> create(email, hash, handle, nickname, form.agreeAi(), verified));
         } catch (DataIntegrityViolationException e) {
             String msg = String.valueOf(e.getMostSpecificCause().getMessage());
             if (msg.contains("uq_auth_identity")) throw emailTaken();
@@ -120,16 +130,17 @@ public class EmailAccountService {
             if (msg.contains("uq_member_nickname")) throw ApiException.conflict("NICKNAME_TAKEN", "방금 다른 분이 이 닉네임을 사용했어요.");
             throw e;
         }
-        verification.sendAfterSignup(principal.id(), email);
+        if (!verified) verification.sendAfterSignup(principal.id(), email);
         return principal;
     }
 
-    private MemberPrincipal create(String email, String hash, String handle, String nickname, boolean agreeAi) {
+    private MemberPrincipal create(String email, String hash, String handle, String nickname, boolean agreeAi, boolean verified) {
         Instant now = Times.now(clock);
         Member member = members.saveAndFlush(Member.join(handle, nickname, now));
         AuthIdentity identity = identities.saveAndFlush(AuthIdentity.local(member.getId(), email, hash, now));
         agreements.recordSignup(member.getId(), now, agreeAi);
         identity.recordLogin(now);
+        if (verified) identity.markEmailVerified(now);
         return new MemberPrincipal(member.getId(), handle, member.getRole().name(), AuthProvider.LOCAL.name(), false, null);
     }
 

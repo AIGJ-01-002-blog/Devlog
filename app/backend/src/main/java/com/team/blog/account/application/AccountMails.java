@@ -35,6 +35,18 @@ public class AccountMails {
                 """.formatted(site, base, token, ttl.toHours()));
     }
 
+    /** 가입 화면에서 넣을 인증번호 (spec 065). */
+    public Mail signupCode(String to, String code, Duration ttl) {
+        return new Mail(to, "[" + site + "] 가입 인증번호 " + code, """
+                안녕하세요. %s 가입 화면에 아래 인증번호를 넣어 주세요.
+
+                인증번호: %s
+
+                인증번호는 %d분 동안 쓸 수 있어요.
+                직접 가입하지 않았다면 이 메일은 무시해 주세요.
+                """.formatted(site, code, ttl.toMinutes()));
+    }
+
     /** @param socials 같은 이메일로 가입한 소셜 계정 (안내만 덧붙인다) */
     public Mail reset(String to, String token, Duration ttl, List<AuthProvider> socials) {
         String extra = socials.isEmpty() ? "" : "\n이 이메일로 " + names(socials) + "로 가입한 계정도 있어요. 그 계정은 "
