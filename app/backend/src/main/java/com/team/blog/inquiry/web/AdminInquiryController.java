@@ -50,6 +50,6 @@ public class AdminInquiryController {
     }
 
     private static void admin(MemberPrincipal me) {
-        if (!me.isAdmin()) throw new NotFoundException();
+        if (!me.isStaff()) throw new NotFoundException();
     }
 }

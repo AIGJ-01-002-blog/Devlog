@@ -135,8 +135,8 @@ public class Member {
         this.updatedAt = now;
     }
 
-    public void promoteToAdmin(Instant now) {
-        this.role = Role.ADMIN;
+    public void changeRole(Role role, Instant now) {
+        this.role = role;
         this.updatedAt = now;
     }
 

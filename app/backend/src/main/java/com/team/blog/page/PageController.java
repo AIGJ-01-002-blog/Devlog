@@ -350,7 +350,7 @@ public class PageController {
     }
 
     /**
-     * 관리자 화면 (019 FR-011). 비회원은 있는 주소·없는 주소 모두 로그인으로, 일반 회원은 없는 페이지와 같은 404다.
+     * 관리자 화면 (019 FR-011, 062: 매니저 포함). 비회원은 있는 주소·없는 주소 모두 로그인으로, 일반 회원은 없는 페이지와 같은 404다.
      */
     @GetMapping({"/admin", "/admin/**"})
     public ResponseEntity<String> admin(HttpServletRequest request, @CurrentMember(required = false) MemberPrincipal me) {
@@ -358,7 +358,7 @@ public class PageController {
             String back = request.getRequestURI() + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
             return redirect(HttpStatus.FOUND, "/login?redirect=" + UriUtils.encodeQueryParam(back, java.nio.charset.StandardCharsets.UTF_8));
         }
-        if (!me.isAdmin()) return notFound();
+        if (!me.isStaff()) return notFound();
         return appShell();
     }
 

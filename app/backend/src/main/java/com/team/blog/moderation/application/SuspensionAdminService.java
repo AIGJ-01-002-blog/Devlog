@@ -15,7 +15,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import com.team.blog.account.domain.Member;
 import com.team.blog.account.domain.MemberStatus;
 import com.team.blog.account.domain.MemberSuspension;
-import com.team.blog.account.domain.Role;
 import com.team.blog.account.infra.MemberRepository;
 import com.team.blog.account.infra.MemberSuspensionRepository;
 import com.team.blog.shared.error.ApiException;
@@ -58,8 +57,8 @@ public class SuspensionAdminService {
         if (reason.isEmpty()) throw invalid("reason", "REASON_REQUIRED", "정지 사유를 적어 주세요.");
         if (reason.codePointCount(0, reason.length()) > REASON_MAX) throw invalid("reason", "REASON_TOO_LONG", "사유는 " + REASON_MAX + "자까지 쓸 수 있어요.");
         Member m = target(handle);
-        if (m.getId() == adminId || m.getRole() == Role.ADMIN) {
-            throw ApiException.badRequest("CANNOT_SUSPEND_ADMIN", "관리자나 자기 자신은 정지할 수 없어요.");
+        if (m.getId() == adminId || m.getRole().staff()) {
+            throw ApiException.badRequest("CANNOT_SUSPEND_ADMIN", "관리자·매니저나 자기 자신은 정지할 수 없어요. 매니저는 권한을 먼저 거둬 주세요.");
         }
         Instant now = Times.now(clock);
         if (m.getStatus() == MemberStatus.SUSPENDED && suspensions.findFirstByMemberIdAndLiftedAtIsNullOrderByStartedAtDesc(m.getId())

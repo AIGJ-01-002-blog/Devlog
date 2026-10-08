@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AdminNav } from '../components/AdminNav'
 import { ApiError } from '../lib/api'
 import { fullDate } from '../lib/format'
 import {
@@ -52,6 +53,7 @@ export function AdminInquiryPage({ id }: { id: string }) {
 
   return (
     <main className="container narrow admin">
+      <AdminNav />
       <p className="small"><Link to="/admin/inquiries">← 문의 관리</Link></p>
       <h1 className="page-title admin-inquiry-title">{item.title}</h1>
       <div className="admin-case-main">
