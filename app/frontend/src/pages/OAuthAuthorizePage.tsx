@@ -45,7 +45,7 @@ export function OAuthAuthorizePage() {
           <ul className="oauth-scope">
             <li>내 글과 공개 글 읽기 (웹에서 볼 수 있는 글만)</li>
             {view.scope === 'WRITE' && <li>임시글 만들기·고치기, "발행 대기" 표시</li>}
-            <li className="muted">발행·공개 범위 바꾸기·삭제는 할 수 없어요. 발행은 언제나 내가 해요.</li>
+            <li className="muted">발행·삭제는 내가 설정 › AI 연결에서 허용했을 때만 할 수 있어요(기본은 꺼짐). 공개 범위만 바꾸는 일은 할 수 없어요.</li>
           </ul>
           <div className="oauth-host">
             <span className="muted small">허용하면 이 주소로 돌아가요</span>

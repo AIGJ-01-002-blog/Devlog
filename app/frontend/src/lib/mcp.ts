@@ -18,12 +18,17 @@ export function mcpJsonConfig(origin: string, token = TOKEN_PLACEHOLDER): string
   return JSON.stringify({ mcpServers: { devlog: { url: mcpEndpoint(origin), headers: { Authorization: `Bearer ${token}` } } } }, null, 2)
 }
 
-/** AI가 쓸 수 있는 도구. 발행은 언제나 사람이 devlog 화면에서 한다 */
-export const MCP_TOOLS: ReadonlyArray<{ name: string; does: string; scope: '읽기' | '쓰기' }> = [
+/**
+ * AI가 쓸 수 있는 도구. 기본으로 발행은 사람이 devlog 화면에서 한다.
+ * aiPublish 도구는 설정 › AI 연결에서 "AI가 발행·삭제하도록 허용"을 켠 회원에게만 열린다 (053).
+ */
+export const MCP_TOOLS: ReadonlyArray<{ name: string; does: string; scope: '읽기' | '쓰기'; aiPublish?: boolean }> = [
   { name: 'write_devlog', does: '오늘 대화·커밋을 정리한 개발 일지를 임시글로 올려요', scope: '쓰기' },
   { name: 'create_draft', does: '새 임시글 만들기 (제목·본문·태그)', scope: '쓰기' },
   { name: 'update_draft', does: '내 임시글 고치기', scope: '쓰기' },
   { name: 'request_publish', does: '"발행 대기"로 올리기. 내가 화면에서 [발행]을 눌러야 공개돼요', scope: '쓰기' },
+  { name: 'publish_post', does: '임시글을 바로 발행하기 (웹의 [발행하기]와 같아요)', scope: '쓰기', aiPublish: true },
+  { name: 'delete_post', does: '내 글 삭제하기. 웹에서 지울 때처럼 휴지통으로 가고 30일 안에 복구할 수 있어요', scope: '쓰기', aiPublish: true },
   { name: 'search_posts', does: '내 글·공개 글 검색', scope: '읽기' },
   { name: 'get_post', does: '글 본문(Markdown) 읽기. 웹과 같은 공개 범위를 따라요', scope: '읽기' },
   { name: 'list_my_posts', does: '내 글·임시글 목록', scope: '읽기' },
@@ -57,6 +62,14 @@ export const tokensApi = {
   create: (name: string, scope: TokenScope, expiresInDays: number) =>
     api<IssuedToken>('/api/me/tokens', { method: 'POST', body: { name, scope, expiresInDays } }),
   revoke: (id: number) => api<void>(`/api/me/tokens/${id}`, { method: 'DELETE' }),
+}
+
+/** "AI가 발행·삭제하도록 허용" (053). 로그인한 웹 화면에서만 바꾼다. 접근 토큰으로는 바꿀 수 없다 */
+export interface AiPublishSetting { allowed: boolean }
+
+export const aiPublishApi = {
+  get: () => api<AiPublishSetting>('/api/me/ai-publish'),
+  set: (allowed: boolean) => api<AiPublishSetting>('/api/me/ai-publish', { method: 'PUT', body: { allowed } }),
 }
 
 /** AI가 만든 임시글의 태그 제안·발행 요청. 없으면 null(204) */

@@ -38,6 +38,10 @@ public class McpController {
             devlog는 개발 블로그예요. 사용자가 개발 일지를 남겨 달라고 하거나 작업을 마무리할 때 write_devlog로 \
             오늘 한 일을 정리해 임시글로 올려 주세요. 글은 공개되지 않고, 사용자가 devlog 화면에서 읽고 직접 발행해요. \
             비밀번호·토큰·개인 정보·회사 내부 주소는 글에 넣지 마세요.""";
+    /** 회원이 "AI가 발행·삭제하도록 허용"을 켰을 때 덧붙인다 (053) */
+    private static final String INSTRUCTIONS_AI_PUBLISH = " 이 사용자는 AI가 발행·삭제하도록 허용했어요. "
+            + "publish_post·delete_post는 사용자가 발행하거나 삭제하라고 분명히 말했을 때만 쓰고, "
+            + "하기 전에 어떤 글인지(글 번호·제목) 사용자에게 확인해 주세요.";
 
     private final AccessTokens tokens;
     private final McpTools tools;
@@ -82,9 +86,9 @@ public class McpController {
         }
         JsonNode params = req.path("params");
         return switch (method) {
-            case "initialize" -> ok(result(id, initialize(params)));
+            case "initialize" -> ok(result(id, initialize(params, caller.get())));
             case "ping" -> ok(result(id, Map.of()));
-            case "tools/list" -> ok(result(id, Map.of("tools", tools.definitions())));
+            case "tools/list" -> ok(result(id, Map.of("tools", tools.definitions(caller.get()))));
             case "tools/call" -> {
                 String name = params.path("name").asString("");
                 if (name.isEmpty()) yield ok(error(id, -32602, "도구 이름(name)이 필요해요."));
@@ -101,13 +105,13 @@ public class McpController {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).header(HttpHeaders.ALLOW, "POST").build();
     }
 
-    private Map<String, Object> initialize(JsonNode params) {
+    private Map<String, Object> initialize(JsonNode params, AccessTokens.Caller caller) {
         String asked = params.path("protocolVersion").asString("");
         String version = PROTOCOL_VERSIONS.contains(asked) ? asked : PROTOCOL_VERSIONS.getFirst();
         return Map.of("protocolVersion", version,
                 "capabilities", Map.of("tools", Map.of("listChanged", false)),
                 "serverInfo", Map.of("name", "devlog", "title", "devlog 개발 일지", "version", "1"),
-                "instructions", INSTRUCTIONS);
+                "instructions", caller.aiPublishAllowed() ? INSTRUCTIONS + INSTRUCTIONS_AI_PUBLISH : INSTRUCTIONS);
     }
 
     private static ResponseEntity<Object> ok(Object body) {
