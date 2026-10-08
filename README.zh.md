@@ -70,8 +70,11 @@
 ### 5 分钟本地启动
 
 ```bash
+# 终端 1：依赖服务和后端
 docker compose -f app/compose.yaml up -d                 # PostgreSQL 16 · Redis 7
 cd app/backend && DEV_LOGIN_ENABLED=true SITE_BASE_URL=http://localhost:5173 ./mvnw spring-boot:run
+
+# 终端 2：前端（在仓库根目录执行）
 cd app/frontend && npm install && npm run dev            # http://localhost:5173
 ```
 
@@ -221,7 +224,7 @@ sequenceDiagram
 - **隐藏存在性的 404**：私密、仅好友可见、回收站中、被隐藏的文章，如果没有查看权限，返回和不存在的文章相同的 404。
 - **限流**：写作、自动保存、图片上传、点赞、搜索、举报、AI 推荐等可能被反复调用的请求都设有次数限制（429、`Retry-After`）。
 - **个人信息最小化**：浏览数不保存原始 IP，搜索词也不记录。邮件发送失败和无效令牌只记录异常类型，确保地址和令牌不会留在日志里。`X-Forwarded-For` 只信任来自可信代理范围的值。
-- **图片存储桶**：匿名用户只允许获取文件（GetObject），禁止列出文件，防止私密文章的图片 URL 泄露。
+- **图片存储桶**：匿名用户只允许获取图片文件（`images/`、`profiles/` 下的 GetObject），禁止列出存储桶内容，因此无法通过列表找到私密文章的图片 URL。但已知图片 URL 的人仍然可以下载该文件。
 - **网络策略**：PostgreSQL 和 Redis 只允许应用 Pod 连接，MinIO 只允许应用和 Ingress 连接。
 - **密钥**：连接信息不放进仓库，只通过 Kubernetes Secret 和 GitHub Secret 传入。`deploy/scripts/check-no-secrets.sh` 会在 CI 中检查是否泄露。
 
@@ -291,11 +294,11 @@ sequenceDiagram
 # 依赖服务
 docker compose -f app/compose.yaml up -d
 
-# 后端
+# 后端（终端 1）
 cd app/backend
 DEV_LOGIN_ENABLED=true SITE_BASE_URL=http://localhost:5173 ./mvnw spring-boot:run
 
-# 前端
+# 前端（终端 2，在仓库根目录执行）
 cd app/frontend
 npm install
 npm run dev        # http://localhost:5173
@@ -360,6 +363,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.25.0 | 2026-10-08 | 注册页面将 AI 功能同意改为可选项 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.0) |
 | v1.24.0 | 2026-10-08 | 现代开发者博客外观 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.24.0) |
 | v1.23.2 | 2026-10-08 | 修正生产环境邮件账号地址 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.2) |
 | v1.23.1 | 2026-10-08 | 清理 SonarQube 安全与可靠性问题 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.1) |

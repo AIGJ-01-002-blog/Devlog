@@ -92,14 +92,17 @@ public class AuthController {
                 d.emailRequired(), terms());
     }
 
-    public record SignupRequest(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy, String email) {}
+    /** @param agreeAi 선택 항목이라 보내지 않으면 동의하지 않은 것으로 본다 */
+    public record SignupRequest(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy, String email,
+                                Boolean agreeAi) {}
 
     @PostMapping("/auth/signup")
     public ResponseEntity<Map<String, String>> signup(@RequestBody SignupRequest body, HttpServletRequest request,
                                                       HttpServletResponse response) {
         PendingSignup pending = requirePending(request);
         MemberPrincipal principal = signupService.complete(pending,
-                new SignupService.SignupForm(body.handleBody(), body.nickname(), body.agreeTerms(), body.agreePrivacy(), body.email()));
+                new SignupService.SignupForm(body.handleBody(), body.nickname(), body.agreeTerms(), body.agreePrivacy(), body.email(),
+                        Boolean.TRUE.equals(body.agreeAi())));
         HttpSession session = request.getSession(true);
         session.removeAttribute(PendingSignup.SESSION_KEY);
         String target = LoginFlow.popRedirect(session);

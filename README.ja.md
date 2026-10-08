@@ -70,8 +70,11 @@
 ### 手元で 5 分で起動する
 
 ```bash
+# ターミナル 1：依存サービスとバックエンド
 docker compose -f app/compose.yaml up -d                 # PostgreSQL 16 · Redis 7
 cd app/backend && DEV_LOGIN_ENABLED=true SITE_BASE_URL=http://localhost:5173 ./mvnw spring-boot:run
+
+# ターミナル 2：フロントエンド（リポジトリのルートから）
 cd app/frontend && npm install && npm run dev            # http://localhost:5173
 ```
 
@@ -221,7 +224,7 @@ sequenceDiagram
 - **存在を隠す 404**：非公開・友だちのみ・ゴミ箱・非表示の記事は、見る権限がなければ存在しない記事と同じ 404 です。
 - **レート制限**：執筆・自動保存・画像アップロード・いいね・検索・通報・AI 提案のように繰り返されうるリクエストごとに回数制限（429、`Retry-After`）を設けています。
 - **個人情報の最小化**：閲覧数に元の IP を保存せず、検索語も記録しません。メール送信の失敗や不正なトークンは例外の種類だけを記録し、アドレスやトークンがログに残らないようにしています。`X-Forwarded-For` は信頼するプロキシの範囲から来たものだけを信じます。
-- **画像バケット**：匿名ユーザーにはファイルの取得（GetObject）だけを許し、一覧の取得は止めて、非公開記事の画像 URL が漏れないようにしています。
+- **画像バケット**：匿名ユーザーには画像（`images/`・`profiles/`）のファイル取得（GetObject）だけを許し、バケットの一覧取得は止めています。そのため一覧から非公開記事の画像 URL を見つけることはできませんが、画像 URL を知っている人はそのファイルを取得できます。
 - **ネットワークポリシー**：PostgreSQL と Redis にはアプリの Pod からだけ、MinIO にはアプリと Ingress からだけ接続できます。
 - **シークレット**：接続情報はリポジトリに入れず、Kubernetes Secret と GitHub Secret でだけ渡します。`deploy/scripts/check-no-secrets.sh` が CI で漏れを検査します。
 
@@ -291,11 +294,11 @@ GitHub Actions でテストし、イメージを作って GHCR に上げたあ�
 # 依存サービス
 docker compose -f app/compose.yaml up -d
 
-# バックエンド
+# バックエンド（ターミナル 1）
 cd app/backend
 DEV_LOGIN_ENABLED=true SITE_BASE_URL=http://localhost:5173 ./mvnw spring-boot:run
 
-# フロントエンド
+# フロントエンド（ターミナル 2、リポジトリのルートから）
 cd app/frontend
 npm install
 npm run dev        # http://localhost:5173
@@ -360,6 +363,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.25.0 | 2026-10-08 | 登録画面で AI 機能への同意を任意項目として受け付ける | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.0) |
 | v1.24.0 | 2026-10-08 | モダンな開発ブログの見た目 | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.24.0) |
 | v1.23.2 | 2026-10-08 | 本番メールアカウントのアドレスを修正 | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.2) |
 | v1.23.1 | 2026-10-08 | SonarQube のセキュリティ・信頼性の指摘を整理 | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.1) |
