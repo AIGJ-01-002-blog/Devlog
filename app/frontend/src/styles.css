@@ -728,9 +728,10 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .trending-hint { margin: -12px 0 20px; }
 .feed-notice { padding: 10px 14px; margin: 0 0 16px; background: var(--color-surface-2); border-radius: var(--radius); }
 
-/* 홈 첫 화면 소개 (048) */
+/* 홈 첫 화면 소개 (048, 051): 왼쪽 슬로건, 오른쪽 AI가 개발 일지를 쓰는 장면 */
 .home-hero {
   position: relative; overflow: hidden; margin: 32px 0 8px; padding: 48px; border: 1px solid var(--color-border); border-radius: 20px;
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: center;
   background:
     radial-gradient(600px 280px at 85% 0%, color-mix(in srgb, var(--grad-1b) 22%, transparent), transparent 70%),
     radial-gradient(520px 300px at 10% 100%, color-mix(in srgb, var(--grad-2a) 18%, transparent), transparent 70%),
@@ -741,13 +742,70 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
   border: 1px solid var(--color-border); background: var(--color-surface); font-size: 0.8125rem; font-weight: 600; color: var(--color-text-2);
 }
 .home-hero-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-brand); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand) 20%, transparent); }
-.home-hero-title { margin: 0; font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 800; line-height: 1.15; letter-spacing: -0.04em; word-break: keep-all; }
-.home-hero-sub { margin: 16px 0 28px; max-width: 560px; font-size: 1.0625rem; line-height: 1.7; color: var(--color-text-2); word-break: keep-all; }
+.home-hero-title { margin: 0; font-size: clamp(2rem, 4.6vw, 3.25rem); font-weight: 800; line-height: 1.15; letter-spacing: -0.04em; word-break: keep-all; }
+.home-hero-accent { color: var(--color-brand); }
+.home-hero-sub { margin: 16px 0 28px; max-width: 520px; font-size: 1.0625rem; line-height: 1.7; color: var(--color-text-2); word-break: keep-all; }
 .home-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn-lg { height: 44px; padding: 0 20px; font-size: 1rem; }
+.hero-demo {
+  margin: 0; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-code-bg);
+  box-shadow: var(--shadow-lg); overflow: hidden; font-size: 0.875rem;
+}
+.hero-demo-bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--color-border); background: var(--color-surface); }
+.hero-demo-bar span { width: 10px; height: 10px; border-radius: 50%; background: var(--color-border); }
+.hero-demo-bar b { margin-left: 8px; font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); font-family: var(--mono); }
+.hero-demo-body { padding: 18px; display: grid; gap: 12px; }
+.hero-demo-body p { margin: 0; }
+.hero-demo-me { font-weight: 600; }
+.hero-demo-me span { color: var(--color-brand); margin-right: 6px; }
+.hero-demo-tool { font-family: var(--mono); color: var(--color-text-muted); font-size: 0.8125rem; }
+.hero-demo-tool code { color: var(--color-text); }
+.hero-demo-ok { color: var(--color-ok-text); margin-right: 4px; }
+.hero-demo-card {
+  display: grid; gap: 4px; padding: 14px 16px; border-radius: var(--radius); border: 1px solid color-mix(in srgb, var(--color-brand) 35%, var(--color-border));
+  background: var(--color-surface);
+}
+.hero-demo-label { justify-self: start; padding: 1px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;
+  background: color-mix(in srgb, var(--color-brand) 12%, var(--color-surface)); color: var(--color-brand); }
+.hero-demo-meta { font-size: 0.75rem; color: var(--color-text-muted); }
+.hero-demo-ai { color: var(--color-text-2); }
+@media (max-width: 1023px) {
+  .home-hero { grid-template-columns: 1fr; gap: 28px; }
+}
 @media (max-width: 767px) {
-  .home-hero { margin-top: 16px; padding: 32px 20px; border-radius: var(--radius-lg); }
+  .home-hero { margin-top: 16px; padding: 28px 20px; border-radius: var(--radius-lg); }
   .home-hero-sub { font-size: 1rem; }
+}
+/* 좁은 화면 헤더는 자리가 없어 [AI 연결]을 숨긴다. 첫 화면 소개의 버튼으로 간다 */
+@media (max-width: 640px) { .header-mcp { display: none; } }
+
+/* AI에 devlog 연결하기 (051) */
+.mcp-page { padding: 40px 16px 96px; }
+.mcp-title { margin: 0 0 16px; font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.25; word-break: keep-all; }
+.mcp-lead { font-size: 1.0625rem; line-height: 1.8; color: var(--color-text-2); word-break: keep-all; }
+.mcp-page h2 { margin: 48px 0 16px; font-size: 1.375rem; letter-spacing: -0.02em; }
+.mcp-page h3 { margin: 24px 0 8px; font-size: 1rem; }
+.mcp-steps { list-style: none; counter-reset: step; padding: 0; margin: 32px 0 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.mcp-steps li { counter-increment: step; display: grid; gap: 6px; align-content: start; padding: 18px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.mcp-steps li::before { content: counter(step); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--color-brand-fill); color: var(--color-on-fill); font-weight: 700; font-size: 0.875rem; }
+.mcp-steps span { font-size: 0.875rem; color: var(--color-text-2); line-height: 1.6; word-break: keep-all; }
+.mcp-status { margin: 0 0 8px; }
+.copy-code { position: relative; }
+.copy-code pre { margin: 0; padding: 16px 84px 16px 16px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-code-bg);
+  overflow-x: auto; font-family: var(--mono); font-size: 0.8125rem; line-height: 1.6; }
+.copy-code-button { position: absolute; top: 10px; right: 10px; }
+.mcp-tools { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.mcp-tools th, .mcp-tools td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.mcp-tools th { font-size: 0.8125rem; color: var(--color-text-muted); font-weight: 600; }
+.mcp-tools td:last-child { white-space: nowrap; color: var(--color-text-muted); }
+.mcp-tools code { font-family: var(--mono); font-size: 0.8125rem; color: var(--color-brand); }
+.mcp-safety { padding-left: 1.2em; line-height: 1.9; }
+.mcp-cta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 40px; }
+@media (max-width: 767px) {
+  .mcp-steps { grid-template-columns: 1fr; }
+  .mcp-tools td:nth-child(2) { min-width: 160px; }
+  .mcp-tools { display: block; overflow-x: auto; }
 }
 
 /* AI 태그 추천 (spec 018) */
