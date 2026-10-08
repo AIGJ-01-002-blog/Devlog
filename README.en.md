@@ -363,6 +363,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.27.7 | 2026-10-08 | School MinIO address uses port 8000 (nhn, deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.7) |
 | v1.27.6 | 2026-10-08 | Auto-deploy to the school server on merge to main (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.6) |
 | v1.27.5 | 2026-10-08 | Deploy waits until the school-server SSH tunnel is open (fixes a dropped tunnel, deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.5) |
 | v1.27.4 | 2026-10-08 | School-server cluster resolves external names through the school DNS (fixes the domain tunnel, deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.4) |
