@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
+  labels: {app.kubernetes.io/name: postgres}
 spec:
   selector: {app.kubernetes.io/name: postgres}
   ports: [{name: pg, port: 5432, targetPort: 5432}]
@@ -10,6 +11,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
+  labels: {app.kubernetes.io/name: postgres}
 spec:
   serviceName: postgres
   replicas: 1
@@ -21,12 +23,14 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 70
-        fsGroup: 70
+        # pgvector 이미지는 Debian 기반이라 postgres 사용자가 999다(alpine은 70)
+        runAsUser: 999
+        fsGroup: 999
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: postgres
-          image: postgres:17-alpine
+          # 글 임베딩(pgvector)과 부분 일치 검색(pg_trgm)을 서버 안 DB에서 바로 쓰려고 pgvector 포함 이미지를 쓴다
+          image: pgvector/pgvector:0.8.7-pg17-bookworm
           env:
             - {name: POSTGRES_DB, value: blog}
             - name: POSTGRES_USER
