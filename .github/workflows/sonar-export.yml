@@ -25,16 +25,36 @@ jobs:
       - name: 이슈·핫스팟 받기
         shell: python
         run: |
-          import base64, json, os, sys, urllib.parse, urllib.request
+          import base64, json, os, sys, urllib.error, urllib.parse, urllib.request
           token, host, project = os.environ["SONAR_TOKEN"], os.environ["SONAR_HOST_URL"].rstrip("/"), os.environ["PROJECT"]
           if not token or not host:
               print("::error::Secret SONAR_TOKEN·SONAR_HOST_URL이 필요합니다"); sys.exit(1)
+          if not host.startswith("https://"):
+              # 학교 SonarQube는 http만 연다. 분석 단계(backend-ci)도 같은 토큰을 같은 주소로 보낸다
+              print("::warning::SONAR_HOST_URL이 https가 아니라 토큰이 암호화되지 않고 전송됩니다")
           auth = "Basic " + base64.b64encode(f"{token}:".encode()).decode()
+
+          def origin(url):
+              u = urllib.parse.urlsplit(url)
+              return u.scheme.lower(), u.hostname, u.port or {"http": 80, "https": 443}.get(u.scheme.lower())
+
+          class SameOriginRedirect(urllib.request.HTTPRedirectHandler):
+              # 다른 주소로 넘기는 응답을 따라가면 토큰 머리글이 그쪽으로 간다. 같은 서버 안에서만 따라간다
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  target = urllib.parse.urljoin(req.full_url, newurl)
+                  if origin(req.full_url) != origin(target):
+                      raise urllib.error.HTTPError(req.full_url, code, "다른 서버로 넘기는 응답은 따라가지 않습니다", headers, fp)
+                  return super().redirect_request(req, fp, code, msg, headers, target)
+
+          opener = urllib.request.build_opener(SameOriginRedirect())
 
           def get(path, **params):
               req = urllib.request.Request(f"{host}{path}?{urllib.parse.urlencode(params)}", headers={"Authorization": auth})
-              with urllib.request.urlopen(req, timeout=30) as r:
+              with opener.open(req, timeout=30) as r:
                   return json.load(r)
+
+          # 검색 API는 앞 10,000건까지만 준다. 넘으면 그만 받고 알린다(지금은 수백 건)
+          LIMIT = 10_000
 
           def pages(path, key, **params):
               out, p = [], 1
@@ -42,6 +62,9 @@ jobs:
                   d = get(path, ps=500, p=p, **params)
                   out += d[key]
                   total = d.get("paging", d).get("total", 0)
+                  if len(out) >= LIMIT and total > LIMIT:
+                      print(f"::warning::{path} 결과 {total}건 중 앞 {LIMIT}건만 받았습니다")
+                      return out
                   if len(out) >= total or not d[key]: return out
                   p += 1
 
