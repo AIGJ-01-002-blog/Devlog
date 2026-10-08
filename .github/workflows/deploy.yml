@@ -1,11 +1,12 @@
 name: 블로그 배포
+# 문서(*.md)와 Oracle VM 준비 스크립트만 바뀌면 배포하지 않는다. 설계 문서는 AIGJ-01-002-blog/docs 저장소에 둔다.
 
 on:
   pull_request:
-    paths: ["deploy/**", "app/**", ".github/workflows/deploy.yml"]
+    paths: ["deploy/**", "app/**", ".github/workflows/deploy.yml", "!**/*.md", "!deploy/scripts/server-setup.sh"]
   push:
     branches: [main]
-    paths: ["deploy/**", "app/**", ".github/workflows/deploy.yml"]
+    paths: ["deploy/**", "app/**", ".github/workflows/deploy.yml", "!**/*.md", "!deploy/scripts/server-setup.sh"]
   workflow_dispatch:
     inputs:
       deploy:
