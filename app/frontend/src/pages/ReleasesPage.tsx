@@ -1,0 +1,59 @@
+import { useEffect, useState } from 'react'
+import { useAuth } from '../lib/auth'
+import { releasesApi, versionFromHash, type Release } from '../lib/releases'
+import { Link } from '../lib/router'
+
+const FIRST = 10
+
+/**
+ * 릴리스 노트 (054). 버전마다 무엇을 더하고 고쳤는지. 문의의 "v1.29.0에서 고쳤어요"가 #v1.29.0으로 이 화면의 그 버전을 연다.
+ * 처음에는 최근 10개만 그리고, 주소가 더 오래된 버전을 가리키면 거기까지 펼친다.
+ */
+export function ReleasesPage() {
+  const { me } = useAuth()
+  const [data, setData] = useState<{ current: string | null; releases: Release[] } | null>(null)
+  const [error, setError] = useState(false)
+  const [shown, setShown] = useState(FIRST)
+  const target = versionFromHash(window.location.hash)
+
+  useEffect(() => {
+    document.title = '릴리스 노트 - devlog'
+    releasesApi.list().then((d) => {
+      const at = target ? d.releases.findIndex((r) => r.version === target) : -1
+      if (at >= FIRST) setShown(at + 1)
+      setData(d)
+    }).catch(() => setError(true))
+  }, [target])
+
+  useEffect(() => {
+    if (data && target) document.getElementById(`v${target}`)?.scrollIntoView({ block: 'start' })
+  }, [data, target])
+
+  return (
+    <main className="container narrow releases">
+      <h1 className="page-title">릴리스 노트</h1>
+      <p className="muted">
+        devlog가 버전마다 무엇을 더하고 고쳤는지 모았어요.{data?.current && <> 지금 버전은 <b>v{data.current}</b>예요.</>}{' '}
+        버그를 찾으셨다면 <Link to={me?.authenticated ? '/support?from=/releases' : '/support'}>문의·신고</Link>로 알려 주세요.
+      </p>
+      {error && <p className="error" role="alert">릴리스 노트를 불러오지 못했어요.</p>}
+      {!data && !error && <p className="muted center">불러오는 중…</p>}
+      {data && data.releases.length === 0 && <div className="empty"><p>아직 릴리스 노트가 없어요.</p></div>}
+      {data?.releases.slice(0, shown).map((r) => (
+        <article key={r.version} id={`v${r.version}`} className={`release${r.version === target ? ' release-target' : ''}`}>
+          <h2 className="release-head">
+            <a href={`#v${r.version}`} title="이 버전 주소 복사용 링크">v{r.version}</a>
+            {r.version === data.current && <span className="badge badge-brand" title="지금 돌고 있는 버전">지금</span>}
+            {r.date && <time className="muted small" dateTime={r.date}>{r.date}</time>}
+          </h2>
+          <div className="markdown release-body" dangerouslySetInnerHTML={{ __html: r.html }} />
+        </article>
+      ))}
+      {data && shown < data.releases.length && (
+        <button type="button" className="btn btn-outline more" onClick={() => setShown((n) => n + FIRST)} title="이전 버전 10개를 더 보여 줘요">
+          이전 버전 더 보기
+        </button>
+      )}
+    </main>
+  )
+}

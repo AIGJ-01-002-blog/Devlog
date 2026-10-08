@@ -14,7 +14,7 @@ import tools.jackson.databind.JsonNode;
 
 import com.team.blog.support.IntegrationTest;
 
-/** spec 054 글 수정 이력. */
+/** spec 055 글 수정 이력. */
 class PostRevisionTest extends IntegrationTest {
 
     long newPost(Session s) throws Exception {

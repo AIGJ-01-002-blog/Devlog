@@ -3,7 +3,7 @@ import { prepublishChecks, type CheckLevel, type PrepublishInput } from '../lib/
 const ICON: Record<CheckLevel, string> = { ok: '✓', warn: '⚠', info: 'ℹ' }
 const LABEL: Record<CheckLevel, string> = { ok: '통과', warn: '확인 필요', info: '참고' }
 
-/** 발행 전 점검 (056). 발행을 막지 않는 안내라 색과 함께 기호·숨은 글자로 상태를 알린다. */
+/** 발행 전 점검 (057). 발행을 막지 않는 안내라 색과 함께 기호·숨은 글자로 상태를 알린다. */
 export function PrepublishCheck(props: PrepublishInput) {
   const items = prepublishChecks(props)
   const warns = items.filter((i) => i.level === 'warn').length

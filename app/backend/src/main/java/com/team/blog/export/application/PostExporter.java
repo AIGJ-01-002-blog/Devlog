@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import com.team.blog.shared.config.BlogProperties;
 
 /**
- * 내 글 내보내기 (055). 휴지통에 없는 내 글을 글마다 Markdown 파일 하나로 묶어 zip으로 준다.
+ * 내 글 내보내기 (056). 휴지통에 없는 내 글을 글마다 Markdown 파일 하나로 묶어 zip으로 준다.
  * 파일 맨 위에 YAML 머리말(제목·날짜·태그·시리즈·주소)을 붙여 다른 블로그(Hugo·Jekyll·Gatsby)로 옮기기 쉽게 한다.
  * 발행한 글은 독자가 보는 발행본을, 임시글은 마지막으로 저장한 내용을 담는다. 사진은 주소 그대로 둔다.
  */

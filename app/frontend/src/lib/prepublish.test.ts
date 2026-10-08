@@ -3,7 +3,7 @@ import { codeFences, emptyLinks, prepublishChecks, proseLength, repeatsTitle } f
 
 const base = { title: '제목', contentMd: '', summary: '', tags: [] as string[], thumbnail: { kind: 'auto' } as const }
 
-describe('발행 전 점검 (056)', () => {
+describe('발행 전 점검 (057)', () => {
   it('비어 있는 글은 소개·태그·사진·길이를 알린다', () => {
     const ids = prepublishChecks(base).map((c) => `${c.id}:${c.level}`)
     expect(ids).toEqual(['summary:info', 'tags:warn', 'thumbnail:info', 'length:info'])

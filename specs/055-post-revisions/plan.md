@@ -1,12 +1,12 @@
-# 구현 메모: 054 글 수정 이력 (v1.29.0)
+# 구현 메모: 055 글 수정 이력 (v1.30.0)
 
 | 파일 | 바뀜 |
 |---|---|
-| `V15__post_revision.sql` | `post_revision(post_id, revision_no)` 기본 키, `post` FK `ON DELETE CASCADE`, 발행한 글 1판 채우기 |
+| `V16__post_revision.sql` | `post_revision(post_id, revision_no)` 기본 키, `post` FK `ON DELETE CASCADE`, 발행한 글 1판 채우기 |
 | `revision/application/PostRevisionRecorder` | `PublishExtension.onPublish`에서 판 추가, 50판 넘으면 정리 |
 | `revision/application/PostRevisionQuery`, `revision/web/PostRevisionController` | 목록·한 판 읽기, 작성자 확인 |
 | 화면 | `components/RevisionHistory`(창), `components/TextDiff`(충돌 창에서 떼어 낸 비교), `lib/revisions`, `pages/WritePage`(버튼·불러오기) |
-| 테스트 | `PostRevisionTest` 5개, `revisions.test.ts` 1개, `MigrationTest` 테이블 수 38 |
+| 테스트 | `PostRevisionTest` 5개, `revisions.test.ts` 1개, `MigrationTest` 테이블 수 40 |
 
 ## 결정
 - **발행본만 남긴다**: 자동 저장은 1분마다 쌓여 판이 너무 많아진다. 독자가 실제로 본 내용이 기준이라 발행 때만 남긴다.

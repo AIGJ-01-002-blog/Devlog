@@ -6,7 +6,7 @@ import { Modal } from './Modal'
 import { changedLines, TextDiff } from './TextDiff'
 
 /**
- * 글 수정 이력 (054). Crowfoot의 "버전 기록"처럼 발행한 판을 고르고 지금 편집 중인 내용과 비교한다.
+ * 글 수정 이력 (055). Crowfoot의 "버전 기록"처럼 발행한 판을 고르고 지금 편집 중인 내용과 비교한다.
  * [이 판 불러오기]는 편집기 내용만 바꾼다. 평소처럼 저장되고, 다시 발행해야 독자에게 보인다.
  */
 export function RevisionHistory({ postId, current, onLoad, onClose }: {

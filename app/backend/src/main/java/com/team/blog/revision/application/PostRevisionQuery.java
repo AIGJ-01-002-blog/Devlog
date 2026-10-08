@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import com.team.blog.shared.error.NotFoundException;
 
 /**
- * 글 수정 이력 읽기 (054). 작성자 본인만 본다. 남의 글·없는 글·휴지통 글은 모두 404다 (헌법 II).
+ * 글 수정 이력 읽기 (055). 작성자 본인만 본다. 남의 글·없는 글·휴지통 글은 모두 404다 (헌법 II).
  * 되돌리기는 서버에 따로 두지 않는다. 편집기가 판 내용을 불러와 평소처럼 저장·다시 발행한다(작업본·버전 규칙 그대로).
  */
 @Service

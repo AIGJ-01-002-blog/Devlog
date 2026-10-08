@@ -14,6 +14,8 @@ RUN npm run build
 FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk AS build
 WORKDIR /src
 COPY app/backend/ ./
+# 릴리스 노트(054): pom이 ../../CHANGELOG.md를 jar에 넣는다
+COPY CHANGELOG.md /CHANGELOG.md
 COPY --from=web /web/dist/ ./src/main/resources/static/
 RUN set -eu; \
     if [ -x ./gradlew ]; then ./gradlew --no-daemon -q bootJar -x test && cp "$(ls build/libs/*.jar | grep -v plain | head -1)" /app.jar; \

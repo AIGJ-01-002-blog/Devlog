@@ -1,6 +1,6 @@
 import { api } from './api'
 
-// 글 수정 이력 (054). 발행할 때마다 한 판씩 남고, 작성자만 본다.
+// 글 수정 이력 (055). 발행할 때마다 한 판씩 남고, 작성자만 본다.
 
 export interface RevisionItem {
   no: number

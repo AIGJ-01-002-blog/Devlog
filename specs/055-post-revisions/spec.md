@@ -1,8 +1,8 @@
 # Feature Specification: 글 수정 이력
 
-**Feature Branch**: `054-post-revisions`
+**Feature Branch**: `055-post-revisions`
 **Created**: 2026-10-08
-**Status**: Implemented (v1.29.0)
+**Status**: Implemented (v1.30.0)
 **근거**: 블로그 주인 요청 "crowfoot에 기능 중에 우리한테도 적용했을 때 좋을 거 같은 기능 우리도 추가해 줘." Crowfoot은 문서를 저장할 때마다 버전을 남기고 두 버전을 비교하거나 되돌린다. 블로그에서는 "발행한 판"이 같은 자리다.
 
 ## 사용자 시나리오

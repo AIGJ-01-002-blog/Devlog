@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { codeFences, emptyLinks, prepublishChecks, proseLength, repeatsTitle } from './prepublish';
 const base = { title: '제목', contentMd: '', summary: '', tags: [], thumbnail: { kind: 'auto' } };
-describe('발행 전 점검 (056)', () => {
+describe('발행 전 점검 (057)', () => {
     it('비어 있는 글은 소개·태그·사진·길이를 알린다', () => {
         const ids = prepublishChecks(base).map((c) => `${c.id}:${c.level}`);
         expect(ids).toEqual(['summary:info', 'tags:warn', 'thumbnail:info', 'length:info']);

@@ -13,7 +13,7 @@ import com.team.blog.shared.error.NotFoundException;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
 
-/** 글 수정 이력 (054). 작성자에게만 보이는 개인 정보라 캐시하지 않는다. */
+/** 글 수정 이력 (055). 작성자에게만 보이는 개인 정보라 캐시하지 않는다. */
 @RestController
 public class PostRevisionController {
     private final PostRevisionQuery query;

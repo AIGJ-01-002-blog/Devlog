@@ -32,10 +32,10 @@ class MigrationTest {
                 .createSchemas(false).locations("classpath:db/migration").load().migrate();
 
         try (Connection c = DriverManager.getConnection(url, "cf_user", "cf_pw"); Statement st = c.createStatement()) {
-            // V15 뒤: 테이블 38개(V3 정규화 28개 + member_telegram + series·series_post + member_about + member_social_link + post_thumbnail + oauth_client·personal_access_token·post_ai_hint + post_revision) + 통계 뷰 post_stat 1개. Crowfoot 문서 660은 아직 28개
+            // V16 뒤: 테이블 40개(V3 정규화 28개 + member_telegram + series·series_post + member_about + member_social_link + post_thumbnail + oauth_client·personal_access_token·post_ai_hint + inquiry·notification_inquiry + post_revision) + 통계 뷰 post_stat 1개. Crowfoot 문서 660은 아직 28개
             ResultSet tables = st.executeQuery("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'cf_test' AND table_type = 'BASE TABLE' AND table_name <> 'flyway_schema_history'");
             tables.next();
-            assertThat(tables.getInt(1)).isEqualTo(38);
+            assertThat(tables.getInt(1)).isEqualTo(40);
             ResultSet views = st.executeQuery("SELECT string_agg(table_name, ',') FROM information_schema.views WHERE table_schema = 'cf_test'");
             views.next();
             assertThat(views.getString(1)).isEqualTo("post_stat");

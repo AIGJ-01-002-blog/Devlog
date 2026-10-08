@@ -1,7 +1,7 @@
 import { bodyImages } from './postImages'
 import { thumbnailPreview, type ThumbnailChoice } from './postThumbnail'
 
-// 발행 전 점검 (056). Crowfoot의 "설계 검증"처럼 발행 창에서 글을 한 번 훑어 놓치기 쉬운 것을 알려 준다.
+// 발행 전 점검 (057). Crowfoot의 "설계 검증"처럼 발행 창에서 글을 한 번 훑어 놓치기 쉬운 것을 알려 준다.
 // 발행을 막지 않는다. 막아야 하는 규칙(빈 제목, 올리는 중인 사진 등)은 서버와 기존 오류 표시가 맡는다.
 
 export type CheckLevel = 'ok' | 'warn' | 'info'
