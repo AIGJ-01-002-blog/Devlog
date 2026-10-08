@@ -19,14 +19,14 @@ public final class AiInput {
     public static final int PROMPT_VERSION = 1;
     static final int CODE_LINES = 5;
 
-    private static final Pattern FENCE = Pattern.compile("^\\s{0,3}(`{3,}|~{3,})\\s*([^\\s`]*).*$");
+    private static final Pattern FENCE = Pattern.compile("^\\s{0,3}+(`{3,}+|~{3,}+)\\s*+([^\\s`]*+).*$");
     private static final Pattern IMAGE = Pattern.compile("!\\[[^\\]]*]\\([^)]*\\)|<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
     private static final Pattern LINK = Pattern.compile("\\[([^\\]]*)]\\([^)]*\\)");
     private static final Pattern AUTOLINK = Pattern.compile("<(https?://[^>\\s]+)>");
     private static final Pattern HTML_TAG = Pattern.compile("</?[a-zA-Z][^>]*>");
-    private static final Pattern RULE = Pattern.compile("^\\s*([-*_])(\\s*\\1){2,}\\s*$");
+    private static final Pattern RULE = Pattern.compile("^\\s*([-*_])(?:\\s*+\\1){2,}+\\s*$");
     private static final Pattern HEADING = Pattern.compile("^\\s{0,3}#{1,6}\\s+");
-    private static final Pattern QUOTE = Pattern.compile("^\\s*(>\\s?)+");
+    private static final Pattern QUOTE = Pattern.compile("^\\s*(?:>\\s?)++");
     private static final Pattern LIST = Pattern.compile("^\\s*(?:[-*+]|\\d+[.)])\\s+(?:\\[[ xX]]\\s+)?");
     private static final Pattern EMPHASIS = Pattern.compile("(\\*{1,3}|_{1,3}|~~)(?=\\S)(.+?)(?<=\\S)\\1");
     private static final Pattern INLINE_CODE = Pattern.compile("`+([^`]+)`+");

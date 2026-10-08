@@ -3,6 +3,7 @@ package com.team.blog.notification.application;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -150,7 +151,7 @@ public class NotificationService {
      * 벗어났으면 만들지 않는다. 팔로워 전원에게 문장 하나로 만든다(끈 사람·탈퇴 신청한 사람 제외). 행동자 = 글 작성자라 따로 적지 않는다.
      */
     public int newPost(long postId, long authorId, Instant at) {
-        Integer n = tx.execute(s -> {
+        return Objects.requireNonNullElse(tx.execute(s -> {
             Boolean listed = jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM post p JOIN member m ON m.id = p.author_id WHERE p.id = ? AND "
                     + PostAccessPolicy.PUBLIC_LIST_CONDITION + " AND m.status <> 'WITHDRAWN' AND m.deleted_at IS NULL)", Boolean.class, postId);
             if (!Boolean.TRUE.equals(listed)) return 0;
@@ -168,8 +169,7 @@ public class NotificationService {
                     )
                     SELECT made.id, made.receiver_id FROM made JOIN linked ON linked.notification_id = made.id
                     """, CREATED_ROW, authorId, ts, ts, postId), NotificationType.NEW_POST);
-        });
-        return n == null ? 0 : n;
+        }), 0);
     }
 
     /**
@@ -177,7 +177,7 @@ public class NotificationService {
      * 탈퇴 신청한 신고자에게는 만들지 않는다. 운영 알림이라 끌 수 없다.
      */
     public int reportsResolved(long caseId, Instant at) {
-        Integer n = tx.execute(s -> {
+        return Objects.requireNonNullElse(tx.execute(s -> {
             Timestamp ts = Timestamp.from(at);
             return publish(jdbc.query("""
                     WITH targets AS (
@@ -195,8 +195,7 @@ public class NotificationService {
                     )
                     SELECT made.id, made.receiver_id FROM made WHERE made.id IN (SELECT notification_id FROM linked)
                     """, CREATED_ROW, caseId, ts, ts), NotificationType.REPORT_RESOLVED);
-        });
-        return n == null ? 0 : n;
+        }), 0);
     }
 
     /**
@@ -284,9 +283,9 @@ public class NotificationService {
 
     /** 새 알림 행. 커밋 뒤 다른 전달 수단(023 텔레그램)이 받도록 사건을 낸다. 묶음에 사람이 더해질 때는 내지 않는다. */
     private long insert(long receiverId, NotificationType type, Timestamp at) {
-        long id = jdbc.queryForObject("""
+        long id = Objects.requireNonNull(jdbc.queryForObject("""
                 INSERT INTO notification (receiver_id, type, created_at, updated_at) VALUES (?, ?, ?, ?) RETURNING id
-                """, Long.class, receiverId, type.name(), at, at);
+                """, Long.class, receiverId, type.name(), at, at));
         events.publishEvent(new NotificationCreated(id, receiverId, type));
         return id;
     }

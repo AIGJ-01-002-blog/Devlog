@@ -7,8 +7,10 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -28,6 +30,7 @@ import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.error.FieldErrorItem;
 import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.time.Times;
 import com.team.blog.shared.web.RateLimiter;
 
@@ -75,7 +78,14 @@ public class PostFiles {
 
     public record Attachment(long id, String name, long sizeBytes, String contentType) {}
 
-    public record Download(String name, String contentType, byte[] data) {}
+    /** 배열 필드라 내용으로 비교하고, 문자열에는 크기만 남긴다 */
+    public record Download(String name, String contentType, byte[] data) {
+        @Override public boolean equals(Object o) {
+            return o instanceof Download(String n, String type, byte[] bytes) && name.equals(n) && contentType.equals(type) && Arrays.equals(data, bytes);
+        }
+        @Override public int hashCode() { return 31 * Objects.hash(name, contentType) + Arrays.hashCode(data); }
+        @Override public String toString() { return "Download[" + name + ", " + contentType + ", " + data.length + " bytes]"; }
+    }
 
     /** 올리기 (US1, FR-001~FR-006). 연결은 하지 않는다: 첨부 목록을 저장하거나 발행할 때 연결된다. */
     public Attachment upload(long memberId, String rawName, byte[] data) {
@@ -149,8 +159,8 @@ public class PostFiles {
             throw ApiException.validation(List.of(new FieldErrorItem("fileIds", "INVALID_FILES", "첨부 목록을 확인해 주세요.")));
         }
         return tx.execute(s -> {
-            List<Long> post = jdbc.queryForList("SELECT id FROM post WHERE id = ? AND author_id = ? AND deleted_at IS NULL FOR UPDATE",
-                    Long.class, postId, memberId);
+            List<Long> post = Columns.longs(jdbc, "SELECT id FROM post WHERE id = ? AND author_id = ? AND deleted_at IS NULL FOR UPDATE",
+                    postId, memberId);
             if (post.isEmpty()) throw new NotFoundException();
             List<FieldErrorItem> errors = new ArrayList<>();
             validate(memberId, fileIds, errors);
@@ -242,7 +252,7 @@ public class PostFiles {
         if (s.isEmpty()) throw ApiException.badRequest("FILE_NAME", "파일 이름을 확인해 주세요.");
         if (s.codePointCount(0, s.length()) > MAX_NAME) {
             String ext = FileInspector.extension(s).map(e -> "." + e).orElse("");
-            int[] cps = s.substring(0, s.length() - ext.length()).codePoints().limit(MAX_NAME - ext.length()).toArray();
+            int[] cps = s.substring(0, s.length() - ext.length()).codePoints().limit((long) MAX_NAME - ext.length()).toArray();
             s = new String(cps, 0, cps.length) + ext;
         }
         return s;

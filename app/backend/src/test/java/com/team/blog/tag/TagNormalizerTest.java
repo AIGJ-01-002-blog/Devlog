@@ -31,7 +31,7 @@ class TagNormalizerTest {
             "spring--boot-|spring-boot",
             "자바_기초|자바_기초",
             "##java|java",
-            "'​ja‮va\u0007'|java",
+            "'\u200Bja\u202Eva\u0007'|java",
     })
     void 같은_뜻의_입력은_같은_모양이_된다(String raw, String expected) {
         assertThat(TagNormalizer.clean(raw)).isEqualTo(expected);

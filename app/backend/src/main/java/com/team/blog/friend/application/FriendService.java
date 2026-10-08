@@ -15,6 +15,7 @@ import com.team.blog.friend.application.FriendEvents.FriendAccepted;
 import com.team.blog.friend.application.FriendEvents.FriendRequested;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.time.Times;
 
 /**
@@ -112,14 +113,13 @@ public class FriendService {
     /** 탈퇴 유예·삭제된 회원은 없는 블로그와 같아 대상이 될 수 없다 (FR-006). */
     private Optional<Long> activeMember(String handle) {
         if (handle == null) return Optional.empty();
-        return jdbc.queryForList("SELECT id FROM member WHERE handle = ? AND withdrawn_at IS NULL AND deleted_at IS NULL",
-                Long.class, handle.toLowerCase(java.util.Locale.ROOT)).stream().findFirst();
+        return Columns.firstLong(jdbc, "SELECT id FROM member WHERE handle = ? AND withdrawn_at IS NULL AND deleted_at IS NULL",
+                handle.toLowerCase(java.util.Locale.ROOT));
     }
 
     /** 끊기·거절은 상대가 탈퇴 유예 중이어도 할 수 있다. */
     private Optional<Long> anyMember(String handle) {
         if (handle == null) return Optional.empty();
-        return jdbc.queryForList("SELECT id FROM member WHERE handle = ?", Long.class, handle.toLowerCase(java.util.Locale.ROOT))
-                .stream().findFirst();
+        return Columns.firstLong(jdbc, "SELECT id FROM member WHERE handle = ?", handle.toLowerCase(java.util.Locale.ROOT));
     }
 }

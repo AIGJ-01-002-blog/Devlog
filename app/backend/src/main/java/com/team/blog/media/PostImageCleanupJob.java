@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.team.blog.media.storage.ObjectStorage;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.scheduling.JobLock;
 import com.team.blog.shared.time.Times;
 
@@ -75,8 +76,7 @@ public class PostImageCleanupJob {
         int deleted = 0, failed = 0;
         long after = 0;
         while (true) {
-            List<Long> ids = jdbc.queryForList("SELECT r.id FROM resource r WHERE r.id > ? AND " + UNUSED + " ORDER BY r.id LIMIT " + BATCH,
-                    Long.class, after, unusedBefore, detachedBefore);
+            List<Long> ids = Columns.longs(jdbc, "SELECT r.id FROM resource r WHERE r.id > ? AND " + UNUSED + " ORDER BY r.id LIMIT " + BATCH, after, unusedBefore, detachedBefore);
             for (long id : ids) {
                 after = id;
                 try {

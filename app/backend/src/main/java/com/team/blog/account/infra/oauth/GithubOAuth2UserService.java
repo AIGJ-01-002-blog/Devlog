@@ -3,7 +3,9 @@ package com.team.blog.account.infra.oauth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -22,6 +24,7 @@ public class GithubOAuth2UserService extends DefaultOAuth2UserService {
     public static final String VERIFIED_EMAIL = "blog_verified_email";
     private final RestClient rest;
 
+    @Autowired
     public GithubOAuth2UserService() {
         this("https://api.github.com");
     }
@@ -33,7 +36,7 @@ public class GithubOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
-        OAuth2User user = super.loadUser(userRequest);
+        OAuth2User user = Objects.requireNonNull(super.loadUser(userRequest), "GitHub 사용자 정보가 없습니다");
         if (!"github".equals(userRequest.getClientRegistration().getRegistrationId())) return user;
         Map<String, Object> attrs = new HashMap<>(user.getAttributes());
         attrs.put(VERIFIED_EMAIL, primaryVerifiedEmail(userRequest.getAccessToken().getTokenValue()));

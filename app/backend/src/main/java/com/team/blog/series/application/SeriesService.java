@@ -12,6 +12,7 @@ import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.error.FieldErrorItem;
 import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.shared.jdbc.Columns;
 
 /**
  * 시리즈 만들기·이름 바꾸기·지우기와 글 넣기·빼기·순서 (024 US1·US3). 모두 본인 것만, 남의 것이면 404 (FR-007).
@@ -46,7 +47,7 @@ public class SeriesService {
         String name = validName(rawName);
         return tx.execute(st -> {
             // 회원 행을 잠가 동시에 만들어도 개수 제한을 넘지 않게 한다
-            jdbc.queryForList("SELECT id FROM member WHERE id = ? FOR UPDATE", Long.class, memberId);
+            Columns.longs(jdbc, "SELECT id FROM member WHERE id = ? FOR UPDATE", memberId);
             Long count = jdbc.queryForObject("SELECT count(*) FROM series WHERE member_id = ?", Long.class, memberId);
             if (count != null && count >= maxSeries) {
                 throw ApiException.badRequest("TOO_MANY_SERIES", "시리즈는 " + maxSeries + "개까지 만들 수 있어요.");
@@ -79,16 +80,16 @@ public class SeriesService {
      */
     public void assign(long memberId, long postId, Long seriesId) {
         tx.executeWithoutResult(st -> {
-            List<Long> post = jdbc.queryForList("SELECT id FROM post WHERE id = ? AND author_id = ? AND deleted_at IS NULL FOR UPDATE",
-                    Long.class, postId, memberId);
+            List<Long> post = Columns.longs(jdbc, "SELECT id FROM post WHERE id = ? AND author_id = ? AND deleted_at IS NULL FOR UPDATE",
+                    postId, memberId);
             if (post.isEmpty()) throw new NotFoundException();
-            List<Long> current = jdbc.queryForList("SELECT series_id FROM series_post WHERE post_id = ?", Long.class, postId);
+            List<Long> current = Columns.longs(jdbc, "SELECT series_id FROM series_post WHERE post_id = ?", postId);
             if (seriesId != null && current.contains(seriesId)) return;
             // 원래 시리즈와 옮길 시리즈를 번호 순으로 함께 잠근다. 서로 반대로 옮기는 두 요청이 엇갈려 기다리지 않게
             List<Long> touched = new java.util.ArrayList<>(current);
             if (seriesId != null) touched.add(seriesId);
-            List<Long> locked = jdbc.queryForList("SELECT id FROM series WHERE id = ANY (?) AND member_id = ? ORDER BY id FOR UPDATE",
-                    Long.class, touched.toArray(Long[]::new), memberId);
+            List<Long> locked = Columns.longs(jdbc, "SELECT id FROM series WHERE id = ANY (?) AND member_id = ? ORDER BY id FOR UPDATE",
+                    touched.toArray(Long[]::new), memberId);
             if (seriesId != null && !locked.contains(seriesId)) throw new NotFoundException();
             if (!current.isEmpty()) {
                 jdbc.update("DELETE FROM series_post WHERE post_id = ?", postId);
@@ -117,9 +118,9 @@ public class SeriesService {
         }
         tx.executeWithoutResult(st -> {
             lockSeries(memberId, seriesId);
-            List<Long> live = jdbc.queryForList("""
+            List<Long> live = Columns.longs(jdbc, """
                     SELECT sp.post_id FROM series_post sp JOIN post p ON p.id = sp.post_id
-                    WHERE sp.series_id = ? AND """ + " " + SeriesQuery.OWNER_CONDITION, Long.class, seriesId);
+                    WHERE sp.series_id = ? AND """ + " " + SeriesQuery.OWNER_CONDITION, seriesId);
             if (!new HashSet<>(live).containsAll(postIds)) {
                 throw ApiException.validation(List.of(new FieldErrorItem("postIds", "INVALID_POSTS", "시리즈에 없는 글이 있어요.")));
             }
@@ -143,7 +144,7 @@ public class SeriesService {
     }
 
     private void lockSeries(long memberId, long seriesId) {
-        if (jdbc.queryForList("SELECT id FROM series WHERE id = ? AND member_id = ? FOR UPDATE", Long.class, seriesId, memberId).isEmpty()) {
+        if (Columns.longs(jdbc, "SELECT id FROM series WHERE id = ? AND member_id = ? FOR UPDATE", seriesId, memberId).isEmpty()) {
             throw new NotFoundException();
         }
     }

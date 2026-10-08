@@ -11,7 +11,7 @@ import com.team.blog.shared.text.TextCleaner;
  */
 public final class CommentText {
     public static final int MAX_LENGTH = 1000;
-    private static final Pattern BLANK_LINES = Pattern.compile("\\n[ \\t]*(\\n[ \\t]*)+\\n");
+    private static final Pattern BLANK_LINES = Pattern.compile("\\n(?:[ \\t]*+\\n){2,}+");
 
     private CommentText() {}
 

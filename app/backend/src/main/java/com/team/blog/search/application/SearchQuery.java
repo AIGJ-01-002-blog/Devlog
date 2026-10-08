@@ -236,23 +236,22 @@ public class SearchQuery {
         };
     }
 
+    /** 찾은 글 번호들의 결과 카드 */
+    private static final String HITS = """
+            SELECT p.id, p.title, p.content_md, p.first_public_at, s.comment_count, s.like_count,
+                   m.id AS author_id, m.handle, m.nickname, """ + PostSql.THUMBNAIL_KEY + ", " + PostSql.PROFILE_IMAGE_KEY + """
+
+            FROM post p JOIN member m ON m.id = p.author_id
+            """ + PostSql.STAT_JOIN + " " + PostSql.PROFILE_IMAGE_JOIN + """
+
+            WHERE p.id = ANY (?) AND\s""" + PostAccessPolicy.PUBLIC_LIST_CONDITION;
+
     private List<Hit> hits(List<Found> found, SearchTerms terms) {
         if (found.isEmpty()) return List.of();
         Long[] ids = found.stream().map(Found::id).toArray(Long[]::new);
         Pattern words = terms.highlightPattern();
         Map<Long, Hit> byId = new HashMap<>();
-        jdbc.query(con -> {
-            var ps = con.prepareStatement("""
-                    SELECT p.id, p.title, p.content_md, p.first_public_at, s.comment_count, s.like_count,
-                           m.id AS author_id, m.handle, m.nickname, """ + PostSql.THUMBNAIL_KEY + ", " + PostSql.PROFILE_IMAGE_KEY + """
-
-                    FROM post p JOIN member m ON m.id = p.author_id
-                    """ + PostSql.STAT_JOIN + " " + PostSql.PROFILE_IMAGE_JOIN + """
-
-                    WHERE p.id = ANY (?) AND\s""" + PostAccessPolicy.PUBLIC_LIST_CONDITION);
-            ps.setArray(1, con.createArrayOf("bigint", ids));
-            return ps;
-        }, rs -> {
+        jdbc.query(HITS, ps -> ps.setArray(1, ps.getConnection().createArrayOf("bigint", ids)), rs -> {
             long id = rs.getLong("id");
             String handle = rs.getString("handle");
             String title = rs.getString("title");

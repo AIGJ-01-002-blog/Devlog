@@ -17,6 +17,7 @@ import com.team.blog.post.application.PostLifecycleEvents.PostRestored;
 import com.team.blog.post.application.PostLifecycleEvents.PostTrashed;
 import com.team.blog.post.application.PostLifecycleEvents.Reason;
 import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.time.Times;
 
 /**
@@ -107,7 +108,7 @@ public class PostTrashService {
     /** 탈퇴 30일 뒤 정리(020 FR-025 (10)): 휴지통을 포함한 그 회원의 글 전부. 정리 배치의 트랜잭션 안에서 부른다. */
     void purgeAllOf(long authorId) {
         Instant now = Times.now(clock);
-        for (long postId : jdbc.queryForList("SELECT id FROM post WHERE author_id = ? ORDER BY id FOR UPDATE", Long.class, authorId)) {
+        for (long postId : Columns.longs(jdbc, "SELECT id FROM post WHERE author_id = ? ORDER BY id FOR UPDATE", authorId)) {
             purgeLocked(postId, authorId, Reason.WITHDRAW, now);
         }
     }

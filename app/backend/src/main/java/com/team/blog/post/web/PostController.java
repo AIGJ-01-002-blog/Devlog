@@ -35,7 +35,7 @@ import com.team.blog.shared.web.RateLimiter;
 @RequestMapping("/api/posts")
 public class PostController {
     /** 자동 저장·저장·발행 요청 본문 상한 (docs/04 §2-1). 본문 100,000자를 UTF-8로 넉넉히 담는 크기다. */
-    static final long MAX_BODY_BYTES = 1024 * 1024;
+    static final long MAX_BODY_BYTES = 1024L * 1024;
 
     private final PostCommandService commands;
     private final PostEditorQuery editor;

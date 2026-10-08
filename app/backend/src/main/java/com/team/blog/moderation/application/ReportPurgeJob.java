@@ -1,6 +1,7 @@
 package com.team.blog.moderation.application;
 
 import java.time.Duration;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +38,7 @@ public class ReportPurgeJob {
 
     /** @return 비운 사건 수. 두 UPDATE는 한 트랜잭션이다(예약 실행은 자기 호출이라 @Transactional이 걸리지 않아 직접 묶는다). */
     public int run() {
-        Integer n = tx.execute(s -> purge());
-        return n == null ? 0 : n;
+        return Objects.requireNonNullElse(tx.execute(s -> purge()), 0);
     }
 
     private int purge() {

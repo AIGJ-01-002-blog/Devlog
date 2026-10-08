@@ -237,7 +237,7 @@ class WritePublishTest extends IntegrationTest {
     void 제목의_보이지_않는_글자와_방향_뒤집기_문자는_지워진다() throws Exception {
         Session s = signup(uniqueLogin("rlo"));
         long id = newPost(s);
-        publish(s, id, "invoice‮fdp.exe 관​리‍자", "본문", "PUBLIC", 0, null).andExpect(status().isOk());
+        publish(s, id, "invoice\u202Efdp.exe 관\u200B리\u200D자", "본문", "PUBLIC", 0, null).andExpect(status().isOk());
         assertThat(row(id).get("title")).isEqualTo("invoicefdp.exe 관리자");
     }
 

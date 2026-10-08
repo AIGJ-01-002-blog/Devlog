@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,8 @@ import com.team.blog.support.IntegrationTest;
 /** spec 042: 블로그 [소개] 탭. 누구나 읽고 본인만 고친다. */
 class AboutTest extends IntegrationTest {
     @Autowired JdbcTemplate jdbc;
-    @Autowired List<WithdrawalPurgeStep> purgeSteps;
+    /** 빈 이름으로 고른다. 단계 클래스는 패키지 안에서만 보인다 */
+    @Autowired Map<String, WithdrawalPurgeStep> purgeSteps;
 
     ResultActions save(Session s, String md) throws Exception {
         return s.http().perform(asJson(put("/api/me/about"), Map.of("contentMd", md)));
@@ -95,8 +95,7 @@ class AboutTest extends IntegrationTest {
     void 탈퇴_정리_때_지운다() throws Exception {
         Session me = signup(uniqueLogin("abw"));
         save(me, "곧 탈퇴").andExpect(status().isNoContent());
-        purgeSteps.stream().filter(s -> s.getClass().getSimpleName().equals("AboutWithdrawalPurgeStep"))
-                .findFirst().orElseThrow().purge(me.memberId());
+        purgeSteps.get("aboutWithdrawalPurgeStep").purge(me.memberId());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM member_about WHERE member_id = ?", Long.class, me.memberId())).isZero();
     }
 }

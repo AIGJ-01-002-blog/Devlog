@@ -22,7 +22,8 @@ import com.team.blog.support.IntegrationTest;
 
 /** spec 043: 블로그 소셜 정보. 본인이 설정에서 저장하고, 누구나 블로그 머리에서 본다. */
 class SocialLinksTest extends IntegrationTest {
-    @Autowired List<WithdrawalPurgeStep> purgeSteps;
+    /** 빈 이름으로 고른다. 단계 클래스는 패키지 안에서만 보인다 */
+    @Autowired Map<String, WithdrawalPurgeStep> purgeSteps;
 
     ResultActions save(Session s, Map<String, String> body) throws Exception {
         return s.http().perform(asJson(put("/api/me/social-links"), body));
@@ -124,8 +125,7 @@ class SocialLinksTest extends IntegrationTest {
     void 탈퇴_정리에서_지운다() throws Exception {
         Session me = signup(uniqueLogin("slw"));
         save(me, Map.of("email", "bye@example.com")).andExpect(status().isOk());
-        purgeSteps.stream().filter(s -> s.getClass().getSimpleName().equals("SocialLinksWithdrawalPurgeStep"))
-                .findFirst().orElseThrow().purge(me.memberId());
+        purgeSteps.get("socialLinksWithdrawalPurgeStep").purge(me.memberId());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM member_social_link WHERE member_id = ?", Long.class, me.memberId())).isZero();
     }
 }

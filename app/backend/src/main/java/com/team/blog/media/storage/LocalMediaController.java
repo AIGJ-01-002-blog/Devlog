@@ -20,7 +20,8 @@ class LocalMediaController {
         this.storage = storage;
     }
 
-    @GetMapping("/media/{*key}")
+    // {*key}는 나머지 경로 전체를 key로 받는다. 분석기(S6856)가 이름을 "*key"로 읽는 오탐이라 표시해 둔다
+    @GetMapping("/media/{*key}") // NOSONAR
     ResponseEntity<byte[]> get(@PathVariable String key) {
         String k = key.startsWith("/") ? key.substring(1) : key;
         // 첨부파일(files/)은 공개 주소로 내주지 않는다. 글 읽기 권한을 확인하는 내려받기 API로만 받는다 (022 FR-011)

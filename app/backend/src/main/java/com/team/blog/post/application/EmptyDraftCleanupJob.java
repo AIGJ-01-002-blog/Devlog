@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import com.team.blog.post.infra.AutosaveStore;
 import com.team.blog.shared.config.BlogProperties;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.scheduling.JobLock;
 import com.team.blog.shared.time.Times;
 
@@ -46,12 +47,12 @@ public class EmptyDraftCleanupJob {
     /** @return 지운 글 수 */
     public int cleanup() {
         Timestamp cutoff = Timestamp.from(Times.now(clock).minus(ttl));
-        List<Long> candidates = jdbc.queryForList("""
+        List<Long> candidates = Columns.longs(jdbc, """
                 SELECT id FROM post
                 WHERE status = 'DRAFT' AND deleted_at IS NULL AND btrim(title) = '' AND btrim(content_md) = ''
                   AND created_at < ? AND updated_at < ?
                 ORDER BY id LIMIT 5000
-                """, Long.class, cutoff, cutoff);
+                """, cutoff, cutoff);
         int deleted = 0;
         for (long id : candidates) {
             boolean hasAutosave;

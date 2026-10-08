@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -94,8 +95,9 @@ public class AutosaveStore {
     }
 
     public Set<Long> dirtyPostIds() {
-        Set<String> ids = redis.opsForSet().members(DIRTY);
-        return ids == null ? Set.of() : ids.stream().map(Long::valueOf).collect(Collectors.toSet());
+        // 파이프라인·트랜잭션 안에서만 null이다
+        return Objects.requireNonNullElse(redis.opsForSet().members(DIRTY), Set.<String>of()).stream()
+                .map(Long::valueOf).collect(Collectors.toSet());
     }
 
     public void markDirty(long postId) {

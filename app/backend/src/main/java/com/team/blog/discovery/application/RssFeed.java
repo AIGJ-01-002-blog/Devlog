@@ -14,6 +14,7 @@ import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.post.infra.PostSql;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.markdown.ContentRenderer;
+import com.team.blog.shared.text.TextCleaner;
 
 /**
  * RSS 2.0 (spec 026). 전체 최신 공개 글과 블로그별 공개 글을 20개씩. 공개 목록과 같은 조건이라 친구 공개·비공개 글은 나오지 않는다.
@@ -83,7 +84,7 @@ public class RssFeed {
     }
 
     private String absolute(String path) {
-        String base = site.baseUrl() == null ? "" : site.baseUrl().replaceAll("/+$", "");
+        String base = site.baseUrl() == null ? "" : TextCleaner.trimEnd(site.baseUrl(), '/');
         return base + path;
     }
 

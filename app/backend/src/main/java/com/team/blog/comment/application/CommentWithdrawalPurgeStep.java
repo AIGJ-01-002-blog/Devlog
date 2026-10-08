@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import com.team.blog.account.application.WithdrawalPurgeStep;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.time.Times;
 
 /**
@@ -32,8 +33,8 @@ class CommentWithdrawalPurgeStep implements WithdrawalPurgeStep {
     @Override
     public void purge(long memberId) {
         // 답글을 지우기 전에 그 답글이 달린 최상위를 기억해 둔다 (빈 자리 정리용)
-        Long[] roots = jdbc.queryForList("SELECT DISTINCT parent_id FROM comment WHERE author_id = ? AND parent_id IS NOT NULL",
-                Long.class, memberId).toArray(Long[]::new);
+        Long[] roots = Columns.longs(jdbc, "SELECT DISTINCT parent_id FROM comment WHERE author_id = ? AND parent_id IS NOT NULL",
+                memberId).toArray(Long[]::new);
         jdbc.update("DELETE FROM comment WHERE author_id = ? AND parent_id IS NOT NULL", memberId);
         jdbc.update("""
                 UPDATE comment c SET content = '', deleted_at = COALESCE(c.deleted_at, ?)

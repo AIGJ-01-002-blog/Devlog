@@ -10,8 +10,8 @@ on:
         description: 프로젝트 키 (비우면 레포 변수 SONAR_PROJECT_KEY)
         required: false
 
-permissions:
-  contents: read
+# 저장소를 읽지 않고 GITHUB_TOKEN도 쓰지 않는다(아티팩트는 런너 토큰으로 올라감)
+permissions: {}
 
 jobs:
   export:
@@ -68,8 +68,20 @@ jobs:
                   if len(out) >= total or not d[key]: return out
                   p += 1
 
+          # 규칙 판정은 서버(분석기) 판마다 달라서, 로컬에서 같은 판으로 재현할 수 있게 남긴다
+          try:
+              with opener.open(urllib.request.Request(f"{host}/api/server/version", headers={"Authorization": auth}), timeout=30) as r:
+                  print(f"SonarQube {r.read().decode().strip()}")
+          except (urllib.error.URLError, TimeoutError):
+              print("::warning::SonarQube 서버 판을 받지 못했습니다. 이슈 조회는 계속합니다")
           issues = pages("/api/issues/search", "issues", componentKeys=project, resolved="false")
-          hotspots = pages("/api/hotspots/search", "hotspots", projectKey=project, status="TO_REVIEW")
+          try:
+              hotspots = pages("/api/hotspots/search", "hotspots", projectKey=project, status="TO_REVIEW")
+          except urllib.error.HTTPError as e:
+              # 핫스팟 조회는 프로젝트 Browse 권한이 있어야 한다. 분석 전용 토큰이면 403이라 이슈만 남긴다
+              hint = " 토큰에 프로젝트 Browse 권한이 필요합니다" if e.code == 403 else ""
+              print(f"::warning::핫스팟을 받지 못했습니다(HTTP {e.code}).{hint}")
+              hotspots = []
           os.makedirs("sonar", exist_ok=True)
           json.dump(issues, open("sonar/issues.json", "w"), ensure_ascii=False, indent=1)
           json.dump(hotspots, open("sonar/hotspots.json", "w"), ensure_ascii=False, indent=1)

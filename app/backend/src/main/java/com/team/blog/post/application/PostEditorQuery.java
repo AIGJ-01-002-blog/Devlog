@@ -12,6 +12,7 @@ import com.team.blog.post.domain.Post;
 import com.team.blog.post.domain.PostStatus;
 import com.team.blog.post.infra.PostRepository;
 import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.markdown.ImageUrls;
 
 /** 에디터 열기 (docs/04 §2-5 "다시 열기"). 작성자 본인만, 남의 글은 404. */
@@ -58,7 +59,7 @@ public class PostEditorQuery {
         return new EditorView(p.getId(), p.getStatus(), p.getVisibility(), s.title(), s.contentMd(), s.version(),
                 s.savedAt(), editing, p.isPublished() ? "/@" + handle + "/posts/" + p.getId() : null,
                 p.getPublishedAt(), p.getFirstPublicAt(), p.getEditedAt(),
-                jdbc.queryForList("SELECT t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = ? ORDER BY pt.position",
-                        String.class, p.getId()), p.getSummary(), thumb.url(), thumb.hidden());
+                Columns.strings(jdbc, "SELECT t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = ? ORDER BY pt.position",
+                        p.getId()), p.getSummary(), thumb.url(), thumb.hidden());
     }
 }

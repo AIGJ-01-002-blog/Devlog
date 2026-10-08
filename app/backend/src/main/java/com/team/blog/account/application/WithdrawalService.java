@@ -99,13 +99,14 @@ public class WithdrawalService {
             throw ApiException.validation(List.of(new FieldErrorItem("confirmed", "NOT_CONFIRMED", "안내 내용을 확인해 주세요.")));
         }
         Optional<AuthIdentity> identity = identities.findByMemberId(memberId);
-        Method method = identity.filter(i -> i.getProvider() == AuthProvider.LOCAL).isPresent() ? Method.PASSWORD : Method.CONFIRM_TEXT;
+        Optional<String> passwordHash = identity.filter(i -> i.getProvider() == AuthProvider.LOCAL).map(AuthIdentity::getPasswordHash);
+        Method method = passwordHash.isPresent() ? Method.PASSWORD : Method.CONFIRM_TEXT;
         if (members.findById(memberId).map(Member::getRole).orElse(null) == Role.ADMIN) throw adminCannot();
         if (method == Method.PASSWORD) {
             // 비밀번호 변경과 같은 규칙: 5번 연속 틀리면 15분 잠금 (FR-008, docs/11 §6-2)
             String subject = "withdraw:" + memberId;
             if (attempts.isLocked(subject)) throw EmailAccountService.locked(attempts.lockMinutes());
-            if (req.password() == null || !encoder.matches(req.password(), identity.get().getPasswordHash())) {
+            if (req.password() == null || !encoder.matches(req.password(), passwordHash.orElseThrow())) {
                 attempts.recordFailure(subject);
                 throw ApiException.validation(List.of(new FieldErrorItem("password", "PASSWORD_WRONG", "비밀번호가 올바르지 않아요.")));
             }

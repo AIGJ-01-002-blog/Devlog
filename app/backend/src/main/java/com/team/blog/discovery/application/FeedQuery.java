@@ -23,6 +23,7 @@ import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.cursor.CursorCodec;
 import com.team.blog.shared.error.NotFoundException;
 import com.team.blog.post.infra.PostSql;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.markdown.ContentRenderer;
 import com.team.blog.shared.markdown.ImageUrls;
 import com.team.blog.shared.time.Times;
@@ -193,8 +194,7 @@ public class FeedQuery {
     }
 
     private Optional<Long> findBlogOwner(String handle) {
-        return jdbc.queryForList("SELECT id FROM member WHERE handle = ? AND withdrawn_at IS NULL AND deleted_at IS NULL",
-                Long.class, handle).stream().findFirst();
+        return Columns.firstLong(jdbc, "SELECT id FROM member WHERE handle = ? AND withdrawn_at IS NULL AND deleted_at IS NULL", handle);
     }
 
     /**

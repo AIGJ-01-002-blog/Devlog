@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,7 @@ import com.team.blog.shared.web.TooManyRequestsException;
  */
 @Service
 public class EmailAccountService {
-    static final String INVALID_CREDENTIALS = "이메일 또는 비밀번호가 올바르지 않아요.";
+    static final String LOGIN_FAILED_MESSAGE = "이메일 또는 비밀번호가 올바르지 않아요.";
 
     private final MemberRepository members;
     private final AuthIdentityRepository identities;
@@ -66,7 +67,8 @@ public class EmailAccountService {
         this.attempts = attempts;
         this.tx = tx;
         this.clock = clock;
-        this.dummyHash = encoder.encode("timing-equalizer-Aa1!");
+        // 없는 이메일도 비밀번호 비교 시간을 같게 하는 해시. 맞힐 수 없도록 실행마다 무작위 값으로 만든다
+        this.dummyHash = encoder.encode(UUID.randomUUID().toString());
     }
 
     public record EmailSignupForm(String email, String handleBody, String password, String passwordConfirm,
@@ -141,7 +143,7 @@ public class EmailAccountService {
         boolean matches = password != null && encoder.matches(password, hash);
         if (found.isEmpty() || !matches) {
             attempts.recordFailure(subject);
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", INVALID_CREDENTIALS);
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", LOGIN_FAILED_MESSAGE);
         }
         attempts.reset(subject);
         long identityId = found.get().getId();
