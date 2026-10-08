@@ -64,8 +64,12 @@ jobs:
           if docker run --rm --privileged alpine:3.20 true 2>/tmp/priv.err; then echo "privileged=OK"; else echo "privileged=FAIL $(head -c 300 /tmp/priv.err)"; fi
           rm -f /tmp/priv.err
           echo "== 바깥 인터넷(이미지 받기·Cloudflare Tunnel)"
-          for u in https://ghcr.io https://registry-1.docker.io https://region1.v2.argotunnel.com; do
+          for u in https://ghcr.io https://registry-1.docker.io https://api.cloudflare.com/cdn-cgi/trace https://github.com; do
             printf '%s ' "$u"; curl -s -o /dev/null -m 8 -w '%{http_code}\n' "$u" || echo "실패"
+          done
+          # Cloudflare Tunnel(cloudflared)은 7844 포트로 나간다(들어오는 포트는 필요 없음)
+          for h in region1.v2.argotunnel.com region2.v2.argotunnel.com; do
+            if timeout 6 bash -c "echo > /dev/tcp/$h/7844" 2>/dev/null; then echo "$h:7844 tcp OK"; else echo "$h:7844 tcp 실패"; fi
           done
           echo "== 도구"; for t in kubectl k3d kind helm; do printf '%s ' "$t"; command -v "$t" || echo "없음"; done
           EOF
