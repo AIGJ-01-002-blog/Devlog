@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 새 Ubuntu 서버(Oracle Cloud 무료 Ampere VM 기준)에 블로그를 돌릴 k3s 한 대짜리 클러스터를 만든다.
 # 서버에 SSH로 들어가 저장소 없이 이 파일만 받아 실행한다:
-#   curl -fsSL https://raw.githubusercontent.com/AIGJ-01-002-blog/Devlog/main/deploy/scripts/server-setup.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/AIGJ-01-002-blog/devlog/main/deploy/scripts/server-setup.sh | sudo bash
 # 끝나면 GitHub Secret KUBECONFIG에 넣을 접속 파일을 /root/kubeconfig-github.yaml로 만든다(화면에는 찍지 않는다).
 #
 # 하는 일: 방화벽(Oracle Ubuntu 기본 iptables의 REJECT 규칙이 파드 통신을 막음) 정리 → k3s 설치(traefik 끔)
