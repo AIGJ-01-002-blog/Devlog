@@ -5,6 +5,7 @@ import { AiTagSuggest } from '../components/AiTagSuggest'
 import { AttachmentEditor } from '../components/AttachmentEditor'
 import { SeriesPicker } from '../components/SeriesPicker'
 import { TagInput } from '../components/TagInput'
+import { ThumbnailPicker } from '../components/ThumbnailPicker'
 import { api, ApiError } from '../lib/api'
 import { Autosaver, type Content, type SaveState } from '../lib/autosave'
 import { useAuth } from '../lib/auth'
@@ -16,6 +17,7 @@ import { useImageUploads } from '../lib/useImageUploads'
 import { decideRestore } from '../lib/restore'
 import { navigate, setLeaveGuard } from '../lib/router'
 import { isPublishField, SUMMARY_MAX, summaryLength } from '../lib/postSummary'
+import { initialThumbnail, thumbnailRequest } from '../lib/postThumbnail'
 import { addTag, tagErrors } from '../lib/tags'
 import type { EditorView, FriendOverview, ServerContent, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
@@ -77,6 +79,9 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
   const [tags, setTags] = useState<string[]>(view.tags ?? [])
   // 짧은 소개도 발행할 때 확정된다. 비우면 목록이 본문 앞부분으로 요약한다 (045)
   const [summary, setSummary] = useState(view.summary ?? '')
+  // 썸네일도 발행할 때 확정된다. 고르지 않으면 본문 첫 사진 (047)
+  const [thumbnail, setThumbnail] = useState(() => initialThumbnail(view))
+  const [thumbnailBusy, setThumbnailBusy] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showAlts, setShowAlts] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -238,7 +243,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     setPublishing(true)
     setErrors({})
     const key = crypto.randomUUID()
-    const body = { title, contentMd: content, summary, tags, visibility, baseVersion: saver.current!.version }
+    const body = { title, contentMd: content, summary, tags, visibility, baseVersion: saver.current!.version, ...thumbnailRequest(thumbnail) }
     try {
       for (let attempt = 0; ; attempt++) {
         try {
@@ -260,7 +265,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
         }
       }
     } catch (e) {
-      // 태그·짧은 소개 오류는 발행 창 안에 보여 준다
+      // 태그·짧은 소개·썸네일 오류는 발행 창 안에 보여 준다
       if (!(e instanceof ApiError && e.errors.some((f) => isPublishField(f.field)))) setShowPublish(false)
       handleError(e)
     } finally {
@@ -377,6 +382,8 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
                       onChange={(e) => { setSummary(e.target.value); setErrors(({ summary: _, ...rest }) => rest) }} />
           </label>
           {errors.summary && <p id="summary-error" className="error small" role="alert">{errors.summary}</p>}
+          <ThumbnailPicker value={thumbnail} content={content} error={errors.thumbnail} onBusy={setThumbnailBusy}
+                           onChange={(c) => { setThumbnail(c); setErrors(({ thumbnail: _, ...rest }) => rest) }} />
           {Object.keys(errors).some((k) => !isPublishField(k)) && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
           {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
           <AltTexts content={content} open={showAlts} onOpen={() => setShowAlts(true)}
@@ -384,7 +391,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           {pendingIds(content).length > 0 && <p className="error small">업로드가 끝나지 않은 사진이 있어요. 다 올라간 뒤 발행할 수 있어요.</p>}
           <footer className="dialog-footer">
             <button type="button" className="btn btn-text" onClick={() => setShowPublish(false)} disabled={publishing}>취소</button>
-            <button type="button" className="btn btn-primary" onClick={publish} disabled={publishing}>
+            <button type="button" className="btn btn-primary" onClick={publish} disabled={publishing || thumbnailBusy}>
               {publishing ? '발행 중…' : '발행하기'}
             </button>
           </footer>

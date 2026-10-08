@@ -51,6 +51,7 @@
 | [044-author-social-links](./044-author-social-links/spec.md) | 글 아래 작성자 소셜 정보 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 2 |
 | [045-post-summary](./045-post-summary/spec.md) | 글 짧은 소개 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 5 |
 | [046-logo](./046-logo/spec.md) | 새 로고 (파비콘·헤더) | 2026-10-08 추가 (민서님 로고) | 이후 단계 (Tier C) | 3 |
+| [047-post-thumbnail](./047-post-thumbnail/spec.md) | 글 썸네일 고르기 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 7 |
 
 ## 여러 spec에 걸치는 문서
 

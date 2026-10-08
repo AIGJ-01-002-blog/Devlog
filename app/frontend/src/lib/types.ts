@@ -134,6 +134,10 @@ export interface EditorView {
   tags: string[]
   /** 작성자가 쓴 짧은 소개. 없으면 null (045) */
   summary: string | null
+  /** 작성자가 고른 썸네일 사진 주소. 고르지 않았으면 null (047) */
+  thumbnailUrl: string | null
+  /** 썸네일을 없앴으면 true (047) */
+  thumbnailHidden: boolean
 }
 
 export interface ServerContent {

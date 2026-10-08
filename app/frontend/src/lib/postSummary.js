@@ -8,7 +8,7 @@ export function normalizeSummary(raw) {
 export function summaryLength(raw) {
     return [...normalizeSummary(raw)].length;
 }
-/** 발행 설정 창 안에서 고치는 칸(태그·짧은 소개). 이 칸의 오류면 창을 닫지 않는다. */
+/** 발행 설정 창 안에서 고치는 칸(태그·짧은 소개·썸네일). 이 칸의 오류면 창을 닫지 않는다. */
 export function isPublishField(field) {
-    return field.startsWith('tags') || field === 'summary';
+    return field.startsWith('tags') || field === 'summary' || field === 'thumbnail';
 }

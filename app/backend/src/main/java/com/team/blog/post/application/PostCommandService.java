@@ -243,7 +243,8 @@ public class PostCommandService {
         }
         String summary = PostInput.cleanSummary(cmd.summary(), errors);
         PublishCommand cleaned = new PublishCommand(cmd.postId(), cmd.memberId(), in.title(), in.contentMd(), summary,
-                cmd.visibility(), cmd.tags() == null ? List.of() : cmd.tags(), cmd.baseVersion());
+                cmd.visibility(), cmd.tags() == null ? List.of() : cmd.tags(), cmd.baseVersion(),
+                cmd.thumbnailUrl() == null || cmd.thumbnailUrl().isBlank() ? null : cmd.thumbnailUrl().strip(), cmd.thumbnailHidden());
         extensions.forEach(e -> e.validate(cleaned, errors));
         if (!errors.isEmpty()) throw ApiException.validation(errors);
 
@@ -323,7 +324,8 @@ public class PostCommandService {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             for (String part : List.of(c.title(), c.contentMd(), String.valueOf(c.summary()), String.valueOf(c.visibility()),
-                    String.join("\u0001", c.tags()), String.valueOf(c.baseVersion()))) {
+                    String.join("\u0001", c.tags()), String.valueOf(c.baseVersion()), String.valueOf(c.thumbnailUrl()),
+                    String.valueOf(c.thumbnailHidden()))) {
                 md.update(part.getBytes(StandardCharsets.UTF_8));
                 md.update((byte) 0);
             }
