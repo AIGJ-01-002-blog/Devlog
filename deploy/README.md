@@ -195,7 +195,7 @@ Oracle 무료 VM이 "Out of capacity"로 만들어지지 않아 학교가 준 �
 
 1. Oracle Cloud에서 인스턴스 생성: 이미지 Ubuntu 24.04, 모양 `VM.Standard.A1.Flex`(Ampere, 무료 범위 4 OCPU·24GB 안에서 2 OCPU·12GB 권장), SSH 키 등록.
 2. 인스턴스의 VCN → 보안 목록 → 수신 규칙에 TCP 6443(쿠버네티스 API, GitHub Actions 배포용) 추가. 80·443은 열지 않는다(Cloudflare Tunnel이 안에서 밖으로 연결).
-3. SSH로 접속해 `curl -fsSL https://raw.githubusercontent.com/AIGJ-01-002-blog/docs/main/deploy/scripts/server-setup.sh | sudo bash`
+3. SSH로 접속해 `curl -fsSL https://raw.githubusercontent.com/AIGJ-01-002-blog/Devlog/main/deploy/scripts/server-setup.sh | sudo bash`
 4. `sudo cat /root/kubeconfig-github.yaml` 내용을 GitHub Secret `KUBECONFIG`에 넣는다.
 5. `BLOG_SECRET_ENV`: 로컬에서 `deploy/scripts/gen-secret-env.sh selfhosted`로 만든 secret.env 내용 전체.
 6. 아래 "도메인 연결"의 토큰을 넣고 Actions → 배포 → Run workflow (overlay `selfhosted`).
