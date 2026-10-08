@@ -363,6 +363,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.27.3 | 2026-10-08 | 学校サーバーでドメイン接続（cloudflared）が動くよう http2 で接続、失敗時の原因ログ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.3) |
 | v1.27.2 | 2026-10-08 | ソースコードとドキュメントのリポジトリを分離（ドキュメントは AIGJ-01-002-blog/docs） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.2) |
 | v1.27.1 | 2026-10-08 | 学校の実習サーバーに Kubernetes（k3d）でデプロイ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.1) |
 | v1.27.0 | 2026-10-08 | devlog MCP サーバー、ChatGPT・Codex 接続、自宅 PC の AI 優先 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.0) |

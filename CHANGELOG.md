@@ -6,6 +6,14 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.27.3] - 2026-10-08
+
+학교 서버 첫 배포에서 앱은 떴지만 도메인 연결(cloudflared)이 준비되지 않아 배포가 실패했다 (배포 구성).
+
+### 바뀜
+- cloudflared가 QUIC(UDP) 대신 http2(TCP 7844)로 Cloudflare에 연결한다. 학교 서버는 TCP 7844가 열려 있음을 점검으로 확인했고, UDP는 막혀 있을 수 있다
+- 배포가 cloudflared를 300초까지 기다리고, 실패하면 파드 상태·이벤트·로그를 실행 기록에 남긴다(토큰은 찍히지 않음)
+
 ## [1.27.2] - 2026-10-08
 
 소스코드와 문서를 저장소 두 개로 나눴다 (동작 변화 없음). 이 저장소 이름이 `docs`에서 `Devlog`로 바뀌었고, 설계 문서는 새 문서 저장소 [AIGJ-01-002-blog/docs](https://github.com/AIGJ-01-002-blog/docs)로 git 기록째 옮겼다.
