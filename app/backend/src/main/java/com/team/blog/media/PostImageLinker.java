@@ -26,12 +26,13 @@ class PostImageLinker implements PublishExtension {
     public void onPublish(Post post, RenderedContent rendered, PublishCommand command) {
         List<String> keys = rendered.imageKeys();
         String[] keyArray = keys.toArray(String[]::new);
-        // 이 글에서 빠지고 다른 글에도 없는 사진은 연결 해제 시각을 남긴다
+        // 이 글에서 빠지고 다른 글에도, 썸네일(047)로도 쓰지 않는 사진은 연결 해제 시각을 남긴다
         jdbc.update("""
                 UPDATE resource r SET detached_at = now()
                 WHERE r.id IN (SELECT resource_id FROM post_image WHERE post_id = ?)
                   AND NOT (r.storage_key = ANY (?))
                   AND NOT EXISTS (SELECT 1 FROM post_image o WHERE o.resource_id = r.id AND o.post_id <> ?)
+                  AND NOT EXISTS (SELECT 1 FROM post_thumbnail t WHERE t.resource_id = r.id)
                 """, post.getId(), keyArray, post.getId());
         jdbc.update("DELETE FROM post_image WHERE post_id = ?", post.getId());
         if (keys.isEmpty()) return;
