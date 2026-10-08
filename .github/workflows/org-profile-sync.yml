@@ -1,0 +1,62 @@
+# README.md가 바뀌면 조직 프로필(AIGJ-01-002-blog/.github의 profile/README.md)을 자동으로 맞춘다.
+# 레포 Secret ORG_PROFILE_TOKEN(.github 저장소 Contents 읽기·쓰기만 준 fine-grained 토큰)이 있을 때만 돈다. 없으면 안내만 남기고 넘어간다.
+name: 조직 프로필 동기화
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "docs/images/**"
+      - "scripts/build-org-profile.py"
+      - ".github/workflows/org-profile-sync.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: org-profile-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 토큰 확인
+        id: token
+        env:
+          TOKEN: ${{ secrets.ORG_PROFILE_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::notice::ORG_PROFILE_TOKEN이 없어 조직 프로필을 갱신하지 않습니다. scripts/build-org-profile.py 결과를 직접 붙여 넣어 주세요."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.token.outputs.skip != 'true'
+      - name: 프로필 만들기
+        if: steps.token.outputs.skip != 'true'
+        run: python3 scripts/build-org-profile.py --stdout > "$RUNNER_TEMP/profile-README.md"
+      - uses: actions/checkout@v4
+        if: steps.token.outputs.skip != 'true'
+        with:
+          repository: AIGJ-01-002-blog/.github
+          token: ${{ secrets.ORG_PROFILE_TOKEN }}
+          path: org-profile
+      - name: 바뀌었으면 올리기
+        if: steps.token.outputs.skip != 'true'
+        working-directory: org-profile
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p profile
+          cp "$RUNNER_TEMP/profile-README.md" profile/README.md
+          git add profile/README.md
+          if git diff --cached --quiet; then
+            echo "조직 프로필이 이미 최신입니다."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs 저장소 README 반영 (${SOURCE_SHA::7})"
+          git push
