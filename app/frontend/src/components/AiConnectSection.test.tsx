@@ -65,6 +65,8 @@ describe('AiConnectSection', () => {
     vi.stubGlobal('confirm', ask)
     await act(async () => { root.render(<AiConnectSection />) })
     expect(host.textContent).toContain('켜면 연결한 AI가 글을 바로 발행하거나 삭제할 수 있어요. 삭제는 웹에서 지울 때와 같아요.')
+    // AI 앱은 처음 연결할 때 받은 도구 목록을 기억하므로, 켠 뒤에는 다시 연결해야 한다
+    expect(host.textContent).toContain('켠 뒤에는 AI 앱에서 devlog 연결을 다시 시작해야 발행·삭제 도구가 보여요.')
     const box = () => host.querySelector<HTMLInputElement>('.ai-publish input[type="checkbox"]')!
     const puts = () => (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([, init]) => init?.method === 'PUT')
     expect(box().checked).toBe(false)

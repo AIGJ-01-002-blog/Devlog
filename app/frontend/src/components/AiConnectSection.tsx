@@ -155,6 +155,9 @@ function AiPublishToggle() {
       <p className="muted small">
         {AI_PUBLISH_WARNING} 지운 글은 휴지통에서 30일 안에 복구할 수 있어요. 꺼 두면 AI는 임시글과 "발행 대기"까지만 만들어요.
       </p>
+      <p className="muted small ai-publish-reconnect">
+        끄면 바로 막혀요. 켠 뒤에는 AI 앱에서 devlog 연결을 다시 시작해야 발행·삭제 도구가 보여요.
+      </p>
       {error && <p className="error" role="status">{error}</p>}
     </div>
   )
