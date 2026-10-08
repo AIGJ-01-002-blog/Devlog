@@ -364,6 +364,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
 | v1.27.0 | 2026-10-08 | devlog MCP サーバー、ChatGPT・Codex 接続、自宅 PC の AI 優先 | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.27.0) |
+| v1.26.1 | 2026-10-08 | デプロイが Gemini キーと自宅 PC の Ollama 設定をアプリに渡す（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.1) |
 | v1.26.0 | 2026-10-08 | MCP 開発日誌中心のトップ画面と AI 接続ガイド | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.0) |
 | v1.25.2 | 2026-10-08 | 記事一覧・詳細の取得を記事モジュールへ移して整理（動作の変更なし） | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.2) |
 | v1.25.1 | 2026-10-08 | 本番 DB を pgvector 入りの PostgreSQL に変更（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.1) |

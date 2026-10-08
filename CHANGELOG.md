@@ -27,6 +27,17 @@ devlog MCP 서버와 접근 토큰·OAuth (spec 052). 모든 회원이 자기 AI
 - 집 PC를 Cloudflare Tunnel로 열 때 쓰는 접근 토큰(Cloudflare Access 서비스 토큰·Bearer)을 Ollama 요청에 붙인다. 설정 순서는 `docs/61-home-ai-ollama.md`
 - `/mcp` 안내 화면의 "곧 열려요"를 없애고 [설정에서 토큰 만들기]로 바꿨다. 도구 목록의 태그 추천을 `list_tags`로 바꿨다
 
+## [1.26.1] - 2026-10-08
+
+배포가 AI 설정(Gemini 열쇠, 집 PC Ollama)을 넣어 준다.
+
+### 수정
+- 저장소 Secret `GEMINI_API_KEY`를 넣어도 배포가 앱에 전달하지 않던 문제를 고쳤다. 이제 SMTP 비밀번호처럼 `BLOG_SECRET_ENV`의 같은 값을 덮어쓴다
+
+### 추가
+- 집 PC Ollama 연결(docs/61): GitHub 변수 `OLLAMA_BASE_URL`과 Secret `OLLAMA_ACCESS_CLIENT_ID`·`OLLAMA_ACCESS_CLIENT_SECRET`·`OLLAMA_AUTH_TOKEN`을 배포가 앱에 넣는다. 주소 변수가 비어 있으면 Ollama를 쓰지 않는다
+- 운영(selfhosted) 설정에 `OLLAMA_MODEL=qwen2.5:14b`, `OLLAMA_CONCURRENCY=1`, `OLLAMA_DOWN_FOR=60s`
+
 ## [1.26.0] - 2026-10-08
 
 MCP 개발 일지 중심 첫 화면 (spec 051). 새 슬로건 "코딩은 AI와, 기록은 devlog가."

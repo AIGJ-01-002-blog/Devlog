@@ -364,6 +364,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
 | v1.27.0 | 2026-10-08 | devlog MCP server, ChatGPT and Codex connections, home PC AI first | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.27.0) |
+| v1.26.1 | 2026-10-08 | Deploy passes the Gemini key and home-PC Ollama settings to the app (deployment config) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.1) |
 | v1.26.0 | 2026-10-08 | Home centered on MCP dev logs, AI connection guide | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.0) |
 | v1.25.2 | 2026-10-08 | Post list and detail queries moved into the post module (no behavior change) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.2) |
 | v1.25.1 | 2026-10-08 | Production DB switched to PostgreSQL with pgvector (deployment config) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.1) |

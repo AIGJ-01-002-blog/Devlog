@@ -362,6 +362,7 @@ npm run dev        # http://localhost:5173
 | 버전 | 날짜 | 주요 내용 | 릴리스 노트 |
 | --- | --- | --- | --- |
 | v1.27.0 | 2026-10-08 | devlog MCP 서버, ChatGPT·Codex 연결, 집 PC AI 먼저 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.27.0) |
+| v1.26.1 | 2026-10-08 | 배포가 Gemini 열쇠와 집 PC Ollama 설정을 앱에 넣기(배포 구성) | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.1) |
 | v1.26.0 | 2026-10-08 | MCP 개발 일지 중심 첫 화면과 AI 연결 안내 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.0) |
 | v1.25.2 | 2026-10-08 | 글 목록·상세 조회를 글 모듈로 옮겨 정리(동작 변화 없음) | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.2) |
 | v1.25.1 | 2026-10-08 | 운영 DB를 pgvector가 들어 있는 PostgreSQL로 바꾸기(배포 구성) | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.1) |
