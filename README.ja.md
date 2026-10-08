@@ -117,6 +117,9 @@ AI の利用に同意していれば AI がタイトルを付けて文章を整�
 - **シリーズ**：記事をまとめて順番を並べ替えます。記事の上にシリーズボックスと前後の記事へのリンクが出ます。
 - **AI タグ提案**：タイトルと本文の冒頭からタグを最大 5 個提案します。初回に外部サービスへの送信について同意を求め、1 日 20 回まで使えます。
 - **記事管理とゴミ箱**：状態・公開範囲で絞り込み、削除した記事は 30 日以内なら復元できます。
+- **変更履歴**：公開するたびに版が残り（最新 50 版）、以前の版を今の内容と比べたり、エディターに読み込んで戻したりできます。
+- **公開前チェック**：公開画面で紹介文・タグ・代表画像・画像の代替テキスト・コードブロック・空のリンクを確認し、見落としを知らせます。公開は止めません。
+- **記事のエクスポート**：設定から自分の記事すべてを、前付け（タイトル・日付・タグ・シリーズ）付きの Markdown zip でダウンロードできます。
 
 ### 閲覧と発見
 
@@ -150,7 +153,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>複数 Pod]
     I -->|/blog-images| M[(MinIO / S3<br/>画像・添付)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V16)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V17)]
     A --> R[(Redis<br/>セッション・レート制限・閲覧数・キャッシュ)]
     A --> M
     A -.任意.-> G[Google Gemini]
@@ -170,6 +173,7 @@ flowchart LR
 | **comment · like · view** | コメント・返信、いいね、閲覧数（Redis に集めて 1 分ごとに移す） | PostgreSQL、Redis |
 | **follow · friend · notification** | フォローとフィード、友だち、アプリ内通知 | PostgreSQL |
 | **series** | シリーズのまとめと並び順 | PostgreSQL |
+| **revision · export** | 記事の変更履歴、自分の記事の Markdown エクスポート | PostgreSQL |
 | **ai** | AI タグ提案（Gemini → Ollama）、メモを記事に整える | Redis（結果の保存・上限の状態） |
 | **telegram** | アカウント連携、通知の送信、メモ → 下書き | PostgreSQL |
 | **moderation** | 通報、非表示、利用停止、管理画面 | PostgreSQL |
@@ -240,7 +244,7 @@ GitHub Actions でテストし、イメージを作って GHCR に上げたあ�
 
 | パス | 説明 |
 | --- | --- |
-| [app/backend](app/backend) | バックエンド：Spring Boot 4.1、Java 21。機能モジュール、Flyway マイグレーション（V1~V16）、テスト |
+| [app/backend](app/backend) | バックエンド：Spring Boot 4.1、Java 21。機能モジュール、Flyway マイグレーション（V1~V17）、テスト |
 | [app/frontend](app/frontend) | フロントエンド：React 19 SPA、TypeScript、Vite。画面、自動保存（IndexedDB）、ダークモード |
 | [deploy](deploy) | デプロイ：Dockerfile、Kubernetes マニフェスト（base・selfhosted・nhn・local）、デプロイ・ロールバック・シークレット検査のスクリプト |
 | [.github](.github) | CI/CD：バックエンドと画面のテスト、イメージのビルドとデプロイ、リリース、Discord・Telegram 通知 |
@@ -317,7 +321,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub・Google ログイン、セッション、CSRF、パスごとの権限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | ドメイン全体 | 会員・記事・コメントなどドメインデータの保存 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | セッション、レート制限、閲覧数、キャッシュ | 複数の Pod が同じセッションを共有し、同時リクエストも Redis スクリプト 1 つで判定します |
-| Flyway | Boot 4.1 | DB | スキーマを V1~V16 のマイグレーションで管理し、起動時に適用します |
+| Flyway | Boot 4.1 | DB | スキーマを V1~V17 のマイグレーションで管理し、起動時に適用します |
 | commonmark-java (+ GFM 拡張) | 0.30.0 | 本文のレンダリング | Markdown → HTML。表・取り消し線・チェックリスト・自動リンク・見出しアンカー |
 | OWASP Java HTML Sanitizer | 20260924.2 | 本文のサニタイズ | レンダリングした HTML を許可リストでサニタイズし XSS を防ぎます |
 | AWS SDK for Java (S3) | 2.55.12 | media | MinIO・S3 に画像と添付をアップロードします |
@@ -363,6 +367,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.33.0 | 2026-10-08 | 変更履歴、公開前チェック、記事の Markdown エクスポート | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |
 | v1.32.1 | 2026-10-08 | 学校サーバーのクラスター状態を読み取り専用で見る「クラスター状態」ワークフロー（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.1) |
 | v1.32.0 | 2026-10-08 | ハイブリッド検索：検索語がなくても意味の近い記事を探す | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
 | v1.31.0 | 2026-10-08 | AI が公開済み記事の修正・画像アップロード・自分の記事全体の検索まで | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.31.0) |

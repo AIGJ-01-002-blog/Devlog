@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
+import { ExportSection } from '../components/ExportSection'
 import { AiConnectSection } from '../components/AiConnectSection'
 import { Avatar } from '../components/Avatar'
 import { ImageCropper } from '../components/ImageCropper'
@@ -71,6 +72,7 @@ export function SettingsPage() {
       <TelegramSection />
       <AccountSection settings={settings} onChange={setSettings} />
       {settings.hasPassword && <PasswordSection />}
+      <ExportSection />
       <section className="settings-section withdraw-link">
         <Link to="/settings/withdraw" className="btn btn-text danger">회원 탈퇴</Link>
       </section>

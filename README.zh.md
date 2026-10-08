@@ -117,6 +117,9 @@ cd app/frontend && npm install && npm run dev            # http://localhost:5173
 - **系列**：把文章归入系列并调整顺序。文章上方会显示系列框以及上下篇文章的链接。
 - **AI 标签推荐**：根据标题和正文开头推荐最多 5 个标签。首次使用时会征求向外部服务发送内容的同意，每天最多 20 次。
 - **文章管理与回收站**：按状态和公开范围筛选，删除的文章 30 天内可以恢复。
+- **修改历史**：每次发布都会保留一个版本（最近 50 个），可以把以前的版本和当前内容对比，或载入编辑器恢复。
+- **发布前检查**：发布窗口会检查简介、标签、封面图、图片替代文本、代码块和空链接，提醒容易遗漏的地方。不会阻止发布。
+- **导出文章**：在设置中把自己的全部文章下载为带前言（标题、日期、标签、系列）的 Markdown zip。
 
 ### 阅读与发现
 
@@ -150,7 +153,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>多个 Pod]
     I -->|/blog-images| M[(MinIO / S3<br/>图片 · 附件)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V16)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V17)]
     A --> R[(Redis<br/>会话 · 限流 · 浏览数 · 缓存)]
     A --> M
     A -.可选.-> G[Google Gemini]
@@ -170,6 +173,7 @@ flowchart LR
 | **comment · like · view** | 评论与回复、点赞、浏览数（先汇总到 Redis，每分钟转存） | PostgreSQL、Redis |
 | **follow · friend · notification** | 关注与动态、好友、站内通知 | PostgreSQL |
 | **series** | 系列的归类与排序 | PostgreSQL |
+| **revision · export** | 文章修改历史、导出自己的文章为 Markdown | PostgreSQL |
 | **ai** | AI 标签推荐（Gemini → Ollama）、把速记整理成文章 | Redis（结果缓存、额度状态） |
 | **telegram** | 账号关联、发送通知、速记 → 草稿 | PostgreSQL |
 | **moderation** | 举报、隐藏、封禁、管理页面 | PostgreSQL |
@@ -240,7 +244,7 @@ sequenceDiagram
 
 | 路径 | 说明 |
 | --- | --- |
-| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V16）、测试 |
+| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V17）、测试 |
 | [app/frontend](app/frontend) | 前端：React 19 SPA、TypeScript、Vite。界面、自动保存（IndexedDB）、深色模式 |
 | [deploy](deploy) | 部署：Dockerfile、Kubernetes 清单（base、selfhosted、nhn、local），部署、回滚、密钥检查脚本 |
 | [.github](.github) | CI/CD：后端与界面测试、镜像构建与部署、版本发布、Discord 与 Telegram 通知 |
@@ -317,7 +321,7 @@ npm run dev        # http://localhost:5173
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub、Google 登录，会话，CSRF，按路径的权限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | 所有领域 | 保存会员、文章、评论等领域数据 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | 会话、限流、浏览数、缓存 | 多个 Pod 共享同一会话，并发请求也由一个 Redis 脚本判定 |
-| Flyway | Boot 4.1 | 数据库 | 用 V1~V16 迁移管理模式，启动时自动应用 |
+| Flyway | Boot 4.1 | 数据库 | 用 V1~V17 迁移管理模式，启动时自动应用 |
 | commonmark-java (+ GFM 扩展) | 0.30.0 | 正文渲染 | Markdown → HTML。表格、删除线、任务清单、自动链接、标题锚点 |
 | OWASP Java HTML Sanitizer | 20260924.2 | 正文净化 | 按白名单净化渲染后的 HTML，防止 XSS |
 | AWS SDK for Java (S3) | 2.55.12 | media | 把图片和附件上传到 MinIO、S3 |
@@ -363,6 +367,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.33.0 | 2026-10-08 | 修改历史、发布前检查、导出文章为 Markdown | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |
 | v1.32.1 | 2026-10-08 | 只读查看学校服务器集群状态的“集群状态”工作流（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.1) |
 | v1.32.0 | 2026-10-08 | 混合搜索：即使没有检索词也能找到意思相近的文章 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
 | v1.31.0 | 2026-10-08 | AI 可修改已发布文章、上传图片、搜索自己的全部文章 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.31.0) |
