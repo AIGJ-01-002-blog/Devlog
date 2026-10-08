@@ -1,6 +1,7 @@
 package com.team.blog.post.query;
 
 import java.time.Instant;
+import java.util.List;
 
 import com.team.blog.account.domain.Visibility;
 
@@ -9,8 +10,10 @@ import com.team.blog.account.domain.Visibility;
  *
  * @param firstPublicAt 친구 공개 글은 null (처음 전체 공개된 적이 없음)
  * @param publishedAt   처음 발행한 시각. 친구가 보는 블로그 목록은 이 순서다
+ * @param tags          입력 순서대로 전부. 카드에 몇 개를 보일지는 화면이 정한다
  */
 public record PostCard(long id, String url, String title, String excerpt, String thumbnailUrl, Instant firstPublicAt,
-                       Instant publishedAt, Visibility visibility, int commentCount, int likeCount, Author author) {
+                       Instant publishedAt, Visibility visibility, int commentCount, int likeCount, long viewCount,
+                       List<String> tags, Author author) {
     public record Author(long id, String handle, String nickname, String profileImageUrl) {}
 }

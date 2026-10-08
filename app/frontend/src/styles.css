@@ -358,7 +358,19 @@ select { width: auto; }
 }
 .card-author { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .card-author b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card-likes { color: var(--color-text-muted); }
+.card-stats { display: flex; align-items: center; gap: 12px; flex-shrink: 0; color: var(--color-text-muted); }
+.card-stat > span[aria-hidden] { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.card-stat .nav-icon { flex-shrink: 0; }
+/* 태그는 한 줄만. 3개를 넘으면 …로 줄인다 (카드 높이가 글마다 달라지지 않게) */
+.card-tags { display: flex; flex-wrap: nowrap; gap: 6px; list-style: none; padding: 0; margin: -8px 0 12px; min-width: 0; overflow: hidden; }
+.card-tags li { min-width: 0; flex-shrink: 1; }
+.card-tags li.card-tag-more { flex-shrink: 0; }
+.card-tag, .card-tag-more {
+  display: block; padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; line-height: 1.6;
+  background: color-mix(in srgb, var(--color-brand) 9%, var(--color-surface)); color: var(--color-brand); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-tag:hover { background: color-mix(in srgb, var(--color-brand) 16%, var(--color-surface)); }
+.card-tag-more { background: var(--color-surface-2); color: var(--color-text-muted); cursor: default; }
 .more { display: flex; justify-content: center; padding: 16px 0 48px; }
 .feed-error { padding: 32px 0; text-align: center; }
 
@@ -377,6 +389,17 @@ select { width: auto; }
 .post-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: var(--color-text-2); margin-bottom: 32px; }
 .post-author { font-weight: 700; color: var(--color-text); }
 .post-owner-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+/* 공개 범위: 테두리 상자 대신 수정·삭제와 같은 글자 버튼 모양 */
+.visibility-picker { position: relative; display: inline-flex; align-items: center; border-radius: var(--radius); color: var(--color-text-muted); transition: background-color 0.15s, color 0.15s; }
+.visibility-picker:hover, .visibility-picker:focus-within { color: var(--color-text); background: var(--color-hover); }
+.post-owner-actions .visibility-picker select {
+  appearance: none; -webkit-appearance: none; border: 0; border-radius: var(--radius); background: transparent; color: inherit;
+  height: 34px; padding: 0 28px 0 10px; font: inherit; font-weight: 600; font-size: 0.9375rem; cursor: pointer;
+  field-sizing: content; /* 고른 항목 글자만큼만 넓어진다 (지원 안 하는 브라우저는 가장 긴 항목 폭) */
+}
+.post-owner-actions .visibility-picker select:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.visibility-picker option { background: var(--color-surface); color: var(--color-text); }
+.visibility-chevron { position: absolute; right: 10px; pointer-events: none; }
 .post-stats { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 48px; color: var(--color-text-muted); font-size: 0.875rem; }
 .post-byline { color: var(--color-text-2); }
 .post-body { margin-top: 32px; }

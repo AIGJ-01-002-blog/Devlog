@@ -369,6 +369,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.41.0 | 2026-10-09 | Post cards show tags, views and comments; visibility picker on a post now looks like a text button | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.41.0) |
 | v1.40.0 | 2026-10-09 | Admin dashboard charts active members per day | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.40.0) |
 | v1.39.0 | 2026-10-09 | Sign-up page checks the ID (email) and verifies it with an emailed code | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.39.0) |
 | v1.38.0 | 2026-10-09 | Admin dashboard shows site visitors (unique visitors and visits) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.38.0) |

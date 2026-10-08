@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.41.0 | 2026-10-09 | 記事カードにタグ・閲覧数・コメント数、記事画面の公開設定を文字ボタン風に | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.41.0) |
 | v1.40.0 | 2026-10-09 | 管理者ダッシュボードに日別のアクティブ会員グラフ | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.40.0) |
 | v1.39.0 | 2026-10-09 | 登録画面で ID(メール)の確認と認証コードによるメール認証 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.39.0) |
 | v1.38.0 | 2026-10-09 | 管理者ダッシュボードにサイト訪問者数（ユニーク訪問者・訪問回数） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.38.0) |
