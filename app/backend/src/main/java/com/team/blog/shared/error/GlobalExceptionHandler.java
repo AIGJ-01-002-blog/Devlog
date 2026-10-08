@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -42,6 +43,16 @@ public class GlobalExceptionHandler {
             MissingRequestHeaderException.class, HttpMediaTypeNotSupportedException.class})
     ResponseEntity<ErrorResponse> handleBadRequest(Exception e) {
         return ResponseEntity.badRequest().body(ErrorResponse.of("BAD_REQUEST", "요청 형식이 올바르지 않아요."));
+    }
+
+    /**
+     * 보안 방화벽이 막은 요청(헤더 값에 줄바꿈·제어 문자 등)은 보낸 쪽 문제라 400이다. 서버 오류 로그를 남기지 않고,
+     * 예외 메시지에 헤더 값(토큰일 수 있다)이 들어 있으므로 기록하지 않는다.
+     */
+    @ExceptionHandler(RequestRejectedException.class)
+    ResponseEntity<ErrorResponse> handleRejected(RequestRejectedException e) {
+        return ResponseEntity.badRequest().body(ErrorResponse.of("BAD_REQUEST",
+                "요청 헤더에 쓸 수 없는 문자(줄바꿈 등)가 있어요. 토큰을 쓰셨다면 다시 붙여 넣어 주세요."));
     }
 
     /** 경로 변수 타입 오류(예: 글 번호 자리에 문자)는 없는 대상과 같은 404 (docs/40 §3 ②). */
