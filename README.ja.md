@@ -363,6 +363,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.27.1 | 2026-10-08 | 学校の実習サーバーに Kubernetes（k3d）でデプロイ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.27.1) |
 | v1.27.0 | 2026-10-08 | devlog MCP サーバー、ChatGPT・Codex 接続、自宅 PC の AI 優先 | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.27.0) |
 | v1.26.1 | 2026-10-08 | デプロイが Gemini キーと自宅 PC の Ollama 設定をアプリに渡す（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.1) |
 | v1.26.0 | 2026-10-08 | MCP 開発日誌中心のトップ画面と AI 接続ガイド | [見る](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.0) |

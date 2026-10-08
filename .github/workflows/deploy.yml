@@ -9,9 +9,14 @@ on:
   workflow_dispatch:
     inputs:
       deploy:
-        description: "클러스터에 배포 (KUBECONFIG·BLOG_SECRET_ENV Secret 필요)"
+        description: "클러스터에 배포 (BLOG_SECRET_ENV Secret 필요)"
         type: boolean
         default: false
+      target:
+        description: "school = 학교 실습 서버 k3d(SCHOOL_SSH_PASSWORD, SSH 터널) / oracle = KUBECONFIG Secret의 클러스터"
+        type: choice
+        options: [school, oracle]
+        default: school
       overlay:
         description: "selfhosted = DB·Redis·MinIO를 클러스터 안에 띄움 / nhn = 학교 공용 서버 사용(학교망에서만 닿음)"
         type: choice
@@ -94,6 +99,7 @@ jobs:
       packages: read
     env:
       OVERLAY: ${{ inputs.overlay }}
+      TARGET: ${{ inputs.target }}
     steps:
       - uses: actions/checkout@v4
       - name: 이미지 이름 정하기
@@ -101,6 +107,27 @@ jobs:
       - name: 도구 설치
         run: |
           curl -sSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin
+      - name: 학교 서버 SSH 터널 (target=school)
+        if: inputs.target == 'school'
+        env:
+          HOST: ${{ vars.SCHOOL_SSH_HOST || 's2.java21.net' }}
+          SSH_PORT: ${{ vars.SCHOOL_SSH_PORT || '8822' }}
+          SSH_USER: ${{ vars.SCHOOL_SSH_USER || 'AIGJ_01_002' }}
+          API_PORT: ${{ vars.SCHOOL_K8S_API_PORT || '8318' }}
+          SSHPASS: ${{ secrets.SCHOOL_SSH_PASSWORD }}
+        run: |
+          [ -n "$SSHPASS" ] || { echo "::error::Secret SCHOOL_SSH_PASSWORD가 없습니다"; exit 1; }
+          sudo apt-get install -y -qq sshpass >/dev/null
+          umask 077
+          ssh_opts=(-p "$SSH_PORT" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -o ServerAliveInterval=30)
+          # 학교 서버의 쿠버네티스 API는 그 서버 127.0.0.1에만 열려 있다(school-setup.sh). SSH로 러너 16443에 잇는다
+          sshpass -e ssh "${ssh_opts[@]}" "$SSH_USER@$HOST" 'cat "$HOME/devlog/kubeconfig.yaml"' \
+            | sed -E "s#https://127\.0\.0\.1:[0-9]+#https://127.0.0.1:16443#" > "$RUNNER_TEMP/kubeconfig"
+          [ -s "$RUNNER_TEMP/kubeconfig" ] || { echo "::error::학교 서버에 클러스터가 없습니다. Actions → 학교 서버 준비를 먼저 실행하세요"; exit 1; }
+          sshpass -e ssh "${ssh_opts[@]}" -f -N -o ExitOnForwardFailure=yes \
+            -L "16443:127.0.0.1:${API_PORT}" "$SSH_USER@$HOST"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+          KUBECONFIG="$RUNNER_TEMP/kubeconfig" kubectl get nodes
       - name: 접속 정보 준비 (파일은 러너에만 존재)
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
@@ -120,7 +147,11 @@ jobs:
           OLLAMA_AUTH_TOKEN: ${{ secrets.OLLAMA_AUTH_TOKEN }}
         run: |
           umask 077
-          printf '%s' "$KUBECONFIG_CONTENT" > "$RUNNER_TEMP/kubeconfig"
+          # oracle은 KUBECONFIG Secret을 쓴다. school은 앞 단계가 SSH로 받아 둔 파일을 쓴다
+          if [ "$TARGET" != school ]; then
+            printf '%s' "$KUBECONFIG_CONTENT" > "$RUNNER_TEMP/kubeconfig"
+            echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+          fi
           f="deploy/k8s/overlays/$OVERLAY/secret.env"
           printf '%s\n' "$BLOG_SECRET_ENV" > "$f"
           for key in SMTP_PASSWORD SMTP_HOST TELEGRAM_BOT_TOKEN GEMINI_API_KEY OLLAMA_BASE_URL OLLAMA_ACCESS_CLIENT_ID OLLAMA_ACCESS_CLIENT_SECRET OLLAMA_AUTH_TOKEN; do
@@ -135,7 +166,6 @@ jobs:
             grep -v '^OLLAMA_BASE_URL=' "$f" > "$f.tmp" || true
             mv "$f.tmp" "$f"
           fi
-          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
       - name: 이미지 받기 권한 (GHCR 비공개 이미지)
         env:
           # 클러스터가 나중에 파드를 다시 띄울 때도 받을 수 있게 만료 없는 토큰(read:packages)을 권장. 없으면 이번 실행 토큰으로 대신한다
@@ -174,7 +204,9 @@ jobs:
           kubectl -n blog rollout status deploy/cloudflared --timeout=120s
       - name: 정리
         if: always()
-        run: rm -f "deploy/k8s/overlays/$OVERLAY/secret.env" "$RUNNER_TEMP/kubeconfig" "$RUNNER_TEMP/tunnel-token" "$RUNNER_TEMP/ghcr-token"
+        run: |
+          rm -f "deploy/k8s/overlays/$OVERLAY/secret.env" "$RUNNER_TEMP/kubeconfig" "$RUNNER_TEMP/tunnel-token" "$RUNNER_TEMP/ghcr-token"
+          pkill -f 'ssh .*-L 16443:' || true
       - name: 알림 (Discord·텔레그램)
         if: always() && (vars.DISCORD_ENABLED == 'true' || vars.TELEGRAM_ENABLED == 'true')
         uses: ./.github/actions/notify
@@ -183,6 +215,6 @@ jobs:
           telegram-bot-token: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_BOT_TOKEN || '' }}
           telegram-chat-id: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_CHAT_ID || '' }}
           title: "${{ vars.SERVICE_NAME || github.event.repository.name }} 배포 ${{ job.status == 'success' && '성공' || '실패(직전 버전으로 롤백 시도)' }}"
-          description: "${{ inputs.overlay }} · 커밋 ${{ github.sha }} · 실행자 ${{ github.actor }}"
+          description: "${{ inputs.target }} · ${{ inputs.overlay }} · 커밋 ${{ github.sha }} · 실행자 ${{ github.actor }}"
           status: ${{ job.status == 'success' && 'success' || 'failure' }}
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
