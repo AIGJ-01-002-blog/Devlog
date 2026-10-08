@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../lib/api';
 import { revisionLabel, revisions } from '../lib/revisions';
 import { Modal } from './Modal';
@@ -22,12 +22,18 @@ export function RevisionHistory({ postId, current, onLoad, onClose }) {
             .catch((e) => setError(e instanceof ApiError ? e.message : '수정 이력을 불러오지 못했어요.'));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [postId]);
+    // 판을 빠르게 바꿔 고르면 늦게 온 앞 응답이 마지막 선택을 덮지 않게, 마지막 요청만 반영한다
+    const latestPick = useRef(0);
     async function pick(no) {
+        const seq = ++latestPick.current;
         try {
-            setSelected(await revisions.get(postId, no));
+            const r = await revisions.get(postId, no);
+            if (seq === latestPick.current)
+                setSelected(r);
         }
         catch (e) {
-            setError(e instanceof ApiError ? e.message : '이 판을 불러오지 못했어요.');
+            if (seq === latestPick.current)
+                setError(e instanceof ApiError ? e.message : '이 판을 불러오지 못했어요.');
         }
     }
     const latestNo = items?.[0]?.no ?? 0;

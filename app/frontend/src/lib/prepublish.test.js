@@ -34,6 +34,8 @@ describe('발행 전 점검 (056)', () => {
     });
     it('보조 함수', () => {
         expect(emptyLinks('[a]() ![b]( ) [c](x)')).toBe(2);
+        expect(emptyLinks('```js\nfns[0]()\n```\n[a]()')).toBe(1);
+        expect(proseLength('````md\n```\n안쪽\n```\n````\n바깥')).toBe(2);
         expect(repeatsTitle('JPA 정리', '\n# JPA 정리\n본문')).toBe(true);
         expect(repeatsTitle('JPA 정리', '## JPA 정리')).toBe(false);
     });

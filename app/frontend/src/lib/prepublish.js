@@ -3,6 +3,10 @@ import { thumbnailPreview } from './postThumbnail';
 /** 본문이 이보다 짧으면 알린다(코드·사진 문법은 빼고 센다). */
 export const SHORT_BODY = 200;
 const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/;
+/** 펜스가 같은 글자(` 또는 ~)이고 여는 펜스보다 짧지 않으며 뒤에 글자가 없으면 닫는 펜스다 (CommonMark). */
+function closes(open, m) {
+    return m[1][0] === open[0] && m[1].length >= open.length && !m[2].trim();
+}
 /** 코드 블록을 열고 닫는 줄을 훑는다. 닫히지 않은 블록과 언어를 적지 않은 블록 수를 센다. */
 export function codeFences(md) {
     let open = null;
@@ -16,32 +20,40 @@ export function codeFences(md) {
             if (!m[2].trim())
                 noLang++;
         }
-        else if (m[1][0] === open[0] && m[1].length >= open.length && !m[2].trim()) {
+        else if (closes(open, m)) {
             open = null;
         }
     }
     return { unclosed: open != null, noLang };
 }
+/** 코드 블록(펜스 줄 포함)을 뺀 본문. codeFences와 같은 닫기 규칙을 쓴다. */
+export function outsideFences(md) {
+    const out = [];
+    let open = null;
+    for (const line of md.split('\n')) {
+        const m = FENCE.exec(line);
+        if (open == null) {
+            if (m)
+                open = m[1];
+            else
+                out.push(line);
+        }
+        else if (m && closes(open, m)) {
+            open = null;
+        }
+    }
+    return out.join('\n');
+}
 /** 코드 블록 밖의 글자 수. 사진·링크 주소는 빼고 센다. */
 export function proseLength(md) {
-    const out = [];
-    let inFence = false;
-    for (const line of md.split('\n')) {
-        if (FENCE.test(line)) {
-            inFence = !inFence;
-            continue;
-        }
-        if (!inFence)
-            out.push(line);
-    }
-    return out.join('\n')
+    return outsideFences(md)
         .replace(/!\[[^\]]*]\([^)]*\)/g, '')
         .replace(/\[([^\]]*)]\([^)]*\)/g, '$1')
         .replace(/[#>*_`~\-\s]/g, '').length;
 }
-/** 주소가 비어 있는 링크·사진 수: [글자]() */
+/** 코드 블록 밖에서 주소가 비어 있는 링크·사진 수: [글자]() */
 export function emptyLinks(md) {
-    return [...md.matchAll(/\[[^\]]*]\(\s*\)/g)].length;
+    return [...outsideFences(md).matchAll(/\[[^\]]*]\(\s*\)/g)].length;
 }
 /** 본문 첫 제목(# …)이 글 제목과 같으면 화면에 제목이 두 번 보인다. */
 export function repeatsTitle(title, md) {

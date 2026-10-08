@@ -432,7 +432,9 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           onLoad={async (r) => {
             // 지금 내용은 이 기기 백업에 남겨 둔다: 불러오기로 사라지지 않게 (백업 불러오기와 같은 규칙)
             const mine = { memberId, postId: view.id, ...current(), at: Date.now() }
-            if (mine.title !== r.title || mine.contentMd !== r.contentMd) await localDrafts.addBackup(mine)
+            if ((mine.title !== r.title || mine.contentMd !== r.contentMd) && !(await localDrafts.addBackup(mine))) {
+              if (!confirm('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 이 판을 불러올까요?')) return
+            }
             setTitle(r.title)
             setContent(r.contentMd)
             setSummary(r.summary ?? '')
@@ -457,7 +459,9 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
                   <button type="button" className="btn btn-outline" onClick={async () => {
                     // 지금 내용도 백업해 두고 바꾼다: 어느 쪽도 모르게 사라지지 않게 (FR-013)
                     const mine = { memberId, postId: view.id, ...current(), at: Date.now() }
-                    if (mine.title !== b.title || mine.contentMd !== b.contentMd) await localDrafts.addBackup(mine)
+                    if ((mine.title !== b.title || mine.contentMd !== b.contentMd) && !(await localDrafts.addBackup(mine))) {
+                      if (!confirm('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 백업을 불러올까요?')) return
+                    }
                     setTitle(b.title)
                     setContent(b.contentMd)
                     setBackups(await localDrafts.backups(memberId, view.id))
