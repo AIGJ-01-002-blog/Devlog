@@ -14,6 +14,8 @@ describe('MCP 연결 안내 (051)', () => {
         expect(MCP_TOOLS.filter((t) => t.aiPublish).map((t) => t.name)).toEqual(['publish_post', 'delete_post']);
         expect(MCP_TOOLS.filter((t) => !t.aiPublish).map((t) => t.name)).not.toContain('publish_post');
         expect(MCP_TOOLS.find((t) => t.name === 'request_publish')?.does).toContain('[발행]');
+        expect(MCP_TOOLS.map((t) => t.name)).toEqual(expect.arrayContaining(['upload_image', 'create_image_upload_link']));
+        expect(MCP_TOOLS.find((t) => t.name === 'update_draft')?.does).toContain('다시 발행');
     });
     it('Codex 설정은 토큰을 환경 변수로 받는다 (052)', () => {
         expect(codexConfig('https://devlog.life')).toBe('[mcp_servers.devlog]\nurl = "https://devlog.life/api/mcp"\nbearer_token_env_var = "DEVLOG_TOKEN"');
