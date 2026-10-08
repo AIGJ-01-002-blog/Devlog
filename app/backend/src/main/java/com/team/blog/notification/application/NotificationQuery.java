@@ -65,9 +65,13 @@ public class NotificationQuery {
     /**
      * @param result 신고 처리 결과 (REPORT_RESOLVED): ACTION_TAKEN / NO_VIOLATION. 신고 대상의 내용·작성자는 싣지 않는다
      * @param hidden 숨김 알림(CONTENT_HIDDEN)의 대상
+     * @param inquiry 답변이 온 내 문의(INQUIRY_ANSWERED, 054)
      */
     public record Item(long id, NotificationType type, boolean read, Instant at, Actor actor, int othersCount,
-                       PostRef post, String commentPreview, String link, String result, Hidden hidden) {}
+                       PostRef post, String commentPreview, String link, String result, Hidden hidden, InquiryRef inquiry) {}
+
+    /** 답변이 온 내 문의 (054). status는 지금 처리 상태 */
+    public record InquiryRef(long id, String title, String status) {}
 
     public record Page(List<Item> items, String nextCursor) {}
 
@@ -82,7 +86,8 @@ public class NotificationQuery {
                        a.actor_count, am.nickname AS actor_nickname, am.handle AS actor_handle,
                        am.status = 'WITHDRAWN' OR am.deleted_at IS NOT NULL AS actor_withdrawn,
                        rc.status AS case_status, rc.target_type AS case_target, rc.comment_id AS hidden_comment_id,
-                       p.hidden_reason AS post_hidden_reason, hc.hidden_at IS NOT NULL AS comment_hidden, hc.hidden_reason AS comment_hidden_reason
+                       p.hidden_reason AS post_hidden_reason, hc.hidden_at IS NOT NULL AS comment_hidden, hc.hidden_reason AS comment_hidden_reason,
+                       iq.id AS inquiry_id, iq.title AS inquiry_title, iq.status AS inquiry_status
                 FROM notification n
                 LEFT JOIN notification_comment nc ON nc.notification_id = n.id
                 LEFT JOIN comment c ON c.id = nc.comment_id
@@ -90,6 +95,8 @@ public class NotificationQuery {
                 LEFT JOIN notification_report nr ON nr.notification_id = n.id
                 LEFT JOIN report rp ON rp.id = nr.report_id
                 LEFT JOIN notification_case ncs ON ncs.notification_id = n.id
+                LEFT JOIN notification_inquiry ni ON ni.notification_id = n.id
+                LEFT JOIN inquiry iq ON iq.id = ni.inquiry_id
                 LEFT JOIN report_case rc ON rc.id = COALESCE(rp.case_id, ncs.case_id)
                 LEFT JOIN comment hc ON hc.id = rc.comment_id AND n.type = 'CONTENT_HIDDEN'
                 LEFT JOIN post p ON p.id = COALESCE(c.post_id, np.post_id, CASE WHEN n.type = 'CONTENT_HIDDEN' THEN COALESCE(rc.post_id, hc.post_id) END)
@@ -180,7 +187,7 @@ public class NotificationQuery {
                        boolean commentGone, Long postId, String title, ReadablePost post, String postHandle,
                        int actorCount, String actorNickname, String actorHandle, boolean actorWithdrawn,
                        String caseStatus, String caseTarget, Long hiddenCommentId, String postHiddenReason,
-                       boolean commentHidden, String commentHiddenReason) {}
+                       boolean commentHidden, String commentHiddenReason, InquiryRef inquiry) {}
 
     private Row row(ResultSet rs, int i) throws SQLException {
         long postId = rs.getLong("post_id");
@@ -195,7 +202,9 @@ public class NotificationQuery {
                 rs.getBoolean("comment_gone"), hasPost ? postId : null, rs.getString("title"), post, rs.getString("post_handle"),
                 rs.getInt("actor_count"), rs.getString("actor_nickname"), rs.getString("actor_handle"), rs.getBoolean("actor_withdrawn"),
                 rs.getString("case_status"), rs.getString("case_target"), nullableLong(rs, "hidden_comment_id"),
-                rs.getString("post_hidden_reason"), rs.getBoolean("comment_hidden"), rs.getString("comment_hidden_reason"));
+                rs.getString("post_hidden_reason"), rs.getBoolean("comment_hidden"), rs.getString("comment_hidden_reason"),
+                nullableLong(rs, "inquiry_id") == null ? null
+                        : new InquiryRef(rs.getLong("inquiry_id"), rs.getString("inquiry_title"), rs.getString("inquiry_status")));
     }
 
     private static Long nullableLong(ResultSet rs, String col) throws SQLException {
@@ -207,7 +216,12 @@ public class NotificationQuery {
         if (r.type() == NotificationType.REPORT_RESOLVED) {
             // 신고자에게는 결과만 (대상·작성자·관리자 없음, docs/25 §2)
             String result = "HIDDEN".equals(r.caseStatus()) ? "ACTION_TAKEN" : "NO_VIOLATION";
-            return new Item(r.id(), r.type(), r.read(), r.at(), null, 0, null, null, null, result, null);
+            return new Item(r.id(), r.type(), r.read(), r.at(), null, 0, null, null, null, result, null, null);
+        }
+        if (r.type() == NotificationType.INQUIRY_ANSWERED) {
+            // 문의가 지워졌으면(탈퇴 정리) 알림도 FK로 함께 지워지므로 여기서는 늘 있다
+            return new Item(r.id(), r.type(), r.read(), r.at(), null, 0, null, null,
+                    r.inquiry() == null ? "/support" : "/support?id=" + r.inquiry().id(), null, null, r.inquiry());
         }
         if (r.type() == NotificationType.CONTENT_HIDDEN) return hiddenItem(r, viewerId);
         Actor actor = r.actorNickname() == null ? null
@@ -230,7 +244,7 @@ public class NotificationQuery {
         }
         // 새 팔로워는 글이 없고 대표 팔로워의 블로그로 간다
         if (r.type() == NotificationType.FOLLOW && actor != null && !actor.withdrawn()) link = "/@" + actor.handle();
-        return new Item(r.id(), r.type(), r.read(), r.at(), actor, others, post, preview, link, null, null);
+        return new Item(r.id(), r.type(), r.read(), r.at(), actor, others, post, preview, link, null, null, null);
     }
 
     /**
@@ -253,7 +267,7 @@ public class NotificationQuery {
                 link = "/@" + r.postHandle() + "/posts/" + r.postId() + "?comment=" + r.hiddenCommentId() + "#comment-" + r.hiddenCommentId();
             }
         }
-        return new Item(r.id(), r.type(), r.read(), r.at(), null, 0, post, null, link, null, hidden);
+        return new Item(r.id(), r.type(), r.read(), r.at(), null, 0, post, null, link, null, hidden, null);
     }
 
     static String preview(String content) {

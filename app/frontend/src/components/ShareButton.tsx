@@ -29,7 +29,7 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
   const message = result ? MESSAGES[result] : undefined
   return (
     <span className="share">
-      <button type="button" className="like-button" onClick={press}>
+      <button type="button" className="like-button" data-tip="이 글 링크를 복사하거나 공유해요" onClick={press}>
         <span aria-hidden="true">↗</span> 공유
       </button>
       <span className={`like-notice${result === 'failed' ? ' error' : ''}`} role="status">{message ?? ''}</span>

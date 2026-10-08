@@ -136,14 +136,14 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           </span>
           {post.mine && (
             <span className="post-owner-actions">
-              <Link to={`/write/${post.id}`} className="btn btn-text">수정</Link>
-              <select aria-label="공개 범위" value={post.visibility}
+              <Link to={`/write/${post.id}`} className="btn btn-text" data-tip="에디터에서 이 글 고치기">수정</Link>
+              <select aria-label="공개 범위" data-tip="누가 이 글을 볼 수 있는지 바로 바꿔요" value={post.visibility}
                       onChange={(e) => changeVisibility(e.target.value as Visibility)}>
                 <option value="PUBLIC">🌐 전체 공개</option>
                 <option value="FRIENDS">👥 친구에게만</option>
                 <option value="PRIVATE">🔒 비공개</option>
               </select>
-              <button type="button" className="btn btn-text danger" onClick={remove}>삭제</button>
+              <button type="button" className="btn btn-text danger" data-tip="휴지통으로 옮겨요. 30일 안에 되돌릴 수 있어요" onClick={remove}>삭제</button>
             </span>
           )}
         </div>
@@ -160,7 +160,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           <LikeButton postId={post.id} mine={post.mine} initial={{ liked: post.liked, likeCount: post.likeCount }}
             onChange={(l) => setPost((p) => p && { ...p, liked: l.liked, likeCount: l.likeCount })} />
           {post.visibility !== 'PRIVATE' && <ShareButton path={post.url} title={post.title} />}
-          <span>댓글 {compactNumber(post.commentCount)}</span>
+          <a href="#comments" data-tip="댓글로 가기">댓글 {compactNumber(post.commentCount)}</a>
           <span className="view-count" tabIndex={0} title={VIEW_HINT} aria-label={`조회 ${post.viewCount}회, ${VIEW_HINT}`}>
             조회 {compactNumber(post.viewCount)}
           </span>

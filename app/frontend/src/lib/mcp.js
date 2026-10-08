@@ -30,6 +30,7 @@ export const MCP_TOOLS = [
     { name: 'get_post', does: '글 본문(Markdown) 읽기. 웹과 같은 공개 범위를 따라요', scope: '읽기' },
     { name: 'list_my_posts', does: '내 글·임시글 목록', scope: '읽기' },
     { name: 'list_tags', does: '내가 자주 쓴 태그·인기 태그 보기 (태그 제안에 써요)', scope: '읽기' },
+    { name: 'report_bug', does: 'devlog가 잘못 동작하면 운영자에게 버그 신고하기. 처리 상태와 답변은 [문의·신고]에서 봐요', scope: '모든 토큰' },
 ];
 export const TOKEN_EXPIRY_DAYS = [30, 90, 365];
 export const TOKEN_NAME_MAX = 40;

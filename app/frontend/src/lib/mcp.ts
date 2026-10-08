@@ -22,7 +22,7 @@ export function mcpJsonConfig(origin: string, token = TOKEN_PLACEHOLDER): string
  * AI가 쓸 수 있는 도구. 기본으로 발행은 사람이 devlog 화면에서 한다.
  * aiPublish 도구는 설정 › AI 연결에서 "AI가 발행·삭제하도록 허용"을 켠 회원에게만 열린다 (053).
  */
-export const MCP_TOOLS: ReadonlyArray<{ name: string; does: string; scope: '읽기' | '쓰기'; aiPublish?: boolean }> = [
+export const MCP_TOOLS: ReadonlyArray<{ name: string; does: string; scope: '읽기' | '쓰기' | '모든 토큰'; aiPublish?: boolean }> = [
   { name: 'write_devlog', does: '오늘 대화·커밋을 정리한 개발 일지를 임시글로 올려요', scope: '쓰기' },
   { name: 'create_draft', does: '새 임시글 만들기 (제목·본문·태그)', scope: '쓰기' },
   { name: 'update_draft', does: '내 글 고치기. 발행한 글은 "고치는 중"으로만 저장되고 다시 발행해야 공개돼요', scope: '쓰기' },
@@ -35,6 +35,7 @@ export const MCP_TOOLS: ReadonlyArray<{ name: string; does: string; scope: '읽�
   { name: 'get_post', does: '글 본문(Markdown) 읽기. 웹과 같은 공개 범위를 따라요', scope: '읽기' },
   { name: 'list_my_posts', does: '내 글·임시글 목록', scope: '읽기' },
   { name: 'list_tags', does: '내가 자주 쓴 태그·인기 태그 보기 (태그 제안에 써요)', scope: '읽기' },
+  { name: 'report_bug', does: 'devlog가 잘못 동작하면 운영자에게 버그 신고하기. 처리 상태와 답변은 [문의·신고]에서 봐요', scope: '모든 토큰' },
 ]
 
 // 개인 접근 토큰 (052). 원문(secret)은 만든 직후 한 번만 받는다.

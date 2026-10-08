@@ -28,5 +28,5 @@ export function CopyCode({ code, label }) {
             setState('failed');
         }
     };
-    return (_jsxs("div", { className: "copy-code", children: [_jsx("pre", { "aria-label": label, children: _jsx("code", { ref: codeRef, children: code }) }), _jsx("button", { type: "button", className: "btn btn-small copy-code-button", onClick: copy, children: state === 'copied' ? '복사됨' : '복사' }), _jsx("span", { className: "sr-only", role: "status", children: state === 'copied' ? `${label} 복사됨` : state === 'failed' ? '복사하지 못했어요. 글자를 골라 두었으니 Ctrl+C로 복사해 주세요' : '' })] }));
+    return (_jsxs("div", { className: "copy-code", children: [_jsx("pre", { "aria-label": label, children: _jsx("code", { ref: codeRef, children: code }) }), _jsx("button", { type: "button", className: "btn btn-small copy-code-button", "data-tip": "\uCF54\uB4DC\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uD574\uC694", onClick: copy, children: state === 'copied' ? '복사됨' : '복사' }), _jsx("span", { className: "sr-only", role: "status", children: state === 'copied' ? `${label} 복사됨` : state === 'failed' ? '복사하지 못했어요. 글자를 골라 두었으니 Ctrl+C로 복사해 주세요' : '' })] }));
 }

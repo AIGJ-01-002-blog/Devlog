@@ -2,6 +2,8 @@ import { Suspense, useEffect, type ReactNode } from 'react'
 import { Flash } from './components/Flash'
 import { Header } from './components/Header'
 import { SkipLink } from './components/SkipLink'
+import { TooltipLayer } from './components/TooltipLayer'
+import { MobileNav } from './components/MobileNav'
 import { PageAnnouncer } from './components/PageAnnouncer'
 import { MAIN_ID } from './lib/focusMain'
 import { VerifyBanner } from './components/VerifyBanner'
@@ -45,6 +47,10 @@ const WithdrawnPage = lazyPage(() => import('./pages/WithdrawnPage'), 'Withdrawn
 const WithdrawPage = lazyPage(() => import('./pages/WithdrawPage'), 'WithdrawPage')
 const McpPage = lazyPage(() => import('./pages/McpPage'), 'McpPage')
 const OAuthAuthorizePage = lazyPage(() => import('./pages/OAuthAuthorizePage'), 'OAuthAuthorizePage')
+const SupportPage = lazyPage(() => import('./pages/SupportPage'), 'SupportPage')
+const ReleasesPage = lazyPage(() => import('./pages/ReleasesPage'), 'ReleasesPage')
+const AdminInquiriesPage = lazyPage(() => import('./pages/AdminInquiriesPage'), 'AdminInquiriesPage')
+const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage')
 
 export function App() {
   const { path } = useLocation()
@@ -58,6 +64,8 @@ export function App() {
       <div id={MAIN_ID} tabIndex={-1}>
         <WithdrawnGate path={path}><AgreementGate path={path}><PageErrorBoundary path={path}><Suspense fallback={<Loading />}>{route(path)}</Suspense></PageErrorBoundary></AgreementGate></WithdrawnGate>
       </div>
+      {!path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && <MobileNav path={path} />}
+      <TooltipLayer />
     </>
   )
 }
@@ -75,6 +83,8 @@ function route(path: string): ReactNode {
   if (path === '/search') return <SearchPage />
   if (path === '/mcp') return <McpPage />
   if (path === '/oauth/authorize') return <RequireLogin><OAuthAuthorizePage /></RequireLogin>
+  if (path === '/support') return <SupportPage />
+  if (path === '/releases') return <ReleasesPage />
   if (path === '/tags') return <TagsPage />
   if ((p = match('/tags/:name', path))) return <TagPage key={p.name} name={p.name} />
   if (path === '/login') return <LoginPage />
@@ -98,6 +108,8 @@ function route(path: string): ReactNode {
   if (path === '/account/restore') return <RequireLogin><RestorePage /></RequireLogin>
   if (path === '/admin/reports') return <RequireAdmin><AdminReportsPage /></RequireAdmin>
   if ((p = match('/admin/reports/:id', path))) return <RequireAdmin><AdminReportPage key={p.id} id={p.id} /></RequireAdmin>
+  if (path === '/admin/inquiries') return <RequireAdmin><AdminInquiriesPage /></RequireAdmin>
+  if ((p = match('/admin/inquiries/:id', path))) return <RequireAdmin><AdminInquiryPage key={p.id} id={p.id} /></RequireAdmin>
   if ((p = match('/admin/members/:handle', path))) return <RequireAdmin><AdminMemberPage key={p.handle} handle={p.handle} /></RequireAdmin>
   return <NotFoundPage />
 }

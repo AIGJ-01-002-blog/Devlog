@@ -58,6 +58,7 @@
 | [051-mcp-devlog-home](./051-mcp-devlog-home/spec.md) | MCP 개발 일지 중심 첫 화면 | 2026-10-08 추가 (민서님 답 5·6번) | 이후 단계 (Tier C) | 6 |
 | [052-mcp-server](./052-mcp-server/spec.md) | devlog MCP 서버와 접근 토큰·OAuth | 2026-10-08 추가 (민서님 답 5번) | 이후 단계 (Tier C) | 9 |
 | [053-ai-publish-toggle](./053-ai-publish-toggle/spec.md) | AI 발행·삭제 허용 설정 | 2026-10-08 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 7 |
+| [054-inquiry-bug-report](./054-inquiry-bug-report/spec.md) | 문의·신고 접수와 AI 버그 신고, 릴리스 노트 | 2026-10-08 추가 (민서님 요청) | 이후 단계 (Tier C) | 10 |
 
 ## 여러 spec에 걸치는 문서
 
