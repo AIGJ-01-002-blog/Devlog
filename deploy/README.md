@@ -47,6 +47,8 @@ selfhosted에서는 RabbitMQ·Elasticsearch·Ollama를 띄우지 않는다. 아�
 
 main에 `app/`·`deploy/`·`deploy.yml`이 바뀐 커밋이 머지되면 "블로그 배포"가 학교 서버(target school, overlay selfhosted)에 그대로 배포한다. 헬스 체크에 실패하면 직전 버전으로 돌아간다. 배포는 하나씩 차례로 돈다. 잠시 끄려면 저장소 Variables에 `AUTO_DEPLOY=false`를 넣는다. 다른 target·overlay는 Actions에서 수동으로 실행한다.
 
+배포가 기다리지 않는 파드(ollama-embed의 임베딩 모델 받기 등)는 Actions → "클러스터 상태"로 확인한다. 읽기 전용이다.
+
 ## 클러스터에 배포 (수동)
 
 2026-10-07 기준 학교에서 받은 쿠버네티스 클러스터는 없다. 클러스터가 생기면 아래처럼 올린다.
