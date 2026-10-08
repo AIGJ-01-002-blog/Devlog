@@ -11,6 +11,7 @@ export type SearchNotice = 'TWO_CHAR_TITLE_TAG_ONLY' | 'TOO_SHORT' | null
 export interface SearchHit extends Omit<Card, 'excerpt' | 'publishedAt' | 'visibility' | 'firstPublicAt'> {
   firstPublicAt: string
   snippetHtml: string | null
+  similar: boolean
 }
 
 export interface SearchPostPage {

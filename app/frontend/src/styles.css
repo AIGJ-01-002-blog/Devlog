@@ -284,6 +284,7 @@ select { width: auto; }
   font-size: 0.75rem; font-weight: 600; background: var(--color-surface-2); color: var(--color-text-2);
 }
 .badge-warn { background: var(--color-warn-bg); color: var(--color-warn-text); }
+.badge-similar { color: var(--color-brand); cursor: help; }
 .chip { color: var(--color-brand); }
 
 /* 탭·필터 */

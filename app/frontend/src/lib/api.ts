@@ -81,7 +81,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   return data as T
 }
 
-/** 파일로 받는 GET (056 내보내기). 오류는 {@link api}와 같은 ApiError로 던진다. */
+/** 파일로 받는 GET (059 내보내기). 오류는 {@link api}와 같은 ApiError로 던진다. */
 export async function apiFile(path: string): Promise<{ blob: Blob; fileName: string | null }> {
   let res: Response
   try {

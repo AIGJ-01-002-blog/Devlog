@@ -1,8 +1,8 @@
 # Feature Specification: 내 글 내보내기
 
-**Feature Branch**: `056-post-export`
+**Feature Branch**: `059-post-export`
 **Created**: 2026-10-08
-**Status**: Implemented (v1.32.0)
+**Status**: Implemented (v1.33.0)
 **근거**: 058과 같은 요청. Crowfoot은 요구사항을 Markdown·CSV로 내보낸다. 블로그에서는 "내 글을 언제든 들고 나갈 수 있다"가 같은 가치이고, velog 사용자들이 자주 바라는 기능이다.
 
 ## 사용자 시나리오

@@ -117,15 +117,15 @@ cd app/frontend && npm install && npm run dev            # http://localhost:5173
 - **系列**：把文章归入系列并调整顺序。文章上方会显示系列框以及上下篇文章的链接。
 - **AI 标签推荐**：根据标题和正文开头推荐最多 5 个标签。首次使用时会征求向外部服务发送内容的同意，每天最多 20 次。
 - **文章管理与回收站**：按状态和公开范围筛选，删除的文章 30 天内可以恢复。
-- **导出我的文章**：在设置中把自己的全部文章下载为带头信息（标题、日期、标签、系列）的 Markdown zip。
-- **发布前检查**：发布对话框会检查简介、标签、封面图、图片替代文本、代码块和空链接，提示容易遗漏的地方，但不会阻止发布。
-- **修改历史**：每次发布都保留一个版本（最近 50 个），可以把以前的版本与正在编辑的内容对比，或载入编辑器恢复。
+- **修改历史**：每次发布都会保留一个版本（最近 50 个），可以把以前的版本和当前内容对比，或载入编辑器恢复。
+- **发布前检查**：发布窗口会检查简介、标签、封面图、图片替代文本、代码块和空链接，提醒容易遗漏的地方。不会阻止发布。
+- **导出文章**：在设置中把自己的全部文章下载为带前言（标题、日期、标签、系列）的 Markdown zip。
 
 ### 阅读与发现
 
 - **首页**：最新和热门两个标签页。热门统计最近 7 天，按文章发布时长对点赞、评论、浏览进行衰减计分，每 10 分钟更新一次，每位作者最多 3 篇。
 - **文章页面**：目录、阅读时长、系列、上下篇文章、作者简介和社交链接、分享按钮、链接预览（Open Graph）。
-- **标签与搜索**：按标签列出文章，搜索标题、标签和正文（按相关度或最新排序），搜索用户。
+- **标签与搜索**：按标签列出文章，结合标题、标签、正文关键词与语义的混合搜索（按相关度或最新排序），搜索用户。
 - **RSS**：每个博客的 `/@your-id/rss` 以及全站的 `/rss`。
 
 ### 互动与连接
@@ -153,7 +153,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>多个 Pod]
     I -->|/blog-images| M[(MinIO / S3<br/>图片 · 附件)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V16)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V17)]
     A --> R[(Redis<br/>会话 · 限流 · 浏览数 · 缓存)]
     A --> M
     A -.可选.-> G[Google Gemini]
@@ -169,7 +169,7 @@ flowchart LR
 | **post** | 写作、自动保存、发布、编辑、公开范围、回收站、文章管理、Markdown 预览 | PostgreSQL、Redis（自动保存、幂等键） |
 | **media** | 图片、GIF、附件的上传与检查，清理未使用的文件 | MinIO/S3（未配置时使用本地文件夹） |
 | **discovery · page** | 首页、博客、文章页面、上下篇文章、RSS、包含链接预览 head 信息的页面外壳 | PostgreSQL |
-| **tag · search · trending** | 标签列表、文章与用户搜索、热门排名（每 10 分钟） | PostgreSQL（有 pg_trgm 时使用） |
+| **tag · search · trending** | 标签列表、文章与用户搜索、热门排名（每 10 分钟） | PostgreSQL（有 pg_trgm、pgvector 时使用），嵌入 bge-m3 |
 | **comment · like · view** | 评论与回复、点赞、浏览数（先汇总到 Redis，每分钟转存） | PostgreSQL、Redis |
 | **follow · friend · notification** | 关注与动态、好友、站内通知 | PostgreSQL |
 | **series** | 系列的归类与排序 | PostgreSQL |
@@ -244,7 +244,7 @@ sequenceDiagram
 
 | 路径 | 说明 |
 | --- | --- |
-| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V16）、测试 |
+| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V17）、测试 |
 | [app/frontend](app/frontend) | 前端：React 19 SPA、TypeScript、Vite。界面、自动保存（IndexedDB）、深色模式 |
 | [deploy](deploy) | 部署：Dockerfile、Kubernetes 清单（base、selfhosted、nhn、local），部署、回滚、密钥检查脚本 |
 | [.github](.github) | CI/CD：后端与界面测试、镜像构建与部署、版本发布、Discord 与 Telegram 通知 |
@@ -321,7 +321,7 @@ npm run dev        # http://localhost:5173
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub、Google 登录，会话，CSRF，按路径的权限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | 所有领域 | 保存会员、文章、评论等领域数据 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | 会话、限流、浏览数、缓存 | 多个 Pod 共享同一会话，并发请求也由一个 Redis 脚本判定 |
-| Flyway | Boot 4.1 | 数据库 | 用 V1~V16 迁移管理模式，启动时自动应用 |
+| Flyway | Boot 4.1 | 数据库 | 用 V1~V17 迁移管理模式，启动时自动应用 |
 | commonmark-java (+ GFM 扩展) | 0.30.0 | 正文渲染 | Markdown → HTML。表格、删除线、任务清单、自动链接、标题锚点 |
 | OWASP Java HTML Sanitizer | 20260924.2 | 正文净化 | 按白名单净化渲染后的 HTML，防止 XSS |
 | AWS SDK for Java (S3) | 2.55.12 | media | 把图片和附件上传到 MinIO、S3 |
@@ -342,7 +342,7 @@ npm run dev        # http://localhost:5173
 
 | 技术 | 使用位置 | 作用 |
 | --- | --- | --- |
-| PostgreSQL 16 · 17 | 本地 · 集群 | 服务数据库。有 `pg_trgm` 时用于搜索 |
+| PostgreSQL 16 · 17 | 本地 · 集群 | 服务数据库。有 `pg_trgm` 和 `pgvector` 时用于搜索 |
 | Redis 7 · 7.4 | 本地 · 集群 | 会话、限流、浏览数汇总、渲染缓存、自动保存、定时任务锁 |
 | MinIO | 集群 | 图片与附件存储（兼容 S3）。首次部署时创建存储桶，公开访问只允许读取 |
 | Docker · GHCR | 镜像 | 构建界面并放进后端，打成一个镜像。以非 root 用户运行 |
@@ -367,7 +367,8 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
-| v1.32.0 | 2026-10-08 | 修改历史、发布前检查、导出文章为 Markdown | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
+| v1.33.0 | 2026-10-08 | 修改历史、发布前检查、导出文章为 Markdown | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |
+| v1.32.0 | 2026-10-08 | 混合搜索：即使没有检索词也能找到意思相近的文章 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
 | v1.31.0 | 2026-10-08 | AI 可修改已发布文章、上传图片、搜索自己的全部文章 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.31.0) |
 | v1.30.0 | 2026-10-08 | 按钮提示、移动端底部标签栏、编辑器格式工具栏 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.30.0) |
 | v1.29.0 | 2026-10-08 | 咨询与举报受理、AI 错误报告（report_bug）、发布说明页面 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.29.0) |

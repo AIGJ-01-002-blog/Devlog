@@ -1,6 +1,6 @@
 import { ApiError, api, apiFile } from './api'
 
-/** 내 글 내보내기 (056). */
+/** 내 글 내보내기 (059). */
 export function exportSummary(): Promise<{ posts: number }> {
   return api<{ posts: number }>('/api/me/export')
 }

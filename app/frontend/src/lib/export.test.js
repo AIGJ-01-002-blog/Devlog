@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ApiError, attachmentName } from './api';
 import { exportErrorText } from './export';
-describe('내 글 내보내기 (056)', () => {
+describe('내 글 내보내기 (059)', () => {
     it('Content-Disposition에서 파일 이름을 읽는다', () => {
         expect(attachmentName('attachment; filename="devlog-minseo-2026-10-08.zip"')).toBe('devlog-minseo-2026-10-08.zip');
         expect(attachmentName("attachment; filename=\"a.zip\"; filename*=UTF-8''%EB%82%B4-%EA%B8%80.zip")).toBe('내-글.zip');

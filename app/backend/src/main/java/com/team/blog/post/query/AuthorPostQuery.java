@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import com.team.blog.shared.jdbc.Columns;
 
 /**
- * 작성자 본인 기준으로 휴지통에 없는 글을 읽는다 (058 수정 이력의 본인 확인, 056 내보내기).
+ * 작성자 본인 기준으로 휴지통에 없는 글을 읽는다 (058 수정 이력의 본인 확인, 059 내보내기).
  * 다른 모듈은 post 테이블을 읽지 않고 이 서비스를 쓴다 (헌법 IV).
  */
 @Service

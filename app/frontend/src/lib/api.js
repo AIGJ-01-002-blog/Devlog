@@ -64,7 +64,7 @@ export async function api(path, options = {}) {
         throw errorOf(res, data);
     return data;
 }
-/** 파일로 받는 GET (056 내보내기). 오류는 {@link api}와 같은 ApiError로 던진다. */
+/** 파일로 받는 GET (059 내보내기). 오류는 {@link api}와 같은 ApiError로 던진다. */
 export async function apiFile(path) {
     let res;
     try {

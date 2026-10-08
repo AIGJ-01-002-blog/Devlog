@@ -2,7 +2,7 @@
 
 **Feature Branch**: `057-prepublish-check`
 **Created**: 2026-10-08
-**Status**: Implemented (v1.32.0)
+**Status**: Implemented (v1.33.0)
 **근거**: 058과 같은 요청. Crowfoot은 이름 중복·FK 타입 불일치 같은 설계 규칙 17종을 상시 검사한다. 블로그 글에서는 발행 직전에 놓치기 쉬운 것들이 같은 자리다.
 
 ## 사용자 시나리오

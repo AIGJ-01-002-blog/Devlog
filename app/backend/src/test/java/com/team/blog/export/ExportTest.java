@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.team.blog.support.IntegrationTest;
 
-/** spec 056 내 글 내보내기. */
+/** spec 059 내 글 내보내기. */
 class ExportTest extends IntegrationTest {
 
     long newPost(Session s, String title, String content) throws Exception {

@@ -44,6 +44,8 @@ export interface Card {
   author: CardAuthor
   /** 검색 결과면 검색어 주변 문장 (mark 외 태그 없음, 014) */
   snippetHtml?: string | null
+  /** 검색 결과에서 검색어가 그대로 없고 뜻이 가까워 찾은 글 (하이브리드 검색, 054) */
+  similar?: boolean
 }
 
 export interface FeedPage {

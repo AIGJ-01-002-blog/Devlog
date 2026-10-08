@@ -71,7 +71,7 @@ public class SeriesQuery {
         }
     }
 
-    /** 여러 글이 들어 있는 시리즈 이름 (056 내보내기). 시리즈에 없는 글은 빠진다. */
+    /** 여러 글이 들어 있는 시리즈 이름 (059 내보내기). 시리즈에 없는 글은 빠진다. */
     public Map<Long, String> seriesNamesOf(Collection<Long> postIds) {
         Map<Long, String> byPost = new HashMap<>();
         if (postIds.isEmpty()) return byPost;

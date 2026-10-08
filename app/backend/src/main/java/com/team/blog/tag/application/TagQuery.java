@@ -55,7 +55,7 @@ public class TagQuery {
                 postId);
     }
 
-    /** 여러 글의 태그를 한 번에 (056 내보내기). 글마다 입력한 순서대로, 태그 없는 글은 빠진다. */
+    /** 여러 글의 태그를 한 번에 (059 내보내기). 글마다 입력한 순서대로, 태그 없는 글은 빠진다. */
     public Map<Long, List<String>> tagsOf(Collection<Long> postIds) {
         Map<Long, List<String>> byPost = new LinkedHashMap<>();
         if (postIds.isEmpty()) return byPost;

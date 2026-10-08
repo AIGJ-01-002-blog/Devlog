@@ -18,7 +18,7 @@ import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
 import com.team.blog.shared.web.RateLimiter;
 
-/** 내 글 내보내기 (056). 내 글 전체를 읽는 무거운 요청이라 회원마다 10분에 5번까지 받는다. */
+/** 내 글 내보내기 (059). 내 글 전체를 읽는 무거운 요청이라 회원마다 10분에 5번까지 받는다. */
 @RestController
 public class ExportController {
     static final int LIMIT = 5;

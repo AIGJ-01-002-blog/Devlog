@@ -3,9 +3,14 @@ package com.team.blog.search.application;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,6 +20,8 @@ import com.team.blog.account.domain.Visibility;
 import com.team.blog.post.query.PostCard.Author;
 import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.post.infra.PostSql;
+import com.team.blog.search.semantic.SemanticProperties;
+import com.team.blog.search.semantic.SemanticSearch;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.cursor.CursorCodec;
 import com.team.blog.shared.error.ApiException;
@@ -30,6 +37,10 @@ import com.team.blog.shared.time.Times;
  * 단계마다 ① 최근 공개 글 N개(설정 recent-window) 안에서 먼저 찾고, ② 모자라면 가장 긴 단어로 제목·태그·본문 후보를
  * 각각 인덱스로 모아(UNION) 전체 조건을 확인한다. 태그 EXISTS를 OR로 섞으면 본문 인덱스를 못 쓴다 (docs/33 §4·§8).
  * 찾은 번호로 카드(글 + 작성자 + 수)를 한 번에 읽는다.
+ * <p>
+ * 하이브리드 (spec 054): 관련도순이고 의미 검색을 쓸 수 있으면, 위 키워드 결과 앞쪽(keywordCandidates개)과 의미 검색 결과를
+ * 순위 섞기(RRF)로 합친다. 검색어가 그대로 없어도 뜻이 가까운 글이 나오고, 제목·태그에 그대로 있는 글은 계속 위에 남는다.
+ * 섞은 목록이 끝나면 남은 키워드 결과가 키워드 순서대로 이어진다. 의미 검색을 쓸 수 없으면 키워드 결과 그대로다.
  */
 @Service
 public class SearchQuery {
@@ -37,6 +48,8 @@ public class SearchQuery {
 
     /** 최신순은 단계 0 하나다 (커서 {단계, 시각, 번호}). */
     static final int LATEST_STAGE = 0;
+    /** 섞은 목록 안 위치를 가리키는 커서 단계 (커서 {단계, 위치, 0}) */
+    static final int HYBRID_STAGE = 9;
     static final int PEOPLE_LIMIT = 20;
 
     private static final String TITLE = "p.title ILIKE ?";
@@ -49,19 +62,27 @@ public class SearchQuery {
     private final ContentRenderer renderer;
     private final int pageSize;
     private final int recentWindow;
+    private final SemanticSearch semantic;
+    private final SemanticProperties semanticProps;
 
-    public SearchQuery(JdbcTemplate jdbc, CursorCodec cursors, ImageUrls imageUrls, ContentRenderer renderer, BlogProperties props) {
+    public SearchQuery(JdbcTemplate jdbc, CursorCodec cursors, ImageUrls imageUrls, ContentRenderer renderer, BlogProperties props,
+                       SemanticSearch semantic, SemanticProperties semanticProps) {
         this.jdbc = jdbc;
         this.cursors = cursors;
         this.imageUrls = imageUrls;
         this.renderer = renderer;
         this.pageSize = props.feed().pageSize();
         this.recentWindow = props.search().recentWindow();
+        this.semantic = semantic;
+        this.semanticProps = semanticProps;
     }
 
-    /** 목록 카드(docs/10 §2)와 같은 모양에서 미리보기 자리만 검색어 주변 문장이다. snippetHtml에는 mark 외 태그가 없다. */
+    /**
+     * 목록 카드(docs/10 §2)와 같은 모양에서 미리보기 자리만 검색어 주변 문장이다. snippetHtml에는 mark 외 태그가 없다.
+     * @param similar 검색어가 그대로 들어 있지 않고 뜻이 가까워 찾은 글 (054). 화면은 "비슷한 글" 표시를 단다
+     */
     public record Hit(long id, String url, String title, String snippetHtml, String thumbnailUrl, Instant firstPublicAt,
-                      int commentCount, int likeCount, Author author) {}
+                      int commentCount, int likeCount, Author author, boolean similar) {}
 
     /** @param notice TWO_CHAR_TITLE_TAG_ONLY(2글자 단어 안내), TOO_SHORT(남는 단어 없음) 또는 null */
     public record PostPage(String query, List<Hit> items, String nextCursor, String notice) {}
@@ -111,16 +132,26 @@ public class SearchQuery {
         List<Integer> stages = sort == Sort.LATEST ? List.of(LATEST_STAGE)
                 : terms.hasBodyWord() ? List.of(1, 2, 3) : List.of(1, 2);
 
+        long[] k = cursor == null || cursor.isBlank() ? null : cursors.decode(cursor, listName, 3);
+        if (sort == Sort.RELEVANCE && (k == null || k[0] == HYBRID_STAGE)) {
+            Optional<PostPage> hybrid = hybrid(terms, stages, authorId, k == null ? 0 : (int) k[1], listName, notice);
+            if (hybrid.isPresent()) return hybrid.get();
+            if (k != null) throw invalidCursor();
+        }
+
         int fromStage = stages.get(0);
         Instant cursorAt = null;
         Long cursorId = null;
-        if (cursor != null && !cursor.isBlank()) {
-            long[] k = cursors.decode(cursor, listName, 3);
-            if (!stages.contains((int) k[0])) throw ApiException.badRequest("INVALID_CURSOR", "목록 위치 값이 올바르지 않아요. 처음부터 다시 불러와 주세요.");
+        if (k != null) {
+            if (!stages.contains((int) k[0])) throw invalidCursor();
             fromStage = (int) k[0];
             cursorAt = Times.fromEpochMicros(k[1]);
             cursorId = k[2];
         }
+
+        // 하이브리드 목록 뒤를 잇는 페이지면, 섞은 목록에서 이미 보여 준 의미 검색 글은 다시 내지 않는다
+        Set<Long> shown = sort == Sort.RELEVANCE && k != null
+                ? new HashSet<>(semantic.nearest(terms.normalized(), authorId).orElse(List.of())) : Set.of();
 
         // 9개 + 다음 페이지 확인용 1개. 한 단계가 모자라면 같은 페이지에서 다음 단계로 이어 채운다 (FR-013)
         List<Found> found = new ArrayList<>();
@@ -129,11 +160,81 @@ public class SearchQuery {
             int need = pageSize + 1 - found.size();
             if (need <= 0) break;
             boolean continuing = stage == fromStage && cursorAt != null;
-            found.addAll(findStage(terms, stage, authorId, continuing ? cursorAt : null, continuing ? cursorId : null, need));
+            List<Found> got = new ArrayList<>(findStage(terms, stage, authorId, continuing ? cursorAt : null,
+                    continuing ? cursorId : null, need + shown.size()));
+            got.removeIf(f -> shown.contains(f.id()));
+            found.addAll(got.subList(0, Math.min(need, got.size())));
         }
         CursorCodec.Page<Found> page = CursorCodec.page(found, pageSize,
                 f -> cursors.encode(listName, f.stage(), Times.toEpochMicros(f.at()), f.id()));
-        return new PostPage(terms.normalized(), hits(page.items(), terms), page.nextCursor(), notice);
+        return new PostPage(terms.normalized(), hits(page.items(), terms, null), page.nextCursor(), notice);
+    }
+
+    private static ApiException invalidCursor() {
+        return ApiException.badRequest("INVALID_CURSOR", "목록 위치 값이 올바르지 않아요. 처음부터 다시 불러와 주세요.");
+    }
+
+    /**
+     * 하이브리드 한 페이지 (054). 페이지마다 키워드 앞쪽과 의미 검색 결과를 다시 구해 섞는다(검색어 벡터는 보관돼 있어 빠르다).
+     * @param offset 섞은 목록 안 위치
+     * @return 의미 검색을 쓸 수 없으면 비어 있다 (부르는 쪽이 키워드 결과로 답한다)
+     */
+    private Optional<PostPage> hybrid(SearchTerms terms, List<Integer> stages, Long authorId, int offset, String listName, String notice) {
+        Optional<List<Long>> near = semantic.nearest(terms.normalized(), authorId);
+        if (near.isEmpty()) return Optional.empty();
+        int keywordLimit = semanticProps.keywordCandidates();
+        // 섞을 앞쪽 + 그 뒤에 이어질 글이 있는지 볼 만큼. 뒤쪽 글이 모두 의미 검색 결과에 이미 있으면 이어질 글이 없다
+        int fetch = keywordLimit + 1 + near.get().size();
+        List<Found> keyword = new ArrayList<>();
+        for (int stage : stages) {
+            int need = fetch - keyword.size();
+            if (need <= 0) break;
+            keyword.addAll(findStage(terms, stage, authorId, null, null, need));
+        }
+        Set<Long> nearIds = new HashSet<>(near.get());
+        boolean keywordOverflow = keyword.stream().skip(keywordLimit).anyMatch(f -> !nearIds.contains(f.id()));
+        if (keyword.size() > keywordLimit) keyword = keyword.subList(0, keywordLimit);
+        List<Long> keywordIds = keyword.stream().map(Found::id).toList();
+        List<Long> fused = fuse(keywordIds, near.get(), semanticProps.rrfK(), semanticProps.semanticWeight());
+        if (offset < 0 || offset > fused.size()) throw invalidCursor();
+
+        int end = Math.min(offset + pageSize, fused.size());
+        List<Found> page = new ArrayList<>();
+        for (Long id : fused.subList(offset, end)) page.add(new Found(HYBRID_STAGE, id, null));
+        String next = null;
+        if (end < fused.size()) {
+            next = cursors.encode(listName, HYBRID_STAGE, end, 0);
+        } else if (keywordOverflow) {
+            // 섞은 목록 뒤로는 키워드 결과가 키워드 순서대로 이어진다. 의미 검색에만 나온 글은 키워드 결과에 다시 나오지 않는다
+            Found last = keyword.get(keyword.size() - 1);
+            next = cursors.encode(listName, last.stage(), Times.toEpochMicros(last.at()), last.id());
+        }
+        return Optional.of(new PostPage(terms.normalized(), hits(page, terms, new HashSet<>(keywordIds)), next, notice));
+    }
+
+    /**
+     * 순위 섞기 (Reciprocal Rank Fusion). 글마다 1/(k + 키워드 순위) + 무게 × 1/(k + 의미 순위)를 더해 큰 순서로 놓는다.
+     * 점수가 같으면 키워드 순위가 앞선 글, 그다음 의미 순위가 앞선 글이 먼저다.
+     */
+    static List<Long> fuse(List<Long> keyword, List<Long> semantic, int k, double semanticWeight) {
+        Map<Long, double[]> score = new LinkedHashMap<>();
+        for (int i = 0; i < keyword.size(); i++) {
+            score.computeIfAbsent(keyword.get(i), id -> new double[] {0, Integer.MAX_VALUE, Integer.MAX_VALUE});
+            double[] s = score.get(keyword.get(i));
+            s[0] += 1.0 / (k + i + 1);
+            s[1] = Math.min(s[1], i);
+        }
+        for (int i = 0; i < semantic.size(); i++) {
+            score.computeIfAbsent(semantic.get(i), id -> new double[] {0, Integer.MAX_VALUE, Integer.MAX_VALUE});
+            double[] s = score.get(semantic.get(i));
+            s[0] += semanticWeight / (k + i + 1);
+            s[2] = Math.min(s[2], i);
+        }
+        return score.entrySet().stream()
+                .sorted(Comparator.<Map.Entry<Long, double[]>>comparingDouble(e -> -e.getValue()[0])
+                        .thenComparingDouble(e -> e.getValue()[1])
+                        .thenComparingDouble(e -> e.getValue()[2]))
+                .map(Map.Entry::getKey).toList();
     }
 
     /** 사람 검색 (FR-004): 탈퇴 신청 제외, 닉네임·주소가 정확히 같으면 먼저, 최대 20명. */
@@ -246,7 +347,8 @@ public class SearchQuery {
 
             WHERE p.id = ANY (?) AND\s""" + PostAccessPolicy.PUBLIC_LIST_CONDITION;
 
-    private List<Hit> hits(List<Found> found, SearchTerms terms) {
+    /** @param keywordIds 하이브리드에서 키워드로도 찾은 글. null이면 키워드 검색이라 모두 키워드 결과다 */
+    private List<Hit> hits(List<Found> found, SearchTerms terms, Set<Long> keywordIds) {
         if (found.isEmpty()) return List.of();
         Long[] ids = found.stream().map(Found::id).toArray(Long[]::new);
         Pattern words = terms.highlightPattern();
@@ -259,7 +361,8 @@ public class SearchQuery {
                     Snippet.of(renderer.searchText(rs.getString("content_md")), title, words),
                     imageUrls.urlOf(rs.getString("thumbnail_key")), rs.getTimestamp("first_public_at").toInstant(),
                     rs.getInt("comment_count"), rs.getInt("like_count"),
-                    new Author(rs.getLong("author_id"), handle, rs.getString("nickname"), imageUrls.urlOf(rs.getString("profile_image_key")))));
+                    new Author(rs.getLong("author_id"), handle, rs.getString("nickname"), imageUrls.urlOf(rs.getString("profile_image_key"))),
+                    keywordIds != null && !keywordIds.contains(id)));
         });
         // 두 쿼리 사이에 비공개·휴지통으로 바뀐 글은 빠진다. 순서는 찾은 순서 그대로
         return found.stream().map(f -> byId.get(f.id())).filter(java.util.Objects::nonNull).toList();

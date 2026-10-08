@@ -117,15 +117,15 @@ If you have agreed to AI use, the AI adds a title and tidies up the text; otherw
 - **Series**: group posts and reorder them. A series box and previous/next links appear above the post.
 - **AI tag suggestions**: up to 5 tags suggested from the title and the start of the body. You are asked to agree to sending text to an external service the first time, and you get 20 suggestions a day.
 - **Post management and trash**: filter by status and visibility, and restore deleted posts within 30 days.
-- **Export my posts**: download all your posts from Settings as a Markdown zip with front matter (title, date, tags, series).
-- **Pre-publish check**: the publish dialog reviews the summary, tags, cover image, image alt text, code blocks and empty links, and points out what is easy to miss. It never blocks publishing.
-- **Revision history**: every publish keeps a revision (latest 50). Compare an earlier revision with what you are editing, or load it back into the editor.
+- **Revision history**: each publish keeps a revision (latest 50). Compare an earlier revision with what you are writing now, or load it back into the editor.
+- **Pre-publish check**: the publish dialog scans summary, tags, cover image, image alt text, code blocks and empty links so you catch what is easy to miss. It never blocks publishing.
+- **Export your posts**: from Settings, download all your posts as a Markdown zip with front matter (title, dates, tags, series).
 
 ### Reading and discovery
 
 - **Home**: Latest and Trending tabs. Trending covers the last 7 days, scores likes, comments and views with decay by post age, refreshes every 10 minutes, and shows at most 3 posts per author.
 - **Post page**: table of contents, reading time, series, previous/next post, author bio and social links, share button, link previews (Open Graph).
-- **Tags and search**: browse posts by tag, search titles, tags and bodies (by relevance or newest), and search for people.
+- **Tags and search**: browse posts by tag, hybrid search over title, tag and body keywords plus meaning (by relevance or newest), and search for people.
 - **RSS**: per-blog `/@your-id/rss` and site-wide `/rss`.
 
 ### Reactions and relationships
@@ -153,7 +153,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>multiple pods]
     I -->|/blog-images| M[(MinIO / S3<br/>images · attachments)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V16)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V17)]
     A --> R[(Redis<br/>sessions · rate limits · views · cache)]
     A --> M
     A -.optional.-> G[Google Gemini]
@@ -169,7 +169,7 @@ flowchart LR
 | **post** | Writing, autosave, publishing and editing, visibility, trash, post management, Markdown preview | PostgreSQL, Redis (autosave, idempotency keys) |
 | **media** | Uploading and checking images, GIFs and attachments; cleaning up unused files | MinIO/S3 (local folder if not set) |
 | **discovery · page** | Home, blog and post pages, previous/next post, RSS, the page shell with head tags for link previews | PostgreSQL |
-| **tag · search · trending** | Tag pages, post and people search, trending ranking (every 10 minutes) | PostgreSQL (uses pg_trgm when available) |
+| **tag · search · trending** | Tag pages, post and people search, trending ranking (every 10 minutes) | PostgreSQL (uses pg_trgm and pgvector when available), bge-m3 embeddings |
 | **comment · like · view** | Comments and replies, likes, view counts (collected in Redis and moved every minute) | PostgreSQL, Redis |
 | **follow · friend · notification** | Follow and feed, friends, in-app notifications | PostgreSQL |
 | **series** | Grouping and ordering posts into series | PostgreSQL |
@@ -244,7 +244,7 @@ Code lives in this repository; design documents live in the documentation reposi
 
 | Path | Description |
 | --- | --- |
-| [app/backend](app/backend) | Backend: Spring Boot 4.1, Java 21. Feature modules, Flyway migrations (V1~V16), tests |
+| [app/backend](app/backend) | Backend: Spring Boot 4.1, Java 21. Feature modules, Flyway migrations (V1~V17), tests |
 | [app/frontend](app/frontend) | Frontend: React 19 SPA, TypeScript, Vite. Screens, autosave (IndexedDB), dark mode |
 | [deploy](deploy) | Deployment: Dockerfile, Kubernetes manifests (base, selfhosted, nhn, local), deploy, rollback and secret-check scripts |
 | [.github](.github) | CI/CD: backend and frontend tests, image build and deploy, releases, Discord and Telegram notifications |
@@ -321,7 +321,7 @@ To try it on Kubernetes, run `kubectl apply -k deploy/k8s/overlays/local` on kin
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub and Google login, sessions, CSRF, per-path authorization |
 | Spring Data JPA (Hibernate) | Boot 4.1 | All domains | Storing members, posts, comments and other domain data |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | Sessions, rate limits, views, cache | Lets multiple pods share sessions, and decides concurrent requests with a single Redis script |
-| Flyway | Boot 4.1 | Database | Manages the schema as migrations V1~V16, applied at startup |
+| Flyway | Boot 4.1 | Database | Manages the schema as migrations V1~V17, applied at startup |
 | commonmark-java (+ GFM extensions) | 0.30.0 | Body rendering | Markdown → HTML: tables, strikethrough, task lists, autolinks, heading anchors |
 | OWASP Java HTML Sanitizer | 20260924.2 | Body sanitizing | Sanitizes rendered HTML against an allow list to prevent XSS |
 | AWS SDK for Java (S3) | 2.55.12 | media | Uploads images and attachments to MinIO and S3 |
@@ -342,7 +342,7 @@ To try it on Kubernetes, run `kubectl apply -k deploy/k8s/overlays/local` on kin
 
 | Technology | Where | Role |
 | --- | --- | --- |
-| PostgreSQL 16 · 17 | Local · cluster | Service database. Uses `pg_trgm` for search when available |
+| PostgreSQL 16 · 17 | Local · cluster | Service database. Uses `pg_trgm` and `pgvector` for search when available |
 | Redis 7 · 7.4 | Local · cluster | Sessions, rate limits, view-count aggregation, render cache, autosave, scheduled-job locks |
 | MinIO | Cluster | Image and attachment storage (S3 compatible). Creates the bucket on first deploy and makes it download-only for the public |
 | Docker · GHCR | Image | Builds the UI and bundles it into the backend as one image, running as a non-root user |
@@ -367,7 +367,8 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
-| v1.32.0 | 2026-10-08 | Revision history, pre-publish check, Markdown export of your posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
+| v1.33.0 | 2026-10-08 | Revision history, pre-publish check, Markdown export of your posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |
+| v1.32.0 | 2026-10-08 | Hybrid search: finds posts with a similar meaning even without the exact words | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
 | v1.31.0 | 2026-10-08 | Your AI can edit published posts, upload images, and search all your own posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.31.0) |
 | v1.30.0 | 2026-10-08 | Tooltips on buttons, a mobile bottom tab bar, and an editor formatting toolbar | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.30.0) |
 | v1.29.0 | 2026-10-08 | Support inbox, AI bug reports (report_bug), release notes page | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.29.0) |

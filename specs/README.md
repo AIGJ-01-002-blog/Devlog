@@ -60,9 +60,10 @@
 | [053-ai-publish-toggle](./053-ai-publish-toggle/spec.md) | AI 발행·삭제 허용 설정 | 2026-10-08 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 7 |
 | [054-inquiry-bug-report](./054-inquiry-bug-report/spec.md) | 문의·신고 접수와 AI 버그 신고, 릴리스 노트 | 2026-10-08 추가 (민서님 요청) | 이후 단계 (Tier C) | 10 |
 | [055-ux-tooltips-mobile](./055-ux-tooltips-mobile/spec.md) | 툴팁·모바일 아래 탭·에디터 서식 도구 | 2026-10-08 추가 (블로그 주인 요청, UX 점검) | 이후 단계 (Tier C) | - |
-| [056-post-export](./056-post-export/spec.md) | 내 글 내보내기 | 2026-10-08 추가 (블로그 주인 요청, Crowfoot Markdown 내보내기) | 이후 단계 (Tier C) | 6 |
+| [056-hybrid-search](./056-hybrid-search/spec.md) | 하이브리드 검색 (키워드 + 의미 검색) | 2026-10-08 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | - |
 | [057-prepublish-check](./057-prepublish-check/spec.md) | 발행 전 점검 | 2026-10-08 추가 (블로그 주인 요청, Crowfoot 설계 검증) | 이후 단계 (Tier C) | 3 |
 | [058-post-revisions](./058-post-revisions/spec.md) | 글 수정 이력 | 2026-10-08 추가 (블로그 주인 요청, Crowfoot 버전 기록) | 이후 단계 (Tier C) | 7 |
+| [059-post-export](./059-post-export/spec.md) | 내 글 내보내기 | 2026-10-08 추가 (블로그 주인 요청, Crowfoot Markdown 내보내기) | 이후 단계 (Tier C) | 6 |
 | [060-mcp-tools-plus](./060-mcp-tools-plus/spec.md) | MCP 도구 강화 1차 | 2026-10-08 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | - |
 
 ## 여러 spec에 걸치는 문서

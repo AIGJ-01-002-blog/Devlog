@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { downloadExport, exportErrorText, exportSummary } from '../lib/export'
 
 /**
- * 내 글 내보내기 (056). Crowfoot의 Markdown 내보내기처럼, 내 글을 언제든 들고 나갈 수 있게 한다.
+ * 내 글 내보내기 (059). Crowfoot의 Markdown 내보내기처럼, 내 글을 언제든 들고 나갈 수 있게 한다.
  * 받는 동안 버튼을 막고, 요청 제한(10분 5번)이나 오류는 글로 알린다.
  */
 export function ExportSection() {
