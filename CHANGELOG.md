@@ -13,7 +13,7 @@ main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/r
 ### 바뀜
 - 설계 문서 `docs/*.md`는 문서 저장소의 `design/`으로, `verification/`은 문서 저장소로 옮겼다. 코드 주석의 `docs/NN §n` 표기는 그 저장소 `design/NN-…md`를 뜻한다
 - README 사진은 `docs/images/`에서 `assets/images/`로 옮겼다
-- README 4개 언어의 배지·릴리스·이슈 링크, 조직 프로필 생성 스크립트, 서버 준비 스크립트 설치 주소를 `AIGJ-01-002-blog/Devlog`로 바꿨다
+- README 4개 언어의 "설계 문서" 링크와 폴더 표가 문서 저장소를 가리킨다 (배지·릴리스 링크의 Devlog 주소는 #86)
 - 설계 검증 스크립트(`scripts/check-*.sh`)는 코드 저장소 옆에 받은 문서 저장소(`../docs/design`)를 읽는다. 다른 곳이면 `DOCS=경로`
 
 ## [1.27.1] - 2026-10-08
