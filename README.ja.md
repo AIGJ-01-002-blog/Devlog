@@ -367,6 +367,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.33.1 | 2026-10-08 | 意味検索の有効状態を起動ログに、クラスター状態に埋め込みの進み具合を表示 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.1) |
 | v1.33.0 | 2026-10-08 | 変更履歴、公開前チェック、記事の Markdown エクスポート | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |
 | v1.32.1 | 2026-10-08 | 学校サーバーのクラスター状態を読み取り専用で見る「クラスター状態」ワークフロー（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.1) |
 | v1.32.0 | 2026-10-08 | ハイブリッド検索：検索語がなくても意味の近い記事を探す | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |

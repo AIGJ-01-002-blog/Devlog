@@ -21,5 +21,28 @@ k -n blog logs statefulset/ollama-embed --tail=30 2>&1 || true
 echo "== ollama-embed 안의 모델"
 k -n blog exec statefulset/ollama-embed -- ollama list 2>&1 || true
 
-echo "== 앱 로그의 임베딩 관련 줄"
-k -n blog logs deploy/blog-app --all-containers --tail=2000 2>&1 | grep -E "임베딩|[Ee]mbed" | tail -20 || true
+# 임베딩 작업은 앱 파드 중 하나(잠금을 잡은 쪽)에서만 돌아서, 파드마다 따로 본다
+echo "== 앱 로그의 의미 검색·임베딩 줄 (파드별)"
+for pod in $(k -n blog get pods -l app.kubernetes.io/name=blog-app -o name); do
+  echo "-- $pod"
+  k -n blog logs "$pod" --all-containers --tail=5000 2>&1 | grep -E "의미 검색|임베딩|[Ee]mbed" | tail -10 || true
+done
+# 조회문은 표준 입력으로 넘긴다(따옴표가 겹치지 않게). 공개 조건은 PostAccessPolicy.PUBLIC_LIST_CONDITION과 같다
+psql_read() {
+  docker exec -i "$NODE" kubectl -n blog exec -i statefulset/postgres -- \
+    sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -v ON_ERROR_STOP=1 -F " | "' 2>&1
+}
+echo "== 공개 글 수 (읽기 전용 조회)"
+psql_read <<'SQL' || true
+SELECT count(*) FROM post p JOIN member m ON m.id = p.author_id
+WHERE p.status = 'PUBLISHED' AND p.visibility = 'PUBLIC' AND p.deleted_at IS NULL AND p.hidden_at IS NULL AND m.withdrawn_at IS NULL;
+SQL
+echo "== 모델별 임베딩 수: 모델 | 공개 글 중 최신 | 전체 (읽기 전용 조회)"
+psql_read <<'SQL' || echo "post_embedding 표를 읽지 못했습니다(pgvector가 없거나 아직 만들어지지 않음)"
+SELECT e.model,
+       count(*) FILTER (WHERE p.status = 'PUBLISHED' AND p.visibility = 'PUBLIC' AND p.deleted_at IS NULL
+                          AND p.hidden_at IS NULL AND m.withdrawn_at IS NULL AND e.source_version = p.edit_version),
+       count(*)
+FROM post_embedding e JOIN post p ON p.id = e.post_id JOIN member m ON m.id = p.author_id
+GROUP BY e.model;
+SQL
