@@ -236,7 +236,7 @@ The current production baseline is `overlays/selfhosted`. It runs PostgreSQL 17,
 
 ## Repository layout
 
-All code and documentation live in this one repository.
+Code lives in this repository; design documents live in the documentation repository [AIGJ-01-002-blog/docs](https://github.com/AIGJ-01-002-blog/docs).
 
 | Path | Description |
 | --- | --- |

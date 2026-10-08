@@ -234,7 +234,7 @@ GitHub Actions로 테스트하고 이미지를 만들어 GHCR에 올린 뒤, kus
 
 ## 저장소
 
-모든 코드와 문서를 저장소 하나에서 관리합니다.
+코드는 이 저장소에서, 설계 문서는 문서 저장소 [AIGJ-01-002-blog/docs](https://github.com/AIGJ-01-002-blog/docs)에서 관리합니다.
 
 | 경로 | 설명 |
 | --- | --- |

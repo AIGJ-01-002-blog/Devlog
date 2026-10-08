@@ -236,7 +236,7 @@ sequenceDiagram
 
 ## 仓库结构
 
-代码和文档都在这一个仓库中管理。
+代码在本仓库中管理，设计文档在文档仓库 [AIGJ-01-002-blog/docs](https://github.com/AIGJ-01-002-blog/docs) 中管理。
 
 | 路径 | 说明 |
 | --- | --- |
