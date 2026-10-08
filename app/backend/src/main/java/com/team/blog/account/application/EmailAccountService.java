@@ -71,8 +71,9 @@ public class EmailAccountService {
         this.dummyHash = encoder.encode(UUID.randomUUID().toString());
     }
 
+    /** @param agreeAi 선택 항목 "AI 기능 이용 동의". 동의하지 않아도 가입된다 */
     public record EmailSignupForm(String email, String handleBody, String password, String passwordConfirm,
-                                  String nickname, boolean agreeTerms, boolean agreePrivacy) {}
+                                  String nickname, boolean agreeTerms, boolean agreePrivacy, boolean agreeAi) {}
 
     public MemberPrincipal signup(EmailSignupForm form) {
         String email = EmailAddress.normalize(form.email());
@@ -106,7 +107,7 @@ public class EmailAccountService {
         String handle = AuthProvider.LOCAL.handlePrefix() + body;
         MemberPrincipal principal;
         try {
-            principal = tx.execute(status -> create(email, hash, handle, nickname));
+            principal = tx.execute(status -> create(email, hash, handle, nickname, form.agreeAi()));
         } catch (DataIntegrityViolationException e) {
             String msg = String.valueOf(e.getMostSpecificCause().getMessage());
             if (msg.contains("uq_auth_identity")) throw emailTaken();
@@ -123,11 +124,11 @@ public class EmailAccountService {
         return principal;
     }
 
-    private MemberPrincipal create(String email, String hash, String handle, String nickname) {
+    private MemberPrincipal create(String email, String hash, String handle, String nickname, boolean agreeAi) {
         Instant now = Times.now(clock);
         Member member = members.saveAndFlush(Member.join(handle, nickname, now));
         AuthIdentity identity = identities.saveAndFlush(AuthIdentity.local(member.getId(), email, hash, now));
-        agreements.recordSignup(member.getId(), now);
+        agreements.recordSignup(member.getId(), now, agreeAi);
         identity.recordLogin(now);
         return new MemberPrincipal(member.getId(), handle, member.getRole().name(), AuthProvider.LOCAL.name(), false, null);
     }
