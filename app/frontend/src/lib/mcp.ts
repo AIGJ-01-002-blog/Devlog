@@ -1,4 +1,4 @@
-/** devlog MCP 서버 연결 안내 (049). 실제 주소는 지금 사이트 주소를 따라간다(로컬 개발이면 localhost). */
+/** devlog MCP 서버 연결 안내 (050). 실제 주소는 지금 사이트 주소를 따라간다(로컬 개발이면 localhost). */
 export const MCP_PATH = '/api/mcp'
 export const TOKEN_PLACEHOLDER = '<내 토큰>'
 

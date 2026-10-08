@@ -53,12 +53,12 @@ public class SignupService {
         this.clock = clock;
     }
 
-    /** @param email 소셜이 인증된 이메일을 주지 않았을 때만 쓴다 (004 FR-028). 메일 인증을 거친다 */
-    public record SignupForm(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy, String email) {
-        public SignupForm(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy) {
-            this(handleBody, nickname, agreeTerms, agreePrivacy, null);
-        }
-    }
+    /**
+     * @param email   소셜이 인증된 이메일을 주지 않았을 때만 쓴다 (004 FR-028). 메일 인증을 거친다
+     * @param agreeAi 선택 항목. 동의하지 않아도 가입되고, AI를 처음 쓸 때 다시 묻는다
+     */
+    public record SignupForm(String handleBody, String nickname, boolean agreeTerms, boolean agreePrivacy, String email,
+                             boolean agreeAi) {}
 
     /** 가입 마무리 화면의 미리 채우는 값. emailRequired면 화면이 이메일을 입력받는다. */
     public record SignupDraft(AuthProvider provider, String prefix, String handleBody, String nickname,
@@ -97,7 +97,7 @@ public class SignupService {
         String handle = profile.provider().handlePrefix() + body;
         String finalEmail = email;
         try {
-            MemberPrincipal principal = tx.execute(status -> create(profile, handle, nickname, finalEmail, emailVerified));
+            MemberPrincipal principal = tx.execute(status -> create(profile, handle, nickname, finalEmail, emailVerified, form.agreeAi()));
             if (!emailVerified) verification.sendAfterSignup(principal.id(), finalEmail);
             return principal;
         } catch (DataIntegrityViolationException e) {
@@ -119,12 +119,13 @@ public class SignupService {
         }
     }
 
-    private MemberPrincipal create(SocialProfile profile, String handle, String nickname, String email, boolean emailVerified) {
+    private MemberPrincipal create(SocialProfile profile, String handle, String nickname, String email, boolean emailVerified,
+                                   boolean agreeAi) {
         Instant now = Times.now(clock);
         Member member = members.saveAndFlush(Member.join(handle, nickname, now));
         AuthIdentity identity = identities.saveAndFlush(
                 AuthIdentity.social(member.getId(), profile.provider(), profile.providerUserId(), email, emailVerified, now));
-        agreements.recordSignup(member.getId(), now);
+        agreements.recordSignup(member.getId(), now, agreeAi);
         identity.recordLogin(now);
         return new MemberPrincipal(member.getId(), handle, member.getRole().name(), profile.provider().name(), false, null);
     }

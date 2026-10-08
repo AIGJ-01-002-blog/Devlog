@@ -45,7 +45,7 @@ import com.team.blog.tag.web.TagController;
 @Controller
 public class PageController {
     private static final Pattern HANDLE_CHARS = Pattern.compile("[A-Za-z0-9_-]{1,23}");
-    /** 서비스 슬로건 (049). 첫 화면 설명과 링크 미리보기에 같이 쓴다 */
+    /** 서비스 슬로건 (050). 첫 화면 설명과 링크 미리보기에 같이 쓴다 */
     static final String SLOGAN = "코딩은 AI와, 기록은 devlog가.";
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(ZoneId.of("Asia/Seoul"));
 
@@ -156,7 +156,7 @@ public class PageController {
         return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "home", "feed", first)), CacheControl.noCache());
     }
 
-    /** AI에 devlog 연결하기 (049): 검색 엔진·링크 미리보기에 보이는 공개 안내 화면. React가 연결 명령과 도구 목록을 그린다. */
+    /** AI에 devlog 연결하기 (050): 검색 엔진·링크 미리보기에 보이는 공개 안내 화면. React가 연결 명령과 도구 목록을 그린다. */
     @GetMapping("/mcp")
     public ResponseEntity<String> mcpGuide() {
         String body = "<main><h1>당신의 AI가 개발 일지를 씁니다</h1><p>Claude·Cursor 같은 AI 도구에 devlog MCP를 연결하면, "

@@ -4,7 +4,7 @@ import { CopyCode } from '../components/CopyCode';
 import { loginPath, useAuth } from '../lib/auth';
 import { claudeCodeCommand, MCP_TOOLS, mcpJsonConfig } from '../lib/mcp';
 import { Link } from '../lib/router';
-/** AI에 devlog 연결하기 (049): MCP가 무엇인지, 무엇을 할 수 있는지, 어떻게 연결하는지. */
+/** AI에 devlog 연결하기 (050): MCP가 무엇인지, 무엇을 할 수 있는지, 어떻게 연결하는지. */
 export function McpPage() {
     const { me } = useAuth();
     const origin = window.location.origin;

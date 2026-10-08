@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { SignupAgreements, type AgreementChecks } from '../components/SignupAgreements'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { setFlash } from '../lib/flash'
@@ -21,8 +22,7 @@ export function SignupSocialPage() {
   const [body, setBody] = useState('')
   const [nickname, setNickname] = useState('')
   const [email, setEmail] = useState('')
-  const [terms, setTerms] = useState(false)
-  const [privacy, setPrivacy] = useState(false)
+  const [agreed, setAgreed] = useState<AgreementChecks>({ terms: false, privacy: false, ai: false })
   const [usePhoto, setUsePhoto] = useState(true)
   const [photoBroken, setPhotoBroken] = useState(false)
   const [handleCheck, setHandleCheck] = useState<Check | null>(null)
@@ -76,7 +76,7 @@ export function SignupSocialPage() {
     setErrors({})
     try {
       const r = await api<{ handle: string; redirect: string }>('/api/auth/signup', {
-        method: 'POST', body: { handleBody: body, nickname, agreeTerms: terms, agreePrivacy: privacy, email: draft.emailRequired ? email : undefined },
+        method: 'POST', body: { handleBody: body, nickname, agreeTerms: agreed.terms, agreePrivacy: agreed.privacy, agreeAi: agreed.ai, email: draft.emailRequired ? email : undefined },
       })
       if (photo && usePhoto && !(await copySocialAvatar(draft.avatarUrl!))) {
         setFlash('소셜 사진을 가져오지 못했어요. 설정에서 직접 올릴 수 있어요.')
@@ -147,14 +147,10 @@ export function SignupSocialPage() {
             <small className="muted">가입할 때 한 번 복사해 와요. 나중에 설정에서 바꿀 수 있어요.</small>
           </label>
         )}
-        <fieldset className="field agreements">
-          <label><input type="checkbox" checked={terms && privacy} onChange={(e) => { setTerms(e.target.checked); setPrivacy(e.target.checked) }} /> <b>모두 동의</b></label>
-          <label><input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} /> (필수) 이용약관 ({draft.terms.termsEffectiveDate} 시행)</label>
-          <label><input type="checkbox" checked={privacy} onChange={(e) => setPrivacy(e.target.checked)} /> (필수) 개인정보 처리방침 ({draft.terms.privacyEffectiveDate} 시행)</label>
-          {(errors.agreeTerms || errors.agreePrivacy) && <small className="error">{errors.agreeTerms ?? errors.agreePrivacy}</small>}
-        </fieldset>
+        <SignupAgreements value={agreed} onChange={setAgreed} termsDate={draft.terms.termsEffectiveDate}
+                          privacyDate={draft.terms.privacyEffectiveDate} error={errors.agreeTerms ?? errors.agreePrivacy} />
         {errors.form && <div className="banner banner-warn" role="alert">{errors.form}</div>}
-        <button className="btn btn-primary btn-block" disabled={submitting || !terms || !privacy}>
+        <button className="btn btn-primary btn-block" disabled={submitting || !agreed.terms || !agreed.privacy}>
           {submitting ? (photo && usePhoto ? '가입하고 사진을 가져오는 중…' : '가입하는 중…') : '가입하기'}
         </button>
       </form>

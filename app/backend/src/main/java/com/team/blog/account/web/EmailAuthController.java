@@ -59,14 +59,15 @@ public class EmailAuthController {
         return Map.of("email", true, "social", social);
     }
 
+    /** agreeAi는 선택 항목이라 보내지 않으면 동의하지 않은 것으로 본다. */
     public record EmailSignupRequest(String email, String handleBody, String password, String passwordConfirm,
-                                     String nickname, boolean agreeTerms, boolean agreePrivacy) {}
+                                     String nickname, boolean agreeTerms, boolean agreePrivacy, Boolean agreeAi) {}
 
     @PostMapping("/api/auth/signup/email")
     public ResponseEntity<Map<String, String>> signup(@RequestBody EmailSignupRequest b, HttpServletRequest request,
                                                       HttpServletResponse response) {
         MemberPrincipal principal = accounts.signup(new EmailAccountService.EmailSignupForm(b.email(), b.handleBody(),
-                b.password(), b.passwordConfirm(), b.nickname(), b.agreeTerms(), b.agreePrivacy()));
+                b.password(), b.passwordConfirm(), b.nickname(), b.agreeTerms(), b.agreePrivacy(), Boolean.TRUE.equals(b.agreeAi())));
         String target = LoginFlow.popRedirect(request.getSession(true));
         sessions.login(request, response, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("handle", principal.handle(), "redirect", target));

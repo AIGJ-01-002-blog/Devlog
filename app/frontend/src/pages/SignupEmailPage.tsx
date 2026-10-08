@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { PasswordRules } from '../components/PasswordRules'
+import { SignupAgreements, type AgreementChecks } from '../components/SignupAgreements'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { fieldErrors } from '../lib/fieldErrors'
@@ -25,8 +26,7 @@ export function SignupEmailPage() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [nickname, setNickname] = useState('')
-  const [agreeTerms, setAgreeTerms] = useState(false)
-  const [agreePrivacy, setAgreePrivacy] = useState(false)
+  const [agreed, setAgreed] = useState<AgreementChecks>({ terms: false, privacy: false, ai: false })
   const [handleCheck, setHandleCheck] = useState<Check | null>(null)
   const [nickCheck, setNickCheck] = useState<Check | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -87,7 +87,7 @@ export function SignupEmailPage() {
       await api('/api/auth/redirect', { method: 'POST', body: { redirect } })
       const r = await api<{ handle: string; redirect: string }>('/api/auth/signup/email', {
         method: 'POST',
-        body: { email, handleBody: body, password, passwordConfirm: confirm, nickname, agreeTerms, agreePrivacy },
+        body: { email, handleBody: body, password, passwordConfirm: confirm, nickname, agreeTerms: agreed.terms, agreePrivacy: agreed.privacy, agreeAi: agreed.ai },
       })
       await refresh()
       navigate(r.redirect || '/', { replace: true })
@@ -109,7 +109,7 @@ export function SignupEmailPage() {
     }
   }
 
-  const ready = agreeTerms && agreePrivacy && passwordOk(password, email) && password === confirm && body.length >= 3
+  const ready = agreed.terms && agreed.privacy && passwordOk(password, email) && password === confirm && body.length >= 3
 
   return (
     <main className="container narrow auth-page">
@@ -177,12 +177,8 @@ export function SignupEmailPage() {
             {errors.nickname ?? (nickCheck == null ? '한글·영문·숫자 2~10자' : nickCheck.available ? '쓸 수 있는 닉네임이에요.' : nickCheck.message)}
           </small>
         </label>
-        <fieldset className="field agreements">
-          <label><input type="checkbox" checked={agreeTerms && agreePrivacy} onChange={(e) => { setAgreeTerms(e.target.checked); setAgreePrivacy(e.target.checked) }} /> <b>모두 동의</b></label>
-          <label><input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} /> (필수) 이용약관{terms ? ` (${terms.termsEffectiveDate} 시행)` : ''}</label>
-          <label><input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} /> (필수) 개인정보 처리방침{terms ? ` (${terms.privacyEffectiveDate} 시행)` : ''}</label>
-          {(errors.agreeTerms || errors.agreePrivacy) && <small className="error">{errors.agreeTerms ?? errors.agreePrivacy}</small>}
-        </fieldset>
+        <SignupAgreements value={agreed} onChange={setAgreed} termsDate={terms?.termsEffectiveDate}
+                          privacyDate={terms?.privacyEffectiveDate} error={errors.agreeTerms ?? errors.agreePrivacy} />
         {errors.form && <div className="banner banner-warn" role="alert">{errors.form}</div>}
         <button className="btn btn-primary btn-block" disabled={submitting || !ready}>{submitting ? '가입하는 중…' : '가입하기'}</button>
         <p className="muted small">가입하면 인증 메일을 보내요. 메일의 링크를 눌러야 글을 쓸 수 있어요.</p>

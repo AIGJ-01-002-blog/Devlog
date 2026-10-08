@@ -485,6 +485,7 @@ select { width: auto; }
 .agreements { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius); }
 .agreements label { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; }
 .agreements label:first-child { padding-bottom: 12px; border-bottom: 1px solid var(--color-border); }
+.agreement-help { display: block; margin-top: 4px; line-height: 1.5; }
 input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margin: 4px 0 0; accent-color: var(--color-brand); }
 .settings-section { padding: 24px 0; border-bottom: 1px solid var(--color-border); }
 .settings-section h2 { font-size: 1.125rem; margin: 0 0 12px; }
@@ -727,7 +728,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .trending-hint { margin: -12px 0 20px; }
 .feed-notice { padding: 10px 14px; margin: 0 0 16px; background: var(--color-surface-2); border-radius: var(--radius); }
 
-/* 홈 첫 화면 소개 (048, 049): 왼쪽 슬로건, 오른쪽 AI가 개발 일지를 쓰는 장면 */
+/* 홈 첫 화면 소개 (048, 050): 왼쪽 슬로건, 오른쪽 AI가 개발 일지를 쓰는 장면 */
 .home-hero {
   position: relative; overflow: hidden; margin: 32px 0 8px; padding: 48px; border: 1px solid var(--color-border); border-radius: 20px;
   display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: center;
@@ -778,7 +779,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 /* 좁은 화면 헤더는 자리가 없어 [AI 연결]을 숨긴다. 첫 화면 소개의 버튼으로 간다 */
 @media (max-width: 640px) { .header-mcp { display: none; } }
 
-/* AI에 devlog 연결하기 (049) */
+/* AI에 devlog 연결하기 (050) */
 .mcp-page { padding: 40px 16px 96px; }
 .mcp-title { margin: 0 0 16px; font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.25; word-break: keep-all; }
 .mcp-lead { font-size: 1.0625rem; line-height: 1.8; color: var(--color-text-2); word-break: keep-all; }
