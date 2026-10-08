@@ -6,6 +6,15 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.27.6] - 2026-10-08
+
+main에 머지하면 학교 서버에 자동으로 배포된다 (배포 구성).
+
+### 바뀜
+- "블로그 배포"가 main push(`app/`·`deploy/`·`deploy.yml` 변경)에서도 클러스터 배포까지 진행한다. 기본값은 target school, overlay selfhosted
+- 배포가 겹치지 않게 `concurrency`로 차례로 돈다. 저장소 변수 `AUTO_DEPLOY=false`면 자동 배포를 건너뛴다
+- 수동 실행은 그대로다(target·overlay·롤백 테스트 선택)
+
 ## [1.27.5] - 2026-10-08
 
 학교 서버 배포가 SSH 터널을 열자마자 끊겨 클러스터에 닿지 못하던 문제를 고쳤다 (배포 구성).
