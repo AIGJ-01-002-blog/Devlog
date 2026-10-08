@@ -14,13 +14,13 @@
 Write → autosave → publish → read → react: a velog-style blogging platform for developers
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/AIGJ-01-002-blog/docs?color=10b981&label=release)](https://github.com/AIGJ-01-002-blog/docs/releases/latest)
-[![Backend CI](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/frontend-ci.yml)
+[![Release](https://img.shields.io/github/v/release/AIGJ-01-002-blog/Devlog?color=10b981&label=release)](https://github.com/AIGJ-01-002-blog/Devlog/releases/latest)
+[![Backend CI](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/frontend-ci.yml)
 [![Domain](https://img.shields.io/badge/domain-devlog.life%20(coming%20soon)-0ea5e9.svg)](#deployment)
 [![Stack](https://img.shields.io/badge/Java%2021%20·%20Spring%20Boot%204.1%20·%20React%2019-f97316.svg)](#tech-stack)
 
-[Run it yourself](#run-it-yourself) · [Changelog](CHANGELOG.md) (Korean) · [Releases](https://github.com/AIGJ-01-002-blog/docs/releases) · [Design docs](docs/) (Korean) · [Feature specs](specs/) (Korean)
+[Run it yourself](#run-it-yourself) · [Changelog](CHANGELOG.md) (Korean) · [Releases](https://github.com/AIGJ-01-002-blog/Devlog/releases) · [Design docs](docs/) (Korean) · [Feature specs](specs/) (Korean)
 
 </div>
 
@@ -359,67 +359,67 @@ To try it on Kubernetes, run `kubectl apply -k deploy/k8s/overlays/local` on kin
 
 ## Releases
 
-We follow [Semantic Versioning](https://semver.org/). New features bump the minor version, fixes bump the patch version, and changes that break API or schema compatibility bump the major version. When a new top version in [CHANGELOG.md](CHANGELOG.md) lands on `main`, `release.yml` creates a git tag (`vX.Y.Z`) and a [GitHub Release](https://github.com/AIGJ-01-002-blog/docs/releases). Release notes are written in Korean.
+We follow [Semantic Versioning](https://semver.org/). New features bump the minor version, fixes bump the patch version, and changes that break API or schema compatibility bump the major version. When a new top version in [CHANGELOG.md](CHANGELOG.md) lands on `main`, `release.yml` creates a git tag (`vX.Y.Z`) and a [GitHub Release](https://github.com/AIGJ-01-002-blog/Devlog/releases). Release notes are written in Korean.
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
-| v1.27.1 | 2026-10-08 | Deploy to the school practice server with Kubernetes (k3d) (deployment config) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.27.1) |
-| v1.27.0 | 2026-10-08 | devlog MCP server, ChatGPT and Codex connections, home PC AI first | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.27.0) |
-| v1.26.1 | 2026-10-08 | Deploy passes the Gemini key and home-PC Ollama settings to the app (deployment config) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.1) |
-| v1.26.0 | 2026-10-08 | Home centered on MCP dev logs, AI connection guide | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.0) |
-| v1.25.2 | 2026-10-08 | Post list and detail queries moved into the post module (no behavior change) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.2) |
-| v1.25.1 | 2026-10-08 | Production DB switched to PostgreSQL with pgvector (deployment config) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.1) |
-| v1.25.0 | 2026-10-08 | Optional AI feature consent on the sign-up screen | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.0) |
-| v1.24.0 | 2026-10-08 | Modern developer blog look | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.24.0) |
-| v1.23.2 | 2026-10-08 | Corrected the production mail account address | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.2) |
-| v1.23.1 | 2026-10-08 | Fixed SonarQube security and reliability findings | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.1) |
-| v1.23.0 | 2026-10-08 | Choosing a post thumbnail | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.0) |
-| v1.22.3 | 2026-10-08 | Preparing the Oracle free VM production server and the devlog.life connection (deployment config) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.3) |
-| v1.22.2 | 2026-10-08 | Database backups, zero-downtime deploy docs, mail sending off when no mail password is set (deployment config) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.2) |
-| v1.22.1 | 2026-10-08 | New logo | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.1) |
-| v1.22.0 | 2026-10-08 | Short post summary | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.0) |
-| v1.21.0 | 2026-10-08 | Author social links under each post | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.21.0) |
-| v1.20.0 | 2026-10-08 | Blog social links (email, GitHub, X, Facebook, homepage) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.20.0) |
-| v1.19.0 | 2026-10-08 | Blog About tab | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.19.0) |
-| v1.18.1 | 2026-10-08 | Removed recipient addresses from mail-failure logs | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.18.1) |
-| v1.18.0 | 2026-10-08 | Previous and next post | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.18.0) |
-| v1.17.0 | 2026-10-08 | Post share button | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.17.0) |
-| v1.16.1 ~ v1.16.11 | 2026-10-08 | Performance (first-load JS, caching and compression, reserved image space), accessibility (skip link, dialog focus, reduced motion), error handling and log protection | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.16.11) |
-| v1.16.0 | 2026-10-08 | Liked posts list | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.16.0) |
-| v1.15.0 | 2026-10-08 | RSS feeds, per blog and site-wide | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.15.0) |
-| v1.14.0 | 2026-10-08 | Table of contents and reading time | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.14.0) |
-| v1.13.0 | 2026-10-08 | Series | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.13.0) |
-| v1.12.0 | 2026-10-07 | Telegram: notifications and notes as drafts | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.12.0) |
-| v1.11.0 | 2026-10-07 | Attachments | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.11.0) |
-| v1.10.0 | 2026-10-07 | Dark mode | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.10.0) |
+| v1.27.1 | 2026-10-08 | Deploy to the school practice server with Kubernetes (k3d) (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.1) |
+| v1.27.0 | 2026-10-08 | devlog MCP server, ChatGPT and Codex connections, home PC AI first | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.0) |
+| v1.26.1 | 2026-10-08 | Deploy passes the Gemini key and home-PC Ollama settings to the app (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.26.1) |
+| v1.26.0 | 2026-10-08 | Home centered on MCP dev logs, AI connection guide | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.26.0) |
+| v1.25.2 | 2026-10-08 | Post list and detail queries moved into the post module (no behavior change) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.25.2) |
+| v1.25.1 | 2026-10-08 | Production DB switched to PostgreSQL with pgvector (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.25.1) |
+| v1.25.0 | 2026-10-08 | Optional AI feature consent on the sign-up screen | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.25.0) |
+| v1.24.0 | 2026-10-08 | Modern developer blog look | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.24.0) |
+| v1.23.2 | 2026-10-08 | Corrected the production mail account address | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.23.2) |
+| v1.23.1 | 2026-10-08 | Fixed SonarQube security and reliability findings | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.23.1) |
+| v1.23.0 | 2026-10-08 | Choosing a post thumbnail | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.23.0) |
+| v1.22.3 | 2026-10-08 | Preparing the Oracle free VM production server and the devlog.life connection (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.3) |
+| v1.22.2 | 2026-10-08 | Database backups, zero-downtime deploy docs, mail sending off when no mail password is set (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.2) |
+| v1.22.1 | 2026-10-08 | New logo | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.1) |
+| v1.22.0 | 2026-10-08 | Short post summary | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.0) |
+| v1.21.0 | 2026-10-08 | Author social links under each post | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.21.0) |
+| v1.20.0 | 2026-10-08 | Blog social links (email, GitHub, X, Facebook, homepage) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.20.0) |
+| v1.19.0 | 2026-10-08 | Blog About tab | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.19.0) |
+| v1.18.1 | 2026-10-08 | Removed recipient addresses from mail-failure logs | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.18.1) |
+| v1.18.0 | 2026-10-08 | Previous and next post | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.18.0) |
+| v1.17.0 | 2026-10-08 | Post share button | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.17.0) |
+| v1.16.1 ~ v1.16.11 | 2026-10-08 | Performance (first-load JS, caching and compression, reserved image space), accessibility (skip link, dialog focus, reduced motion), error handling and log protection | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.16.11) |
+| v1.16.0 | 2026-10-08 | Liked posts list | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.16.0) |
+| v1.15.0 | 2026-10-08 | RSS feeds, per blog and site-wide | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.15.0) |
+| v1.14.0 | 2026-10-08 | Table of contents and reading time | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.14.0) |
+| v1.13.0 | 2026-10-08 | Series | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.13.0) |
+| v1.12.0 | 2026-10-07 | Telegram: notifications and notes as drafts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.12.0) |
+| v1.11.0 | 2026-10-07 | Attachments | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.11.0) |
+| v1.10.0 | 2026-10-07 | Dark mode | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.10.0) |
 
 <details>
 <summary>Earlier versions (v0.1.0 ~ v1.9.0)</summary>
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
-| v1.9.0 | 2026-10-07 | Account deletion and recovery | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.9.0) |
-| v1.8.0 | 2026-10-07 | Report, hide, suspend | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.8.0) |
-| v1.7.0 | 2026-10-07 | AI tag suggestions | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.7.0) |
-| v1.6.0 | 2026-10-07 | Trending tab on the home page | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.6.0) |
-| v1.5.0 | 2026-10-07 | Follow and following feed | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.5.0) |
-| v1.4.0 | 2026-10-07 | In-app notifications | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.4.0) |
-| v1.3.0 | 2026-10-07 | Post and people search | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.3.0) |
-| v1.2.0 | 2026-10-07 | View counts | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.2.0) |
-| v1.1.0 | 2026-10-07 | Likes | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.1.0) |
-| v1.0.0 | 2026-10-07 | First stable release, verified end to end on the in-cluster setup (selfhosted) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.0.0) |
-| v0.12.0 | 2026-10-07 | Friends-only posts | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.12.0) |
-| v0.11.0 | 2026-10-07 | Comments and replies | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.11.0) |
-| v0.10.0 | 2026-10-07 | Tags | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.10.0) |
-| v0.9.0 | 2026-10-07 | Images and GIFs, in-cluster deployment setup | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.9.0) |
-| v0.8.0 | 2026-10-07 | Friends and recent activity | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.8.0) |
-| v0.7.0 | 2026-10-07 | 30-day trash | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.7.0) |
-| v0.6.0 | 2026-10-07 | Offline autosave | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.6.0) |
-| v0.5.0 | 2026-10-07 | Profile and settings | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.5.0) |
-| v0.4.0 · v0.4.1 | 2026-10-07 | Email and Google sign-up and login | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.4.1) |
-| v0.3.0 | 2026-10-07 | Database normalization (V3) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.3.0) |
-| v0.2.0 | 2026-10-07 | UI (React) connected: from sign-up to writing, publishing and reading | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.2.0) |
-| v0.1.0 | 2026-10-07 | First backend release | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v0.1.0) |
+| v1.9.0 | 2026-10-07 | Account deletion and recovery | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.9.0) |
+| v1.8.0 | 2026-10-07 | Report, hide, suspend | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.8.0) |
+| v1.7.0 | 2026-10-07 | AI tag suggestions | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.7.0) |
+| v1.6.0 | 2026-10-07 | Trending tab on the home page | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.6.0) |
+| v1.5.0 | 2026-10-07 | Follow and following feed | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.5.0) |
+| v1.4.0 | 2026-10-07 | In-app notifications | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.4.0) |
+| v1.3.0 | 2026-10-07 | Post and people search | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.3.0) |
+| v1.2.0 | 2026-10-07 | View counts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.2.0) |
+| v1.1.0 | 2026-10-07 | Likes | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.1.0) |
+| v1.0.0 | 2026-10-07 | First stable release, verified end to end on the in-cluster setup (selfhosted) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.0.0) |
+| v0.12.0 | 2026-10-07 | Friends-only posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.12.0) |
+| v0.11.0 | 2026-10-07 | Comments and replies | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.11.0) |
+| v0.10.0 | 2026-10-07 | Tags | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.10.0) |
+| v0.9.0 | 2026-10-07 | Images and GIFs, in-cluster deployment setup | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.9.0) |
+| v0.8.0 | 2026-10-07 | Friends and recent activity | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.8.0) |
+| v0.7.0 | 2026-10-07 | 30-day trash | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.7.0) |
+| v0.6.0 | 2026-10-07 | Offline autosave | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.6.0) |
+| v0.5.0 | 2026-10-07 | Profile and settings | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.5.0) |
+| v0.4.0 · v0.4.1 | 2026-10-07 | Email and Google sign-up and login | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.4.1) |
+| v0.3.0 | 2026-10-07 | Database normalization (V3) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.3.0) |
+| v0.2.0 | 2026-10-07 | UI (React) connected: from sign-up to writing, publishing and reading | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.2.0) |
+| v0.1.0 | 2026-10-07 | First backend release | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.1.0) |
 
 </details>
 
@@ -427,7 +427,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 Bug reports, feature ideas and pull requests are all welcome. Issues and pull requests may be written in Korean or English.
 
-- **Bugs and ideas**: open an [issue](https://github.com/AIGJ-01-002-blog/docs/issues). Steps to reproduce, expected behavior, actual behavior and a screenshot help us fix things quickly.
+- **Bugs and ideas**: open an [issue](https://github.com/AIGJ-01-002-blog/Devlog/issues). Steps to reproduce, expected behavior, actual behavior and a screenshot help us fix things quickly.
 - **New features**: we follow the [Spec Kit](https://github.com/github/spec-kit) flow. Write the spec, plan and tasks under `specs/NNN-name/` first, then implement against that spec. Our principles are in [.specify/memory/constitution.md](.specify/memory/constitution.md).
 - **Pull requests**: keep changes small and include tests. The backend must pass `./mvnw verify` (40% line coverage or more), and the UI must pass `npm run typecheck && npm test && npm run build`. Add your change at the top of [CHANGELOG.md](CHANGELOG.md).
 - **Secrets**: never commit credentials or passwords. `deploy/scripts/check-no-secrets.sh` blocks them in CI.
