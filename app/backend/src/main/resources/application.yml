@@ -164,6 +164,14 @@ blog:
   search:
     recent-window: 3000
     per-minute: 30
+    # 하이브리드 검색 (spec 054): 키워드 결과와 의미 검색(pgvector) 결과를 순위 섞기(RRF)로 합친다.
+    # 임베딩은 서버 안 Ollama(EMBED_BASE_URL) → 집 PC(OLLAMA_BASE_URL) → Gemini 순으로 설정된 것 하나를 쓴다.
+    # 공급자가 없거나 DB에 pgvector가 없으면 키워드 검색만 쓴다
+    semantic:
+      enabled: ${SEARCH_SEMANTIC_ENABLED:true}
+      provider: ${SEARCH_EMBED_PROVIDER:auto}
+      base-url: ${EMBED_BASE_URL:}
+      local-model: ${EMBED_MODEL:bge-m3}
   # 시리즈 (spec 024 FR-003): 회원당 시리즈 수, 시리즈당 글 수
   series:
     max-per-member: 100

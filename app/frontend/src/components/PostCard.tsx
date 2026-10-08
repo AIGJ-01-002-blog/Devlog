@@ -34,6 +34,10 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
           ? <p className="card-excerpt card-snippet" dangerouslySetInnerHTML={{ __html: card.snippetHtml }} />
           : <p className="card-excerpt">{card.excerpt ?? ''}</p>}
         <div className="card-meta">
+          {card.similar && (
+            // 하이브리드 검색(054)에서 의미로만 찾은 글. 검색어 강조가 없는 이유를 알려 준다
+            <><span className="badge badge-similar" title="검색어가 그대로 들어 있지 않지만 내용이 비슷해 찾은 글이에요">비슷한 글</span>{' · '}</>
+          )}
           {card.visibility === 'FRIENDS' && (
             <><span className="badge" title="친구에게만 보이는 글">{VISIBILITY_ICON.FRIENDS} {VISIBILITY_LABEL.FRIENDS}</span>{' · '}</>
           )}

@@ -39,3 +39,13 @@ describe('PostCard 표지 (048)', () => {
         expect(withImage.querySelector('img')?.getAttribute('src')).toBe('/media/a.webp');
     });
 });
+describe('PostCard 하이브리드 검색 (054)', () => {
+    it('뜻으로만 찾은 글에는 툴팁이 달린 "비슷한 글" 표시가 붙는다', async () => {
+        const similar = await render(card({ snippetHtml: '커밋 시점', similar: true }));
+        const badge = similar.querySelector('.badge-similar');
+        expect(badge.textContent).toBe('비슷한 글');
+        expect(badge.getAttribute('title')).toContain('내용이 비슷해');
+        const exact = await render(card({ snippetHtml: '<mark>롤백</mark> 전략', similar: false }));
+        expect(exact.querySelector('.badge-similar')).toBeNull();
+    });
+});

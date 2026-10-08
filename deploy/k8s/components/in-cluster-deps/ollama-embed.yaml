@@ -1,0 +1,67 @@
+# 하이브리드 검색(spec 054)의 임베딩 모델. 글과 검색어를 같은 모델(bge-m3)로 임베딩해야 pgvector에서 비교할 수 있어,
+# 검색어 임베딩이 집 PC에 기대지 않도록 서버 안에 CPU로 띄운다. 검색어 하나는 CPU로도 짧게 끝난다.
+# 앱 파드에서만 접속한다(networkpolicy.yaml). 모델은 처음 뜰 때 받아 볼륨에 두고, 받기 전이나 응답이 없으면 앱은 키워드 검색만 쓴다.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-embed
+spec:
+  selector: {app.kubernetes.io/name: ollama-embed}
+  ports: [{name: http, port: 11434, targetPort: 11434}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ollama-embed
+spec:
+  serviceName: ollama-embed
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: ollama-embed}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: ollama-embed}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: ollama
+          image: ollama/ollama:0.34.2
+          command: ["sh", "-c"]
+          # 서버를 띄운 뒤 모델이 없으면 받는다(이미 있으면 바로 끝남). 받기에 실패해도 서버는 계속 돈다
+          args:
+            - |
+              ollama serve &
+              until ollama list >/dev/null 2>&1; do sleep 1; done
+              ollama pull "$EMBED_MODEL" || echo "임베딩 모델을 받지 못했습니다. 검색은 키워드만 씁니다"
+              wait
+          env:
+            - {name: EMBED_MODEL, value: bge-m3}
+            - {name: HOME, value: /data}
+            - {name: OLLAMA_MODELS, value: /data/models}
+            - {name: OLLAMA_HOST, value: "0.0.0.0:11434"}
+            # 모델을 내리지 않고 올려 둔다 (검색어마다 다시 올리면 느리다)
+            - {name: OLLAMA_KEEP_ALIVE, value: "-1"}
+            - {name: OLLAMA_NUM_PARALLEL, value: "2"}
+          ports: [{containerPort: 11434}]
+          readinessProbe:
+            exec: {command: ["sh", "-c", "ollama show \"$EMBED_MODEL\" >/dev/null 2>&1"]}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 500m, memory: 1536Mi}
+            limits: {cpu: "4", memory: 4Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+  # bge-m3 약 1.2GB
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources: {requests: {storage: 5Gi}}

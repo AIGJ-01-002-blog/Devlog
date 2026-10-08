@@ -1,4 +1,4 @@
-# 학교 공용 서버 대신 클러스터 안에 PostgreSQL·Redis·MinIO를 함께 띄우는 부품.
+# 학교 공용 서버 대신 클러스터 안에 PostgreSQL·Redis·MinIO와 검색용 임베딩 모델(Ollama)을 함께 띄우는 부품.
 # 계정·비밀번호는 앱 Secret(blog-app-secret)의 같은 값을 그대로 쓴다:
 #   DB_USERNAME/DB_PASSWORD → PostgreSQL, REDIS_PASSWORD → Redis, S3_ACCESS_KEY/S3_SECRET_KEY → MinIO
 # 사진은 앱과 같은 주소의 /<버킷>/ 경로로 내려준다 (인그레스 → MinIO, 버킷은 파일 받기만 공개, 목록 조회는 막음).
@@ -10,6 +10,7 @@ resources:
   - minio.yaml
   - networkpolicy.yaml
   - pg-backup.yaml
+  - ollama-embed.yaml
 patches:
   # 앱이 뜨기 전에 사진 버킷을 만들고 파일 받기만 공개한다 (이미 있으면 정책만 다시 맞춤)
   - target: {kind: Deployment, name: blog-app}
