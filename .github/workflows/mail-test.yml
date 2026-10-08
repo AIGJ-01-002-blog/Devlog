@@ -29,7 +29,7 @@ jobs:
                   try:
                       with socket.create_connection(addr[:2], timeout=10) as c:
                           c.settimeout(10)
-                          first = c.recv(100) if port == 587 else b"(TLS 포트, 인사말 없음)"
+                          first = c.recv(100) if port == 587 else b"(TLS port)"
                           print(f"{addr[0]}:{port} 연결됨 {first[:60]!r}")
                   except Exception as e:
                       print(f"{addr[0]}:{port} 실패 {type(e).__name__}: {e}")
