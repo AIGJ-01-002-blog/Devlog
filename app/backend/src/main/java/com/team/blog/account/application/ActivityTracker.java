@@ -59,8 +59,11 @@ public class ActivityTracker {
     /** 오늘(한국 날짜) 활동한 회원으로 남긴다. Redis 키로 하루 한 번만 쓰고, Redis가 멈추면 겹쳐도 무시되는 INSERT만 한다 */
     private void markDay(long memberId) {
         LocalDate today = LocalDate.ofInstant(Times.now(clock), Counts.KST);
+        String key = "active-day:" + memberId + ":" + today;
+        boolean keySet = false;
         try {
-            if (!Boolean.TRUE.equals(redis.opsForValue().setIfAbsent("active-day:" + memberId + ":" + today, "1", Duration.ofHours(25)))) return;
+            if (!Boolean.TRUE.equals(redis.opsForValue().setIfAbsent(key, "1", Duration.ofHours(25)))) return;
+            keySet = true;
         } catch (RuntimeException e) {
             // Redis 장애: 아래 INSERT가 겹치면 그냥 무시된다
         }
@@ -68,6 +71,14 @@ public class ActivityTracker {
             jdbc.update("INSERT INTO member_active_day (member_id, day) VALUES (?, ?) ON CONFLICT DO NOTHING", memberId, today);
         } catch (RuntimeException e) {
             log.warn("활동한 날을 남기지 못했습니다 (member {}): {}", memberId, e.getMessage());
+            // 키를 풀어 두면 다음 요청이 다시 쓴다
+            if (keySet) {
+                try {
+                    redis.delete(key);
+                } catch (RuntimeException ignored) {
+                    // 키는 25시간 뒤 저절로 사라진다
+                }
+            }
         }
     }
 
