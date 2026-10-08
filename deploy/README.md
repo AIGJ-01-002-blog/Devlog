@@ -135,7 +135,7 @@ kubectl -n blog create job pg-backup-now --from=cronjob/pg-backup   # 지금 바
 #   gzip -dc /backup/blog-<날짜>.sql.gz | psql -h postgres -d blog -v ON_ERROR_STOP=1
 ```
 
-#### 1.24.0 이전에 만든 클러스터를 1.24.1 이상으로 올릴 때
+#### 1.24.0 이하 버전에서 만든 클러스터를 1.24.1 이상으로 올릴 때
 
 1.24.1부터 DB 이미지가 `postgres:17-alpine`(사용자 UID 70)에서 `pgvector/pgvector`(Debian, UID 999)로 바뀌었다. 기존 `data-postgres-0` 볼륨은 UID 70 소유라 그대로 쓰면 PostgreSQL이 데이터 디렉터리 소유권 검사에서 멈추고, 문자 정렬 라이브러리(musl→glibc)도 달라 인덱스가 어긋날 수 있다. 기존 볼륨은 재사용하지 말고 덤프로 옮긴다. 새로 설치하는 클러스터는 이 절차가 필요 없다.
 
