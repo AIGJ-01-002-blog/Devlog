@@ -2,6 +2,7 @@ package com.team.blog.account.application;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,11 +37,14 @@ public class AgreementService {
         };
     }
 
+    /** @param agreeAi 가입 화면의 선택 항목 "AI 기능 이용 동의". 필수 약관과 따로 받아 따로 기록한다 */
     @Transactional
-    public void recordSignup(long memberId, Instant now) {
-        agreements.saveAll(List.of(
+    public void recordSignup(long memberId, Instant now, boolean agreeAi) {
+        List<MemberAgreement> rows = new ArrayList<>(List.of(
                 new MemberAgreement(memberId, AgreementType.TERMS, current.termsVersion(), now),
                 new MemberAgreement(memberId, AgreementType.PRIVACY, current.privacyVersion(), now)));
+        if (agreeAi) rows.add(new MemberAgreement(memberId, AgreementType.AI, currentVersion(AgreementType.AI), now));
+        agreements.saveAll(rows);
     }
 
     @Transactional(readOnly = true)
