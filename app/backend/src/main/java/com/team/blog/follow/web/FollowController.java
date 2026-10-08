@@ -16,6 +16,8 @@ import com.team.blog.follow.application.FollowQuery;
 import com.team.blog.follow.application.FollowService;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
+import com.team.blog.post.query.PostCardPage;
+import com.team.blog.post.query.PostCard;
 
 /**
  * 팔로우 API (016).
@@ -63,11 +65,11 @@ public class FollowController {
     }
 
     /** @param followsAnyone 빈 피드 문구를 고르는 데 쓴다 (FR-020). 첫 쪽에서만 센다 */
-    public record FeedPage(List<FeedQuery.Card> items, String nextCursor, Boolean followsAnyone) {}
+    public record FeedPage(List<PostCard> items, String nextCursor, Boolean followsAnyone) {}
 
     @GetMapping("/api/feed")
     public ResponseEntity<FeedPage> feed(@RequestParam(required = false) String cursor, @CurrentMember MemberPrincipal me) {
-        FeedQuery.Page page = feed.following(me.id(), cursor);
+        PostCardPage page = feed.following(me.id(), cursor);
         Boolean any = cursor == null || cursor.isEmpty() ? query.counts(me.id()).following() > 0 : null;
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(new FeedPage(page.items(), page.nextCursor(), any));
     }

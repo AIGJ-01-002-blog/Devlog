@@ -1,5 +1,7 @@
 package com.team.blog.post.infra;
 
+import com.team.blog.account.application.MemberSql;
+
 /**
  * 읽기 쿼리가 같이 쓰는 SQL 조각 (V3 정규화). 파생 값은 저장하지 않으므로 여기서 계산한다.
  * 별칭 약속: 글 p, 회원 m.
@@ -28,13 +30,10 @@ public final class PostSql {
                   WHERE pim.post_id = p.id AND NOT EXISTS (SELECT 1 FROM post_thumbnail pt WHERE pt.post_id = p.id)
                   ORDER BY pim.position LIMIT 1))) AS thumbnail_key""";
 
-    /** 작성자 프로필 사진 (회원당 하나). PROFILE_IMAGE_KEY와 함께 쓴다. */
-    public static final String PROFILE_IMAGE_JOIN = """
-            LEFT JOIN member_profile_image mpi ON mpi.member_id = m.id
-            LEFT JOIN resource_image mpri ON mpri.resource_id = mpi.resource_id
-            LEFT JOIN resource mpr ON mpr.id = mpi.resource_id""";
+    /** 작성자 프로필 사진 (회원당 하나, 회원 모듈의 조각). PROFILE_IMAGE_KEY와 함께 쓴다. */
+    public static final String PROFILE_IMAGE_JOIN = MemberSql.PROFILE_IMAGE_JOIN;
 
-    public static final String PROFILE_IMAGE_KEY = "COALESCE(mpri.thumb_storage_key, mpr.storage_key) AS profile_image_key";
+    public static final String PROFILE_IMAGE_KEY = MemberSql.PROFILE_IMAGE_KEY;
 
     /** 조회수·좋아요 수·댓글 수 (post_stat 뷰). 별칭 s. */
     public static final String STAT_JOIN = "JOIN post_stat s ON s.post_id = p.id";

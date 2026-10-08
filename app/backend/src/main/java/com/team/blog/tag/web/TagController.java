@@ -17,6 +17,8 @@ import com.team.blog.shared.security.MemberPrincipal;
 import com.team.blog.shared.web.RateLimiter;
 import com.team.blog.tag.application.TagNormalizer;
 import com.team.blog.tag.application.TagQuery;
+import com.team.blog.post.query.PostCardPage;
+import com.team.blog.post.query.PostCard;
 
 /**
  * 태그 API (docs/22 §5~§8). 태그 이름은 주소에서 정규화한 뒤 쓰고, 형식에 맞지 않으면 404다.
@@ -37,7 +39,7 @@ public class TagController {
     }
 
     /** 태그 페이지 한 쪽. 상단 글 수는 첫 쪽에만 싣는다. */
-    public record TagPage(String name, Long postCount, List<FeedQuery.Card> items, String nextCursor) {}
+    public record TagPage(String name, Long postCount, List<PostCard> items, String nextCursor) {}
 
     @GetMapping("/api/tags")
     public ResponseEntity<List<TagQuery.TagCount>> top(@RequestParam(defaultValue = "100") int limit) {
@@ -62,7 +64,7 @@ public class TagController {
     }
 
     public TagPage page(String name, String cursor) {
-        FeedQuery.Page p = feed.tag(name, cursor);
+        PostCardPage p = feed.tag(name, cursor);
         Long count = cursor == null || cursor.isBlank() ? tags.publicPostCount(name) : null;
         return new TagPage(name, count, p.items(), p.nextCursor());
     }
