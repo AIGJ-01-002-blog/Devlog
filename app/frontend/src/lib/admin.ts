@@ -25,7 +25,8 @@ export function roleLabel(role: string | null | undefined): string {
 
 export interface MemberSummary { total: number; active: number; suspended: number; withdrawing: number; managers: number; admins: number }
 export interface PostSummary { published: number; publicPosts: number; privatePosts: number; drafts: number; trash: number; hidden: number }
-export interface Sums { signups: number; posts: number; comments: number; likes: number; views: number; reports: number }
+/** visitors는 기간 동안 온 사람 수(여러 날 와도 한 명), visits는 들어온 횟수 (064) */
+export interface Sums { signups: number; posts: number; comments: number; likes: number; views: number; reports: number; visitors: number; visits: number }
 export interface Day extends Sums { date: string }
 
 export interface PostLine {
@@ -49,6 +50,8 @@ export interface Dashboard {
   current: Sums
   previous: Sums
   activeMembers: number
+  /** 오늘·어제 순방문자, 기간 방문자 중 회원 수 */
+  visitors: { today: number; yesterday: number; members: number }
   daily: Day[]
   topPosts: PostLine[]
   topAuthors: { handle: string; nickname: string | null; posts: number }[]

@@ -26,6 +26,7 @@ import { TagsPage } from './pages/TagsPage'
 import { withdrawnRedirect } from './lib/withdraw'
 import { lazyPage } from './lib/lazyPage'
 import { PageErrorBoundary } from './components/PageErrorBoundary'
+import { sendVisit } from './lib/views'
 
 // 글 읽기(홈·글·블로그·태그·검색·피드)는 첫 묶음에 두고, 쓰기·설정·가입·관리자 화면은 처음 열 때 받는다.
 // 독자가 받는 첫 JS를 줄이려는 것이다 (spec 028).
@@ -59,6 +60,7 @@ const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'Adm
 
 export function App() {
   const { path } = useLocation()
+  useEffect(() => { sendVisit() }, [])
   return (
     <>
       <SkipLink />

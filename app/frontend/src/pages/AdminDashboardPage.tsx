@@ -6,7 +6,10 @@ import { Link, navigate, useLocation } from '../lib/router'
 
 type Metric = keyof Sums
 
-const METRICS: { key: Metric; label: string; unit: string }[] = [
+/** tip은 합계 칸 툴팁, chart는 그래프 제목(날짜별 값의 뜻이 합계와 다를 때만) */
+const METRICS: { key: Metric; label: string; unit: string; tip?: string; chart?: string }[] = [
+  { key: 'visitors', label: '방문자', unit: '명', tip: '기간 동안 사이트에 온 사람 수예요. 여러 날 와도 한 명으로 세요', chart: '방문자 (날마다 센 사람 수)' },
+  { key: 'visits', label: '방문', unit: '회', tip: '사이트에 들어온 횟수예요. 30분 넘게 쉬었다 다시 오면 한 번 더 세요' },
   { key: 'views', label: '조회수', unit: '회' },
   { key: 'posts', label: '새 글', unit: '편' },
   { key: 'signups', label: '가입', unit: '명' },
@@ -28,7 +31,7 @@ export function AdminDashboardPage() {
   const days = (PERIODS.find((p) => String(p) === search.get('days')) ?? 30) as Period
   const [data, setData] = useState<Dashboard | null>(null)
   const [error, setError] = useState(false)
-  const [metric, setMetric] = useState<Metric>('views')
+  const [metric, setMetric] = useState<Metric>('visitors')
   const current = useRef(days)
   current.current = days
 
@@ -42,6 +45,18 @@ export function AdminDashboardPage() {
   }, [days])
 
   const m = METRICS.find((x) => x.key === metric) ?? METRICS[0]
+  const tile = (data: Dashboard, x: (typeof METRICS)[number]) => {
+    const c = change(data.current[x.key], data.previous[x.key])
+    return (
+      <button key={x.key} type="button" className="stat-tile" aria-pressed={x.key === metric}
+              data-tip={`${x.tip ? `${x.tip}. ` : ''}눌러서 날짜별 그래프 보기`} onClick={() => setMetric(x.key)}>
+        <span className="stat-label">{x.label}</span>
+        <span className="stat-value">{count(data.current[x.key])}</span>
+        <span className={`stat-change ${c.trend}`}>{c.text || ' '}</span>
+      </button>
+    )
+  }
+
   return (
     <main className="container admin admin-wide">
       <h1 className="page-title">관리자 페이지</h1>
@@ -75,17 +90,14 @@ export function AdminDashboardPage() {
           )}
 
           <section className="stat-grid" aria-label={`최근 ${days}일 합계`}>
-            {METRICS.map((x) => {
-              const c = change(data.current[x.key], data.previous[x.key])
-              return (
-                <button key={x.key} type="button" className="stat-tile" aria-pressed={x.key === metric}
-                        data-tip={`${x.label} 날짜별 그래프 보기`} onClick={() => setMetric(x.key)}>
-                  <span className="stat-label">{x.label}</span>
-                  <span className="stat-value">{count(data.current[x.key])}</span>
-                  <span className={`stat-change ${c.trend}`}>{c.text || ' '}</span>
-                </button>
-              )
-            })}
+            {/* 방문자·방문 다음에 오늘 방문자를 둔다 */}
+            {METRICS.slice(0, 2).map((x) => tile(data, x))}
+            <div className="stat-tile static" data-tip="오늘 0시(한국 시간)부터 온 사람 수. 운영진과 로봇은 세지 않아요">
+              <span className="stat-label">오늘 방문자</span>
+              <span className="stat-value">{count(data.visitors.today)}</span>
+              <span className="stat-change flat">어제 {count(data.visitors.yesterday)}명</span>
+            </div>
+            {METRICS.slice(2).map((x) => tile(data, x))}
             <div className="stat-tile static" data-tip="최근 활동 시각이 이 기간 안에 있는 회원">
               <span className="stat-label">활동한 회원</span>
               <span className="stat-value">{count(data.activeMembers)}</span>
@@ -94,7 +106,7 @@ export function AdminDashboardPage() {
           </section>
 
           <section className="admin-card">
-            <BarChart title={m.label} unit={m.unit} points={points(data, metric)} />
+            <BarChart title={m.chart ?? m.label} unit={m.unit} points={points(data, metric)} />
           </section>
 
           <div className="admin-columns">
@@ -135,6 +147,8 @@ export function AdminDashboardPage() {
                 <dd className="muted small">공개 {count(data.totals.posts.publicPosts)} · 비공개 {count(data.totals.posts.privatePosts)} · 숨김 {count(data.totals.posts.hidden)}</dd></div>
               <div><dt>임시글·휴지통</dt><dd>{count(data.totals.posts.drafts)}편</dd>
                 <dd className="muted small">휴지통 {count(data.totals.posts.trash)}편</dd></div>
+              <div><dt>방문자</dt><dd>{count(data.current.visitors)}명</dd>
+                <dd className="muted small">최근 {days}일 · 회원 {count(data.visitors.members)} · 비회원 {count(Math.max(0, data.current.visitors - data.visitors.members))}</dd></div>
               <div><dt>조회수</dt><dd>{count(data.totals.views)}회</dd></div>
               <div><dt>좋아요</dt><dd>{count(data.totals.likes)}개</dd></div>
               <div><dt>댓글</dt><dd>{count(data.totals.comments)}개</dd></div>

@@ -42,4 +42,36 @@ public class ViewStats {
                 GROUP BY post_id ORDER BY n DESC, post_id DESC LIMIT ?
                 """, (rs, i) -> Map.entry(rs.getLong("post_id"), rs.getLong("n")), Timestamp.from(from), limit);
     }
+
+    // --- 사이트 방문자 (064) ---
+
+    /** 날짜별 순방문자 수 */
+    public Map<LocalDate, Long> visitorsByDay(Instant from) {
+        return dayCounts("count(*)", from);
+    }
+
+    /** 날짜별 방문 수 (30분 넘게 쉬었다 오면 한 번 더) */
+    public Map<LocalDate, Long> visitsByDay(Instant from) {
+        return dayCounts("sum(visits)", from);
+    }
+
+    private Map<LocalDate, Long> dayCounts(String agg, Instant from) {
+        Map<LocalDate, Long> out = new java.util.HashMap<>();
+        jdbc.query("SELECT day AS d, " + agg + " AS n FROM site_visit WHERE day >= ? GROUP BY day",
+                rs -> { out.put(rs.getObject("d", LocalDate.class), rs.getLong("n")); }, LocalDate.ofInstant(from, Counts.KST));
+        return out;
+    }
+
+    /**
+     * 기간 [from, to] 동안 한 번이라도 온 사람 수. 같은 사람이 여러 날 와도 한 명이다.
+     * 쿠키 없는 비회원은 날마다 값이 바뀌어 날마다 한 명으로 센다.
+     */
+    public record Visitors(long visitors, long members, long visits) {}
+
+    public Visitors visitors(LocalDate from, LocalDate to) {
+        return jdbc.queryForObject("""
+                SELECT count(DISTINCT visitor) AS v, count(DISTINCT visitor) FILTER (WHERE member) AS m, coalesce(sum(visits), 0) AS n
+                FROM site_visit WHERE day BETWEEN ? AND ?
+                """, (rs, i) -> new Visitors(rs.getLong("v"), rs.getLong("m"), rs.getLong("n")), from, to);
+    }
 }
