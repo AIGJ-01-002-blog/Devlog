@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.37.0 | 2026-10-08 | ヘッダーメニューの並べ替え、タブに分けたマイ設定、ブログと記事管理の新デザイン、ブラウザ向けRSS案内 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.0) |
 | v1.36.0 | 2026-10-08 | 検索エンジン登録：サイトマップ、robots.txt、NAVER所有確認 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.36.0) |
 | v1.35.0 | 2026-10-08 | 管理者ページ：統計ダッシュボード、記事・会員管理、マネージャー権限 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.35.0) |
 | v1.34.0 | 2026-10-08 | AIの記事提案（話題が終わるとタイトルと範囲を提案）と深夜の日記のオン・オフ | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.34.0) |

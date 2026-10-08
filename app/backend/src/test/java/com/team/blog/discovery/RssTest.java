@@ -76,4 +76,30 @@ class RssTest extends IntegrationTest {
                 .getContentAsString(StandardCharsets.UTF_8);
         assertThat(page).contains("type=\"application/rss+xml\"").contains("href=\"/@" + s.handle() + "/rss\"");
     }
+
+    @Test
+    void 브라우저로_RSS를_열면_안내_화면이고_구독_앱은_XML을_받는다() throws Exception {
+        Session s = signup(uniqueLogin("rssg"));
+        publish(s, "안내", "PUBLIC");
+        String url = "/@" + s.handle() + "/rss";
+
+        var guide = browser().perform(get(url).header("Sec-Fetch-Dest", "document")).andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", org.hamcrest.Matchers.startsWith("text/html")))
+                .andExpect(header().string("Vary", org.hamcrest.Matchers.containsString("Sec-Fetch-Dest")))
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        assertThat(guide).contains("RSS 구독 안내").contains("noindex").doesNotContain("<rss");
+
+        // 구독 앱·fetch는 Sec-Fetch-Dest가 document가 아니다. ?format=xml이면 브라우저에서도 XML
+        assertThat(parse(rss(url)).getElementsByTagName("item").getLength()).isEqualTo(1);
+        browser().perform(get(url).header("Sec-Fetch-Dest", "empty")).andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", org.hamcrest.Matchers.startsWith("application/rss+xml")));
+        browser().perform(get(url + "?format=xml").header("Sec-Fetch-Dest", "document")).andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", org.hamcrest.Matchers.startsWith("application/rss+xml")))
+                .andExpect(header().string("Vary", org.hamcrest.Matchers.containsString("Sec-Fetch-Dest")));
+        browser().perform(get("/rss").header("Sec-Fetch-Dest", "document")).andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", org.hamcrest.Matchers.startsWith("text/html")));
+        // 없는 블로그는 브라우저로 열어도 404
+        browser().perform(get("/@nobody-here-xyz/rss").header("Sec-Fetch-Dest", "document")).andExpect(status().isNotFound());
+    }
 }
