@@ -363,7 +363,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
-| v1.28.0 | 2026-10-08 | main へのマージで学校サーバーへ自動デプロイ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.28.0) |
+| v1.27.6 | 2026-10-08 | main へのマージで学校サーバーへ自動デプロイ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.6) |
 | v1.27.5 | 2026-10-08 | デプロイ時に学校サーバーの SSH トンネルが開くまで待つ（トンネル切断の修正、デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.5) |
 | v1.27.4 | 2026-10-08 | 学校サーバーのクラスターが学校の DNS で外部名を解決（ドメイン接続の復旧、デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.4) |
 | v1.27.3 | 2026-10-08 | 学校サーバーでドメイン接続（cloudflared）が動くよう http2 で接続、失敗時の原因ログ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.3) |
