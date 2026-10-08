@@ -41,15 +41,27 @@ jobs:
           msg["Subject"] = "devlog 메일 시험 발송"
           msg.set_content(f"GitHub Actions에서 보낸 시험 메일입니다. {datetime.now(timezone.utc).isoformat()}")
 
-          try:
-              with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as s:
-                  s.starttls()
-                  s.login(user, pw)
-                  s.send_message(msg)
-          except smtplib.SMTPAuthenticationError as e:
-              print(f"::error::로그인 실패(인증 오류 {e.smtp_code}): 앱 비밀번호가 틀렸거나 2단계 인증이 꺼져 있습니다")
-              sys.exit(1)
-          except Exception as e:
-              print(f"::error::발송 실패: {type(e).__name__}: {e}")
-              sys.exit(1)
-          print(f"성공: {user} 로 시험 메일을 보냈습니다")
+          def via_587():
+              s = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)
+              s.ehlo(); s.starttls(); s.ehlo()
+              return s
+
+          def via_465():
+              return smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30)
+
+          # 앱 설정은 587(STARTTLS). 러너 쪽 망 문제와 구분하려고 465(SSL)도 시도한다
+          for name, connect in (("587 STARTTLS", via_587), ("465 SSL", via_465)):
+              try:
+                  with connect() as s:
+                      s.login(user, pw)
+                      s.send_message(msg)
+              except smtplib.SMTPAuthenticationError as e:
+                  print(f"::error::{name}: 로그인 실패(인증 오류 {e.smtp_code}). 앱 비밀번호가 틀렸거나 2단계 인증이 꺼져 있습니다")
+                  sys.exit(1)
+              except Exception as e:
+                  print(f"{name}: 접속 실패 {type(e).__name__}: {e}")
+                  continue
+              print(f"성공({name}): {user} 로 시험 메일을 보냈습니다")
+              sys.exit(0)
+          print("::error::두 포트 모두 접속하지 못했습니다(비밀번호 확인 전 단계)")
+          sys.exit(1)
