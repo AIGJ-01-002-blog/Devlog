@@ -1,6 +1,6 @@
 <div align="center">
 
-🌐 **[한국어](./README.md)** | **English**
+🌐 **[한국어](./README.md)** | **English** | **[日本語](./README.ja.md)** | **[简体中文](./README.zh.md)**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
@@ -70,8 +70,11 @@ Once the production server is up, the service opens at https://devlog.life. Unti
 ### Run it locally in five minutes
 
 ```bash
+# Terminal 1: dependencies and backend
 docker compose -f app/compose.yaml up -d                 # PostgreSQL 16 · Redis 7
 cd app/backend && DEV_LOGIN_ENABLED=true SITE_BASE_URL=http://localhost:5173 ./mvnw spring-boot:run
+
+# Terminal 2: frontend (from the repository root)
 cd app/frontend && npm install && npm run dev            # http://localhost:5173
 ```
 
@@ -221,7 +224,7 @@ sequenceDiagram
 - **404 that hides existence**: private, friends-only, trashed and hidden posts return the same 404 as missing posts to anyone without permission.
 - **Rate limits**: requests that can be repeated, such as writing, autosave, image uploads, likes, search, reports and AI suggestions, have rate limits (429 with `Retry-After`).
 - **Minimal personal data**: view counts never store the original IP, and search terms are not logged. Mail failures and malformed tokens are logged by exception type only, so addresses and tokens never reach the logs. `X-Forwarded-For` is trusted only from trusted proxy ranges.
-- **Image bucket**: anonymous users may only download files (GetObject); listing is blocked so image URLs of private posts can't be discovered.
+- **Image bucket**: anonymous users may only download image files (GetObject on `images/` and `profiles/`); listing the bucket is blocked, so image URLs of private posts can't be discovered by listing. Anyone who already knows an image URL can still download that file.
 - **Network policy**: PostgreSQL and Redis accept connections only from app pods, and MinIO only from the app and the ingress.
 - **Secrets**: credentials are never committed. They go in only as Kubernetes Secrets or GitHub Secrets, and `deploy/scripts/check-no-secrets.sh` checks for leaks in CI.
 
@@ -291,11 +294,11 @@ Defaults work for local development. Production values go in only as Kubernetes 
 # Dependencies
 docker compose -f app/compose.yaml up -d
 
-# Backend
+# Backend (terminal 1)
 cd app/backend
 DEV_LOGIN_ENABLED=true SITE_BASE_URL=http://localhost:5173 ./mvnw spring-boot:run
 
-# Frontend
+# Frontend (terminal 2, from the repository root)
 cd app/frontend
 npm install
 npm run dev        # http://localhost:5173
