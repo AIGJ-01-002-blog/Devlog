@@ -132,6 +132,8 @@ export interface EditorView {
   editedAt: string | null
   /** 지금 달린 태그. 다시 발행할 때 미리 채운다 (010) */
   tags: string[]
+  /** 작성자가 쓴 짧은 소개. 없으면 null (045) */
+  summary: string | null
 }
 
 export interface ServerContent {

@@ -30,10 +30,11 @@ public class PostEditorQuery {
      * @param editing 발행한 글을 고치는 중(작업본 또는 반영 전 자동 저장이 있음) → 내 글 관리의 "수정 중"
      * @param url     발행한 글의 주소. 임시글이면 null
      * @param tags    지금 달린 태그(입력 순서). 다시 발행할 때 발행 설정 창을 미리 채운다 (010 FR-014)
+     * @param summary 작성자가 쓴 짧은 소개(045). 없으면 null. 태그처럼 발행 설정 창을 미리 채운다
      */
     public record EditorView(long id, PostStatus status, Visibility visibility, String title, String contentMd,
                              long version, Instant savedAt, boolean editing, String url,
-                             Instant publishedAt, Instant firstPublicAt, Instant editedAt, List<String> tags) {}
+                             Instant publishedAt, Instant firstPublicAt, Instant editedAt, List<String> tags, String summary) {}
 
     public EditorView open(long memberId, String handle, long postId) {
         Post p = posts.findOwn(postId, memberId).orElseThrow(NotFoundException::new);
@@ -43,6 +44,6 @@ public class PostEditorQuery {
                 s.savedAt(), editing, p.isPublished() ? "/@" + handle + "/posts/" + p.getId() : null,
                 p.getPublishedAt(), p.getFirstPublicAt(), p.getEditedAt(),
                 jdbc.queryForList("SELECT t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = ? ORDER BY pt.position",
-                        String.class, p.getId()));
+                        String.class, p.getId()), p.getSummary());
     }
 }

@@ -15,6 +15,7 @@ import { ALT_SOFT_LIMIT, bodyImages, formatBytes, forPreview, pendingIds, restor
 import { useImageUploads } from '../lib/useImageUploads'
 import { decideRestore } from '../lib/restore'
 import { navigate, setLeaveGuard } from '../lib/router'
+import { isPublishField, SUMMARY_MAX, summaryLength } from '../lib/postSummary'
 import { addTag, tagErrors } from '../lib/tags'
 import type { EditorView, FriendOverview, ServerContent, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
@@ -74,6 +75,8 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
   const [visibility, setVisibility] = useState<Visibility>(view.visibility)
   // 태그는 발행할 때만 확정된다. 다시 발행할 때는 지금 달린 태그로 미리 채운다 (010 FR-006·FR-014)
   const [tags, setTags] = useState<string[]>(view.tags ?? [])
+  // 짧은 소개도 발행할 때 확정된다. 비우면 목록이 본문 앞부분으로 요약한다 (045)
+  const [summary, setSummary] = useState(view.summary ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showAlts, setShowAlts] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -235,7 +238,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     setPublishing(true)
     setErrors({})
     const key = crypto.randomUUID()
-    const body = { title, contentMd: content, tags, visibility, baseVersion: saver.current!.version }
+    const body = { title, contentMd: content, summary, tags, visibility, baseVersion: saver.current!.version }
     try {
       for (let attempt = 0; ; attempt++) {
         try {
@@ -257,8 +260,8 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
         }
       }
     } catch (e) {
-      // 태그 오류는 발행 창 안의 칩에 보여 준다
-      if (!(e instanceof ApiError && e.errors.some((f) => f.field.startsWith('tags')))) setShowPublish(false)
+      // 태그·짧은 소개 오류는 발행 창 안에 보여 준다
+      if (!(e instanceof ApiError && e.errors.some((f) => isPublishField(f.field)))) setShowPublish(false)
       handleError(e)
     } finally {
       setPublishing(false)
@@ -366,7 +369,15 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           <TagInput value={tags} onChange={(t) => { setTags(t); setErrors((m) => withoutTagErrors(m)) }} errors={tagErrors(errors)} />
           <AiTagSuggest postId={view.id} title={title} content={content} tags={tags}
                         onAdd={(t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)) }} />
-          {Object.keys(withoutTagErrors(errors)).length > 0 && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
+          <label className="field">
+            <span>짧은 소개 ({summaryLength(summary)}/{SUMMARY_MAX})</span>
+            <textarea value={summary} rows={3} aria-invalid={errors.summary ? true : undefined}
+                      aria-describedby={errors.summary ? 'summary-error' : undefined}
+                      placeholder="비워 두면 본문 앞부분이 목록에 보여요"
+                      onChange={(e) => { setSummary(e.target.value); setErrors(({ summary: _, ...rest }) => rest) }} />
+          </label>
+          {errors.summary && <p id="summary-error" className="error small" role="alert">{errors.summary}</p>}
+          {Object.keys(errors).some((k) => !isPublishField(k)) && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
           {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
           <AltTexts content={content} open={showAlts} onOpen={() => setShowAlts(true)}
                     localUrls={images.localUrls.current} onChange={(i, alt) => setContent((c) => setAlt(c, i, alt))} />
@@ -446,11 +457,11 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
   )
 }
 
-/** 발행 설정 창의 대체글 넣기 (009 US3). 없어도 발행은 막지 않는다. */
 function withoutTagErrors(map: Record<string, string>): Record<string, string> {
   return Object.fromEntries(Object.entries(map).filter(([k]) => !k.startsWith('tags')))
 }
 
+/** 발행 설정 창의 대체글 넣기 (009 US3). 없어도 발행은 막지 않는다. */
 function AltTexts({ content, open, onOpen, localUrls, onChange }: {
   content: string; open: boolean; onOpen: () => void; localUrls: Map<string, string>; onChange: (index: number, alt: string) => void
 }) {

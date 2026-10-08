@@ -16,6 +16,7 @@ import { ALT_SOFT_LIMIT, bodyImages, formatBytes, forPreview, pendingIds, restor
 import { useImageUploads } from '../lib/useImageUploads';
 import { decideRestore } from '../lib/restore';
 import { navigate, setLeaveGuard } from '../lib/router';
+import { isPublishField, SUMMARY_MAX, summaryLength } from '../lib/postSummary';
 import { addTag, tagErrors } from '../lib/tags';
 import { NotFoundPage } from './NotFoundPage';
 /** [새 글]: 임시글을 먼저 만들고 에디터 주소로 바꾼다 (docs/04 §2-5). */
@@ -72,6 +73,8 @@ function Editor({ view, local, memberId }) {
     const [visibility, setVisibility] = useState(view.visibility);
     // 태그는 발행할 때만 확정된다. 다시 발행할 때는 지금 달린 태그로 미리 채운다 (010 FR-006·FR-014)
     const [tags, setTags] = useState(view.tags ?? []);
+    // 짧은 소개도 발행할 때 확정된다. 비우면 목록이 본문 앞부분으로 요약한다 (045)
+    const [summary, setSummary] = useState(view.summary ?? '');
     const [errors, setErrors] = useState({});
     const [showAlts, setShowAlts] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -231,7 +234,7 @@ function Editor({ view, local, memberId }) {
         setPublishing(true);
         setErrors({});
         const key = crypto.randomUUID();
-        const body = { title, contentMd: content, tags, visibility, baseVersion: saver.current.version };
+        const body = { title, contentMd: content, summary, tags, visibility, baseVersion: saver.current.version };
         try {
             for (let attempt = 0;; attempt++) {
                 try {
@@ -254,8 +257,8 @@ function Editor({ view, local, memberId }) {
             }
         }
         catch (e) {
-            // 태그 오류는 발행 창 안의 칩에 보여 준다
-            if (!(e instanceof ApiError && e.errors.some((f) => f.field.startsWith('tags'))))
+            // 태그·짧은 소개 오류는 발행 창 안에 보여 준다
+            if (!(e instanceof ApiError && e.errors.some((f) => isPublishField(f.field))))
                 setShowPublish(false);
             handleError(e);
         }
@@ -275,7 +278,7 @@ function Editor({ view, local, memberId }) {
                                         addFiles(e.dataTransfer.files);
                                     }
                                 } }), errors.contentMd && _jsx("small", { className: "error", children: errors.contentMd }), _jsx(SeriesPicker, { postId: view.id }), _jsx(AttachmentEditor, { postId: view.id, published: view.status === 'PUBLISHED' })] }), _jsxs("section", { className: "editor-preview", "aria-label": "\uBBF8\uB9AC\uBCF4\uAE30", children: [_jsx("h1", { className: "post-title", children: title || _jsx("span", { className: "muted", children: "\uC81C\uBAA9 \uC5C6\uC74C" }) }), previewError && _jsx("p", { className: "error", children: previewError }), _jsx("div", { className: "post-body markdown", ref: previewRef, dangerouslySetInnerHTML: { __html: preview } })] })] }), showPublish && (_jsxs(Modal, { labelledBy: "publish-title", onClose: () => { if (!publishing)
-                    setShowPublish(false); }, children: [_jsx("h2", { id: "publish-title", children: view.status === 'PUBLISHED' ? '다시 발행' : '발행' }), _jsxs("fieldset", { className: "field", children: [_jsx("legend", { children: "\uACF5\uAC1C \uBC94\uC704" }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'PUBLIC', onChange: () => setVisibility('PUBLIC') }), " \uD83C\uDF10 \uC804\uCCB4 \uACF5\uAC1C"] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'FRIENDS', onChange: () => setVisibility('FRIENDS') }), " \uD83D\uDC65 \uCE5C\uAD6C\uC5D0\uAC8C\uB9CC"] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'PRIVATE', onChange: () => setVisibility('PRIVATE') }), " \uD83D\uDD12 \uBE44\uACF5\uAC1C (\uB098\uB9CC \uBCF4\uAE30)"] })] }), visibility === 'FRIENDS' && _jsx(NoFriendsHint, { onPublic: () => setVisibility('PUBLIC') }), _jsx(TagInput, { value: tags, onChange: (t) => { setTags(t); setErrors((m) => withoutTagErrors(m)); }, errors: tagErrors(errors) }), _jsx(AiTagSuggest, { postId: view.id, title: title, content: content, tags: tags, onAdd: (t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)); } }), Object.keys(withoutTagErrors(errors)).length > 0 && _jsx("p", { className: "error small", children: "\uC81C\uBAA9\uC774\uB098 \uBCF8\uBB38\uB3C4 \uD655\uC778\uD574 \uC8FC\uC138\uC694." }), view.status === 'PUBLISHED' && _jsx("p", { className: "muted small", children: "\uC8FC\uC18C\uC640 \uCC98\uC74C \uACF5\uAC1C\uD55C \uB0A0\uC9DC\uB294 \uADF8\uB300\uB85C\uC774\uACE0 \"\uC218\uC815\uB428\"\uC774 \uD45C\uC2DC\uB3FC\uC694." }), _jsx(AltTexts, { content: content, open: showAlts, onOpen: () => setShowAlts(true), localUrls: images.localUrls.current, onChange: (i, alt) => setContent((c) => setAlt(c, i, alt)) }), pendingIds(content).length > 0 && _jsx("p", { className: "error small", children: "\uC5C5\uB85C\uB4DC\uAC00 \uB05D\uB098\uC9C0 \uC54A\uC740 \uC0AC\uC9C4\uC774 \uC788\uC5B4\uC694. \uB2E4 \uC62C\uB77C\uAC04 \uB4A4 \uBC1C\uD589\uD560 \uC218 \uC788\uC5B4\uC694." }), _jsxs("footer", { className: "dialog-footer", children: [_jsx("button", { type: "button", className: "btn btn-text", onClick: () => setShowPublish(false), disabled: publishing, children: "\uCDE8\uC18C" }), _jsx("button", { type: "button", className: "btn btn-primary", onClick: publish, disabled: publishing, children: publishing ? '발행 중…' : '발행하기' })] })] })), showBackups && (_jsxs(Modal, { labelledBy: "backups-title", onClose: () => setShowBackups(false), children: [_jsx("h2", { id: "backups-title", children: "\uC774 \uAE30\uAE30 \uBC31\uC5C5" }), _jsx("p", { className: "muted small", children: "[\uC800\uC7A5\uB41C \uB0B4\uC6A9 \uBD88\uB7EC\uC624\uAE30]\uB97C \uACE0\uB97C \uB54C \uD3B8\uC9D1 \uC911\uC774\uB358 \uB0B4\uC6A9\uC774\uC5D0\uC694. 7\uC77C \uB3D9\uC548 \uC774 \uBE0C\uB77C\uC6B0\uC800\uC5D0\uB9CC \uB0A8\uC544\uC694." }), _jsx("ul", { className: "backup-list", children: backups.map((b) => (_jsxs("li", { children: [_jsxs("div", { children: [_jsx("b", { children: b.title || '제목 없음' }), " ", _jsx("span", { className: "muted small", children: new Date(b.at).toLocaleString('ko-KR') }), _jsx("p", { className: "small muted backup-excerpt", children: b.contentMd.slice(0, 120) })] }), _jsxs("div", { className: "row", children: [_jsx("button", { type: "button", className: "btn btn-outline", onClick: async () => {
+                    setShowPublish(false); }, children: [_jsx("h2", { id: "publish-title", children: view.status === 'PUBLISHED' ? '다시 발행' : '발행' }), _jsxs("fieldset", { className: "field", children: [_jsx("legend", { children: "\uACF5\uAC1C \uBC94\uC704" }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'PUBLIC', onChange: () => setVisibility('PUBLIC') }), " \uD83C\uDF10 \uC804\uCCB4 \uACF5\uAC1C"] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'FRIENDS', onChange: () => setVisibility('FRIENDS') }), " \uD83D\uDC65 \uCE5C\uAD6C\uC5D0\uAC8C\uB9CC"] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'PRIVATE', onChange: () => setVisibility('PRIVATE') }), " \uD83D\uDD12 \uBE44\uACF5\uAC1C (\uB098\uB9CC \uBCF4\uAE30)"] })] }), visibility === 'FRIENDS' && _jsx(NoFriendsHint, { onPublic: () => setVisibility('PUBLIC') }), _jsx(TagInput, { value: tags, onChange: (t) => { setTags(t); setErrors((m) => withoutTagErrors(m)); }, errors: tagErrors(errors) }), _jsx(AiTagSuggest, { postId: view.id, title: title, content: content, tags: tags, onAdd: (t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)); } }), _jsxs("label", { className: "field", children: [_jsxs("span", { children: ["\uC9E7\uC740 \uC18C\uAC1C (", summaryLength(summary), "/", SUMMARY_MAX, ")"] }), _jsx("textarea", { value: summary, rows: 3, "aria-invalid": errors.summary ? true : undefined, "aria-describedby": errors.summary ? 'summary-error' : undefined, placeholder: "\uBE44\uC6CC \uB450\uBA74 \uBCF8\uBB38 \uC55E\uBD80\uBD84\uC774 \uBAA9\uB85D\uC5D0 \uBCF4\uC5EC\uC694", onChange: (e) => { setSummary(e.target.value); setErrors(({ summary: _, ...rest }) => rest); } })] }), errors.summary && _jsx("p", { id: "summary-error", className: "error small", role: "alert", children: errors.summary }), Object.keys(errors).some((k) => !isPublishField(k)) && _jsx("p", { className: "error small", children: "\uC81C\uBAA9\uC774\uB098 \uBCF8\uBB38\uB3C4 \uD655\uC778\uD574 \uC8FC\uC138\uC694." }), view.status === 'PUBLISHED' && _jsx("p", { className: "muted small", children: "\uC8FC\uC18C\uC640 \uCC98\uC74C \uACF5\uAC1C\uD55C \uB0A0\uC9DC\uB294 \uADF8\uB300\uB85C\uC774\uACE0 \"\uC218\uC815\uB428\"\uC774 \uD45C\uC2DC\uB3FC\uC694." }), _jsx(AltTexts, { content: content, open: showAlts, onOpen: () => setShowAlts(true), localUrls: images.localUrls.current, onChange: (i, alt) => setContent((c) => setAlt(c, i, alt)) }), pendingIds(content).length > 0 && _jsx("p", { className: "error small", children: "\uC5C5\uB85C\uB4DC\uAC00 \uB05D\uB098\uC9C0 \uC54A\uC740 \uC0AC\uC9C4\uC774 \uC788\uC5B4\uC694. \uB2E4 \uC62C\uB77C\uAC04 \uB4A4 \uBC1C\uD589\uD560 \uC218 \uC788\uC5B4\uC694." }), _jsxs("footer", { className: "dialog-footer", children: [_jsx("button", { type: "button", className: "btn btn-text", onClick: () => setShowPublish(false), disabled: publishing, children: "\uCDE8\uC18C" }), _jsx("button", { type: "button", className: "btn btn-primary", onClick: publish, disabled: publishing, children: publishing ? '발행 중…' : '발행하기' })] })] })), showBackups && (_jsxs(Modal, { labelledBy: "backups-title", onClose: () => setShowBackups(false), children: [_jsx("h2", { id: "backups-title", children: "\uC774 \uAE30\uAE30 \uBC31\uC5C5" }), _jsx("p", { className: "muted small", children: "[\uC800\uC7A5\uB41C \uB0B4\uC6A9 \uBD88\uB7EC\uC624\uAE30]\uB97C \uACE0\uB97C \uB54C \uD3B8\uC9D1 \uC911\uC774\uB358 \uB0B4\uC6A9\uC774\uC5D0\uC694. 7\uC77C \uB3D9\uC548 \uC774 \uBE0C\uB77C\uC6B0\uC800\uC5D0\uB9CC \uB0A8\uC544\uC694." }), _jsx("ul", { className: "backup-list", children: backups.map((b) => (_jsxs("li", { children: [_jsxs("div", { children: [_jsx("b", { children: b.title || '제목 없음' }), " ", _jsx("span", { className: "muted small", children: new Date(b.at).toLocaleString('ko-KR') }), _jsx("p", { className: "small muted backup-excerpt", children: b.contentMd.slice(0, 120) })] }), _jsxs("div", { className: "row", children: [_jsx("button", { type: "button", className: "btn btn-outline", onClick: async () => {
                                                 // 지금 내용도 백업해 두고 바꾼다: 어느 쪽도 모르게 사라지지 않게 (FR-013)
                                                 const mine = { memberId, postId: view.id, ...current(), at: Date.now() };
                                                 if (mine.title !== b.title || mine.contentMd !== b.contentMd)
@@ -311,10 +314,10 @@ function Editor({ view, local, memberId }) {
                     navigate(`/write/${created.id}`);
                 } }))] }));
 }
-/** 발행 설정 창의 대체글 넣기 (009 US3). 없어도 발행은 막지 않는다. */
 function withoutTagErrors(map) {
     return Object.fromEntries(Object.entries(map).filter(([k]) => !k.startsWith('tags')));
 }
+/** 발행 설정 창의 대체글 넣기 (009 US3). 없어도 발행은 막지 않는다. */
 function AltTexts({ content, open, onOpen, localUrls, onChange }) {
     const list = bodyImages(content);
     const missing = list.filter((i) => !i.alt.trim()).length;

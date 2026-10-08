@@ -75,7 +75,7 @@ public class PostDetailQuery {
 
     public Optional<Detail> find(long postId, Viewer viewer) {
         List<Row> rows = jdbc.query("""
-                SELECT p.id, p.author_id, p.title, p.content_md, p.edit_version, p.status, p.visibility,
+                SELECT p.id, p.author_id, p.title, p.content_md, p.summary, p.edit_version, p.status, p.visibility,
                        p.published_at, p.first_public_at, p.edited_at, s.view_count, s.like_count, s.comment_count,
                        p.deleted_at IS NOT NULL AS deleted, p.hidden_at IS NOT NULL AS hidden,
                        m.handle, m.nickname, m.bio, m.withdrawn_at IS NOT NULL AS withdrawn,
@@ -89,7 +89,7 @@ public class PostDetailQuery {
                 LEFT JOIN post_draft d ON d.post_id = p.id
                 WHERE p.id = ?
                 """, (rs, i) -> new Row(rs.getLong("id"), rs.getLong("author_id"), rs.getString("title"),
-                rs.getString("content_md"), rs.getLong("edit_version"), rs.getString("thumbnail_key"),
+                rs.getString("content_md"), rs.getString("summary"), rs.getLong("edit_version"), rs.getString("thumbnail_key"),
                 PostStatus.valueOf(rs.getString("status")), Visibility.valueOf(rs.getString("visibility")),
                 instant(rs.getTimestamp("published_at")), instant(rs.getTimestamp("first_public_at")),
                 instant(rs.getTimestamp("edited_at")), rs.getLong("view_count"), rs.getInt("like_count"),
@@ -111,7 +111,7 @@ public class PostDetailQuery {
         // 본문 HTML은 저장하지 않고 원문을 렌더링해 캐시한다 (V3). 임시글은 상세로 보이지 않으므로 렌더링하지 않는다
         String html = r.status == PostStatus.PUBLISHED ? htmlCache.html(r.id, r.editVersion, r.authorId, r.contentMd) : "";
         String head = r.contentMd.length() > 600 ? r.contentMd.substring(0, 600) : r.contentMd;
-        return Optional.of(new Detail(r.id, "/@" + r.handle + "/posts/" + r.id, r.title, html, renderer.excerpt(head),
+        return Optional.of(new Detail(r.id, "/@" + r.handle + "/posts/" + r.id, r.title, html, renderer.summary(r.summary, head),
                 imageUrls.urlOf(r.thumbnailKey), r.status, r.visibility, r.publishedAt, r.firstPublicAt, r.editedAt, r.viewCount,
                 r.likeCount, r.commentCount,
                 new Author(r.authorId, r.handle, r.nickname, r.bio, imageUrls.urlOf(r.profileImageKey), !mine && follows(viewer, r.authorId),
@@ -152,7 +152,7 @@ public class PostDetailQuery {
         return t == null ? null : t.toInstant();
     }
 
-    private record Row(long id, long authorId, String title, String contentMd, long editVersion, String thumbnailKey,
+    private record Row(long id, long authorId, String title, String contentMd, String summary, long editVersion, String thumbnailKey,
                        PostStatus status, Visibility visibility, Instant publishedAt, Instant firstPublicAt,
                        Instant editedAt, long viewCount, int likeCount, int commentCount, boolean deleted,
                        boolean hidden, String handle, String nickname, String bio, boolean withdrawn,

@@ -14,8 +14,12 @@ import com.team.blog.shared.text.TextCleaner;
  * 실패한 항목은 모두 모아 한 번에 돌려준다.
  */
 public record PostInput(String title, String contentMd) {
+    /** 짧은 소개 길이 상한. DB 열(post.summary varchar(150))과 같다. */
+    public static final int MAX_SUMMARY = 150;
+
     /** 업로드가 끝나지 않은 사진(브라우저 임시 주소)이 본문에 남았는지 (docs/04 §4-3). */
     private static final Pattern PENDING_IMAGE = Pattern.compile("\\]\\(\\s*local:");
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     public static PostInput forSave(String rawTitle, String rawContent, BlogProperties.Post rules) {
         PostInput in = clean(rawTitle, rawContent);
@@ -35,6 +39,19 @@ public record PostInput(String title, String contentMd) {
             errors.add(new FieldErrorItem("contentMd", "PENDING_IMAGES", "아직 올라가지 않은 사진이 있어요. 업로드가 끝난 뒤 발행해 주세요."));
         }
         return in;
+    }
+
+    /**
+     * 짧은 소개 (spec 045). 목록에 한 문단으로 보이므로 줄바꿈·연속 공백을 한 칸으로 줄인다.
+     * @return 정리한 소개, 비었으면 null(본문으로 자동 요약)
+     */
+    public static String cleanSummary(String raw, List<FieldErrorItem> errors) {
+        String s = raw == null ? "" : TextCleaner.cleanLine(WHITESPACE.matcher(raw).replaceAll(" "));
+        if (s.isEmpty()) return null;
+        if (s.codePointCount(0, s.length()) > MAX_SUMMARY) {
+            errors.add(new FieldErrorItem("summary", "SUMMARY_TOO_LONG", "짧은 소개는 " + MAX_SUMMARY + "자까지 쓸 수 있어요."));
+        }
+        return s;
     }
 
     private static PostInput clean(String rawTitle, String rawContent) {
