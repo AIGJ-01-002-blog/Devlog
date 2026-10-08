@@ -36,7 +36,7 @@ jobs:
       - name: Gmail로 시험 메일 보내기
         shell: python
         run: |
-          import os, smtplib, sys
+          import os, smtplib, sys, traceback
           from datetime import datetime, timezone
           from email.message import EmailMessage
 
@@ -73,6 +73,8 @@ jobs:
                   sys.exit(1)
               except Exception as e:
                   print(f"{name}: 접속 실패 {type(e).__name__}: {e}")
+                  # 어느 단계(ehlo·starttls·login·send)에서 끊겼는지 보려고 호출 위치만 찍는다. 값은 찍히지 않는다
+                  traceback.print_exc(file=sys.stdout)
                   continue
               print(f"성공({name}): {user} 로 시험 메일을 보냈습니다")
               sys.exit(0)
