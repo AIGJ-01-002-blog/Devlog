@@ -14,13 +14,13 @@
 書く → 自動保存 → 公開 → 読む → 反応する。開発者のための velog 風ブログプラットフォーム
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/AIGJ-01-002-blog/Devlog?color=10b981&label=release)](https://github.com/AIGJ-01-002-blog/Devlog/releases/latest)
-[![Backend CI](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/Devlog/actions/workflows/frontend-ci.yml)
+[![Release](https://img.shields.io/github/v/release/AIGJ-01-002-blog/devlog?color=10b981&label=release)](https://github.com/AIGJ-01-002-blog/devlog/releases/latest)
+[![Backend CI](https://github.com/AIGJ-01-002-blog/devlog/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/devlog/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/AIGJ-01-002-blog/devlog/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/devlog/actions/workflows/frontend-ci.yml)
 [![Domain](https://img.shields.io/badge/domain-devlog.life%20(準備中)-0ea5e9.svg)](#デプロイ)
 [![Stack](https://img.shields.io/badge/Java%2021%20·%20Spring%20Boot%204.1%20·%20React%2019-f97316.svg)](#技術スタック)
 
-[自分で動かす](#自分で動かす) · [変更履歴](CHANGELOG.md)（韓国語） · [リリース](https://github.com/AIGJ-01-002-blog/Devlog/releases) · [設計ドキュメント](https://github.com/AIGJ-01-002-blog/docs)（韓国語） · [機能仕様](specs/)（韓国語）
+[自分で動かす](#自分で動かす) · [変更履歴](CHANGELOG.md)（韓国語） · [リリース](https://github.com/AIGJ-01-002-blog/devlog/releases) · [設計ドキュメント](https://github.com/AIGJ-01-002-blog/docs)（韓国語） · [機能仕様](specs/)（韓国語）
 
 </div>
 
@@ -365,90 +365,90 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 ## リリース
 
-[Semantic Versioning](https://semver.org/lang/ja/) に従います。機能が増えればマイナー、修正だけならパッチを上げ、API・スキーマの互換性が壊れる変更ではメジャーを上げます。[CHANGELOG.md](CHANGELOG.md) の先頭のバージョンが `main` に入ると、`release.yml` が git タグ（`vX.Y.Z`）と [GitHub Release](https://github.com/AIGJ-01-002-blog/Devlog/releases) を作ります。リリースノートは韓国語です。
+[Semantic Versioning](https://semver.org/lang/ja/) に従います。機能が増えればマイナー、修正だけならパッチを上げ、API・スキーマの互換性が壊れる変更ではメジャーを上げます。[CHANGELOG.md](CHANGELOG.md) の先頭のバージョンが `main` に入ると、`release.yml` が git タグ（`vX.Y.Z`）と [GitHub Release](https://github.com/AIGJ-01-002-blog/devlog/releases) を作ります。リリースノートは韓国語です。
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
-| v1.39.0 | 2026-10-09 | 登録画面で ID(メール)の確認と認証コードによるメール認証 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.39.0) |
-| v1.38.0 | 2026-10-09 | 管理者ダッシュボードにサイト訪問者数（ユニーク訪問者・訪問回数） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.38.0) |
-| v1.37.2 | 2026-10-09 | ヘッダー値が不正なリクエスト(改行付きトークンなど)を 500 ではなく 400 で案内 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.2) |
-| v1.37.1 | 2026-10-08 | /mcp の案内に Claude アプリのコネクタ接続方法を追加 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.1) |
-| v1.37.0 | 2026-10-08 | ヘッダーメニューの並べ替え、タブに分けたマイ設定、ブログと記事管理の新デザイン、ブラウザ向けRSS案内 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.0) |
-| v1.36.0 | 2026-10-08 | 検索エンジン登録：サイトマップ、robots.txt、NAVER所有確認 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.36.0) |
-| v1.35.0 | 2026-10-08 | 管理者ページ：統計ダッシュボード、記事・会員管理、マネージャー権限 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.35.0) |
-| v1.34.0 | 2026-10-08 | AIの記事提案（話題が終わるとタイトルと範囲を提案）と深夜の日記のオン・オフ | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.34.0) |
-| v1.33.1 | 2026-10-08 | 意味検索の有効状態を起動ログに、クラスター状態に埋め込みの進み具合を表示 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.1) |
-| v1.33.0 | 2026-10-08 | 変更履歴、公開前チェック、記事の Markdown エクスポート | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |
-| v1.32.1 | 2026-10-08 | 学校サーバーのクラスター状態を読み取り専用で見る「クラスター状態」ワークフロー（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.1) |
-| v1.32.0 | 2026-10-08 | ハイブリッド検索：検索語がなくても意味の近い記事を探す | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
-| v1.31.0 | 2026-10-08 | AI が公開済み記事の修正・画像アップロード・自分の記事全体の検索まで | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.31.0) |
-| v1.30.0 | 2026-10-08 | ボタンのツールチップ、モバイルの下部タブ、エディターの書式ツールバー | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.30.0) |
-| v1.29.0 | 2026-10-08 | お問い合わせ・通報の受付、AI のバグ報告（report_bug）、リリースノート画面 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.29.0) |
-| v1.28.1 | 2026-10-08 | AI の公開・削除をオンにした後は再接続するよう案内 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.28.1) |
-| v1.28.0 | 2026-10-08 | 設定でオンにすると AI が公開・削除まで可能に（既定はオフ） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.28.0) |
-| v1.27.7 | 2026-10-08 | 学校 MinIO のアドレスを 8000 番ポートに（nhn、デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.7) |
-| v1.27.6 | 2026-10-08 | main へのマージで学校サーバーへ自動デプロイ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.6) |
-| v1.27.5 | 2026-10-08 | デプロイ時に学校サーバーの SSH トンネルが開くまで待つ（トンネル切断の修正、デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.5) |
-| v1.27.4 | 2026-10-08 | 学校サーバーのクラスターが学校の DNS で外部名を解決（ドメイン接続の復旧、デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.4) |
-| v1.27.3 | 2026-10-08 | 学校サーバーでドメイン接続（cloudflared）が動くよう http2 で接続、失敗時の原因ログ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.3) |
-| v1.27.2 | 2026-10-08 | ソースコードとドキュメントのリポジトリを分離（ドキュメントは AIGJ-01-002-blog/docs） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.2) |
-| v1.27.1 | 2026-10-08 | 学校の実習サーバーに Kubernetes（k3d）でデプロイ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.1) |
-| v1.27.0 | 2026-10-08 | devlog MCP サーバー、ChatGPT・Codex 接続、自宅 PC の AI 優先 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.0) |
-| v1.26.1 | 2026-10-08 | デプロイが Gemini キーと自宅 PC の Ollama 設定をアプリに渡す（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.26.1) |
-| v1.26.0 | 2026-10-08 | MCP 開発日誌中心のトップ画面と AI 接続ガイド | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.26.0) |
-| v1.25.2 | 2026-10-08 | 記事一覧・詳細の取得を記事モジュールへ移して整理（動作の変更なし） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.25.2) |
-| v1.25.1 | 2026-10-08 | 本番 DB を pgvector 入りの PostgreSQL に変更（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.25.1) |
-| v1.25.0 | 2026-10-08 | 登録画面で AI 機能への同意を任意項目として受け付ける | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.25.0) |
-| v1.24.0 | 2026-10-08 | モダンな開発ブログの見た目 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.24.0) |
-| v1.23.2 | 2026-10-08 | 本番メールアカウントのアドレスを修正 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.23.2) |
-| v1.23.1 | 2026-10-08 | SonarQube のセキュリティ・信頼性の指摘を整理 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.23.1) |
-| v1.23.0 | 2026-10-08 | 記事のサムネイル選択 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.23.0) |
-| v1.22.3 | 2026-10-08 | Oracle 無料 VM の本番サーバーと devlog.life 接続の準備（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.3) |
-| v1.22.2 | 2026-10-08 | DB バックアップ、無停止デプロイの文書化、メールのパスワードがないときは送信オフ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.2) |
-| v1.22.1 | 2026-10-08 | 新しいロゴ | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.1) |
-| v1.22.0 | 2026-10-08 | 記事の短い紹介文 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.22.0) |
-| v1.21.0 | 2026-10-08 | 記事の下に著者のソーシャル情報 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.21.0) |
-| v1.20.0 | 2026-10-08 | ブログのソーシャル情報（メール・GitHub・X・Facebook・ホームページ） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.20.0) |
-| v1.19.0 | 2026-10-08 | ブログの紹介タブ | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.19.0) |
-| v1.18.1 | 2026-10-08 | メール送信失敗の記録から宛先アドレスを除外 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.18.1) |
-| v1.18.0 | 2026-10-08 | 前後の記事 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.18.0) |
-| v1.17.0 | 2026-10-08 | 記事の共有ボタン | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.17.0) |
-| v1.16.1 ~ v1.16.11 | 2026-10-08 | 性能（初回の JS、キャッシュ・圧縮、画像の領域確保）、アクセシビリティ（スキップリンク、ダイアログのフォーカス、動きを減らす）、エラー処理・ログ保護 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.16.11) |
-| v1.16.0 | 2026-10-08 | いいねした記事の一覧 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.16.0) |
-| v1.15.0 | 2026-10-08 | RSS 購読（ブログ別・全体） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.15.0) |
-| v1.14.0 | 2026-10-08 | 目次と読了時間 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.14.0) |
-| v1.13.0 | 2026-10-08 | シリーズ | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.13.0) |
-| v1.12.0 | 2026-10-07 | Telegram 連携（通知の受信、メモを下書きに） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.12.0) |
-| v1.11.0 | 2026-10-07 | 添付ファイル | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.11.0) |
-| v1.10.0 | 2026-10-07 | ダークモード | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.10.0) |
+| v1.39.0 | 2026-10-09 | 登録画面で ID(メール)の確認と認証コードによるメール認証 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.39.0) |
+| v1.38.0 | 2026-10-09 | 管理者ダッシュボードにサイト訪問者数（ユニーク訪問者・訪問回数） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.38.0) |
+| v1.37.2 | 2026-10-09 | ヘッダー値が不正なリクエスト(改行付きトークンなど)を 500 ではなく 400 で案内 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.37.2) |
+| v1.37.1 | 2026-10-08 | /mcp の案内に Claude アプリのコネクタ接続方法を追加 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.37.1) |
+| v1.37.0 | 2026-10-08 | ヘッダーメニューの並べ替え、タブに分けたマイ設定、ブログと記事管理の新デザイン、ブラウザ向けRSS案内 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.37.0) |
+| v1.36.0 | 2026-10-08 | 検索エンジン登録：サイトマップ、robots.txt、NAVER所有確認 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.36.0) |
+| v1.35.0 | 2026-10-08 | 管理者ページ：統計ダッシュボード、記事・会員管理、マネージャー権限 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.35.0) |
+| v1.34.0 | 2026-10-08 | AIの記事提案（話題が終わるとタイトルと範囲を提案）と深夜の日記のオン・オフ | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.34.0) |
+| v1.33.1 | 2026-10-08 | 意味検索の有効状態を起動ログに、クラスター状態に埋め込みの進み具合を表示 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.33.1) |
+| v1.33.0 | 2026-10-08 | 変更履歴、公開前チェック、記事の Markdown エクスポート | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.33.0) |
+| v1.32.1 | 2026-10-08 | 学校サーバーのクラスター状態を読み取り専用で見る「クラスター状態」ワークフロー（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.32.1) |
+| v1.32.0 | 2026-10-08 | ハイブリッド検索：検索語がなくても意味の近い記事を探す | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.32.0) |
+| v1.31.0 | 2026-10-08 | AI が公開済み記事の修正・画像アップロード・自分の記事全体の検索まで | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.31.0) |
+| v1.30.0 | 2026-10-08 | ボタンのツールチップ、モバイルの下部タブ、エディターの書式ツールバー | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.30.0) |
+| v1.29.0 | 2026-10-08 | お問い合わせ・通報の受付、AI のバグ報告（report_bug）、リリースノート画面 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.29.0) |
+| v1.28.1 | 2026-10-08 | AI の公開・削除をオンにした後は再接続するよう案内 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.28.1) |
+| v1.28.0 | 2026-10-08 | 設定でオンにすると AI が公開・削除まで可能に（既定はオフ） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.28.0) |
+| v1.27.7 | 2026-10-08 | 学校 MinIO のアドレスを 8000 番ポートに（nhn、デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.27.7) |
+| v1.27.6 | 2026-10-08 | main へのマージで学校サーバーへ自動デプロイ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.27.6) |
+| v1.27.5 | 2026-10-08 | デプロイ時に学校サーバーの SSH トンネルが開くまで待つ（トンネル切断の修正、デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.27.5) |
+| v1.27.4 | 2026-10-08 | 学校サーバーのクラスターが学校の DNS で外部名を解決（ドメイン接続の復旧、デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.27.4) |
+| v1.27.3 | 2026-10-08 | 学校サーバーでドメイン接続（cloudflared）が動くよう http2 で接続、失敗時の原因ログ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.27.3) |
+| v1.27.2 | 2026-10-08 | ソースコードとドキュメントのリポジトリを分離（ドキュメントは AIGJ-01-002-blog/docs） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.27.2) |
+| v1.27.1 | 2026-10-08 | 学校の実習サーバーに Kubernetes（k3d）でデプロイ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.27.1) |
+| v1.27.0 | 2026-10-08 | devlog MCP サーバー、ChatGPT・Codex 接続、自宅 PC の AI 優先 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.27.0) |
+| v1.26.1 | 2026-10-08 | デプロイが Gemini キーと自宅 PC の Ollama 設定をアプリに渡す（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.26.1) |
+| v1.26.0 | 2026-10-08 | MCP 開発日誌中心のトップ画面と AI 接続ガイド | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.26.0) |
+| v1.25.2 | 2026-10-08 | 記事一覧・詳細の取得を記事モジュールへ移して整理（動作の変更なし） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.25.2) |
+| v1.25.1 | 2026-10-08 | 本番 DB を pgvector 入りの PostgreSQL に変更（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.25.1) |
+| v1.25.0 | 2026-10-08 | 登録画面で AI 機能への同意を任意項目として受け付ける | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.25.0) |
+| v1.24.0 | 2026-10-08 | モダンな開発ブログの見た目 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.24.0) |
+| v1.23.2 | 2026-10-08 | 本番メールアカウントのアドレスを修正 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.23.2) |
+| v1.23.1 | 2026-10-08 | SonarQube のセキュリティ・信頼性の指摘を整理 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.23.1) |
+| v1.23.0 | 2026-10-08 | 記事のサムネイル選択 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.23.0) |
+| v1.22.3 | 2026-10-08 | Oracle 無料 VM の本番サーバーと devlog.life 接続の準備（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.22.3) |
+| v1.22.2 | 2026-10-08 | DB バックアップ、無停止デプロイの文書化、メールのパスワードがないときは送信オフ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.22.2) |
+| v1.22.1 | 2026-10-08 | 新しいロゴ | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.22.1) |
+| v1.22.0 | 2026-10-08 | 記事の短い紹介文 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.22.0) |
+| v1.21.0 | 2026-10-08 | 記事の下に著者のソーシャル情報 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.21.0) |
+| v1.20.0 | 2026-10-08 | ブログのソーシャル情報（メール・GitHub・X・Facebook・ホームページ） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.20.0) |
+| v1.19.0 | 2026-10-08 | ブログの紹介タブ | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.19.0) |
+| v1.18.1 | 2026-10-08 | メール送信失敗の記録から宛先アドレスを除外 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.18.1) |
+| v1.18.0 | 2026-10-08 | 前後の記事 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.18.0) |
+| v1.17.0 | 2026-10-08 | 記事の共有ボタン | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.17.0) |
+| v1.16.1 ~ v1.16.11 | 2026-10-08 | 性能（初回の JS、キャッシュ・圧縮、画像の領域確保）、アクセシビリティ（スキップリンク、ダイアログのフォーカス、動きを減らす）、エラー処理・ログ保護 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.16.11) |
+| v1.16.0 | 2026-10-08 | いいねした記事の一覧 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.16.0) |
+| v1.15.0 | 2026-10-08 | RSS 購読（ブログ別・全体） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.15.0) |
+| v1.14.0 | 2026-10-08 | 目次と読了時間 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.14.0) |
+| v1.13.0 | 2026-10-08 | シリーズ | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.13.0) |
+| v1.12.0 | 2026-10-07 | Telegram 連携（通知の受信、メモを下書きに） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.12.0) |
+| v1.11.0 | 2026-10-07 | 添付ファイル | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.11.0) |
+| v1.10.0 | 2026-10-07 | ダークモード | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.10.0) |
 
 <details>
 <summary>以前のバージョン（v0.1.0 ~ v1.9.0）</summary>
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
-| v1.9.0 | 2026-10-07 | 退会と復旧 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.9.0) |
-| v1.8.0 | 2026-10-07 | 通報・非表示・停止 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.8.0) |
-| v1.7.0 | 2026-10-07 | AI タグ提案 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.7.0) |
-| v1.6.0 | 2026-10-07 | ホームのトレンドタブ | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.6.0) |
-| v1.5.0 | 2026-10-07 | フォローとフォロー中フィード | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.5.0) |
-| v1.4.0 | 2026-10-07 | アプリ内通知 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.4.0) |
-| v1.3.0 | 2026-10-07 | 記事・人の検索 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.3.0) |
-| v1.2.0 | 2026-10-07 | 閲覧数 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.2.0) |
-| v1.1.0 | 2026-10-07 | いいね | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.1.0) |
-| v1.0.0 | 2026-10-07 | 最初の正式版。クラスター内構成（selfhosted）で最初から最後まで動作を確認 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.0.0) |
-| v0.12.0 | 2026-10-07 | 友だちのみ公開 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.12.0) |
-| v0.11.0 | 2026-10-07 | コメントと返信 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.11.0) |
-| v0.10.0 | 2026-10-07 | タグ | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.10.0) |
-| v0.9.0 | 2026-10-07 | 画像と GIF、クラスター内デプロイ構成 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.9.0) |
-| v0.8.0 | 2026-10-07 | 友だちと最近の活動 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.8.0) |
-| v0.7.0 | 2026-10-07 | ゴミ箱 30 日 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.7.0) |
-| v0.6.0 | 2026-10-07 | オフライン自動保存 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.6.0) |
-| v0.5.0 | 2026-10-07 | プロフィールと設定 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.5.0) |
-| v0.4.0 · v0.4.1 | 2026-10-07 | メール・Google での登録とログイン | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.4.1) |
-| v0.3.0 | 2026-10-07 | DB 構造の正規化（V3） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.3.0) |
-| v0.2.0 | 2026-10-07 | 画面（React）を接続。登録から執筆・公開・閲覧まで | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.2.0) |
-| v0.1.0 | 2026-10-07 | バックエンドの最初のリリース | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v0.1.0) |
+| v1.9.0 | 2026-10-07 | 退会と復旧 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.9.0) |
+| v1.8.0 | 2026-10-07 | 通報・非表示・停止 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.8.0) |
+| v1.7.0 | 2026-10-07 | AI タグ提案 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.7.0) |
+| v1.6.0 | 2026-10-07 | ホームのトレンドタブ | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.6.0) |
+| v1.5.0 | 2026-10-07 | フォローとフォロー中フィード | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.5.0) |
+| v1.4.0 | 2026-10-07 | アプリ内通知 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.4.0) |
+| v1.3.0 | 2026-10-07 | 記事・人の検索 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.3.0) |
+| v1.2.0 | 2026-10-07 | 閲覧数 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.2.0) |
+| v1.1.0 | 2026-10-07 | いいね | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.1.0) |
+| v1.0.0 | 2026-10-07 | 最初の正式版。クラスター内構成（selfhosted）で最初から最後まで動作を確認 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.0.0) |
+| v0.12.0 | 2026-10-07 | 友だちのみ公開 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.12.0) |
+| v0.11.0 | 2026-10-07 | コメントと返信 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.11.0) |
+| v0.10.0 | 2026-10-07 | タグ | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.10.0) |
+| v0.9.0 | 2026-10-07 | 画像と GIF、クラスター内デプロイ構成 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.9.0) |
+| v0.8.0 | 2026-10-07 | 友だちと最近の活動 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.8.0) |
+| v0.7.0 | 2026-10-07 | ゴミ箱 30 日 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.7.0) |
+| v0.6.0 | 2026-10-07 | オフライン自動保存 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.6.0) |
+| v0.5.0 | 2026-10-07 | プロフィールと設定 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.5.0) |
+| v0.4.0 · v0.4.1 | 2026-10-07 | メール・Google での登録とログイン | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.4.1) |
+| v0.3.0 | 2026-10-07 | DB 構造の正規化（V3） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.3.0) |
+| v0.2.0 | 2026-10-07 | 画面（React）を接続。登録から執筆・公開・閲覧まで | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.2.0) |
+| v0.1.0 | 2026-10-07 | バックエンドの最初のリリース | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v0.1.0) |
 
 </details>
 
@@ -456,7 +456,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 バグ報告、機能の提案、プルリクエストはどれも歓迎です。Issue とプルリクエストは韓国語でも英語でもかまいません。
 
-- **バグ・提案**：[Issue](https://github.com/AIGJ-01-002-blog/Devlog/issues) に書いてください。再現手順、期待した動作、実際の動作、スクリーンショットがあると早く直せます。
+- **バグ・提案**：[Issue](https://github.com/AIGJ-01-002-blog/devlog/issues) に書いてください。再現手順、期待した動作、実際の動作、スクリーンショットがあると早く直せます。
 - **機能の追加**：[Spec Kit](https://github.com/github/spec-kit) の流れに従います。先に `specs/NNN-name/` に spec・plan・tasks を書き、その仕様どおりに実装します。原則は [.specify/memory/constitution.md](.specify/memory/constitution.md) にあります。
 - **プルリクエスト**：変更は小さく分け、テストも一緒に出してください。バックエンドは `./mvnw verify`（行カバレッジ 40% 以上）、画面は `npm run typecheck && npm test && npm run build` が通る必要があります。変更内容は [CHANGELOG.md](CHANGELOG.md) の先頭に書きます。
 - **シークレット**：接続情報やパスワードはコミットしないでください。`deploy/scripts/check-no-secrets.sh` が CI で止めます。
