@@ -45,6 +45,17 @@ export function watchView(el, send, win = window) {
 export function sendView(postId) {
     api(`/api/posts/${postId}/views`, { method: 'POST', keepalive: true }).catch(() => { });
 }
+let visitSent = false;
+/**
+ * 사이트 방문 (spec 064). 화면을 처음 열 때 한 번만 보낸다. 같은 날 같은 사람은 서버가 한 명으로 모으고,
+ * 30분 넘게 쉬었다 다시 열면 방문 수만 늘린다. 실패해도 다시 보내지 않는다.
+ */
+export function sendVisit() {
+    if (visitSent)
+        return;
+    visitSent = true;
+    api('/api/visits', { method: 'POST', keepalive: true }).catch(() => { });
+}
 /** 남의 발행 글을 열었을 때만 센다. 작성자 본인은 서버도 세지 않지만 요청부터 보내지 않는다. */
 export function useViewBeacon(ref, postId, enabled) {
     useEffect(() => {

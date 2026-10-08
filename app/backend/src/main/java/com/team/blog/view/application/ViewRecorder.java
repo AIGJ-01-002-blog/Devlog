@@ -118,7 +118,11 @@ public class ViewRecorder {
         if (visit.memberId() != null && visit.memberId() == authorId) return true;
         if (visit.admin()) return true;
         if (visit.prefetch()) return true;
-        String ua = visit.userAgent();
+        return isBot(visit.userAgent());
+    }
+
+    /** 브라우저 정보가 없거나 로봇·링크 미리보기면 참. 사이트 방문(064)도 같은 기준을 쓴다 */
+    public boolean isBot(String ua) {
         return ua == null || ua.isBlank() || bots.matcher(ua).find();
     }
 
