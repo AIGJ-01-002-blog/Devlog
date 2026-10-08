@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.37.1 | 2026-10-08 | /mcp 指南新增 Claude 应用连接器的连接方法 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.1) |
 | v1.37.0 | 2026-10-08 | 重新排列页眉菜单、分标签的我的设置、重新设计的博客与文章管理、浏览器可读的 RSS 说明页 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.0) |
 | v1.36.0 | 2026-10-08 | 搜索引擎收录：站点地图、robots.txt、NAVER 站点验证 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.36.0) |
 | v1.35.0 | 2026-10-08 | 管理后台：统计仪表盘、文章与会员管理、管理员助理（Manager）权限 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.35.0) |
