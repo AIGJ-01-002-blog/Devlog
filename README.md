@@ -13,7 +13,7 @@
 
 쓰기 → 자동 저장 → 발행 → 읽기 → 반응까지, 개발자를 위한 velog형 블로그 플랫폼
 
-[![Release](https://img.shields.io/badge/release-v1.21.0-10b981.svg)](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.21.0)
+[![Release](https://img.shields.io/github/v/release/AIGJ-01-002-blog/docs?color=10b981&label=release)](https://github.com/AIGJ-01-002-blog/docs/releases/latest)
 [![Backend CI](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml)
 [![Frontend CI](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/frontend-ci.yml)
 [![Domain](https://img.shields.io/badge/domain-devlog.life%20(준비%20중)-0ea5e9.svg)](#배포)
@@ -339,7 +339,7 @@ npm run dev        # http://localhost:5173
 | Kubernetes · kustomize | 배포 | Deployment·HPA·PDB·NetworkPolicy, 오버레이 3종(selfhosted·nhn·local) |
 | nginx 인그레스 | 앞단 | TLS, 경로별 전달(`/blog-images`는 MinIO로) |
 | GitHub Actions | CI/CD | 테스트, 매니페스트 검증(kubeconform), 비밀값 검사, 이미지 빌드, 배포, 릴리스, 알림 |
-| SonarCloud · CodeRabbit | 품질 | 정적 분석(선택), PR마다 AI 리뷰(한국어) |
+| SonarQube · SonarCloud · CodeRabbit | 품질 | 정적 분석(학교 SonarQube 또는 SonarCloud, 선택), PR마다 AI 리뷰(한국어) |
 
 ### 테스트
 
@@ -357,6 +357,13 @@ npm run dev        # http://localhost:5173
 
 | 버전 | 날짜 | 주요 내용 | 릴리스 노트 |
 | --- | --- | --- | --- |
+| v1.23.2 | 2026-10-08 | 운영 메일 계정 주소 바로잡기 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.2) |
+| v1.23.1 | 2026-10-08 | SonarQube 보안·신뢰성 지적 정리 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.1) |
+| v1.23.0 | 2026-10-08 | 글 썸네일 고르기 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.0) |
+| v1.22.3 | 2026-10-08 | Oracle 무료 VM 운영 서버와 devlog.life 연결 준비(배포 구성) | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.3) |
+| v1.22.2 | 2026-10-08 | DB 백업, 무중단 배포 문서화, 메일 비밀번호가 없을 때 발송 끄기(배포 구성) | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.2) |
+| v1.22.1 | 2026-10-08 | 새 로고 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.1) |
+| v1.22.0 | 2026-10-08 | 글 짧은 소개 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.22.0) |
 | v1.21.0 | 2026-10-08 | 글 아래 작성자 소셜 정보 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.21.0) |
 | v1.20.0 | 2026-10-08 | 블로그 소셜 정보(이메일·GitHub·X·Facebook·홈페이지) | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.20.0) |
 | v1.19.0 | 2026-10-08 | 블로그 소개 탭 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.19.0) |
