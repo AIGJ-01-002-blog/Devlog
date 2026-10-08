@@ -43,6 +43,10 @@ deploy/
 
 selfhosted에서는 RabbitMQ·Elasticsearch·Ollama를 띄우지 않는다. 아직 앱(0.7.0)이 쓰지 않고, 알림(015)·검색(014)·AI 태그(018)를 구현할 때 같은 부품에 더한다.
 
+## 자동 배포
+
+main에 `app/`·`deploy/`·`deploy.yml`이 바뀐 커밋이 머지되면 "블로그 배포"가 학교 서버(target school, overlay selfhosted)에 그대로 배포한다. 헬스 체크에 실패하면 직전 버전으로 돌아간다. 배포는 하나씩 차례로 돈다. 잠시 끄려면 저장소 Variables에 `AUTO_DEPLOY=false`를 넣는다. 다른 target·overlay는 Actions에서 수동으로 실행한다.
+
 ## 클러스터에 배포 (수동)
 
 2026-10-07 기준 학교에서 받은 쿠버네티스 클러스터는 없다. 클러스터가 생기면 아래처럼 올린다.
@@ -80,7 +84,7 @@ kubectl -n blog rollout status deploy/blog-app
 |---|---|---|
 | `backend-ci.yml` | PR·main (백엔드 변경) | `./mvnw verify`: 테스트 + JaCoCo 줄 커버리지 40% 기준, 보고서 업로드, (선택) SonarQube |
 | `frontend-ci.yml` | PR·main (화면 변경) | 타입 검사, 테스트, 빌드 |
-| `deploy.yml` | PR·main·수동 | 매니페스트 검증(local·nhn·selfhosted) + 비밀값 검사 → 이미지 빌드(main은 GHCR에 올림) → 수동 실행 시 고른 overlay로 배포 |
+| `deploy.yml` | PR·main·수동 | 매니페스트 검증(local·nhn·selfhosted) + 비밀값 검사 → 이미지 빌드(main은 GHCR에 올림) → main 머지 시 학교 서버(selfhosted)에 자동 배포, 수동 실행 시 고른 target·overlay로 배포 |
 | `pr-notify.yml` | PR이 리뷰 가능해질 때·main에 머지될 때 | 리뷰 요청·머지 알림 |
 | `ci-notify.yml` | backend-ci·화면 CI가 끝날 때 | 테스트 통과·실패 알림 |
 | `release.yml` | CHANGELOG 버전이 main에 들어올 때 | 태그와 GitHub Release, 새 버전 알림 |

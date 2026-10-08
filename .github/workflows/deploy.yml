@@ -91,15 +91,22 @@ jobs:
   deploy:
     name: 클러스터 배포
     needs: image
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    # main에 머지되면 학교 서버(selfhosted)에 자동 배포한다. 끄려면 저장소 변수 AUTO_DEPLOY=false
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.deploy) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AUTO_DEPLOY != 'false')
     runs-on: ubuntu-latest
-    environment: ${{ inputs.overlay }}   # 보호 규칙(승인자)을 걸 수 있다
+    environment: ${{ inputs.overlay || 'selfhosted' }}   # 보호 규칙(승인자)을 걸 수 있다
+    # 머지가 잇따르면 배포가 겹치지 않게 차례로 돈다
+    concurrency:
+      group: deploy-cluster
+      cancel-in-progress: false
     permissions:
       contents: read
       packages: read
     env:
-      OVERLAY: ${{ inputs.overlay }}
-      TARGET: ${{ inputs.target }}
+      OVERLAY: ${{ inputs.overlay || 'selfhosted' }}
+      TARGET: ${{ inputs.target || 'school' }}
     steps:
       - uses: actions/checkout@v4
       - name: 이미지 이름 정하기
@@ -108,7 +115,7 @@ jobs:
         run: |
           curl -sSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin
       - name: 학교 서버 SSH 터널 (target=school)
-        if: inputs.target == 'school'
+        if: env.TARGET == 'school'
         env:
           HOST: ${{ vars.SCHOOL_SSH_HOST }}
           SSH_PORT: ${{ vars.SCHOOL_SSH_PORT }}
@@ -198,7 +205,7 @@ jobs:
           rm -f "$RUNNER_TEMP/ghcr-token"
       - name: 배포 (헬스 체크 실패 시 직전 버전으로 자동 롤백)
         env:
-          ROLLBACK_TEST: ${{ inputs.rollback_test }}
+          ROLLBACK_TEST: ${{ inputs.rollback_test || 'false' }}
           ROLLOUT_TIMEOUT: ${{ vars.ROLLOUT_TIMEOUT_SECONDS || '300' }}
         run: deploy/scripts/rollout.sh
       - name: 도메인 연결 (Cloudflare Tunnel, Secret CLOUDFLARE_TUNNEL_TOKEN이 있을 때만)
@@ -237,6 +244,6 @@ jobs:
           telegram-bot-token: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_BOT_TOKEN || '' }}
           telegram-chat-id: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_CHAT_ID || '' }}
           title: "${{ vars.SERVICE_NAME || github.event.repository.name }} 배포 ${{ job.status == 'success' && '성공' || '실패(직전 버전으로 롤백 시도)' }}"
-          description: "${{ inputs.target }} · ${{ inputs.overlay }} · 커밋 ${{ github.sha }} · 실행자 ${{ github.actor }}"
+          description: "${{ env.TARGET }} · ${{ env.OVERLAY }} · 커밋 ${{ github.sha }} · 실행자 ${{ github.actor }}"
           status: ${{ job.status == 'success' && 'success' || 'failure' }}
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
