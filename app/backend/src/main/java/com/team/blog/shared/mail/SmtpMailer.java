@@ -33,6 +33,11 @@ public class SmtpMailer implements Mailer {
     }
 
     @Override
+    public boolean delivers() {
+        return true;
+    }
+
+    @Override
     public void send(Mail mail) {
         try {
             executor.execute(() -> deliver(mail));

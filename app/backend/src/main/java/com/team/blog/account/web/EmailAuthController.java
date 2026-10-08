@@ -23,6 +23,7 @@ import com.team.blog.account.application.EmailAccountService;
 import com.team.blog.account.application.EmailVerification;
 import com.team.blog.account.application.LoginOutcome;
 import com.team.blog.account.application.PasswordService;
+import com.team.blog.account.application.SignupEmailCode;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.LoginSessions;
@@ -38,10 +39,17 @@ public class EmailAuthController {
     private final LoginSessions sessions;
     private final ClientIpResolver ipResolver;
     private final ClientRegistrationRepository clients;
+    private final SignupEmailCode signupCode;
+
+    /** 가입 화면에서 인증번호를 맞힌 이메일과 그 시각 (spec 065). 이 브라우저 세션에만 둔다 */
+    static final String VERIFIED_EMAIL = "signup.verifiedEmail";
+    static final String VERIFIED_AT = "signup.verifiedAt";
 
     public EmailAuthController(EmailAccountService accounts, EmailVerification verification, PasswordService passwords,
-                               LoginSessions sessions, ClientIpResolver ipResolver, ClientRegistrationRepository clients) {
+                               LoginSessions sessions, ClientIpResolver ipResolver, ClientRegistrationRepository clients,
+                               SignupEmailCode signupCode) {
         this.clients = clients;
+        this.signupCode = signupCode;
         this.accounts = accounts;
         this.verification = verification;
         this.passwords = passwords;
@@ -56,7 +64,36 @@ public class EmailAuthController {
         if (clients instanceof Iterable<?> it) {
             for (Object r : it) social.add(((ClientRegistration) r).getRegistrationId());
         }
-        return Map.of("email", true, "social", social);
+        return Map.of("email", true, "social", social, "emailCode", signupCode.required());
+    }
+
+    public record EmailCodeRequest(String email) {}
+
+    /** 가입 전 인증번호 보내기 (spec 065). 이미 가입된 이메일이면 보내지 않고 알려 준다(가입 응답과 같은 노출 범위). */
+    @PostMapping("/api/auth/signup/email-code")
+    public ResponseEntity<Map<String, Object>> sendCode(@RequestBody EmailCodeRequest b, HttpServletRequest request) {
+        signupCode.send(b.email(), ipResolver.resolve(request));
+        return ResponseEntity.accepted().body(Map.of("expiresInSeconds", SignupEmailCode.CODE_TTL.toSeconds()));
+    }
+
+    public record EmailCodeConfirm(String email, String code) {}
+
+    @PostMapping("/api/auth/signup/email-code/verify")
+    public Map<String, Object> confirmCode(@RequestBody EmailCodeConfirm b, HttpServletRequest request) {
+        String email = signupCode.confirm(b.email(), b.code());
+        HttpSession session = request.getSession(true);
+        session.setAttribute(VERIFIED_EMAIL, email);
+        session.setAttribute(VERIFIED_AT, Instant.now());
+        return Map.of("verified", true, "email", email);
+    }
+
+    /** 인증한 지 30분이 지났으면 없는 것으로 본다. */
+    private static String verifiedEmail(HttpSession session) {
+        if (session == null) return null;
+        Object email = session.getAttribute(VERIFIED_EMAIL);
+        Object at = session.getAttribute(VERIFIED_AT);
+        if (!(email instanceof String e) || !(at instanceof Instant t)) return null;
+        return t.plus(SignupEmailCode.VERIFIED_TTL).isAfter(Instant.now()) ? e : null;
     }
 
     /** agreeAi는 선택 항목이라 보내지 않으면 동의하지 않은 것으로 본다. */
@@ -67,7 +104,13 @@ public class EmailAuthController {
     public ResponseEntity<Map<String, String>> signup(@RequestBody EmailSignupRequest b, HttpServletRequest request,
                                                       HttpServletResponse response) {
         MemberPrincipal principal = accounts.signup(new EmailAccountService.EmailSignupForm(b.email(), b.handleBody(),
-                b.password(), b.passwordConfirm(), b.nickname(), b.agreeTerms(), b.agreePrivacy(), Boolean.TRUE.equals(b.agreeAi())));
+                b.password(), b.passwordConfirm(), b.nickname(), b.agreeTerms(), b.agreePrivacy(), Boolean.TRUE.equals(b.agreeAi())),
+                verifiedEmail(request.getSession(false)));
+        HttpSession before = request.getSession(false);
+        if (before != null) {
+            before.removeAttribute(VERIFIED_EMAIL);
+            before.removeAttribute(VERIFIED_AT);
+        }
         String target = LoginFlow.popRedirect(request.getSession(true));
         sessions.login(request, response, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("handle", principal.handle(), "redirect", target));

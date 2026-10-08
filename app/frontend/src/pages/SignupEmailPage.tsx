@@ -8,11 +8,17 @@ import { cleanHandleInput, passwordOk } from '../lib/password'
 import { Link, navigate, useLocation } from '../lib/router'
 
 interface Terms { termsEffectiveDate: string; privacyEffectiveDate: string }
-interface Check { available: boolean; message: string | null; suggestion?: string | null }
+interface Check { available: boolean; message: string | null; suggestion?: string | null; code?: string | null }
+
+const RESEND_SECONDS = 60
+const normEmail = (v: string) => v.trim().toLowerCase()
+const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
 
 /**
  * 이메일 가입 (004 US1, docs/08 §3): 이메일을 치는 동안 주소를 미리 채우고, 주소를 직접 고치면 더는 바꾸지 않는다.
  * 비밀번호는 규칙별 ✓로 보여 주고, 최종 검사는 서버가 한다.
+ * 아이디(이메일)는 치는 동안 가입 여부를 확인하고, [인증]으로 받은 6자리 번호를 이 화면에서 넣어 인증한다 (spec 065).
+ * 아이디 사용 가능·블로그 주소 사용 가능·이메일 인증이 모두 끝나야 가입 버튼이 켜진다.
  */
 export function SignupEmailPage() {
   const { me, refresh } = useAuth()
@@ -33,7 +39,18 @@ export function SignupEmailPage() {
   const [emailTaken, setEmailTaken] = useState(false)
   const [withdrawnAccount, setWithdrawnAccount] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const timers = useRef<{ s?: number; h?: number; n?: number }>({})
+  const [codeRequired, setCodeRequired] = useState(false)
+  const [emailCheck, setEmailCheck] = useState<Check | null>(null)
+  const [code, setCode] = useState('')
+  const [sentTo, setSentTo] = useState<string | null>(null)
+  const [expiresAt, setExpiresAt] = useState(0)
+  const [resendAt, setResendAt] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null)
+  const [codeMsg, setCodeMsg] = useState<{ text: string; error: boolean } | null>(null)
+  const [sending, setSending] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const timers = useRef<{ s?: number; h?: number; n?: number; e?: number }>({})
 
   useEffect(() => {
     if (me?.authenticated) navigate('/', { replace: true })
@@ -41,7 +58,25 @@ export function SignupEmailPage() {
 
   useEffect(() => {
     api<Terms>('/api/terms/current').then(setTermsInfo).catch(() => undefined)
+    api<{ emailCode?: boolean }>('/api/auth/providers').then((r) => setCodeRequired(!!r.emailCode)).catch(() => undefined)
   }, [])
+
+  // 아이디(이메일) 확인: 형식과 가입 여부
+  useEffect(() => {
+    const e = normEmail(email)
+    clearTimeout(timers.current.e)
+    if (!e) return setEmailCheck(null)
+    timers.current.e = window.setTimeout(() => {
+      api<Check>(`/api/emails/availability?email=${encodeURIComponent(e)}`).then(setEmailCheck).catch(() => setEmailCheck(null))
+    }, 500)
+  }, [email])
+
+  // 인증번호 남은 시간·다시 보내기 대기 시간 표시
+  useEffect(() => {
+    if (!sentTo || verifiedEmail) return
+    const t = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [sentTo, verifiedEmail])
 
   // 이메일 앞부분으로 주소 미리 채우기 (주소 칸을 직접 고친 뒤로는 하지 않는다)
   useEffect(() => {
@@ -77,6 +112,50 @@ export function SignupEmailPage() {
     }, 500)
   }, [nickname])
 
+  const verified = !!verifiedEmail && verifiedEmail === normEmail(email)
+  const codeOpen = !!sentTo && sentTo === normEmail(email) && !verified
+  const resendLeft = Math.max(0, Math.ceil((resendAt - now) / 1000))
+  const expireLeft = Math.max(0, Math.ceil((expiresAt - now) / 1000))
+
+  const sendCode = async () => {
+    const target = normEmail(email)
+    setSending(true)
+    setCodeMsg(null)
+    setEmailTaken(false)
+    setWithdrawnAccount(false)
+    try {
+      const r = await api<{ expiresInSeconds: number }>('/api/auth/signup/email-code', { method: 'POST', body: { email: target } })
+      const t = Date.now()
+      setSentTo(target)
+      setCode('')
+      setNow(t)
+      setExpiresAt(t + r.expiresInSeconds * 1000)
+      setResendAt(t + RESEND_SECONDS * 1000)
+      setCodeMsg({ text: '인증번호를 보냈어요. 메일함(스팸함 포함)을 확인해 주세요.', error: false })
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 'EMAIL_TAKEN') setEmailTaken(true)
+      else if (err instanceof ApiError && err.code === 'WITHDRAWN_ACCOUNT') setWithdrawnAccount(true)
+      else setCodeMsg({ text: err instanceof ApiError ? err.message : '인증번호를 보내지 못했어요.', error: true })
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const confirmCode = async () => {
+    setConfirming(true)
+    try {
+      const r = await api<{ email: string }>('/api/auth/signup/email-code/verify', { method: 'POST', body: { email: sentTo, code } })
+      setVerifiedEmail(r.email)
+      setCodeMsg(null)
+      setErrors((prev) => { const { email: _drop, ...rest } = prev; return rest })
+    } catch (err) {
+      if (err instanceof ApiError && (err.code === 'CODE_EXPIRED' || err.code === 'CODE_TOO_MANY_TRIES')) setResendAt(0)
+      setCodeMsg({ text: err instanceof ApiError ? err.message : '인증하지 못했어요.', error: true })
+    } finally {
+      setConfirming(false)
+    }
+  }
+
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -109,17 +188,52 @@ export function SignupEmailPage() {
     }
   }
 
+  const emailUsable = emailCheck?.available === true
   const ready = agreed.terms && agreed.privacy && passwordOk(password, email) && password === confirm && body.length >= 3
+    && handleCheck?.available === true && emailUsable && (!codeRequired || verified)
+  const emailHelp = errors.email ?? (emailTaken || withdrawnAccount ? null
+    : emailCheck == null ? '로그인할 때 쓰는 아이디예요.'
+    : emailCheck.available ? (verified ? '인증을 마쳤어요.' : codeOpen ? '쓸 수 있는 아이디예요. 메일로 받은 인증번호를 넣어 주세요.'
+      : codeRequired ? '쓸 수 있는 아이디예요. [인증]을 눌러 인증번호를 받아 주세요.' : '쓸 수 있는 아이디예요.')
+    : emailCheck.message)
+  const sendLabel = verified ? '인증됨' : sending ? '보내는 중…' : codeOpen && resendLeft > 0 ? `다시 보내기 ${resendLeft}초` : codeOpen ? '다시 보내기' : '인증'
 
   return (
     <main className="container narrow auth-page">
       <h1>이메일로 가입</h1>
       <form onSubmit={submit} className="form" noValidate>
-        <label className="field">
-          <span>이메일</span>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254}
-                 autoComplete="email" required aria-invalid={!!errors.email || emailTaken || withdrawnAccount} />
-          {errors.email && <small className="error">{errors.email}</small>}
+        <div className="field">
+          <span id="signup-email-label">아이디(이메일)</span>
+          <div className="input-action">
+            <input id="signup-email" aria-labelledby="signup-email-label" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setEmailTaken(false); setWithdrawnAccount(false) }}
+                   maxLength={254} autoComplete="email" required aria-describedby="email-help"
+                   aria-invalid={!!errors.email || emailTaken || withdrawnAccount || emailCheck?.available === false} />
+            {codeRequired && (
+              <button type="button" className={verified ? 'btn btn-outline ok' : 'btn btn-outline'} onClick={sendCode}
+                      disabled={verified || sending || !emailUsable || (codeOpen && resendLeft > 0)}
+                      title={verified ? '이 이메일은 인증을 마쳤어요' : codeOpen ? '인증번호를 새로 보내요. 앞서 보낸 번호는 쓸 수 없게 돼요'
+                        : '아이디를 확인하고 이 이메일로 6자리 인증번호를 보내요'}>
+                {verified ? '✓ ' : ''}{sendLabel}
+              </button>
+            )}
+          </div>
+          {emailHelp && (
+            <small id="email-help" className={errors.email || emailCheck?.available === false ? 'error' : verified ? 'ok' : 'muted'}>{emailHelp}</small>
+          )}
+          {codeOpen && (
+            <div className="input-action">
+              <input aria-label="인증번호 6자리" value={code} inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                     placeholder="인증번호 6자리" onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (code.length === 6) void confirmCode() } }} />
+              <button type="button" className="btn btn-primary" onClick={confirmCode} disabled={confirming || code.length !== 6 || expireLeft === 0}
+                      title="받은 인증번호가 맞는지 확인해요">
+                {confirming ? '확인 중…' : '확인'}
+              </button>
+            </div>
+          )}
+          {codeOpen && expireLeft > 0 && <small className="muted">{mmss(expireLeft)} 안에 넣어 주세요.</small>}
+          {codeOpen && expireLeft === 0 && !codeMsg?.error && <small className="error">인증번호가 만료됐어요. 다시 보내기를 눌러 주세요.</small>}
+          {codeMsg && !verified && <small className={codeMsg.error ? 'error' : 'muted'} role={codeMsg.error ? 'alert' : undefined}>{codeMsg.text}</small>}
           {withdrawnAccount && (
             <div className="banner banner-warn" role="alert">
               탈퇴 신청한 계정이 있어요. 로그인하면 복구할 수 있어요.
@@ -137,7 +251,7 @@ export function SignupEmailPage() {
               </div>
             </div>
           )}
-        </label>
+        </div>
         <label className="field">
           <span>블로그 주소</span>
           <div className="input-prefix">
@@ -181,7 +295,12 @@ export function SignupEmailPage() {
                           privacyDate={terms?.privacyEffectiveDate} error={errors.agreeTerms ?? errors.agreePrivacy} />
         {errors.form && <div className="banner banner-warn" role="alert">{errors.form}</div>}
         <button className="btn btn-primary btn-block" disabled={submitting || !ready}>{submitting ? '가입하는 중…' : '가입하기'}</button>
-        <p className="muted small">가입하면 인증 메일을 보내요. 메일의 링크를 눌러야 글을 쓸 수 있어요.</p>
+        {!ready && !submitting && (
+          <p className="muted small">
+            {codeRequired && !verified ? '아이디 확인과 이메일 인증을 마치면 가입할 수 있어요.' : '빠진 항목을 채우면 가입할 수 있어요.'}
+          </p>
+        )}
+        {!codeRequired && <p className="muted small">가입하면 인증 메일을 보내요. 메일의 링크를 눌러야 글을 쓸 수 있어요.</p>}
       </form>
       <p className="auth-links small">이미 계정이 있나요? <Link to="/login">로그인</Link></p>
     </main>

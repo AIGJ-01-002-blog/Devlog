@@ -51,7 +51,8 @@ public class SecurityConfig {
     /** 로그인하지 않아도 보낼 수 있는 쓰기 요청 (가입 대기·로그인·공개 기록 API). */
     static final String[] PUBLIC_WRITES = {
             "/api/auth/signup", "/api/auth/redirect", "/api/dev/login",
-            "/api/auth/login", "/api/auth/signup/email", "/api/auth/email/verify", "/api/auth/email/resend",
+            "/api/auth/login", "/api/auth/signup/email", "/api/auth/signup/email-code", "/api/auth/signup/email-code/verify",
+            "/api/auth/email/verify", "/api/auth/email/resend",
             "/api/auth/password/reset-request", "/api/auth/password/reset", "/api/auth/password/reset-check",
             "/api/markdown/preview-public", "/api/posts/*/views", "/api/visits"
     };

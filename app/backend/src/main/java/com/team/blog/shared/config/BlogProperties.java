@@ -45,7 +45,9 @@ public record BlogProperties(
                        @DefaultValue("30m") Duration resetTokenTtl,
                        @DefaultValue("5") int loginLockThreshold,
                        @DefaultValue("15m") Duration loginLockDuration,
-                       @DefaultValue("devlog <no-reply@devlog.local>") String mailFrom) {}
+                       @DefaultValue("devlog <no-reply@devlog.local>") String mailFrom,
+                       // 가입 화면 이메일 인증번호 (spec 065): auto는 메일을 실제로 보내거나 개발 환경이면 요구, on·off는 강제
+                       @DefaultValue("auto") String signupEmailCode) {}
 
     public record Handle(@DefaultValue("16") int autoBodyMaxLength, @DefaultValue Set<String> reserved) {}
 

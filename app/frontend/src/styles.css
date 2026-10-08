@@ -279,6 +279,11 @@ select { width: auto; }
   border-radius: var(--radius) 0 0 var(--radius); background: var(--color-surface-2); color: var(--color-text-muted);
 }
 .input-prefix input { border-radius: 0 var(--radius) var(--radius) 0; }
+/* 입력칸 옆 버튼 (가입 화면 [인증]·[확인], spec 065). 좁은 화면에서도 한 줄에 두고 입력칸이 줄어든다 */
+.input-action { display: flex; align-items: stretch; gap: 8px; }
+.input-action input { flex: 1; min-width: 0; }
+.input-action .btn { flex: none; height: auto; white-space: nowrap; min-width: 72px; }
+.input-action .btn.ok { color: var(--color-ok-text); border-color: currentColor; opacity: 1; }
 .badge, .chip {
   display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px;
   font-size: 0.75rem; font-weight: 600; background: var(--color-surface-2); color: var(--color-text-2);

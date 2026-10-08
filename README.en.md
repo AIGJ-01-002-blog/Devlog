@@ -369,6 +369,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.39.0 | 2026-10-09 | Sign-up page checks the ID (email) and verifies it with an emailed code | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.39.0) |
 | v1.38.0 | 2026-10-09 | Admin dashboard shows site visitors (unique visitors and visits) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.38.0) |
 | v1.37.2 | 2026-10-09 | Requests with invalid header values (e.g. a token with a line break) now get 400 with guidance instead of 500 | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.2) |
 | v1.37.1 | 2026-10-08 | /mcp guide adds how to connect from the Claude app as a connector | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.1) |
