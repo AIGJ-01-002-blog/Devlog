@@ -69,7 +69,12 @@ jobs:
                   p += 1
 
           issues = pages("/api/issues/search", "issues", componentKeys=project, resolved="false")
-          hotspots = pages("/api/hotspots/search", "hotspots", projectKey=project, status="TO_REVIEW")
+          try:
+              hotspots = pages("/api/hotspots/search", "hotspots", projectKey=project, status="TO_REVIEW")
+          except urllib.error.HTTPError as e:
+              # 핫스팟 조회는 프로젝트 Browse 권한이 있어야 한다. 분석 전용 토큰이면 403이라 이슈만 남긴다
+              print(f"::warning::핫스팟을 받지 못했습니다(HTTP {e.code}). 토큰에 프로젝트 Browse 권한이 필요합니다")
+              hotspots = []
           os.makedirs("sonar", exist_ok=True)
           json.dump(issues, open("sonar/issues.json", "w"), ensure_ascii=False, indent=1)
           json.dump(hotspots, open("sonar/hotspots.json", "w"), ensure_ascii=False, indent=1)
