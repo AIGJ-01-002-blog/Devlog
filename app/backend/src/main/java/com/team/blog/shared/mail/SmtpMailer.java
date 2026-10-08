@@ -1,7 +1,9 @@
 package com.team.blog.shared.mail;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PreDestroy;
 
@@ -19,7 +21,11 @@ public class SmtpMailer implements Mailer {
     private static final Logger log = LoggerFactory.getLogger(SmtpMailer.class);
     private final JavaMailSender sender;
     private final String from;
-    private final ExecutorService executor = Executors.newFixedThreadPool(2, Thread.ofPlatform().name("smtp-", 0).daemon().factory());
+    /** 메일 서버가 막혀도 기다리는 메일이 끝없이 쌓이지 않게 하는 상한. 넘치면 보내지 않고 기록만 한다 */
+    static final int QUEUE_LIMIT = 1000;
+    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(QUEUE_LIMIT), Thread.ofPlatform().name("smtp-", 0).daemon().factory(),
+            new ThreadPoolExecutor.AbortPolicy());
 
     public SmtpMailer(JavaMailSender sender, String from) {
         this.sender = sender;
@@ -28,18 +34,24 @@ public class SmtpMailer implements Mailer {
 
     @Override
     public void send(Mail mail) {
-        executor.submit(() -> {
-            try {
-                SimpleMailMessage m = new SimpleMailMessage();
-                m.setFrom(from);
-                m.setTo(mail.to());
-                m.setSubject(mail.subject());
-                m.setText(mail.body());
-                sender.send(m);
-            } catch (RuntimeException e) {
-                log.warn("메일 발송 실패: to={} subject={} error={}", OutboxMailer.mask(mail.to()), mail.subject(), failure(e));
-            }
-        });
+        try {
+            executor.execute(() -> deliver(mail));
+        } catch (RejectedExecutionException e) {
+            log.warn("메일 발송 대기열이 가득 차 보내지 못함: to={} subject={}", OutboxMailer.mask(mail.to()), mail.subject());
+        }
+    }
+
+    private void deliver(Mail mail) {
+        try {
+            SimpleMailMessage m = new SimpleMailMessage();
+            m.setFrom(from);
+            m.setTo(mail.to());
+            m.setSubject(mail.subject());
+            m.setText(mail.body());
+            sender.send(m);
+        } catch (RuntimeException e) {
+            log.warn("메일 발송 실패: to={} subject={} error={}", OutboxMailer.mask(mail.to()), mail.subject(), failure(e));
+        }
     }
 
     /** 예외 종류와 맨 안쪽 원인 종류만. 메시지에는 주소가 들어 있을 수 있다. */
