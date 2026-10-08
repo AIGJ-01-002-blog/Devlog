@@ -43,7 +43,7 @@ public class McpUploadController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> upload(@PathVariable String ticket, HttpServletRequest request) throws IOException {
         long declared = request.getContentLengthLong();
-        if (declared > PostImages.MAX_BYTES) throw tooLarge();
+        if (declared > PostImages.MAX_BYTES) return tooLarge();
         Optional<McpImages.Ticket> t = images.useTicket(ticket);
         if (t.isEmpty()) {
             return json(HttpStatus.NOT_FOUND, Map.of("error", "올리기 주소가 없거나 이미 썼거나 10분이 지났어요. create_image_upload_link로 새 주소를 받아 주세요."));
@@ -56,7 +56,7 @@ public class McpUploadController {
         try (InputStream in = request.getInputStream()) {
             body = in.readNBytes(PostImages.MAX_BYTES + 1);
         }
-        if (body.length > PostImages.MAX_BYTES) throw tooLarge();
+        if (body.length > PostImages.MAX_BYTES) return tooLarge();
         if (body.length == 0) return json(HttpStatus.BAD_REQUEST, Map.of("error", "사진 파일이 비어 있어요."));
         try {
             McpImages.Uploaded up = images.upload(t.get().memberId(), body, t.get().alt());
@@ -70,7 +70,7 @@ public class McpUploadController {
         return ResponseEntity.status(status).cacheControl(CacheControl.noStore()).contentType(MediaType.APPLICATION_JSON).body(body);
     }
 
-    private static ApiException tooLarge() {
-        return new ApiException(HttpStatus.CONTENT_TOO_LARGE, "IMAGE_TOO_LARGE", "사진은 10MB까지 올릴 수 있어요.");
+    private static ResponseEntity<Map<String, Object>> tooLarge() {
+        return json(HttpStatus.CONTENT_TOO_LARGE, Map.of("error", "사진은 10MB까지 올릴 수 있어요."));
     }
 }

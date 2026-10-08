@@ -201,4 +201,30 @@ class McpToolsPlusTest extends IntegrationTest {
         mvc.perform(put("/api/mcp/uploads/" + "x".repeat(32)).content(png(10, 10))).andExpect(status().isNotFound());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM resource WHERE uploader_id = ?", Integer.class, me.memberId())).isEqualTo(1);
     }
+
+    @Test
+    void 같은_올리기_주소로_동시에_보내도_하나만_올라간다() throws Exception {
+        Session me = signup(uniqueLogin("mcpcon"));
+        String t = token(me, "WRITE");
+        String path = text(call(t, "create_image_upload_link", Map.of())).replaceAll("(?s).*(/api/mcp/uploads/[A-Za-z0-9_-]+).*", "$1");
+        byte[] img = png(400, 300);
+        java.util.concurrent.CountDownLatch start = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(4);
+        try {
+            List<java.util.concurrent.Future<Integer>> results = new java.util.ArrayList<>();
+            for (int i = 0; i < 4; i++) {
+                results.add(pool.submit(() -> {
+                    start.await();
+                    return mvc.perform(put(path).contentType(MediaType.IMAGE_PNG).content(img)).andReturn().getResponse().getStatus();
+                }));
+            }
+            start.countDown();
+            List<Integer> codes = new java.util.ArrayList<>();
+            for (var f : results) codes.add(f.get(30, java.util.concurrent.TimeUnit.SECONDS));
+            assertThat(codes).containsOnlyOnce(201).containsOnly(201, 404);
+        } finally {
+            pool.shutdownNow();
+        }
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM resource WHERE uploader_id = ?", Integer.class, me.memberId())).isEqualTo(1);
+    }
 }
