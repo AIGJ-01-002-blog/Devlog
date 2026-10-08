@@ -38,12 +38,12 @@ spec:
                 secretKeyRef: {name: cloudflared-token, key: token}
           ports:
             - {name: metrics, containerPort: 2000}
-          # /ready는 Cloudflare와 연결이 하나 이상 살아 있을 때만 200
+          # /ready는 Cloudflare와 연결이 하나 이상 살아 있을 때만 200. 연결이 잠깐 끊겨도 재시작하지 않게 liveness는 프로세스만 보는 /healthcheck
           readinessProbe:
             httpGet: {path: /ready, port: metrics}
             periodSeconds: 10
           livenessProbe:
-            httpGet: {path: /ready, port: metrics}
+            httpGet: {path: /healthcheck, port: metrics}
             initialDelaySeconds: 30
             periodSeconds: 20
             failureThreshold: 3

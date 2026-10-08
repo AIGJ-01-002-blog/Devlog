@@ -132,6 +132,7 @@ jobs:
         run: |
           kubectl get ns blog >/dev/null 2>&1 || kubectl create ns blog
           umask 077
+          trap 'rm -f "$RUNNER_TEMP/ghcr-token"' EXIT
           printf '%s' "$GHCR_PULL_TOKEN" > "$RUNNER_TEMP/ghcr-token"
           kubectl -n blog create secret docker-registry ghcr-pull --docker-server=ghcr.io \
             --docker-username="$GHCR_PULL_USER" --docker-password="$(cat "$RUNNER_TEMP/ghcr-token")" \
@@ -152,6 +153,7 @@ jobs:
           fi
           # 토큰은 명령줄에 남지 않게 러너 임시 파일로만 넘긴다
           umask 077
+          trap 'rm -f "$RUNNER_TEMP/tunnel-token"' EXIT
           printf '%s' "$CLOUDFLARE_TUNNEL_TOKEN" > "$RUNNER_TEMP/tunnel-token"
           kubectl -n blog create secret generic cloudflared-token --from-file=token="$RUNNER_TEMP/tunnel-token" \
             --dry-run=client -o yaml | kubectl apply -f -
