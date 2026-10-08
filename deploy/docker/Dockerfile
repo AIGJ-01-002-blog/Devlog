@@ -2,15 +2,16 @@
 # 빌드: 저장소 루트에서  docker build -f deploy/docker/Dockerfile -t blog-app .
 # 화면(React)을 먼저 빌드해 jar의 static/에 넣는다. 서버가 그 index.html에 머리말·첫 화면을 채워 보낸다.
 # Gradle·Maven 어느 쪽이든 래퍼(gradlew/mvnw)가 있으면 그것으로 빌드한다.
+# amd64·arm64(Oracle 무료 Ampere VM) 두 가지로 만든다. 화면·jar는 아키텍처와 무관해 빌드 단계는 러너 아키텍처($BUILDPLATFORM)에서 한 번만 돈다.
 
-FROM node:22-alpine AS web
+FROM --platform=$BUILDPLATFORM node:22-alpine AS web
 WORKDIR /web
 COPY app/frontend/package.json app/frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY app/frontend/ ./
 RUN npm run build
 
-FROM eclipse-temurin:21-jdk AS build
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk AS build
 WORKDIR /src
 COPY app/backend/ ./
 COPY --from=web /web/dist/ ./src/main/resources/static/

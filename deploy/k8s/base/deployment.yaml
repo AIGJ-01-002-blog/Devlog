@@ -21,6 +21,9 @@ spec:
         app.kubernetes.io/name: blog-app
     spec:
       serviceAccountName: blog-app
+      # GHCR 비공개 이미지를 받는 Secret (deploy.yml이 만든다). 없으면 노드에 이미 있는 이미지로 뜬다(로컬 검증)
+      imagePullSecrets:
+        - name: ghcr-pull
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 40
       securityContext:

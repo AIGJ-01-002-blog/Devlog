@@ -6,6 +6,17 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.22.3] - 2026-10-08
+
+Oracle 무료 VM 운영 서버와 devlog.life 도메인 연결 준비 (배포 구성만 바뀜).
+
+### 배포
+- Cloudflare Tunnel로 devlog.life를 클러스터 인그레스에 잇는 cloudflared 2개(`deploy/k8s/addons/cloudflare-tunnel`). GitHub Secret `CLOUDFLARE_TUNNEL_TOKEN`이 있을 때만 배포 워크플로가 적용한다
+- 앱 이미지를 amd64·arm64 두 가지로 만든다(Oracle 무료 Ampere VM). 화면·jar 빌드는 한 번만 한다
+- 배포 때 GHCR 비공개 이미지를 받을 Secret `ghcr-pull`을 만들고 앱이 쓴다(`GHCR_PULL_TOKEN`, 없으면 실행 토큰)
+- 새 서버에 k3s·ingress-nginx를 설치하고 배포용 접속 파일을 만드는 `deploy/scripts/server-setup.sh`
+- 배포 문서에 운영 서버 준비와 도메인 연결 순서를 적었다
+
 ## [1.22.2] - 2026-10-08
 
 DB 백업, 무중단 배포 문서화, Gmail 비밀번호가 없을 때 메일 발송 끄기 (배포 구성만 바뀜).

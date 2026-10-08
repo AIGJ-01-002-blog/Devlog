@@ -19,7 +19,9 @@ deploy/
 │   ├── app.env                  비밀 아닌 설정 (주소, Redis DB 번호 등)
 │   └── secret.env.example       비밀값 형식. secret.env로 복사해 채운다 (커밋 금지)
 ├── k8s/overlays/local/          로컬 검증용: selfhosted와 같은 부품, 개발 로그인 켬
+├── k8s/addons/cloudflare-tunnel/ 도메인 연결용 cloudflared 2개 (토큰이 있을 때만 deploy.yml이 적용)
 ├── scripts/gen-secret-env.sh    secret.env를 임의 비밀번호로 만들어 줌
+├── scripts/server-setup.sh      새 Ubuntu 서버(Oracle 무료 VM)에 k3s·ingress-nginx 설치 + 배포용 접속 파일
 ├── scripts/rollout.sh           배포 + 헬스 체크 실패 시 자동 롤백
 └── scripts/check-no-secrets.sh  비밀값이 커밋됐는지 검사 (CI에서도 실행)
 ```
@@ -98,6 +100,8 @@ kubectl -n blog rollout status deploy/blog-app
 | Secret | `TELEGRAM_BOT_TOKEN` | 텔레그램 @BotFather → `/newbot`이 준 토큰. `APP_TELEGRAM_BOT_TOKEN`이 없으면 앱 봇(023)도 이 봇을 쓴다 | 텔레그램 알림 안 감 |
 | Secret | `APP_TELEGRAM_BOT_TOKEN` | 사용자용 앱 봇(023)을 배포 알림 봇과 나눌 때만. 있으면 `BLOG_SECRET_ENV`의 `TELEGRAM_BOT_TOKEN`을 덮어씀 | 배포 알림 봇을 같이 씀 |
 | Secret | `TELEGRAM_CHAT_ID` | 알림 받을 대화방 ID (봇에게 말을 건 뒤 `https://api.telegram.org/bot<토큰>/getUpdates`의 `chat.id`) | 텔레그램 알림 안 감 |
+| Secret | `GHCR_PULL_TOKEN` | GHCR 이미지를 받을 토큰(classic PAT, `read:packages`만). 변수 `GHCR_PULL_USER`에 토큰 주인 GitHub 아이디 | 배포 실행 토큰으로 대신(1시간 뒤 만료라 나중에 파드를 새로 띄울 때 이미지를 못 받을 수 있음) |
+| Secret | `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Tunnel 토큰 (아래 "도메인 연결") | 도메인 연결 건너뜀 |
 | Secret | `SONAR_TOKEN` | SonarCloud(sonarcloud.io → My Account → Security) 토큰 | 품질 검사 건너뜀 |
 | Secret | `SONAR_HOST_URL` | 학교 SonarQube를 쓸 때만 `http://s4.java21.net:9000` | SonarCloud 사용 |
 | Variable | `DISCORD_ENABLED` | `true`면 Discord 알림 켬 | 꺼짐 |
@@ -130,6 +134,31 @@ kubectl -n blog create job pg-backup-now --from=cronjob/pg-backup   # 지금 바
 # 복구: pg-backup 볼륨을 붙인 파드(라벨 app.kubernetes.io/name=pg-backup)에서
 #   gzip -dc /backup/blog-<날짜>.sql.gz | psql -h postgres -d blog -v ON_ERROR_STOP=1
 ```
+
+## 운영 서버 준비 (Oracle Cloud 무료 VM)
+
+1. Oracle Cloud에서 인스턴스 생성: 이미지 Ubuntu 24.04, 모양 `VM.Standard.A1.Flex`(Ampere, 무료 범위 4 OCPU·24GB 안에서 2 OCPU·12GB 권장), SSH 키 등록.
+2. 인스턴스의 VCN → 보안 목록 → 수신 규칙에 TCP 6443(쿠버네티스 API, GitHub Actions 배포용) 추가. 80·443은 열지 않는다(Cloudflare Tunnel이 안에서 밖으로 연결).
+3. SSH로 접속해 `curl -fsSL https://raw.githubusercontent.com/AIGJ-01-002-blog/docs/main/deploy/scripts/server-setup.sh | sudo bash`
+4. `sudo cat /root/kubeconfig-github.yaml` 내용을 GitHub Secret `KUBECONFIG`에 넣는다.
+5. `BLOG_SECRET_ENV`: 로컬에서 `deploy/scripts/gen-secret-env.sh selfhosted`로 만든 secret.env 내용 전체.
+6. 아래 "도메인 연결"의 토큰을 넣고 Actions → 배포 → Run workflow (overlay `selfhosted`).
+
+이미지는 amd64·arm64 두 가지로 만들어 Ampere(arm64)에서도 뜬다. API 6443을 인터넷에 여는 대신 인증서로만 접속되며, 나중에 서버에 GitHub self-hosted 러너를 두면 이 포트를 닫을 수 있다.
+
+## 도메인 연결 (devlog.life, Cloudflare Tunnel)
+
+클러스터 안 cloudflared가 Cloudflare로 먼저 연결을 열고, Cloudflare가 devlog.life 요청을 그 연결로 보내 준다. 서버에 공인 IP나 열린 포트가 필요 없고 https 인증서도 Cloudflare가 붙인다.
+
+1. Cloudflare에 devlog.life를 추가하고 가비아 네임서버를 Cloudflare 것으로 바꾼다(사이트가 Active가 될 때까지).
+2. Cloudflare 대시보드 → Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared, 이름 `devlog`.
+3. 설치 화면 명령의 `--token` 뒤 값(또는 `eyJ`로 시작하는 토큰)만 복사해 GitHub Secret `CLOUDFLARE_TUNNEL_TOKEN`에 넣는다. 설치 명령은 실행하지 않는다.
+4. 같은 터널의 Public Hostname을 추가한다.
+   - `devlog.life` → Service `HTTP`, `ingress-nginx-controller.ingress-nginx.svc.cluster.local:80`
+   - `www.devlog.life`는 인그레스에 없으므로 Cloudflare 리디렉션 규칙으로 devlog.life에 보낸다
+5. Actions → 배포 → Run workflow. 앱을 배포한 뒤 토큰으로 Secret `cloudflared-token`을 만들고 cloudflared 2개를 띄운다.
+
+cloudflared는 2개가 각각 Cloudflare에 연결하므로 하나가 재시작돼도 주소는 끊기지 않는다(PDB `minAvailable: 1`). 확인: `kubectl -n blog get pods -l app.kubernetes.io/name=cloudflared`, Cloudflare 터널 상태가 HEALTHY.
 
 ## 로컬에서 검증
 
