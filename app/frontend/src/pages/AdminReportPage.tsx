@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AdminNav } from '../components/AdminNav'
 import { AuthorPanel } from '../components/AuthorPanel'
 import { SuspendFields } from '../components/SuspendForm'
 import { ApiError } from '../lib/api'
@@ -64,6 +65,7 @@ export function AdminReportPage({ id }: { id: string }) {
 
   return (
     <main className="container narrow admin">
+      <AdminNav />
       <p><Link to="/admin/reports">← 신고 목록</Link></p>
       <h1 className="page-title">{c.targetType === 'POST' ? '글' : '댓글'} 신고 <span className="badge">{STATUS_LABEL[c.status]}</span></h1>
 

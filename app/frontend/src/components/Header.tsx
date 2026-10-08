@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { isStaff } from '../lib/admin'
 import { loginPath, useAuth } from '../lib/auth'
 import { Link, navigate, useLocation } from '../lib/router'
 import { Avatar } from './Avatar'
@@ -35,6 +36,13 @@ export function Header() {
           <Link to="/tags" className="btn btn-text header-nav" data-tip="태그별로 글 모아 보기">태그</Link>
           {member ? (
             <>
+              {isStaff(member.role) && (
+                <Link to="/admin" className="btn btn-text header-admin header-nav" aria-label="관리자 페이지" data-tip="관리자 페이지: 통계·글·회원·신고 관리"
+                      aria-current={path.startsWith('/admin') ? 'page' : undefined}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2"
+                       strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z" /><path d="m9 12 2 2 4-4" /></svg>
+                </Link>
+              )}
               <NotificationBell />
               <Link to="/write" className="btn btn-outline header-write" aria-label="새 글 작성" data-tip="새 글 쓰기"><span className="long">새 글 작성</span><span className="short" aria-hidden="true">글쓰기</span><span className="icon" aria-hidden="true">✏️</span></Link>
               <div className="menu" ref={menuRef}>
@@ -55,8 +63,7 @@ export function Header() {
                     <Link to={path.startsWith('/support') ? '/support' : `/support?from=${encodeURIComponent(path)}`} role="menuitem"
                           title="궁금한 점·버그·제안을 운영자에게 보내요">문의·신고</Link>
                     <Link to="/releases" role="menuitem" title="버전마다 바뀐 점을 봐요">릴리스 노트</Link>
-                    {member.role === 'ADMIN' && <Link to="/admin/reports" role="menuitem">신고 관리</Link>}
-                    {member.role === 'ADMIN' && <Link to="/admin/inquiries" role="menuitem">문의 관리</Link>}
+                    {isStaff(member.role) && <Link to="/admin" role="menuitem" title="통계·글·회원·신고·문의 관리">관리자 페이지</Link>}
                     <button type="button" role="menuitem" onClick={async () => {
                       await logout()
                       navigate('/')

@@ -153,7 +153,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>複数 Pod]
     I -->|/blog-images| M[(MinIO / S3<br/>画像・添付)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V18)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V19)]
     A --> R[(Redis<br/>セッション・レート制限・閲覧数・キャッシュ)]
     A --> M
     A -.任意.-> G[Google Gemini]
@@ -177,6 +177,7 @@ flowchart LR
 | **ai** | AI タグ提案（Gemini → Ollama）、メモを記事に整える | Redis（結果の保存・上限の状態） |
 | **telegram** | アカウント連携、通知の送信、メモ → 下書き | PostgreSQL |
 | **moderation** | 通報、非表示、利用停止、管理画面 | PostgreSQL |
+| **admin** | 管理者ダッシュボード、記事・会員管理（各モジュールの集計を組み立て、SQLなし） | - |
 | **shared** | Markdown のレンダリングと HTML サニタイズ、レート制限、定期ジョブのロック、エラー形式、メール | Redis |
 
 ### リクエストの流れ
@@ -244,7 +245,7 @@ GitHub Actions でテストし、イメージを作って GHCR に上げたあ�
 
 | パス | 説明 |
 | --- | --- |
-| [app/backend](app/backend) | バックエンド：Spring Boot 4.1、Java 21。機能モジュール、Flyway マイグレーション（V1~V18）、テスト |
+| [app/backend](app/backend) | バックエンド：Spring Boot 4.1、Java 21。機能モジュール、Flyway マイグレーション（V1~V19）、テスト |
 | [app/frontend](app/frontend) | フロントエンド：React 19 SPA、TypeScript、Vite。画面、自動保存（IndexedDB）、ダークモード |
 | [deploy](deploy) | デプロイ：Dockerfile、Kubernetes マニフェスト（base・selfhosted・nhn・local）、デプロイ・ロールバック・シークレット検査のスクリプト |
 | [.github](.github) | CI/CD：バックエンドと画面のテスト、イメージのビルドとデプロイ、リリース、Discord・Telegram 通知 |
@@ -321,7 +322,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub・Google ログイン、セッション、CSRF、パスごとの権限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | ドメイン全体 | 会員・記事・コメントなどドメインデータの保存 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | セッション、レート制限、閲覧数、キャッシュ | 複数の Pod が同じセッションを共有し、同時リクエストも Redis スクリプト 1 つで判定します |
-| Flyway | Boot 4.1 | DB | スキーマを V1~V18 のマイグレーションで管理し、起動時に適用します |
+| Flyway | Boot 4.1 | DB | スキーマを V1~V19 のマイグレーションで管理し、起動時に適用します |
 | commonmark-java (+ GFM 拡張) | 0.30.0 | 本文のレンダリング | Markdown → HTML。表・取り消し線・チェックリスト・自動リンク・見出しアンカー |
 | OWASP Java HTML Sanitizer | 20260924.2 | 本文のサニタイズ | レンダリングした HTML を許可リストでサニタイズし XSS を防ぎます |
 | AWS SDK for Java (S3) | 2.55.12 | media | MinIO・S3 に画像と添付をアップロードします |
@@ -367,6 +368,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.35.0 | 2026-10-08 | 管理者ページ：統計ダッシュボード、記事・会員管理、マネージャー権限 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.35.0) |
 | v1.34.0 | 2026-10-08 | AIの記事提案（話題が終わるとタイトルと範囲を提案）と深夜の日記のオン・オフ | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.34.0) |
 | v1.33.1 | 2026-10-08 | 意味検索の有効状態を起動ログに、クラスター状態に埋め込みの進み具合を表示 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.1) |
 | v1.33.0 | 2026-10-08 | 変更履歴、公開前チェック、記事の Markdown エクスポート | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |

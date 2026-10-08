@@ -8,6 +8,7 @@ import { PageAnnouncer } from './components/PageAnnouncer'
 import { MAIN_ID } from './lib/focusMain'
 import { VerifyBanner } from './components/VerifyBanner'
 import { loginPath, useAuth } from './lib/auth'
+import { isStaff } from './lib/admin'
 import { match, navigate, useLocation } from './lib/router'
 import { BlogPage } from './pages/BlogPage'
 import { SeriesPage } from './pages/SeriesPage'
@@ -49,6 +50,9 @@ const McpPage = lazyPage(() => import('./pages/McpPage'), 'McpPage')
 const OAuthAuthorizePage = lazyPage(() => import('./pages/OAuthAuthorizePage'), 'OAuthAuthorizePage')
 const SupportPage = lazyPage(() => import('./pages/SupportPage'), 'SupportPage')
 const ReleasesPage = lazyPage(() => import('./pages/ReleasesPage'), 'ReleasesPage')
+const AdminDashboardPage = lazyPage(() => import('./pages/AdminDashboardPage'), 'AdminDashboardPage')
+const AdminPostsPage = lazyPage(() => import('./pages/AdminPostsPage'), 'AdminPostsPage')
+const AdminMembersPage = lazyPage(() => import('./pages/AdminMembersPage'), 'AdminMembersPage')
 const AdminInquiriesPage = lazyPage(() => import('./pages/AdminInquiriesPage'), 'AdminInquiriesPage')
 const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage')
 
@@ -106,6 +110,9 @@ function route(path: string): ReactNode {
   if (path === '/settings/withdraw') return <RequireLogin><WithdrawPage /></RequireLogin>
   if (path === '/withdrawn') return <WithdrawnPage />
   if (path === '/account/restore') return <RequireLogin><RestorePage /></RequireLogin>
+  if (path === '/admin') return <RequireAdmin><AdminDashboardPage /></RequireAdmin>
+  if (path === '/admin/posts') return <RequireAdmin><AdminPostsPage /></RequireAdmin>
+  if (path === '/admin/members') return <RequireAdmin><AdminMembersPage /></RequireAdmin>
   if (path === '/admin/reports') return <RequireAdmin><AdminReportsPage /></RequireAdmin>
   if ((p = match('/admin/reports/:id', path))) return <RequireAdmin><AdminReportPage key={p.id} id={p.id} /></RequireAdmin>
   if (path === '/admin/inquiries') return <RequireAdmin><AdminInquiriesPage /></RequireAdmin>
@@ -127,12 +134,12 @@ function RequireLogin({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-/** 관리자 화면: 서버가 비회원은 로그인으로, 일반 회원은 404로 보내므로 여기서는 화면 안에서 옮겨 온 경우만 막는다. */
+/** 관리자 화면(관리자·매니저, 062): 서버가 비회원은 로그인으로, 일반 회원은 404로 보내므로 여기서는 화면 안에서 옮겨 온 경우만 막는다. */
 function RequireAdmin({ children }: { children: ReactNode }) {
   const { me, loading } = useAuth()
   if (loading) return <Loading />
   if (!me?.authenticated) return <RequireLogin>{children}</RequireLogin>
-  if (me.member?.role !== 'ADMIN') return <NotFoundPage />
+  if (!isStaff(me.member?.role)) return <NotFoundPage />
   return <>{children}</>
 }
 

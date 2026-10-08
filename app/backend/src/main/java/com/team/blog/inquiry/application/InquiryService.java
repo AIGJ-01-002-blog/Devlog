@@ -129,6 +129,12 @@ public class InquiryService {
         return new Page(List.copyOf(items), more ? items.getLast().id() : null);
     }
 
+    /** 관리자 대시보드(062): 아직 해결하지 않은 문의 수 */
+    public long openCount() {
+        Long n = jdbc.queryForObject("SELECT count(*) FROM inquiry WHERE status IN ('RECEIVED', 'IN_PROGRESS')", Long.class);
+        return n == null ? 0 : n;
+    }
+
     public Item detail(long id) {
         return find(id).orElseThrow(NotFoundException::new);
     }

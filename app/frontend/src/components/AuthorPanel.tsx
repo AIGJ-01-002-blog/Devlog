@@ -10,7 +10,7 @@ export function AuthorPanel({ author, linkToMember = true }: { author: AuthorInf
       <p>
         {linkToMember ? <Link to={`/admin/members/${author.handle}`}>@{author.handle}</Link> : <b>@{author.handle}</b>}
         {author.nickname && <> · {author.nickname}</>}
-        {author.admin && <span className="badge"> 관리자</span>}
+        {author.admin && <span className="badge"> {author.role === 'MANAGER' ? '매니저' : '관리자'}</span>}
         {author.suspended && <span className="badge badge-warn"> 정지 중</span>}
       </p>
       <p className="muted small">가입 {fullDate(author.joinedAt)} · 숨겨진 글·댓글 {author.hiddenCount}개</p>

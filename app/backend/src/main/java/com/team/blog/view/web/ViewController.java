@@ -47,7 +47,7 @@ public class ViewController {
         String visitorId = cookie(request, VISITOR_COOKIE);
         // 첫 방문 비회원에게 무작위 방문자 값을 준다: 1년, 스크립트로 못 읽음, 보안 연결에서만 (FR-005)
         String issued = me == null && visitorId == null ? UUID.randomUUID().toString() : null;
-        recorder.record(Long.parseLong(postId), new ViewRecorder.Visit(me == null ? null : me.id(), me != null && me.isAdmin(),
+        recorder.record(Long.parseLong(postId), new ViewRecorder.Visit(me == null ? null : me.id(), me != null && me.isStaff(),
                 visitorId, issued, ipResolver.resolve(request), request.getHeader("User-Agent"), isPrefetch(request)));
         ResponseEntity.HeadersBuilder<?> res = ResponseEntity.noContent().cacheControl(CacheControl.noStore());
         if (issued != null) {
