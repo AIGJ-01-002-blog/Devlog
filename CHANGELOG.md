@@ -6,6 +6,14 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.22.3] - 2026-10-08
+
+devlog.life 도메인 연결 준비 (배포 구성만 바뀜).
+
+### 배포
+- Cloudflare Tunnel로 devlog.life를 클러스터 인그레스에 잇는 cloudflared 2개(`deploy/k8s/addons/cloudflare-tunnel`). GitHub Secret `CLOUDFLARE_TUNNEL_TOKEN`이 있을 때만 배포 워크플로가 적용한다
+- 배포 문서에 도메인 연결 순서를 적었다
+
 ## [1.22.2] - 2026-10-08
 
 DB 백업, 무중단 배포 문서화, Gmail 비밀번호가 없을 때 메일 발송 끄기 (배포 구성만 바뀜).

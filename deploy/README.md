@@ -19,6 +19,7 @@ deploy/
 │   ├── app.env                  비밀 아닌 설정 (주소, Redis DB 번호 등)
 │   └── secret.env.example       비밀값 형식. secret.env로 복사해 채운다 (커밋 금지)
 ├── k8s/overlays/local/          로컬 검증용: selfhosted와 같은 부품, 개발 로그인 켬
+├── k8s/addons/cloudflare-tunnel/ 도메인 연결용 cloudflared 2개 (토큰이 있을 때만 deploy.yml이 적용)
 ├── scripts/gen-secret-env.sh    secret.env를 임의 비밀번호로 만들어 줌
 ├── scripts/rollout.sh           배포 + 헬스 체크 실패 시 자동 롤백
 └── scripts/check-no-secrets.sh  비밀값이 커밋됐는지 검사 (CI에서도 실행)
@@ -98,6 +99,7 @@ kubectl -n blog rollout status deploy/blog-app
 | Secret | `TELEGRAM_BOT_TOKEN` | 텔레그램 @BotFather → `/newbot`이 준 토큰. `APP_TELEGRAM_BOT_TOKEN`이 없으면 앱 봇(023)도 이 봇을 쓴다 | 텔레그램 알림 안 감 |
 | Secret | `APP_TELEGRAM_BOT_TOKEN` | 사용자용 앱 봇(023)을 배포 알림 봇과 나눌 때만. 있으면 `BLOG_SECRET_ENV`의 `TELEGRAM_BOT_TOKEN`을 덮어씀 | 배포 알림 봇을 같이 씀 |
 | Secret | `TELEGRAM_CHAT_ID` | 알림 받을 대화방 ID (봇에게 말을 건 뒤 `https://api.telegram.org/bot<토큰>/getUpdates`의 `chat.id`) | 텔레그램 알림 안 감 |
+| Secret | `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Tunnel 토큰 (아래 "도메인 연결") | 도메인 연결 건너뜀 |
 | Secret | `SONAR_TOKEN` | SonarCloud(sonarcloud.io → My Account → Security) 토큰 | 품질 검사 건너뜀 |
 | Secret | `SONAR_HOST_URL` | 학교 SonarQube를 쓸 때만 `http://s4.java21.net:9000` | SonarCloud 사용 |
 | Variable | `DISCORD_ENABLED` | `true`면 Discord 알림 켬 | 꺼짐 |
@@ -130,6 +132,20 @@ kubectl -n blog create job pg-backup-now --from=cronjob/pg-backup   # 지금 바
 # 복구: pg-backup 볼륨을 붙인 파드(라벨 app.kubernetes.io/name=pg-backup)에서
 #   gzip -dc /backup/blog-<날짜>.sql.gz | psql -h postgres -d blog -v ON_ERROR_STOP=1
 ```
+
+## 도메인 연결 (devlog.life, Cloudflare Tunnel)
+
+클러스터 안 cloudflared가 Cloudflare로 먼저 연결을 열고, Cloudflare가 devlog.life 요청을 그 연결로 보내 준다. 서버에 공인 IP나 열린 포트가 필요 없고 https 인증서도 Cloudflare가 붙인다.
+
+1. Cloudflare에 devlog.life를 추가하고 가비아 네임서버를 Cloudflare 것으로 바꾼다(사이트가 Active가 될 때까지).
+2. Cloudflare 대시보드 → Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared, 이름 `devlog`.
+3. 설치 화면 명령의 `--token` 뒤 값(또는 `eyJ`로 시작하는 토큰)만 복사해 GitHub Secret `CLOUDFLARE_TUNNEL_TOKEN`에 넣는다. 설치 명령은 실행하지 않는다.
+4. 같은 터널의 Public Hostname에 두 개를 추가한다.
+   - `devlog.life` → Service `HTTP`, `ingress-nginx-controller.ingress-nginx.svc.cluster.local:80`
+   - `www.devlog.life` → 같게 (또는 Cloudflare 리디렉션 규칙으로 devlog.life로 보냄)
+5. Actions → 배포 → Run workflow. 앱을 배포한 뒤 토큰으로 Secret `cloudflared-token`을 만들고 cloudflared 2개를 띄운다.
+
+cloudflared는 2개가 각각 Cloudflare에 연결하므로 하나가 재시작돼도 주소는 끊기지 않는다(PDB `minAvailable: 1`). 확인: `kubectl -n blog get pods -l app.kubernetes.io/name=cloudflared`, Cloudflare 터널 상태가 HEALTHY.
 
 ## 로컬에서 검증
 

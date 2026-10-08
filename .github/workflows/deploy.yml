@@ -50,6 +50,7 @@ jobs:
           for o in local nhn selfhosted; do
             kustomize build "deploy/k8s/overlays/$o" | kubeconform -strict -summary -kubernetes-version 1.33.0 -
           done
+          kustomize build deploy/k8s/addons/cloudflare-tunnel | kubeconform -strict -summary -kubernetes-version 1.33.0 -
 
   image:
     name: 이미지 빌드
@@ -123,9 +124,25 @@ jobs:
           ROLLBACK_TEST: ${{ inputs.rollback_test }}
           ROLLOUT_TIMEOUT: ${{ vars.ROLLOUT_TIMEOUT_SECONDS || '300' }}
         run: deploy/scripts/rollout.sh
+      - name: 도메인 연결 (Cloudflare Tunnel, Secret CLOUDFLARE_TUNNEL_TOKEN이 있을 때만)
+        env:
+          CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_TUNNEL_TOKEN" ]; then
+            echo "CLOUDFLARE_TUNNEL_TOKEN이 없어 도메인 연결을 건너뜁니다."
+            exit 0
+          fi
+          # 토큰은 명령줄에 남지 않게 러너 임시 파일로만 넘긴다
+          umask 077
+          printf '%s' "$CLOUDFLARE_TUNNEL_TOKEN" > "$RUNNER_TEMP/tunnel-token"
+          kubectl -n blog create secret generic cloudflared-token --from-file=token="$RUNNER_TEMP/tunnel-token" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          rm -f "$RUNNER_TEMP/tunnel-token"
+          kustomize build deploy/k8s/addons/cloudflare-tunnel | kubectl apply --server-side --force-conflicts -f -
+          kubectl -n blog rollout status deploy/cloudflared --timeout=120s
       - name: 정리
         if: always()
-        run: rm -f "deploy/k8s/overlays/$OVERLAY/secret.env" "$RUNNER_TEMP/kubeconfig"
+        run: rm -f "deploy/k8s/overlays/$OVERLAY/secret.env" "$RUNNER_TEMP/kubeconfig" "$RUNNER_TEMP/tunnel-token"
       - name: 알림 (Discord·텔레그램)
         if: always() && (vars.DISCORD_ENABLED == 'true' || vars.TELEGRAM_ENABLED == 'true')
         uses: ./.github/actions/notify
