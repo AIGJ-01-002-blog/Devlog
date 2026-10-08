@@ -32,7 +32,7 @@
 
 ### 집 PC GPU 붙이는 방법 (설정만 바꾸면 되게)
 
-- 앱은 AI 공급자를 **설정값 목록**으로만 압니다: `AI_PROVIDERS=gemini,ollama-home,ollama-local`. 순서대로 시도하고 한도·오류면 다음으로 넘어갑니다(지금 태그 추천 구조 확장).
+- 앱은 AI 공급자를 **설정값 목록**으로만 압니다: `AI_PROVIDERS=gemini,ollama-home,ollama-local`. 순서대로 시도하고 한도·오류면 다음으로 넘어갑니다(지금 태그 추천 구조 확장). 공급자마다 글이 어디로 가고 얼마나 보관되는지, 실패하면 다음 공급자로 다시 보낸다는 점을 AI 동의 문구와 개인정보 처리방침에 적고, 동의 범위에 없는 공급자에는 보내지 않습니다(지금 동의 문구는 Gemini만 적혀 있어 집 PC·로컬 Ollama를 넣을 때 함께 고칩니다).
 - 집 PC의 Ollama는 이미 운영 중인 **Cloudflare Tunnel**로 `ai.devlog.life` 같은 주소에 열고, Cloudflare Access 서비스 토큰으로만 들어오게 합니다. 앱은 `OLLAMA_BASE_URL`과 토큰 두 값만 바꾸면 됩니다.
 - PC가 꺼져 있으면 자동으로 다음 공급자 또는 "AI 없음"으로 내려가고, 무거운 일(임베딩 재계산)은 큐에 쌓였다가 PC가 켜지면 처리합니다.
 
@@ -45,7 +45,7 @@ Claude Code·Claude 데스크톱·Cursor에서 "오늘 고친 버그 TIL로 정�
 | 도구 | 하는 일 | 권한 |
 |---|---|---|
 | `search_posts` | 내 글·공개 글 의미 검색 | 읽기 |
-| `get_post` | 글 본문(Markdown) 가져오기 | 읽기 |
+| `get_post` | 글 본문(Markdown) 가져오기 | 읽기(웹과 같은 공개 범위·멤버십 권한 확인) |
 | `create_draft` / `update_draft` | 임시글 만들기·고치기 | 쓰기 |
 | `suggest_tags` | 기존 AI 태그 추천 호출 | 읽기 |
 | `publish_post` | 발행 (사람이 확인한 뒤에만) | 쓰기·확인 필요 |
@@ -53,6 +53,7 @@ Claude Code·Claude 데스크톱·Cursor에서 "오늘 고친 버그 TIL로 정�
 
 - 구현: Spring AI의 MCP 서버 스타터(Streamable HTTP)로 지금 백엔드에 `/mcp` 하나를 붙입니다. 인증은 설정 화면에서 발급하는 **개인 접근 토큰**(범위: 읽기/쓰기, 만료일)으로 시작하고, 나중에 OAuth로 넓힙니다.
 - 발행·삭제처럼 되돌리기 어려운 도구는 기본 꺼짐, 토큰 범위로만 켭니다.
+- `publish_post`는 바로 발행하지 않고 "발행 대기"만 만듭니다. 사람이 devlog 화면에서 [발행하기]를 눌러야 기존 발행 API(`POST /api/posts/{id}/publish`)가 불리므로, MCP를 직접 불러도 사람 확인을 건너뛸 수 없습니다. 읽기 도구도 웹 화면과 같은 권한 검사(공개 범위·차단·멤버십)를 서버에서 그대로 거칩니다.
 
 **② MCP 클라이언트로 기능 넓히기** — 서버 다음에.
 
