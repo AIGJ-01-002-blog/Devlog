@@ -248,8 +248,13 @@ public class McpTools {
         }
         List<String> tagList;
         if (a.has("tags")) {
+            JsonNode raw = a.path("tags");
+            if (!raw.isArray()) return Result.fail("태그(tags)는 문자열 배열이어야 해요. 태그를 비우려면 []를 주세요.");
             tagList = new ArrayList<>();
-            for (JsonNode n : a.path("tags")) if (n.isString()) tagList.add(n.asString());
+            for (JsonNode n : raw) {
+                if (!n.isString()) return Result.fail("태그(tags)에는 문자열만 넣을 수 있어요.");
+                tagList.add(n.asString());
+            }
         } else if (!view.tags().isEmpty()) {
             tagList = view.tags();
         } else {
@@ -258,8 +263,7 @@ public class McpTools {
         String summary = a.has("summary") ? text(a, "summary") : view.summary();
         PostCommandService.PublishResult r = commands.publish(new PublishCommand(id, caller.memberId(), view.title(), view.contentMd(),
                 summary, visibility, tagList, view.version(), view.thumbnailUrl(), view.thumbnailHidden()), caller.handle(), null);
-        List<String> saved = jdbc.queryForList(
-                "SELECT t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = ? ORDER BY pt.position", String.class, id);
+        List<String> saved = editor.open(caller.memberId(), caller.handle(), id).tags();
         return Result.ok("'" + view.title() + "'을(를) " + visibilityLabel(r.visibility()) + "로 발행했어요: " + baseUrl + r.url()
                 + (saved.isEmpty() ? "" : "\n태그: " + String.join(", ", saved)));
     }
@@ -267,9 +271,6 @@ public class McpTools {
     /** 웹의 [삭제]와 같다 (053): 휴지통으로 옮기고 30일 뒤 완전 삭제. 빈 임시글은 바로 지운다. */
     private Result deletePost(AccessTokens.Caller caller, JsonNode a) {
         long id = postId(a);
-        if (!rateLimiter.tryAcquire("post-delete:" + caller.memberId(), 60, Duration.ofMinutes(1))) {
-            return Result.fail("삭제 요청이 너무 많아요. 1분 뒤에 다시 시도해 주세요.");
-        }
         PostTrashService.TrashResult r = trash.trash(caller.memberId(), id);
         return switch (r.result()) {
             case TRASHED -> Result.ok("글 " + id + "번을 휴지통으로 옮겼어요. " + DATE.format(r.purgeAt())

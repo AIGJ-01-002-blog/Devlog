@@ -115,6 +115,10 @@ class McpAiPublishTest extends IntegrationTest {
         JsonNode badTags = call(t, "publish_post", Map.of("post_id", bad, "tags", List.of("a".repeat(100))));
         assertThat(badTags.path("isError").asBoolean()).isTrue();
         assertThat(postStatus(bad)).isEqualTo("DRAFT");
+        // tags는 문자열 배열이어야 한다: 문자열 하나나 숫자가 섞이면 조용히 무시하지 않고 거절한다
+        assertThat(call(t, "publish_post", Map.of("post_id", bad, "tags", "Spring")).path("isError").asBoolean()).isTrue();
+        assertThat(call(t, "publish_post", Map.of("post_id", bad, "tags", List.of("Spring", 1))).path("isError").asBoolean()).isTrue();
+        assertThat(postStatus(bad)).isEqualTo("DRAFT");
 
         // 삭제는 웹의 [삭제]처럼 휴지통으로 옮긴다
         JsonNode del = call(t, "delete_post", Map.of("post_id", id));
