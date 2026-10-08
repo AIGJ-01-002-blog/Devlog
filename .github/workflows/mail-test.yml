@@ -20,6 +20,19 @@ jobs:
       SMTP_USERNAME: devlogauth@gmail.com
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
     steps:
+      - name: 메일 서버 접속 점검(비밀번호 사용 안 함)
+        shell: python
+        run: |
+          import socket
+          for port in (587, 465):
+              for fam, *_, addr in socket.getaddrinfo("smtp.gmail.com", port, proto=socket.IPPROTO_TCP):
+                  try:
+                      with socket.create_connection(addr[:2], timeout=10) as c:
+                          c.settimeout(10)
+                          first = c.recv(100) if port == 587 else b"(TLS 포트, 인사말 없음)"
+                          print(f"{addr[0]}:{port} 연결됨 {first[:60]!r}")
+                  except Exception as e:
+                      print(f"{addr[0]}:{port} 실패 {type(e).__name__}: {e}")
       - name: Gmail로 시험 메일 보내기
         shell: python
         run: |
