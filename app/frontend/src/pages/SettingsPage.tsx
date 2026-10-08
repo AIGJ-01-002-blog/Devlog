@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
+import { AiConnectSection } from '../components/AiConnectSection'
 import { Avatar } from '../components/Avatar'
 import { ImageCropper } from '../components/ImageCropper'
 import { PasswordRules } from '../components/PasswordRules'
@@ -66,6 +67,7 @@ export function SettingsPage() {
       <SocialLinksForm initial={settings.socialLinks} onSaved={(l) => setSettings({ ...settings, socialLinks: l })} />
       <FriendsSection />
       <NotificationsSection />
+      <AiConnectSection />
       <TelegramSection />
       <AccountSection settings={settings} onChange={setSettings} />
       {settings.hasPassword && <PasswordSection />}

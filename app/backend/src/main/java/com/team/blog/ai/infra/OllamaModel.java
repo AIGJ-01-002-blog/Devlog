@@ -47,7 +47,7 @@ class OllamaModel implements TagModel {
         messages.addObject().put("role", "user").put("content", prompt.user());
         body.set("format", json.readTree(schema));
         body.putObject("options").put("temperature", temperature).put("num_predict", maxTokens);
-        HttpJson.Response res = HttpJson.post(HttpJson.trimSlash(props.baseUrl()) + "/api/chat", Map.of(),
+        HttpJson.Response res = HttpJson.post(HttpJson.trimSlash(props.baseUrl()) + "/api/chat", props.authHeaders(),
                 json.writeValueAsString(body), props.timeout());
         if (res.status() != 200) throw new ModelException(ModelException.Kind.FAILURE);
         JsonNode root;

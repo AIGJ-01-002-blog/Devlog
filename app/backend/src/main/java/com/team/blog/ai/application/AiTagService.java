@@ -138,7 +138,7 @@ public class AiTagService {
         String key = AiInput.key(input, widest);
         String sent = input.title() + "\n" + input.bodyUpTo(widest);
         Optional<SuggestionStore.Stored> exact = store.exact(key);
-        boolean upgrade = again && exact.isPresent() && exact.get().provider() == Provider.LOCAL && state.geminiUsable();
+        boolean upgrade = again && !props.preferLocal() && exact.isPresent() && exact.get().provider() == Provider.LOCAL && state.geminiUsable();
         if (exact.isPresent() && !upgrade) {
             return answer(exact.get().tags(), true, exact.get().provider(), input, attached, room, remaining(memberId));
         }
@@ -166,8 +166,35 @@ public class AiTagService {
 
     private record Called(List<String> raw, Provider provider) {}
 
-    /** 공급자 고르기·전환 (FR-015·FR-016) */
+    /**
+     * 공급자 고르기·전환 (FR-015·FR-016). 집 PC를 먼저 쓰는 설정이면 집 PC → (꺼졌거나 바쁘면) 외부 AI.
+     * 그렇지 않으면 외부 AI → (한도면) 집 PC.
+     */
     private Called call(AiInput.Cleaned input, Set<String> attached) {
+        if (props.preferLocal() && state.localUsable()) {
+            if (localSlots.tryAcquire()) {
+                try {
+                    return new Called(local.suggest(prompt(local, input, attached)), Provider.LOCAL);
+                } catch (ModelException e) {
+                    state.localFailed(e.kind());
+                    log.warn("자체 AI 태그 추천 실패, 외부 AI로 넘깁니다: {}", e.kind());
+                } finally {
+                    localSlots.release();
+                }
+            } else if (!state.geminiUsable()) {
+                throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "AI_BUSY", "잠시 후 다시 시도해 주세요.");
+            }
+            if (!state.geminiUsable()) throw unavailable();
+            try {
+                List<String> raw = gemini.suggest(prompt(gemini, input, attached));
+                state.succeeded();
+                return new Called(raw, Provider.GEMINI);
+            } catch (ModelException e) {
+                state.failed(e.kind());
+                log.warn("외부 AI 태그 추천 실패: {}", e.kind());
+                throw unavailable();
+            }
+        }
         if (state.geminiUsable()) {
             try {
                 List<String> raw = gemini.suggest(prompt(gemini, input, attached));
@@ -190,6 +217,7 @@ public class AiTagService {
         try {
             return local.suggest(prompt(local, input, attached));
         } catch (ModelException e) {
+            state.localFailed(e.kind());
             log.warn("자체 AI 태그 추천 실패: {}", e.kind());
             throw unavailable();
         } finally {
@@ -267,6 +295,7 @@ public class AiTagService {
     }
 
     private Provider nextProvider() {
+        if (props.preferLocal() && state.localUsable()) return Provider.LOCAL;
         if (state.geminiUsable()) return Provider.GEMINI;
         return local.configured() ? Provider.LOCAL : null;
     }

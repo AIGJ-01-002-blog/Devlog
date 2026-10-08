@@ -27,6 +27,8 @@ public final class FakeAi {
     public final List<String> geminiRequests = new CopyOnWriteArrayList<>();
     public final List<String> geminiKeys = new CopyOnWriteArrayList<>();
     public final List<String> localRequests = new CopyOnWriteArrayList<>();
+    /** 자체 AI 요청의 접근 헤더 (Authorization, CF-Access-Client-Id) */
+    public final List<String> localAuth = new CopyOnWriteArrayList<>();
 
     private FakeAi(HttpServer server) {
         this.server = server;
@@ -55,6 +57,7 @@ public final class FakeAi {
         geminiRequests.clear();
         geminiKeys.clear();
         localRequests.clear();
+        localAuth.clear();
     }
 
     /** Gemini 성공 응답: 모델이 낸 글자(text)를 감싼다 */
@@ -80,6 +83,7 @@ public final class FakeAi {
         String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         log.add(body);
         if (isGemini) geminiKeys.add(String.valueOf(ex.getRequestHeaders().getFirst("x-goog-api-key")));
+        else localAuth.add(ex.getRequestHeaders().getFirst("Authorization") + "|" + ex.getRequestHeaders().getFirst("CF-Access-Client-Id"));
         Reply r;
         synchronized (this) {
             r = queue.isEmpty() ? null : queue.poll();

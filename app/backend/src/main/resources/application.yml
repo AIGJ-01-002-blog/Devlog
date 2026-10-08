@@ -168,9 +168,11 @@ blog:
   series:
     max-per-member: 100
     max-posts: 200
-  # AI 태그 추천 (spec 018): 외부 AI(Gemini 무료 등급) 먼저, 한도면 자체 AI(Ollama). 둘 다 비어 있으면 기능이 꺼진다
+  # AI (spec 018·052): 집 PC Ollama가 설정돼 있고 켜져 있으면 먼저, 꺼졌거나 바쁘면 외부 AI(Gemini 무료 등급).
+  # AI_PREFER=gemini면 예전처럼 Gemini 먼저, 한도면 Ollama. 둘 다 비어 있으면 기능이 꺼진다
   ai:
     enabled: ${AI_ENABLED:true}
+    prefer: ${AI_PREFER:local}
     user-daily-limit: 20
     gemini:
       api-key: ${GEMINI_API_KEY:}
@@ -184,6 +186,11 @@ blog:
       timeout: 30s
       max-chars: 2000
       concurrency: ${OLLAMA_CONCURRENCY:1}
+      # 집 PC를 Cloudflare Tunnel로 열 때의 접근 토큰 (실행 환경 비밀값으로만)
+      auth-token: ${OLLAMA_AUTH_TOKEN:}
+      access-client-id: ${OLLAMA_ACCESS_CLIENT_ID:}
+      access-client-secret: ${OLLAMA_ACCESS_CLIENT_SECRET:}
+      down-for: ${OLLAMA_DOWN_FOR:60s}
   # 트렌딩 (spec 017): 10분마다 한 서버가 상위 100개 순위표를 만들어 30분 보관
   # 신고 (spec 019): 처리된 지 30일 지난 사건의 스냅샷·설명 비우기
   report:

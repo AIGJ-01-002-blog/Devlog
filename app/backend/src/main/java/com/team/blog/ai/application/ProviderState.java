@@ -48,6 +48,18 @@ class ProviderState {
         return true;
     }
 
+    static final String LOCAL_DOWN = "ai:local:down";
+
+    /** 자체 AI를 불러 볼 만한지. 방금 연결에 실패했으면 downFor 동안 건너뛴다 */
+    boolean localUsable() {
+        return props.local().configured() && !Boolean.TRUE.equals(redis.hasKey(LOCAL_DOWN));
+    }
+
+    /** 연결 실패·시간 초과만 표시한다. 형식 오류는 집 PC가 켜져 있다는 뜻이라 건너뛰지 않는다 */
+    void localFailed(ModelException.Kind kind) {
+        if (kind == ModelException.Kind.FAILURE) redis.opsForValue().set(LOCAL_DOWN, "1", props.local().downFor());
+    }
+
     void succeeded() {
         String day = day();
         redis.opsForValue().increment(PREFIX + "count:" + day);

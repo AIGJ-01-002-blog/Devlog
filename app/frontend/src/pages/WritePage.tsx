@@ -18,6 +18,7 @@ import { decideRestore } from '../lib/restore'
 import { navigate, setLeaveGuard } from '../lib/router'
 import { isPublishField, SUMMARY_MAX, summaryLength } from '../lib/postSummary'
 import { initialThumbnail, thumbnailRequest } from '../lib/postThumbnail'
+import { aiHint, type AiHint } from '../lib/mcp'
 import { addTag, tagErrors } from '../lib/tags'
 import type { EditorView, FriendOverview, ServerContent, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
@@ -83,6 +84,8 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
   const [thumbnail, setThumbnail] = useState(() => initialThumbnail(view))
   const [thumbnailBusy, setThumbnailBusy] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  // AI(MCP)가 만든 임시글이면 태그 제안을 발행 창에 미리 채우고, 발행 요청이 있으면 알린다 (052)
+  const [hint, setHint] = useState<AiHint | null>(null)
   const [showAlts, setShowAlts] = useState(false)
   const [dragging, setDragging] = useState(false)
   const saver = useRef<Autosaver | null>(null)
@@ -119,6 +122,17 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     if (files.length) void images.add(files, insertAtCursor)
     return files.length > 0
   }
+
+  useEffect(() => {
+    if (view.status !== 'DRAFT') return
+    let alive = true
+    aiHint(view.id).then((h) => {
+      if (!alive || !h) return
+      setHint(h)
+      if (h.tags.length) setTags((cur) => (cur.length ? cur : h.tags))
+    }).catch(() => undefined)
+    return () => { alive = false }
+  }, [view.id, view.status])
 
   if (saver.current == null) {
     saver.current = new Autosaver({ title: view.title, contentMd: view.contentMd }, view.version, {
@@ -303,6 +317,13 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
         <div className="banner banner-warn">
           ⚠ 다른 탭이나 기기에서 이 글이 수정되었어요({clock(state.server.savedAt)}). 지금 내용은 이 기기에만 저장되고 있어요.
           <button type="button" className="btn btn-text" onClick={() => setShowConflict(true)}>비교하기</button>
+        </div>
+      )}
+      {hint?.publishRequestedAt && (
+        <div className="banner ai-hint-banner" role="status">
+          AI가 이 글의 발행을 요청했어요. 내용을 읽어 보고 괜찮으면 발행해 주세요.
+          {hint.tags.length > 0 && <span className="muted small"> 태그 제안 {hint.tags.length}개를 발행 창에 채워 뒀어요.</span>}
+          <button type="button" className="btn btn-text" onClick={() => saver.current!.isConflict ? setShowConflict(true) : setShowPublish(true)}>발행 창 열기</button>
         </div>
       )}
       {notice && (

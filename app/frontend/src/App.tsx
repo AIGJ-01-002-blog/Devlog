@@ -44,6 +44,7 @@ const RestorePage = lazyPage(() => import('./pages/RestorePage'), 'RestorePage')
 const WithdrawnPage = lazyPage(() => import('./pages/WithdrawnPage'), 'WithdrawnPage')
 const WithdrawPage = lazyPage(() => import('./pages/WithdrawPage'), 'WithdrawPage')
 const McpPage = lazyPage(() => import('./pages/McpPage'), 'McpPage')
+const OAuthAuthorizePage = lazyPage(() => import('./pages/OAuthAuthorizePage'), 'OAuthAuthorizePage')
 
 export function App() {
   const { path } = useLocation()
@@ -73,6 +74,7 @@ function route(path: string): ReactNode {
   if ((p = match('/@:handle', path))) return <BlogPage key={p.handle} handle={p.handle} />
   if (path === '/search') return <SearchPage />
   if (path === '/mcp') return <McpPage />
+  if (path === '/oauth/authorize') return <RequireLogin><OAuthAuthorizePage /></RequireLogin>
   if (path === '/tags') return <TagsPage />
   if ((p = match('/tags/:name', path))) return <TagPage key={p.name} name={p.name} />
   if (path === '/login') return <LoginPage />
