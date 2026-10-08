@@ -63,6 +63,19 @@ public class MemberStats {
     }
 
     /** 기간 안에 활동(로그인·글쓰기 등)한 회원 수. 최근 활동 시각은 하루에 한 번 정도만 갱신된다 */
+    /** 날짜별 활동한 회원 수 (066). 탈퇴로 지워진 회원은 함께 빠진다 */
+    public Map<LocalDate, Long> activeByDay(Instant from) {
+        Map<LocalDate, Long> out = new HashMap<>();
+        jdbc.query("SELECT day AS d, count(*) AS n FROM member_active_day WHERE day >= ? GROUP BY day",
+                rs -> { out.put(rs.getObject("d", LocalDate.class), rs.getLong("n")); }, LocalDate.ofInstant(from, Counts.KST));
+        return out;
+    }
+
+    /** 기간 [from, to] 동안 하루라도 활동한 회원 수 (066) */
+    public long activeBetween(LocalDate from, LocalDate to) {
+        return Counts.one(jdbc, "SELECT count(DISTINCT member_id) FROM member_active_day WHERE day BETWEEN ? AND ?", from, to);
+    }
+
     public long activeSince(Instant from) {
         return Counts.one(jdbc, "SELECT count(*) FROM member WHERE deleted_at IS NULL AND last_active_at >= ?", Timestamp.from(from));
     }

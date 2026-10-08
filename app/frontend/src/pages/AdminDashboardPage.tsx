@@ -10,6 +10,7 @@ type Metric = keyof Sums
 const METRICS: { key: Metric; label: string; unit: string; tip?: string; chart?: string }[] = [
   { key: 'visitors', label: '방문자', unit: '명', tip: '기간 동안 사이트에 온 사람 수예요. 여러 날 와도 한 명으로 세요', chart: '방문자 (날마다 센 사람 수)' },
   { key: 'visits', label: '방문', unit: '회', tip: '사이트에 들어온 횟수예요. 30분 넘게 쉬었다 다시 오면 한 번 더 세요' },
+  { key: 'activeMembers', label: '활동한 회원', unit: '명', tip: '기간 동안 로그인한 채로 블로그를 쓴 회원 수예요. 여러 날 와도 한 명으로 세요', chart: '활동한 회원 (날마다 센 회원 수)' },
   { key: 'views', label: '조회수', unit: '회' },
   { key: 'posts', label: '새 글', unit: '편' },
   { key: 'signups', label: '가입', unit: '명' },
@@ -98,15 +99,17 @@ export function AdminDashboardPage() {
               <span className="stat-change flat">어제 {count(data.visitors.yesterday)}명</span>
             </div>
             {METRICS.slice(2).map((x) => tile(data, x))}
-            <div className="stat-tile static" data-tip="최근 활동 시각이 이 기간 안에 있는 회원">
-              <span className="stat-label">활동한 회원</span>
-              <span className="stat-value">{count(data.activeMembers)}</span>
-              <span className="stat-change flat">전체 {count(data.totals.members.active)}명 중</span>
-            </div>
           </section>
 
           <section className="admin-card">
             <BarChart title={m.chart ?? m.label} unit={m.unit} points={points(data, metric)} />
+            {(metric === 'activeMembers' || metric === 'visitors' || metric === 'visits') && (
+              <p className="muted small">
+                {metric === 'activeMembers'
+                  ? '날짜별 활동 기록은 v1.40.0부터 쌓여요. 그 전 날짜에는 회원마다 마지막으로 활동한 날만 있어요.'
+                  : '방문 기록은 v1.38.0부터 쌓여요.'}
+              </p>
+            )}
           </section>
 
           <div className="admin-columns">
