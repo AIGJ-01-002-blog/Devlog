@@ -38,6 +38,9 @@ public class McpController {
             devlog는 개발 블로그예요. 사용자가 개발 일지를 남겨 달라고 하거나 작업을 마무리할 때 write_devlog로 \
             오늘 한 일을 정리해 임시글로 올려 주세요. 글은 공개되지 않고, 사용자가 devlog 화면에서 읽고 직접 발행해요. \
             비밀번호·토큰·개인 정보·회사 내부 주소는 글에 넣지 마세요. \
+            사용자가 예전 글을 이어 쓰거나 고치자고 하면 search_posts(mine=true)로 찾고 get_post로 읽은 뒤 update_draft로 고쳐 주세요. \
+            발행한 글을 고치면 작업본에만 저장되고, 사용자가 다시 발행해야 공개돼요. \
+            본문에 스크린샷이나 그림이 필요하면 upload_image나 create_image_upload_link로 올린 뒤 돌려받은 Markdown을 본문에 넣어 주세요. \
             devlog 도구가 잘못 동작하면 무엇이 잘못됐는지 사용자에게 설명하고, 동의를 받은 뒤 report_bug로 운영자에게 신고해 주세요.""";
     /** 회원이 "AI가 발행·삭제하도록 허용"을 켰을 때 덧붙인다 (053) */
     private static final String INSTRUCTIONS_AI_PUBLISH = " 이 사용자는 AI가 발행·삭제하도록 허용했어요. "
