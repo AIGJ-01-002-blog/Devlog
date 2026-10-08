@@ -6,6 +6,14 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.27.7] - 2026-10-08
+
+nhn overlay의 학교 MinIO 주소를 고쳤다 (배포 구성).
+
+### 고침
+- `S3_ENDPOINT`·`IMAGE_PUBLIC_BASE_URL`을 `http://storage.java21.net:8000`으로. 학교 MinIO의 S3 API는 8000번 포트다
+- 학교 MinIO는 http만 열려 있어 https 사이트에서는 사진이 혼합 콘텐츠로 막힌다. https로 운영하려면 인그레스에서 `/blog-images`를 넘기는 프록시가 더 필요하다고 deploy/README.md에 적었다
+
 ## [1.27.6] - 2026-10-08
 
 main에 머지하면 학교 서버에 자동으로 배포된다 (배포 구성).

@@ -34,7 +34,7 @@ deploy/
 |---|---|---|
 | PostgreSQL | Crowfoot 발급 DB (`nhnacademy` DB, `DB_SCHEMA=cf_u25_d1`) | 호스트·비밀번호는 Crowfoot 데이터베이스 탭. 안 되면 학교 PG-SQL `s3.java21.net:8000`의 2팀 DB(계정은 secret.env에만). 테이블은 앱 시작 때 Flyway가 만든다 |
 | Redis | `220.67.216.14:6379` | DB 번호 8 (318·319는 범위 0~56 밖이라 마지막 대안 8). `FLUSHALL` 금지 |
-| MinIO | `storage.java21.net` | 버킷 `blog-images` |
+| MinIO | `http://storage.java21.net:8000` (S3 API) | 버킷 `blog-images`. http만 열려 있어 https 사이트에서는 사진이 혼합 콘텐츠로 막힌다. https로 운영하려면 인그레스 `/blog-images`를 이 주소로 넘기는 프록시(ExternalName 서비스 + 경로)가 필요하다(selfhosted의 MinIO 경로와 같은 방식) |
 | RabbitMQ | `s4.java21.net:5672` | 알림(015) |
 | Elasticsearch | `s4.java21.net:9200` | 검색(014), nori 플러그인 |
 | Ollama | `ollama.java21.net` | AI 태그 추천(018) |
@@ -266,7 +266,7 @@ selfhosted 검증 (2026-10-07, k3s v1.33.4, 앱 v0.7.0 = main f6311ed를 이 Doc
 
 | 대상 | 외부망 결과 |
 |---|---|
-| `storage.java21.net` http 80 | 열림 (200). https 443은 거절 → MinIO 주소는 `http://storage.java21.net` |
+| `storage.java21.net` http 80 | 열림 (200). https 443은 거절. 2026-10-08 민서님 확인: S3 API는 8000번 → `http://storage.java21.net:8000` |
 | `s3.java21.net:8000` (PostgreSQL), `220.67.216.14:6379` (Redis) | 닫힘 |
 | `s4.java21.net` 5672·15672 (RabbitMQ), 9200 (ES, No route to host), 5601, 9000, 13306 | 닫힘 |
 | `ollama.java21.net:443` | 닫힘 |
