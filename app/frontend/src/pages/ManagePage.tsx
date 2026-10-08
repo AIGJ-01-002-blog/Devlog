@@ -6,6 +6,7 @@ import { Link, navigate, useLocation } from '../lib/router'
 import { daysLeft, purgePost, PURGE_CONFIRM, restorePost, TRASH_CONFIRM, trashedMessage, trashPost } from '../lib/trash'
 import type { ManageItem, ManagePage as Page, Visibility } from '../lib/types'
 import { VISIBILITY_ICON, VISIBILITY_LABEL } from '../lib/visibility'
+import { AiProposals } from '../components/AiProposals'
 
 type Tab = 'drafts' | 'published' | 'trash'
 type CountKey = keyof NonNullable<Page['counts']>
@@ -122,6 +123,7 @@ export function ManagePage() {
         <button type="button" role="tab" aria-selected={tab === 'published'} onClick={() => go('published')}>발행 글 {counts?.published ?? ''}</button>
         <button type="button" role="tab" aria-selected={tab === 'trash'} onClick={() => go('trash')}>휴지통 {counts?.trash ?? ''}</button>
       </div>
+      {tab === 'drafts' && <AiProposals />}
       {tab === 'trash' && <p className="muted small">휴지통의 글은 30일이 지나면 완전히 지워져요. 다른 사람에게는 보이지 않아요.</p>}
       {tab === 'published' && (
         <div className="filters">

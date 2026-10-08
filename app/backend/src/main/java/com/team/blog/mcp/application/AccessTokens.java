@@ -55,9 +55,10 @@ public class AccessTokens {
      * 토큰으로 들어온 요청의 주인. status는 member.status(ACTIVE·SUSPENDED·WITHDRAWN).
      * aiPublishAllowed는 회원이 웹 설정에서 켠 "AI가 발행·삭제하도록 허용"(053). 요청마다 DB에서 새로 읽는다.
      * admin은 관리자 회원(054 문의 관리 도구). 역할도 요청마다 새로 읽는다. tokenName은 토큰 이름이나 OAuth 앱 이름(버그 신고에 남긴다).
+     * aiDiaryEnabled는 회원이 켠 "자정에 일기 쓰기"(061). 켜져 있을 때만 add_note가 보인다.
      */
     public record Caller(long memberId, String handle, Scope scope, String status, boolean emailVerified, boolean aiPublishAllowed,
-                         boolean admin, String tokenName) {
+                         boolean admin, String tokenName, boolean aiDiaryEnabled) {
         public boolean canWrite() {
             return scope == Scope.WRITE;
         }
@@ -180,7 +181,7 @@ public class AccessTokens {
         if (secret == null) return Optional.empty();
         Instant now = Times.now(clock);
         List<Row> rows = jdbc.query("""
-                SELECT t.id, t.member_id, t.scope, t.last_used_at, t.name AS token_name, m.handle, m.status, m.ai_publish_allowed,
+                SELECT t.id, t.member_id, t.scope, t.last_used_at, t.name AS token_name, m.handle, m.status, m.ai_publish_allowed, m.ai_diary_enabled,
                        m.role = 'ADMIN' AS admin,
                        EXISTS (SELECT 1 FROM auth_identity a WHERE a.member_id = m.id AND a.email_verified_at IS NOT NULL) AS verified
                 FROM personal_access_token t JOIN member m ON m.id = t.member_id
@@ -188,7 +189,7 @@ public class AccessTokens {
                 """, (rs, i) -> new Row(rs.getLong("id"), instant(rs.getTimestamp("last_used_at")),
                 new Caller(rs.getLong("member_id"), rs.getString("handle"), Scope.valueOf(rs.getString("scope")),
                         rs.getString("status"), rs.getBoolean("verified"), rs.getBoolean("ai_publish_allowed"), rs.getBoolean("admin"),
-                        rs.getString("token_name"))),
+                        rs.getString("token_name"), rs.getBoolean("ai_diary_enabled"))),
                 hash(secret), Timestamp.from(now));
         if (rows.isEmpty()) return Optional.empty();
         Row row = rows.getFirst();

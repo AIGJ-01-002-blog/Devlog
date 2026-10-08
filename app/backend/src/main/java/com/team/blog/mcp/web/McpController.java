@@ -40,12 +40,23 @@ public class McpController {
             비밀번호·토큰·개인 정보·회사 내부 주소는 글에 넣지 마세요. \
             사용자가 예전 글을 이어 쓰거나 고치자고 하면 search_posts(mine=true)로 찾고 get_post로 읽은 뒤 update_draft로 고쳐 주세요. \
             발행한 글을 고치면 작업본에만 저장되고, 사용자가 다시 발행해야 공개돼요. \
+            함께 하던 한 주제(기능 하나, 버그 하나, 조사 하나)가 끝났다고 판단되면 바로 글을 쓰지 말고, 블로그 글로 남길지 \
+            제목과 쓸 범위(다룰 내용·뺄 내용)를 사용자에게 제안하고 propose_post로도 남겨 주세요. 사용자가 쓰라고 하면 그 범위대로 \
+            create_draft에 proposal_id를 함께 줘서 써 주세요. 제안은 주제가 끝났을 때 한 번만 하고, 사용자가 넘기면 다시 묻지 마세요. \
+            사용자가 포트폴리오용 글이라고 하면 기술 소개(쓴 기술과 고른 이유), 프로젝트 설명(문제·구조·결과), 스크린샷·구조도 사진 위주로 쓰고, \
+            "우리 팀이 한 일"과 "제 역할"(사용자가 맡은 부분)을 나눠 적어 주세요. 쓰기 전에 이 두 범위를 사용자에게 보여 주고 \
+            확인받아 확정한 뒤에 써 주세요. 사용자가 맡지 않은 일을 사용자가 했다고 쓰지 마세요. \
             본문에 스크린샷이나 그림이 필요하면 upload_image나 create_image_upload_link로 올린 뒤 돌려받은 Markdown을 본문에 넣어 주세요. \
             devlog 도구가 잘못 동작하면 무엇이 잘못됐는지 사용자에게 설명하고, 동의를 받은 뒤 report_bug로 운영자에게 신고해 주세요.""";
     /** 회원이 "AI가 발행·삭제하도록 허용"을 켰을 때 덧붙인다 (053) */
     private static final String INSTRUCTIONS_AI_PUBLISH = " 이 사용자는 AI가 발행·삭제하도록 허용했어요. "
             + "publish_post·delete_post는 사용자가 발행하거나 삭제하라고 분명히 말했을 때만 쓰고, "
             + "하기 전에 어떤 글인지(글 번호·제목) 사용자에게 확인해 주세요.";
+
+    /** 회원이 "자정에 일기 쓰기"를 켰을 때 덧붙인다 (061) */
+    private static final String INSTRUCTIONS_AI_DIARY = " 이 사용자는 '자정에 일기 쓰기'를 켰어요. 의미 있는 작업 단위(기능 완성, 버그 원인 발견, "
+            + "결정, 막힌 점)를 마칠 때마다 add_note로 한두 문장 메모를 남겨 주세요. 주제(topic)는 같은 일이면 같은 표기로 적어 주세요. "
+            + "메모는 매일 자정(한국 시간)에 일기 임시글로 묶여요. 메모를 남겼다고 매번 사용자에게 알릴 필요는 없어요.";
 
     /** 관리자 토큰일 때 덧붙인다 (054) */
     private static final String INSTRUCTIONS_ADMIN = " 이 사용자는 devlog 관리자예요. list_inquiries·get_inquiry로 접수된 문의·버그 신고를 읽고 "
@@ -119,7 +130,8 @@ public class McpController {
         return Map.of("protocolVersion", version,
                 "capabilities", Map.of("tools", Map.of("listChanged", false)),
                 "serverInfo", Map.of("name", "devlog", "title", "devlog 개발 일지", "version", "1"),
-                "instructions", INSTRUCTIONS + (caller.aiPublishAllowed() ? INSTRUCTIONS_AI_PUBLISH : "") + (caller.admin() ? INSTRUCTIONS_ADMIN : ""));
+                "instructions", INSTRUCTIONS + (caller.aiPublishAllowed() ? INSTRUCTIONS_AI_PUBLISH : "")
+                        + (caller.aiDiaryEnabled() ? INSTRUCTIONS_AI_DIARY : "") + (caller.admin() ? INSTRUCTIONS_ADMIN : ""));
     }
 
     private static ResponseEntity<Object> ok(Object body) {

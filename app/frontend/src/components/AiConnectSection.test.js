@@ -11,6 +11,7 @@ const chatgpt = { ...listed, id: 3, name: 'ChatGPT', prefix: 'dvl_zzzz', scope: 
 const secret = 'dvl_' + 'x'.repeat(43);
 describe('AiConnectSection', () => {
     let allowed;
+    let diary;
     let root;
     let host;
     beforeEach(() => {
@@ -21,11 +22,17 @@ describe('AiConnectSection', () => {
         document.body.appendChild(host);
         root = createRoot(host);
         allowed = false;
+        diary = false;
         vi.stubGlobal('fetch', vi.fn(async (url, init) => {
             if (url.endsWith('/api/me/ai-publish')) {
                 if (init?.method === 'PUT')
                     allowed = JSON.parse(String(init.body)).allowed;
                 return new Response(JSON.stringify({ allowed }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            }
+            if (url.endsWith('/api/me/ai-diary')) {
+                if (init?.method === 'PUT')
+                    diary = JSON.parse(String(init.body)).enabled;
+                return new Response(JSON.stringify({ enabled: diary }), { status: 200, headers: { 'Content-Type': 'application/json' } });
             }
             if (init?.method === 'POST') {
                 return new Response(JSON.stringify({ token: { ...listed, id: 2, name: 'Claude Code', prefix: secret.slice(0, 8), scope: 'WRITE' }, secret }), { status: 201, headers: { 'Content-Type': 'application/json' } });
@@ -80,6 +87,31 @@ describe('AiConnectSection', () => {
         await act(async () => { box().click(); });
         expect(ask).toHaveBeenCalledTimes(2);
         expect(JSON.parse(String(puts()[1][1].body))).toEqual({ allowed: false });
+        expect(box().checked).toBe(false);
+    });
+    // spec 061: 자정에 일기 쓰기는 기본 꺼짐이고, 끌 때는 남은 메모가 지워지니 한 번 더 묻는다
+    it('자정에 일기 쓰기는 켤 때 바로 켜고, 끌 때 확인을 받는다', async () => {
+        const ask = vi.fn(() => false);
+        vi.stubGlobal('confirm', ask);
+        await act(async () => { root.render(_jsx(AiConnectSection, {})); });
+        const box = () => host.querySelector('.ai-diary input[type="checkbox"]');
+        const puts = () => fetch.mock.calls
+            .filter(([url, init]) => init?.method === 'PUT' && String(url).endsWith('/api/me/ai-diary'));
+        expect(host.textContent).toContain('자정에 일기 쓰기');
+        expect(box().closest('label').title).toContain('자정에');
+        expect(box().checked).toBe(false);
+        await act(async () => { box().click(); });
+        expect(ask).not.toHaveBeenCalled();
+        expect(JSON.parse(String(puts()[0][1].body))).toEqual({ enabled: true });
+        expect(box().checked).toBe(true);
+        // 끌 때 취소하면 그대로
+        await act(async () => { box().click(); });
+        expect(ask).toHaveBeenCalledTimes(1);
+        expect(puts()).toHaveLength(1);
+        expect(box().checked).toBe(true);
+        ask.mockReturnValue(true);
+        await act(async () => { box().click(); });
+        expect(JSON.parse(String(puts()[1][1].body))).toEqual({ enabled: false });
         expect(box().checked).toBe(false);
     });
 });
