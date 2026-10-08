@@ -143,13 +143,17 @@ kubectl -n blog create job pg-backup-now --from=cronjob/pg-backup   # 지금 바
 # 1) 올리기 전에(옛 이미지 그대로) 백업을 만들고 끝날 때까지 기다린다
 kubectl -n blog create job pg-backup-before-1241 --from=cronjob/pg-backup
 kubectl -n blog wait --for=condition=complete job/pg-backup-before-1241 --timeout=600s
-# 2) 옛 DB와 그 볼륨만 지운다(pg-backup 볼륨은 남는다)
+# 2) 앱을 멈추고(재시작한 앱이 빈 DB에 테이블을 만들지 않게. replicas가 0이면 HPA도 늘리지 않는다)
+#    옛 DB와 그 볼륨만 지운다(pg-backup 볼륨은 남는다)
+kubectl -n blog scale deployment/blog-app --replicas=0
 kubectl -n blog delete statefulset postgres
 kubectl -n blog delete pvc data-postgres-0
-# 3) 새 버전을 적용하면 새 볼륨으로 빈 DB가 뜬다
-kubectl apply -k deploy/k8s/overlays/selfhosted
+# 3) DB만 새 버전으로 띄운다. 앱까지 한꺼번에 올리면 앱이 빈 DB에 Flyway로 테이블을 먼저 만들어 4)의 복구가 충돌한다
+kubectl kustomize deploy/k8s/overlays/selfhosted | kubectl apply -l app.kubernetes.io/name=postgres -f -
 kubectl -n blog rollout status statefulset/postgres --timeout=300s
 # 4) 위 "복구" 명령으로 1)의 덤프(blog-<날짜>.sql.gz 중 가장 최근 것)를 넣는다
+# 5) 복구가 끝난 뒤 나머지를 적용한다(앱이 replicas 2로 돌아온다)
+kubectl apply -k deploy/k8s/overlays/selfhosted
 ```
 
 ## 운영 서버 준비 (Oracle Cloud 무료 VM)

@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
+  labels: {app.kubernetes.io/name: postgres}
 spec:
   selector: {app.kubernetes.io/name: postgres}
   ports: [{name: pg, port: 5432, targetPort: 5432}]
@@ -10,6 +11,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
+  labels: {app.kubernetes.io/name: postgres}
 spec:
   serviceName: postgres
   replicas: 1
