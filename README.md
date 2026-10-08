@@ -1,6 +1,6 @@
 <div align="center">
 
-🌐 **한국어**
+🌐 **한국어** | **[English](./README.en.md)**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
@@ -13,6 +13,7 @@
 
 쓰기 → 자동 저장 → 발행 → 읽기 → 반응까지, 개발자를 위한 velog형 블로그 플랫폼
 
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/AIGJ-01-002-blog/docs?color=10b981&label=release)](https://github.com/AIGJ-01-002-blog/docs/releases/latest)
 [![Backend CI](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml)
 [![Frontend CI](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/frontend-ci.yml)
@@ -421,4 +422,4 @@ npm run dev        # http://localhost:5173
 
 ## 라이선스
 
-라이선스는 아직 정하지 않았습니다. 정해지면 이 자리와 저장소 루트의 `LICENSE`에 적습니다.
+[Apache License 2.0](LICENSE)으로 배포됩니다.
