@@ -1,0 +1,73 @@
+# 학교 실습 서버(s2.java21.net)에 블로그를 쿠버네티스로 올릴 수 있는지 읽기 전용으로 확인한다.
+# 1단계는 비밀번호 없이 포트만 두드린다. 2단계는 Secret SCHOOL_SSH_PASSWORD가 있을 때만 SSH로 들어가
+# Docker 권한·자원·포트 사용 여부를 본다. 비밀번호는 로그에 찍지 않는다. 수동 실행(Actions → 학교 서버 점검).
+name: 학교 서버 점검
+
+on:
+  workflow_dispatch:
+  # 임시: 첫 점검을 브랜치 푸시로 바로 돌린다(PR 전 제거)
+  push:
+    branches: [claude/k8s-infra-4keum5]
+    paths: [.github/workflows/server-check.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HOST: s2.java21.net
+      SSH_PORT: "8822"
+      SSH_USER: ${{ vars.SCHOOL_SSH_USER || 'AIGJ_01_002' }}
+    steps:
+      - name: 포트 점검(비밀번호 사용 안 함)
+        shell: python
+        run: |
+          import os, socket
+          host = os.environ["HOST"]
+          print("주소:", sorted({a[4][0] for a in socket.getaddrinfo(host, None)}))
+          for port in [int(os.environ["SSH_PORT"]), *range(8310, 8320)]:
+              try:
+                  with socket.create_connection((host, port), timeout=5) as c:
+                      c.settimeout(5)
+                      try:
+                          first = c.recv(40)
+                      except OSError:
+                          first = b""
+                      print(f"{port} OPEN {first[:40]!r}")
+              except Exception as e:
+                  print(f"{port} CLOSED {type(e).__name__}")
+
+      - name: 서버 안 점검(읽기 전용)
+        env:
+          SSHPASS: ${{ secrets.SCHOOL_SSH_PASSWORD }}
+        run: |
+          if [ -z "$SSHPASS" ]; then
+            echo "::warning::Secret SCHOOL_SSH_PASSWORD가 없어 서버 안 점검을 건너뜁니다"
+            exit 0
+          fi
+          sudo apt-get install -y -qq sshpass >/dev/null
+          # 서버에서 실행할 명령. 아무것도 남기지 않는다(시험 컨테이너는 --rm)
+          cat > "$RUNNER_TEMP/remote.sh" <<'EOF'
+          echo "== 계정"; id; echo "home=$HOME"
+          echo "== OS"; . /etc/os-release && echo "$PRETTY_NAME"; uname -rm
+          echo "== 자원"; nproc; free -m | sed -n '1,2p'; df -h "$HOME" | tail -1
+          echo "== Docker"
+          docker version --format 'client={{.Client.Version}} server={{.Server.Version}}' 2>&1 | head -3
+          docker info --format 'rootless={{range .SecurityOptions}}{{.}} {{end}} cgroup={{.CgroupVersion}}/{{.CgroupDriver}} cpus={{.NCPU}} mem={{.MemTotal}} storage={{.Driver}}' 2>&1 | head -3
+          echo "running_containers=$(docker ps -q 2>/dev/null | wc -l)"
+          echo "== 내 포트(8310~8319) 사용 중인 컨테이너"
+          docker ps --format '{{.Names}} {{.Ports}}' 2>/dev/null | grep -E ':831[0-9]->' || echo "(없음)"
+          echo "== 특권 컨테이너(k3d·kind에 필요)"
+          if docker run --rm --privileged alpine:3.20 true 2>/tmp/priv.err; then echo "privileged=OK"; else echo "privileged=FAIL $(head -c 300 /tmp/priv.err)"; fi
+          rm -f /tmp/priv.err
+          echo "== 바깥 인터넷(이미지 받기·Cloudflare Tunnel)"
+          for u in https://ghcr.io https://registry-1.docker.io https://region1.v2.argotunnel.com; do
+            printf '%s ' "$u"; curl -s -o /dev/null -m 8 -w '%{http_code}\n' "$u" || echo "실패"
+          done
+          echo "== 도구"; for t in kubectl k3d kind helm; do printf '%s ' "$t"; command -v "$t" || echo "없음"; done
+          EOF
+          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 \
+            "$SSH_USER@$HOST" 'bash -s' < "$RUNNER_TEMP/remote.sh"
