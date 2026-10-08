@@ -167,7 +167,10 @@ img { max-width: 100%; }
 /* 헤더 */
 .site-header { height: 64px; position: sticky; top: 0; z-index: 10; background: var(--color-bg); }
 .header-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
-.logo { font-family: var(--mono); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+.logo { font-family: var(--mono); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; display: inline-flex; align-items: center; gap: 0.3em; }
+/* 로고 그림은 파비콘 SVG를 마스크로 써 글자색(currentColor)으로 칠한다. 다크 모드에서도 글자와 같은 색이고, 그림을 번들에 다시 넣지 않는다 */
+.logo-mark { width: 1.2em; height: 1.2em; flex-shrink: 0; background-color: currentColor;
+  -webkit-mask: url(/favicon.svg) center / contain no-repeat; mask: url(/favicon.svg) center / contain no-repeat; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
 .header-write .short, .header-write .icon { display: none; }
 /* 좁은 화면: 헤더가 한 줄에 들어가게 간격과 글자를 줄인다 (테마 버튼 추가 뒤 375px 기준) */
