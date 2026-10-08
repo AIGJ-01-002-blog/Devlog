@@ -6,7 +6,7 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
-## [1.25.3] - 2026-10-08
+## [1.26.1] - 2026-10-08
 
 배포가 AI 설정(Gemini 열쇠, 집 PC Ollama)을 넣어 준다.
 
@@ -16,6 +16,18 @@ main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/r
 ### 추가
 - 집 PC Ollama 연결(docs/61): GitHub 변수 `OLLAMA_BASE_URL`과 Secret `OLLAMA_ACCESS_CLIENT_ID`·`OLLAMA_ACCESS_CLIENT_SECRET`·`OLLAMA_AUTH_TOKEN`을 배포가 앱에 넣는다. 주소 변수가 비어 있으면 Ollama를 쓰지 않는다
 - 운영(selfhosted) 설정에 `OLLAMA_MODEL=qwen2.5:14b`, `OLLAMA_CONCURRENCY=1`, `OLLAMA_DOWN_FOR=60s`
+
+## [1.26.0] - 2026-10-08
+
+MCP 개발 일지 중심 첫 화면 (spec 051). 새 슬로건 "코딩은 AI와, 기록은 devlog가."
+
+### 추가
+- 처음 온 방문자의 첫 화면이 슬로건과 [AI에 devlog 연결하기], AI가 개발 일지 임시글을 만드는 예시 장면으로 바뀌었다
+- `/mcp` "AI에 devlog 연결하기" 안내 화면: MCP가 무엇인지, 연결 3단계, Claude Code 명령·설정 파일 복사, AI가 쓸 수 있는 도구, 안전 장치. MCP 서버와 토큰 발급은 곧 연다
+- 헤더에 [AI 연결] 링크
+
+### 바뀜
+- 첫 화면의 링크 미리보기 설명이 슬로건으로 바뀌었다
 
 ## [1.25.2] - 2026-10-08
 

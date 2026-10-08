@@ -43,6 +43,7 @@ const WritePage = lazyPage(() => import('./pages/WritePage'), 'WritePage');
 const RestorePage = lazyPage(() => import('./pages/RestorePage'), 'RestorePage');
 const WithdrawnPage = lazyPage(() => import('./pages/WithdrawnPage'), 'WithdrawnPage');
 const WithdrawPage = lazyPage(() => import('./pages/WithdrawPage'), 'WithdrawPage');
+const McpPage = lazyPage(() => import('./pages/McpPage'), 'McpPage');
 export function App() {
     const { path } = useLocation();
     return (_jsxs(_Fragment, { children: [_jsx(SkipLink, {}), _jsx(PageAnnouncer, {}), !path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx("div", { id: MAIN_ID, tabIndex: -1, children: _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: _jsx(PageErrorBoundary, { path: path, children: _jsx(Suspense, { fallback: _jsx(Loading, {}), children: route(path) }) }) }) }) })] }));
@@ -67,6 +68,8 @@ function route(path) {
         return _jsx(BlogPage, { handle: p.handle }, p.handle);
     if (path === '/search')
         return _jsx(SearchPage, {});
+    if (path === '/mcp')
+        return _jsx(McpPage, {});
     if (path === '/tags')
         return _jsx(TagsPage, {});
     if ((p = match('/tags/:name', path)))

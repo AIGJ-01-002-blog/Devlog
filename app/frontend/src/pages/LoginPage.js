@@ -18,6 +18,8 @@ export function LoginPage() {
     const [formError, setFormError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [social, setSocial] = useState(['github']);
+    // 안내 화면(/mcp 등)에서 화면 안 이동으로 오면 앞 화면 제목이 남지 않게
+    useEffect(() => { document.title = '로그인 - devlog'; }, []);
     useEffect(() => {
         api('/api/auth/providers').then((p) => setSocial(p.social)).catch(() => undefined);
     }, []);

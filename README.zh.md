@@ -363,7 +363,8 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
-| v1.25.3 | 2026-10-08 | 部署时将 Gemini 密钥和家用 PC 的 Ollama 设置传给应用（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.3) |
+| v1.26.1 | 2026-10-08 | 部署时将 Gemini 密钥和家用 PC 的 Ollama 设置传给应用（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.1) |
+| v1.26.0 | 2026-10-08 | 以 MCP 开发日志为中心的首页与 AI 连接指南 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.0) |
 | v1.25.2 | 2026-10-08 | 将文章列表与详情查询移入文章模块整理（行为不变） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.2) |
 | v1.25.1 | 2026-10-08 | 生产数据库改用内置 pgvector 的 PostgreSQL 镜像（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.1) |
 | v1.25.0 | 2026-10-08 | 注册页面将 AI 功能同意改为可选项 | [查看](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.0) |
