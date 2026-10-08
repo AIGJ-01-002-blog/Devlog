@@ -16,6 +16,7 @@ export function SignupAgreements({ value, onChange, termsDate, privacyDate, erro
   const all = value.terms && value.privacy && value.ai
   return (
     <fieldset className="field agreements">
+      <legend className="sr-only">약관 동의</legend>
       <label><input type="checkbox" checked={all} onChange={(e) => onChange({ terms: e.target.checked, privacy: e.target.checked, ai: e.target.checked })} /> <b>모두 동의 (선택 항목 포함)</b></label>
       <label><input type="checkbox" checked={value.terms} onChange={(e) => onChange({ ...value, terms: e.target.checked })} /> (필수) 이용약관{termsDate ? ` (${termsDate} 시행)` : ''}</label>
       <label><input type="checkbox" checked={value.privacy} onChange={(e) => onChange({ ...value, privacy: e.target.checked })} /> (필수) 개인정보 처리방침{privacyDate ? ` (${privacyDate} 시행)` : ''}</label>
