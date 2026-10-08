@@ -29,6 +29,8 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import tools.jackson.databind.JsonNode;
 
+import com.team.blog.account.application.AgreementService;
+import com.team.blog.account.domain.AgreementType;
 import com.team.blog.shared.mail.Mail;
 import com.team.blog.shared.mail.Mailer;
 import com.team.blog.shared.mail.OutboxMailer;
@@ -41,6 +43,7 @@ class EmailAuthTest extends IntegrationTest {
     private static final Pattern TOKEN = Pattern.compile("token=([A-Za-z0-9_-]+)");
 
     @Autowired Mailer mailer;
+    @Autowired AgreementService agreementService;
 
     record Account(Browser http, String email, long memberId, String handle) {}
 
@@ -137,6 +140,31 @@ class EmailAuthTest extends IntegrationTest {
         assertThat(mails.getFirst().body()).contains("/verify-email?token=").contains("24시간");
         Long ttl = redis.getExpire("auth:verify:member:" + a.memberId());
         assertThat(ttl).isBetween(23 * 3600L, 24 * 3600L);
+    }
+
+    @Test
+    void 가입_화면의_AI_동의는_선택이라_따로_기록되고_안_하면_기록이_없다() throws Exception {
+        // 이메일 가입: 선택 항목에 동의
+        String email = uniqueEmail("aiyes");
+        Map<String, Object> form = signupForm(email, email.substring(0, email.indexOf('@')).replaceAll("[^a-z0-9]", ""), "에이아이예", PASSWORD);
+        form.put("agreeAi", true);
+        Browser b = browser();
+        b.perform(asJson(post("/api/auth/signup/email"), form)).andExpect(status().isCreated());
+        long yes = read(b.perform(get("/api/auth/me")).andReturn()).path("member").path("id").asLong();
+        assertThat(jdbc.queryForList("SELECT type FROM member_agreement WHERE member_id = ? ORDER BY type", String.class, yes))
+                .containsExactly("AI", "PRIVACY", "TERMS");
+        assertThat(jdbc.queryForObject("SELECT version FROM member_agreement WHERE member_id = ? AND type = 'AI'", String.class, yes))
+                .isEqualTo(agreementService.currentVersion(AgreementType.AI));
+
+        // 소셜 가입: 선택 항목을 비우면 필수 둘만 남고 가입은 된다
+        String login = uniqueLogin("ainone");
+        Browser g = githubAuthenticated(String.valueOf(System.nanoTime() % 1_000_000_000L + 20_000_000L), login, login, login + "@example.com");
+        g.perform(asJson(post("/api/auth/signup"), Map.of("handleBody", login.toLowerCase().replace('-', '_'), "nickname", "에이아이노",
+                        "agreeTerms", true, "agreePrivacy", true, "agreeAi", false)))
+                .andExpect(status().isCreated());
+        long no = read(g.perform(get("/api/auth/me")).andReturn()).path("member").path("id").asLong();
+        assertThat(jdbc.queryForList("SELECT type FROM member_agreement WHERE member_id = ? ORDER BY type", String.class, no))
+                .containsExactly("PRIVACY", "TERMS");
     }
 
     @Test
