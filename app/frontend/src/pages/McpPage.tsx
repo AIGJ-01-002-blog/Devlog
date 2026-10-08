@@ -53,14 +53,18 @@ export function McpPage() {
         <thead><tr><th scope="col">도구</th><th scope="col">하는 일</th><th scope="col">권한</th></tr></thead>
         <tbody>
           {MCP_TOOLS.map((t) => (
-            <tr key={t.name}><td><code>{t.name}</code></td><td>{t.does}</td><td>{t.scope}</td></tr>
+            <tr key={t.name}><td><code>{t.name}</code></td><td>{t.does}</td><td>{t.aiPublish ? `${t.scope} · 허용했을 때만` : t.scope}</td></tr>
           ))}
         </tbody>
       </table>
+      <p className="muted small">
+        <code>publish_post</code>·<code>delete_post</code>는 설정 › AI 연결에서 <b>AI가 발행·삭제하도록 허용</b>을 켰을 때만 AI에게 보이고 쓸 수 있어요. 기본은 꺼져 있어요.
+      </p>
 
       <h2>안심하고 쓰도록</h2>
       <ul className="mcp-safety">
-        <li><b>발행은 언제나 내가</b> 해요. AI는 임시글과 "발행 대기"까지만 만들 수 있어요.</li>
+        <li><b>발행은 기본으로 내가</b> 해요. AI는 임시글과 "발행 대기"까지만 만들 수 있어요.</li>
+        <li>설정 › AI 연결에서 <b>AI가 발행·삭제하도록 허용</b>을 켠 경우에만 AI가 글을 바로 발행하거나 삭제할 수 있어요. 삭제는 웹에서 지울 때와 같아 휴지통에서 30일 안에 복구할 수 있어요. 이 설정은 로그인한 웹 화면에서만 바꿀 수 있어 AI가 스스로 켤 수 없어요.</li>
         <li>AI가 읽는 글도 <b>웹과 같은 공개 범위</b>를 따라요. 남의 비공개·친구 공개 글은 읽을 수 없어요.</li>
         <li>토큰마다 <b>범위·만료일</b>이 있고, 회원마다 <b>요청 수 제한</b>(1분에 60번, 글쓰기는 한 시간에 30번)이 있어요.</li>
         <li>글쓰기 도구는 <b>이메일 인증을 마친 회원</b>만 쓸 수 있어요.</li>

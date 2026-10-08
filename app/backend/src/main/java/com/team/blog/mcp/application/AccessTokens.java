@@ -51,8 +51,11 @@ public class AccessTokens {
     /** @param secret 원문. 이 응답에서만 보인다 */
     public record Issued(TokenView token, String secret) {}
 
-    /** 토큰으로 들어온 요청의 주인. status는 member.status(ACTIVE·SUSPENDED·WITHDRAWN). */
-    public record Caller(long memberId, String handle, Scope scope, String status, boolean emailVerified) {
+    /**
+     * 토큰으로 들어온 요청의 주인. status는 member.status(ACTIVE·SUSPENDED·WITHDRAWN).
+     * aiPublishAllowed는 회원이 웹 설정에서 켠 "AI가 발행·삭제하도록 허용"(053). 요청마다 DB에서 새로 읽는다.
+     */
+    public record Caller(long memberId, String handle, Scope scope, String status, boolean emailVerified, boolean aiPublishAllowed) {
         public boolean canWrite() {
             return scope == Scope.WRITE;
         }
@@ -152,6 +155,18 @@ public class AccessTokens {
         if (changed == 0) throw new NotFoundException();
     }
 
+    /** "AI가 발행·삭제하도록 허용" (053). 웹 설정 화면(로그인 세션)에서만 읽고 바꾼다. */
+    public boolean aiPublishAllowed(long memberId) {
+        List<Boolean> rows = jdbc.queryForList("SELECT ai_publish_allowed FROM member WHERE id = ?", Boolean.class, memberId);
+        if (rows.isEmpty()) throw new NotFoundException();
+        return Boolean.TRUE.equals(rows.getFirst());
+    }
+
+    public boolean setAiPublishAllowed(long memberId, boolean allowed) {
+        if (jdbc.update("UPDATE member SET ai_publish_allowed = ? WHERE id = ?", allowed, memberId) == 0) throw new NotFoundException();
+        return allowed;
+    }
+
     /** 탈퇴 정리 (020): 토큰을 모두 지운다. */
     public void deleteAll(long memberId) {
         jdbc.update("DELETE FROM personal_access_token WHERE member_id = ?", memberId);
@@ -163,13 +178,14 @@ public class AccessTokens {
         if (secret == null) return Optional.empty();
         Instant now = Times.now(clock);
         List<Row> rows = jdbc.query("""
-                SELECT t.id, t.member_id, t.scope, t.last_used_at, m.handle, m.status,
+                SELECT t.id, t.member_id, t.scope, t.last_used_at, m.handle, m.status, m.ai_publish_allowed,
                        EXISTS (SELECT 1 FROM auth_identity a WHERE a.member_id = m.id AND a.email_verified_at IS NOT NULL) AS verified
                 FROM personal_access_token t JOIN member m ON m.id = t.member_id
                 WHERE t.token_hash = ? AND t.revoked_at IS NULL AND (t.expires_at IS NULL OR t.expires_at > ?) AND m.deleted_at IS NULL
                 """, (rs, i) -> new Row(rs.getLong("id"), instant(rs.getTimestamp("last_used_at")),
                 new Caller(rs.getLong("member_id"), rs.getString("handle"), Scope.valueOf(rs.getString("scope")),
-                        rs.getString("status"), rs.getBoolean("verified"))), hash(secret), Timestamp.from(now));
+                        rs.getString("status"), rs.getBoolean("verified"), rs.getBoolean("ai_publish_allowed"))),
+                hash(secret), Timestamp.from(now));
         if (rows.isEmpty()) return Optional.empty();
         Row row = rows.getFirst();
         if (row.lastUsedAt() == null || row.lastUsedAt().plus(TOUCH_EVERY).isBefore(now)) {

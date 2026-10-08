@@ -11,6 +11,7 @@ const chatgpt = { ...listed, id: 3, name: 'ChatGPT', prefix: 'dvl_zzzz', scope: 
 const secret = 'dvl_' + 'x'.repeat(43)
 
 describe('AiConnectSection', () => {
+  let allowed: boolean
   let root: Root
   let host: HTMLDivElement
   beforeEach(() => {
@@ -19,7 +20,12 @@ describe('AiConnectSection', () => {
     host = document.createElement('div')
     document.body.appendChild(host)
     root = createRoot(host)
+    allowed = false
     vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/api/me/ai-publish')) {
+        if (init?.method === 'PUT') allowed = JSON.parse(String(init.body)).allowed
+        return new Response(JSON.stringify({ allowed }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      }
       if (init?.method === 'POST') {
         return new Response(JSON.stringify({ token: { ...listed, id: 2, name: 'Claude Code', prefix: secret.slice(0, 8), scope: 'WRITE' }, secret }),
           { status: 201, headers: { 'Content-Type': 'application/json' } })
@@ -51,5 +57,34 @@ describe('AiConnectSection', () => {
     await act(async () => { [...host.querySelectorAll('button')].find((b) => b.textContent === '다 복사했어요')!.click() })
     expect(host.textContent).not.toContain(secret)
     expect(host.querySelectorAll('.token-row')).toHaveLength(3)
+  })
+
+  // spec 053: AI 발행·삭제 허용은 기본 꺼짐이고, 켤 때만 한 번 더 묻는다
+  it('AI 발행·삭제 허용은 켤 때 확인을 받고, 끌 때는 바로 끈다', async () => {
+    const ask = vi.fn(() => false)
+    vi.stubGlobal('confirm', ask)
+    await act(async () => { root.render(<AiConnectSection />) })
+    expect(host.textContent).toContain('켜면 연결한 AI가 글을 바로 발행하거나 삭제할 수 있어요. 삭제는 웹에서 지울 때와 같아요.')
+    const box = () => host.querySelector<HTMLInputElement>('.ai-publish input[type="checkbox"]')!
+    const puts = () => (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([, init]) => init?.method === 'PUT')
+    expect(box().checked).toBe(false)
+
+    // 확인 창에서 취소하면 켜지지 않는다
+    await act(async () => { box().click() })
+    expect(ask).toHaveBeenCalledTimes(1)
+    expect(puts()).toHaveLength(0)
+    expect(box().checked).toBe(false)
+
+    ask.mockReturnValue(true)
+    await act(async () => { box().click() })
+    expect(puts()).toHaveLength(1)
+    expect(JSON.parse(String(puts()[0][1].body))).toEqual({ allowed: true })
+    expect(box().checked).toBe(true)
+
+    // 끌 때는 묻지 않는다
+    await act(async () => { box().click() })
+    expect(ask).toHaveBeenCalledTimes(2)
+    expect(JSON.parse(String(puts()[1][1].body))).toEqual({ allowed: false })
+    expect(box().checked).toBe(false)
   })
 })

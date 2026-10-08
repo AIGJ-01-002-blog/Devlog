@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,7 +21,10 @@ import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
 
-/** 설정 화면의 AI 연결(개인 접근 토큰)과 편집 화면의 AI 제안 (052). */
+/**
+ * 설정 화면의 AI 연결(개인 접근 토큰)과 편집 화면의 AI 제안 (052), AI 발행·삭제 허용 설정 (053).
+ * 모두 로그인 세션 + CSRF로만 부른다. /api/mcp 전용 보안 체인 밖이라 접근 토큰(Bearer)으로는 들어올 수 없다.
+ */
 @RestController
 public class AccessTokenController {
     private final AccessTokens tokens;
@@ -36,6 +40,9 @@ public class AccessTokenController {
     public record CreateRequest(String name, String scope, Integer expiresInDays) {}
 
     public record HintView(List<String> tags, Instant publishRequestedAt) {}
+
+    /** @param allowed true면 연결한 AI가 publish_post·delete_post로 글을 바로 발행하거나 휴지통으로 옮길 수 있다 */
+    public record AiPublishSetting(Boolean allowed) {}
 
     @GetMapping("/api/me/tokens")
     public ResponseEntity<List<AccessTokens.TokenView>> list(@CurrentMember MemberPrincipal me) {
@@ -54,6 +61,18 @@ public class AccessTokenController {
     public ResponseEntity<Void> revoke(@CurrentMember MemberPrincipal me, @PathVariable long id) {
         tokens.revoke(me.id(), id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/api/me/ai-publish")
+    public ResponseEntity<AiPublishSetting> aiPublish(@CurrentMember MemberPrincipal me) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(new AiPublishSetting(tokens.aiPublishAllowed(me.id())));
+    }
+
+    /** 켜고 끄기 (053). AI가 스스로 켜지 못하게 MCP 도구로는 열어 두지 않는다. */
+    @PutMapping("/api/me/ai-publish")
+    public AiPublishSetting setAiPublish(@CurrentMember MemberPrincipal me, @RequestBody AiPublishSetting body) {
+        if (body == null || body.allowed() == null) throw ApiException.badRequest("INVALID_REQUEST", "켤지 끌지(allowed)를 보내 주세요.");
+        return new AiPublishSetting(tokens.setAiPublishAllowed(me.id(), body.allowed()));
     }
 
     /** AI가 만든 임시글이면 태그 제안·발행 요청. 본인 글만, 없으면 204. */

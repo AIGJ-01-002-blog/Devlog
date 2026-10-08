@@ -17,11 +17,14 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import com.team.blog.account.domain.Visibility;
 import com.team.blog.discovery.application.PostDetailQuery;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.post.application.MyPostsQuery;
 import com.team.blog.post.application.PostCommandService;
 import com.team.blog.post.application.PostEditorQuery;
+import com.team.blog.post.application.PostTrashService;
+import com.team.blog.post.application.PublishCommand;
 import com.team.blog.post.domain.PostStatus;
 import com.team.blog.search.application.SearchQuery;
 import com.team.blog.shared.config.BlogProperties;
@@ -32,9 +35,10 @@ import com.team.blog.tag.application.TagNormalizer;
 import com.team.blog.tag.application.TagQuery;
 
 /**
- * devlog MCP 도구 (052). AI는 회원 본인의 권한 안에서만 읽고, 임시글과 "발행 대기"까지만 만든다.
- * 발행·공개 범위 변경·삭제 도구는 없다. 발행은 언제나 사람이 화면에서 한다.
- * 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
+ * devlog MCP 도구 (052). AI는 회원 본인의 권한 안에서만 읽고, 기본으로는 임시글과 "발행 대기"까지만 만든다.
+ * 회원이 웹 설정에서 "AI가 발행·삭제하도록 허용"을 켜면(053) publish_post·delete_post가 열린다.
+ * 둘 다 웹의 발행·삭제와 같은 서비스(PostCommandService.publish, PostTrashService.trash)를 그대로 부른다.
+ * 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
  */
 @Service
 public class McpTools {
@@ -47,8 +51,18 @@ public class McpTools {
         static Result fail(String text) { return new Result(text, true); }
     }
 
-    /** 도구 하나. write면 WRITE 토큰과 메일 인증이 필요하다. */
-    record Tool(String name, String title, String description, boolean write, String inputSchema) {}
+    /**
+     * 도구 하나. write면 WRITE 토큰과 메일 인증이 필요하다.
+     * aiPublish면 회원이 "AI가 발행·삭제하도록 허용"을 켰을 때만 목록에 보이고 부를 수 있다 (053).
+     */
+    record Tool(String name, String title, String description, boolean write, String inputSchema, boolean aiPublish, boolean destructive) {
+        Tool(String name, String title, String description, boolean write, String inputSchema) {
+            this(name, title, description, write, inputSchema, false, false);
+        }
+    }
+
+    static final String AI_PUBLISH_OFF = "AI가 발행·삭제하는 기능이 꺼져 있어요. 사용자가 devlog 설정 › AI 연결에서 "
+            + "'AI가 발행·삭제하도록 허용'을 켜야 쓸 수 있어요. 지금은 request_publish로 발행 대기만 표시할 수 있어요.";
 
     private static final String DRAFT_SCHEMA = """
             {"type":"object","properties":{
@@ -76,6 +90,22 @@ public class McpTools {
                     "임시글을 '발행 대기'로 표시하고 편집 화면 링크를 돌려준다. 실제 발행은 사용자가 그 화면에서 [발행하기]를 눌러야 된다.",
                     true, """
                     {"type":"object","properties":{"post_id":{"type":"integer"}},"required":["post_id"]}"""),
+            new Tool("publish_post", "글 발행하기",
+                    "사용자의 임시글을 바로 발행한다(웹의 [발행하기]와 같다). 사용자가 발행하라고 분명히 말했을 때만 부른다. "
+                            + "공개 범위(visibility)를 주지 않으면 그 글에 정해진 공개 범위(보통 회원 기본값)로 발행한다. "
+                            + "tags를 주지 않으면 글에 있던 태그나 AI가 제안한 태그를 쓴다. 이미 발행한 글은 이 도구로 다시 발행하지 않는다. "
+                            + "사용자가 설정 › AI 연결에서 'AI가 발행·삭제하도록 허용'을 켰을 때만 쓸 수 있다.", true, """
+                    {"type":"object","properties":{
+                      "post_id":{"type":"integer"},
+                      "visibility":{"type":"string","enum":["PUBLIC","FRIENDS","PRIVATE"],"description":"PUBLIC 전체 공개, FRIENDS 친구에게만, PRIVATE 나만 보기"},
+                      "tags":{"type":"array","items":{"type":"string"},"description":"붙일 태그 (10개까지). 웹 발행과 같은 규칙으로 검사한다"},
+                      "summary":{"type":"string","description":"목록에 보일 요약. 주지 않으면 본문에서 자동으로 만든다"}},
+                     "required":["post_id"]}""", true, false),
+            new Tool("delete_post", "글 삭제하기",
+                    "사용자의 글을 삭제한다(웹의 [삭제]와 같다): 휴지통으로 옮겨져 30일 동안 devlog 휴지통에서 복구할 수 있고, "
+                            + "그 뒤 완전히 지워진다. 제목·본문이 모두 빈 임시글은 바로 지워진다. 사용자가 삭제하라고 분명히 말했을 때만 부른다. "
+                            + "사용자가 설정 › AI 연결에서 'AI가 발행·삭제하도록 허용'을 켰을 때만 쓸 수 있다.", true, """
+                    {"type":"object","properties":{"post_id":{"type":"integer"}},"required":["post_id"]}""", true, true),
             new Tool("search_posts", "글 검색",
                     "devlog의 공개 글을 검색한다. mine=true면 사용자 본인의 공개 글만 찾는다.", false, """
                     {"type":"object","properties":{
@@ -100,6 +130,7 @@ public class McpTools {
     private final PostDetailQuery details;
     private final TagQuery tags;
     private final AiDraftHints hints;
+    private final PostTrashService trash;
     private final RateLimiter rateLimiter;
     private final JdbcTemplate jdbc;
     private final Clock clock;
@@ -107,8 +138,8 @@ public class McpTools {
     private final int maxTags;
 
     public McpTools(PostCommandService commands, PostEditorQuery editor, MyPostsQuery myPosts, SearchQuery search,
-                    PostDetailQuery details, TagQuery tags, AiDraftHints hints, RateLimiter rateLimiter, JdbcTemplate jdbc,
-                    Clock clock, BlogProperties props) {
+                    PostDetailQuery details, TagQuery tags, AiDraftHints hints, PostTrashService trash, RateLimiter rateLimiter,
+                    JdbcTemplate jdbc, Clock clock, BlogProperties props) {
         this.commands = commands;
         this.editor = editor;
         this.myPosts = myPosts;
@@ -116,6 +147,7 @@ public class McpTools {
         this.details = details;
         this.tags = tags;
         this.hints = hints;
+        this.trash = trash;
         this.rateLimiter = rateLimiter;
         this.jdbc = jdbc;
         this.clock = clock;
@@ -123,13 +155,14 @@ public class McpTools {
         this.maxTags = props.post().maxTags();
     }
 
-    /** tools/list 응답의 tools 배열 */
-    public List<Map<String, Object>> definitions() {
+    /** tools/list 응답의 tools 배열. 발행·삭제 도구는 회원이 허용했을 때만 보인다 (053). */
+    public List<Map<String, Object>> definitions(AccessTokens.Caller caller) {
         List<Map<String, Object>> out = new ArrayList<>();
         for (Tool t : TOOLS) {
+            if (t.aiPublish() && !caller.aiPublishAllowed()) continue;
             out.add(Map.of("name", t.name(), "title", t.title(), "description", t.description(),
                     "inputSchema", json.readTree(t.inputSchema()),
-                    "annotations", Map.of("readOnlyHint", !t.write(), "destructiveHint", false, "openWorldHint", false)));
+                    "annotations", Map.of("readOnlyHint", !t.write(), "destructiveHint", t.destructive(), "openWorldHint", false)));
         }
         return out;
     }
@@ -142,6 +175,8 @@ public class McpTools {
         }
         if (tool.get().write()) {
             if (!caller.canWrite()) return Result.fail("이 토큰은 읽기 전용이에요. devlog 설정 › AI 연결에서 쓰기 권한 토큰을 만들어 주세요.");
+            // 목록에서 숨겨도 이름을 알면 부를 수 있으니 부를 때 다시 확인한다
+            if (tool.get().aiPublish() && !caller.aiPublishAllowed()) return Result.fail(AI_PUBLISH_OFF);
             if (!caller.emailVerified()) return Result.fail("이메일 인증을 마친 뒤 글을 쓸 수 있어요. devlog에서 인증 메일을 확인해 주세요.");
             if (!rateLimiter.tryAcquire("mcp-write:" + caller.memberId(), WRITES_PER_HOUR, Duration.ofHours(1))) {
                 return Result.fail("글쓰기 요청은 한 시간에 " + WRITES_PER_HOUR + "번까지예요. 잠시 뒤 다시 시도해 주세요.");
@@ -153,6 +188,8 @@ public class McpTools {
                 case "write_devlog", "create_draft" -> createDraft(caller, a);
                 case "update_draft" -> updateDraft(caller, a);
                 case "request_publish" -> requestPublish(caller, a);
+                case "publish_post" -> publishPost(caller, a);
+                case "delete_post" -> deletePost(caller, a);
                 case "search_posts" -> searchPosts(caller, a);
                 case "get_post" -> getPost(caller, a);
                 case "list_my_posts" -> listMyPosts(caller, a);
@@ -194,6 +231,69 @@ public class McpTools {
         hints.requestPublish(id, Times.now(clock));
         return Result.ok("'" + view.title() + "'을(를) 발행 대기로 표시했어요. 아직 공개되지 않았어요.\n"
                 + "사용자가 이 화면에서 내용을 확인하고 [발행하기]를 눌러야 공개돼요: " + editUrl(id));
+    }
+
+    /**
+     * 웹의 발행 창과 같은 값으로 발행한다 (053): 제목·본문은 지금 작업본, 공개 범위는 글에 정해진 값, 태그는 글의 태그나 AI 제안,
+     * 요약·썸네일은 글에 있던 그대로. 검증·태그 규칙·발행 후 처리는 PostCommandService.publish가 웹과 똑같이 한다.
+     */
+    private Result publishPost(AccessTokens.Caller caller, JsonNode a) {
+        long id = postId(a);
+        PostEditorQuery.EditorView view = editor.open(caller.memberId(), caller.handle(), id);
+        if (view.status() != PostStatus.DRAFT) return Result.fail("이미 발행한 글이에요. 발행한 글의 수정·다시 발행은 devlog 화면에서 해 주세요: " + baseUrl + view.url());
+        Visibility visibility = view.visibility();
+        if (a.has("visibility")) {
+            visibility = parseVisibility(text(a, "visibility"));
+            if (visibility == null) return Result.fail("공개 범위(visibility)는 PUBLIC, FRIENDS, PRIVATE 중 하나예요.");
+        }
+        List<String> tagList;
+        if (a.has("tags")) {
+            JsonNode raw = a.path("tags");
+            if (!raw.isArray()) return Result.fail("태그(tags)는 문자열 배열이어야 해요. 태그를 비우려면 []를 주세요.");
+            tagList = new ArrayList<>();
+            for (JsonNode n : raw) {
+                if (!n.isString()) return Result.fail("태그(tags)에는 문자열만 넣을 수 있어요.");
+                tagList.add(n.asString());
+            }
+        } else if (!view.tags().isEmpty()) {
+            tagList = view.tags();
+        } else {
+            tagList = hints.find(id).map(AiDraftHints.Hint::tags).orElse(List.of());
+        }
+        String summary = a.has("summary") ? text(a, "summary") : view.summary();
+        PostCommandService.PublishResult r = commands.publish(new PublishCommand(id, caller.memberId(), view.title(), view.contentMd(),
+                summary, visibility, tagList, view.version(), view.thumbnailUrl(), view.thumbnailHidden()), caller.handle(), null);
+        List<String> saved = editor.open(caller.memberId(), caller.handle(), id).tags();
+        return Result.ok("'" + view.title() + "'을(를) " + visibilityLabel(r.visibility()) + "로 발행했어요: " + baseUrl + r.url()
+                + (saved.isEmpty() ? "" : "\n태그: " + String.join(", ", saved)));
+    }
+
+    /** 웹의 [삭제]와 같다 (053): 휴지통으로 옮기고 30일 뒤 완전 삭제. 빈 임시글은 바로 지운다. */
+    private Result deletePost(AccessTokens.Caller caller, JsonNode a) {
+        long id = postId(a);
+        PostTrashService.TrashResult r = trash.trash(caller.memberId(), id);
+        return switch (r.result()) {
+            case TRASHED -> Result.ok("글 " + id + "번을 휴지통으로 옮겼어요. " + DATE.format(r.purgeAt())
+                    + "까지 devlog 휴지통에서 복구할 수 있고, 그 뒤 완전히 지워져요.");
+            case ALREADY_TRASHED -> Result.ok("글 " + id + "번은 이미 휴지통에 있어요. " + DATE.format(r.purgeAt()) + "에 완전히 지워져요.");
+            case DELETED_EMPTY -> Result.ok("글 " + id + "번은 제목과 본문이 비어 있는 임시글이라 바로 지웠어요.");
+        };
+    }
+
+    private static Visibility parseVisibility(String raw) {
+        try {
+            return Visibility.valueOf(raw.strip().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static String visibilityLabel(Visibility v) {
+        return switch (v) {
+            case PUBLIC -> "전체 공개";
+            case FRIENDS -> "친구 공개";
+            case PRIVATE -> "비공개(나만 보기)";
+        };
     }
 
     private Result searchPosts(AccessTokens.Caller caller, JsonNode a) {

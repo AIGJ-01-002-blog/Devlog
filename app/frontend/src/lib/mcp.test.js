@@ -10,8 +10,9 @@ describe('MCP 연결 안내 (051)', () => {
         const config = JSON.parse(mcpJsonConfig('https://devlog.life'));
         expect(config.mcpServers.devlog).toEqual({ url: 'https://devlog.life/api/mcp', headers: { Authorization: `Bearer ${TOKEN_PLACEHOLDER}` } });
     });
-    it('바로 발행하는 도구는 없다', () => {
-        expect(MCP_TOOLS.map((t) => t.name)).not.toContain('publish_post');
+    it('바로 발행·삭제하는 도구는 허용을 켠 회원에게만 열린다 (053)', () => {
+        expect(MCP_TOOLS.filter((t) => t.aiPublish).map((t) => t.name)).toEqual(['publish_post', 'delete_post']);
+        expect(MCP_TOOLS.filter((t) => !t.aiPublish).map((t) => t.name)).not.toContain('publish_post');
         expect(MCP_TOOLS.find((t) => t.name === 'request_publish')?.does).toContain('[발행]');
     });
     it('Codex 설정은 토큰을 환경 변수로 받는다 (052)', () => {

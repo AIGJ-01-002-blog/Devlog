@@ -3,13 +3,14 @@ import { ApiError } from '../lib/api'
 import { fullDate, relativeDate } from '../lib/format'
 import { Link } from '../lib/router'
 import {
-  claudeCodeCommand, TOKEN_EXPIRY_DAYS, TOKEN_NAME_MAX, tokensApi, type AccessToken, type IssuedToken, type TokenScope,
+  aiPublishApi, claudeCodeCommand, TOKEN_EXPIRY_DAYS, TOKEN_NAME_MAX, tokensApi, type AccessToken, type IssuedToken, type TokenScope,
 } from '../lib/mcp'
 import { CopyCode } from './CopyCode'
 
 /**
  * 설정 › AI 연결 (052): MCP용 개인 접근 토큰을 만들고 폐기한다.
  * 원문은 만든 직후 이 화면에서 한 번만 보여 준다. 다시 볼 수 없으니 새로 만들게 안내한다.
+ * 아래의 "AI가 발행·삭제하도록 허용"(053)은 기본 꺼짐이고, 켤 때 한 번 더 묻는다.
  */
 export function AiConnectSection() {
   const [tokens, setTokens] = useState<AccessToken[] | null>(null)
@@ -60,7 +61,7 @@ export function AiConnectSection() {
       <h2>AI 연결</h2>
       <p className="muted small">
         Claude Code·Cursor·Codex 같은 AI 도구에 토큰으로 devlog를 연결하면 "개발 일지 써 줘" 한마디로 임시글이 만들어져요.
-        ChatGPT처럼 로그인으로 연결한 앱도 여기에 보여요. 발행은 언제나 내가 해요. <Link to="/mcp">연결 방법 자세히 보기</Link>
+        ChatGPT처럼 로그인으로 연결한 앱도 여기에 보여요. 발행은 기본으로 내가 해요. <Link to="/mcp">연결 방법 자세히 보기</Link>
       </p>
 
       {issued && (
@@ -81,7 +82,7 @@ export function AiConnectSection() {
         <label>
           <span>권한</span>
           <select value={scope} onChange={(e) => setScope(e.target.value as TokenScope)}>
-            <option value="WRITE">임시글 쓰기 + 읽기</option>
+            <option value="WRITE">쓰기 + 읽기</option>
             <option value="READ">읽기만</option>
           </select>
         </label>
@@ -112,6 +113,49 @@ export function AiConnectSection() {
         </ul>
       )}
       {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
+
+      <AiPublishToggle />
     </section>
+  )
+}
+
+const AI_PUBLISH_WARNING = '켜면 연결한 AI가 글을 바로 발행하거나 삭제할 수 있어요. 삭제는 웹에서 지울 때와 같아요.'
+
+/**
+ * "AI가 발행·삭제하도록 허용" (053). 기본은 꺼짐. 켜면 쓰기 권한으로 연결한 AI에 publish_post·delete_post가 열린다.
+ * 이 설정은 로그인한 이 화면에서만 바꿀 수 있어서 AI가 스스로 켤 수 없다.
+ */
+function AiPublishToggle() {
+  const [allowed, setAllowed] = useState<boolean | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => { aiPublishApi.get().then((s) => setAllowed(s.allowed)).catch(() => setAllowed(null)) }, [])
+
+  const change = async (on: boolean) => {
+    if (on && !confirm('AI가 발행·삭제하도록 허용할까요?\n쓰기 권한으로 연결한 AI가 내 확인 없이 글을 바로 발행하거나 휴지통으로 옮길 수 있어요. 언제든 다시 끌 수 있어요.')) return
+    setBusy(true)
+    setError(null)
+    try {
+      setAllowed((await aiPublishApi.set(on)).allowed)
+    } catch {
+      setError('설정을 바꾸지 못했어요. 다시 시도해 주세요.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="ai-publish">
+      <h3>AI 발행·삭제</h3>
+      <label>
+        <input type="checkbox" checked={allowed === true} disabled={busy || allowed === null} onChange={(e) => change(e.target.checked)} />
+        {' '}AI가 발행·삭제하도록 허용
+      </label>
+      <p className="muted small">
+        {AI_PUBLISH_WARNING} 지운 글은 휴지통에서 30일 안에 복구할 수 있어요. 꺼 두면 AI는 임시글과 "발행 대기"까지만 만들어요.
+      </p>
+      {error && <p className="error" role="status">{error}</p>}
+    </div>
   )
 }

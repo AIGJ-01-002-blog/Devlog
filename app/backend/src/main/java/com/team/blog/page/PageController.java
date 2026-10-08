@@ -162,7 +162,7 @@ public class PageController {
     @GetMapping("/mcp")
     public ResponseEntity<String> mcpGuide() {
         String body = "<main><h1>당신의 AI가 개발 일지를 씁니다</h1><p>Claude·Cursor 같은 AI 도구에 devlog MCP를 연결하면, "
-                + "오늘 작업한 대화와 커밋을 정리해 개발 일지 임시글을 올려 줍니다. 발행은 언제나 내가 합니다.</p></main>";
+                + "오늘 작업한 대화와 커밋을 정리해 개발 일지 임시글을 올려 줍니다. 발행은 기본으로 내가 합니다.</p></main>";
         HeadMeta meta = HeadMeta.site("AI에 devlog 연결하기 - " + site.name(), SLOGAN + " devlog MCP로 AI가 개발 일지를 써 줍니다.",
                 absolute("/mcp"), absolute(site.defaultOgImage()));
         return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "mcp")), CacheControl.noCache());
