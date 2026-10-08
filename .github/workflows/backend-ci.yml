@@ -48,6 +48,7 @@ jobs:
       # 학교 SonarQube를 쓰려면 Secret SONAR_HOST_URL=http://s4.java21.net:9000
       # 품질 서버(학교 SonarQube 등)가 내려가 있어도 빌드·테스트 결과(CI 초록)는 막지 않는다. 실패는 경고로만 남는다
       - name: SonarQube 분석
+        id: sonar
         if: vars.SONAR_ENABLED == 'true' && github.event_name == 'push'
         continue-on-error: true
         env:
@@ -62,6 +63,18 @@ jobs:
             "${org[@]}" \
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY || 'aigj-01-002-blog' }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+      # CI 결과 알림(ci-notify)은 "통과"만 보내므로 Sonar 실패는 따로 경고로 알린다
+      - name: SonarQube 실패 알림
+        if: steps.sonar.outcome == 'failure' && (vars.DISCORD_ENABLED == 'true' || vars.TELEGRAM_ENABLED == 'true')
+        uses: ./.github/actions/notify
+        with:
+          discord-webhook-url: ${{ vars.DISCORD_ENABLED == 'true' && secrets.DISCORD_WEBHOOK_URL || '' }}
+          telegram-bot-token: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_BOT_TOKEN || '' }}
+          telegram-chat-id: ${{ vars.TELEGRAM_ENABLED == 'true' && secrets.TELEGRAM_CHAT_ID || '' }}
+          title: "backend-ci SonarQube 분석 실패"
+          description: "빌드·테스트는 통과했고 SonarQube 분석만 실패했습니다."
+          status: failure
+          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       - name: 실패한 테스트 보고서
         if: failure()
         uses: actions/upload-artifact@v4
