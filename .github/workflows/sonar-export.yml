@@ -68,6 +68,9 @@ jobs:
                   if len(out) >= total or not d[key]: return out
                   p += 1
 
+          # 규칙 판정은 서버(분석기) 판마다 달라서, 로컬에서 같은 판으로 재현할 수 있게 남긴다
+          with opener.open(urllib.request.Request(f"{host}/api/server/version", headers={"Authorization": auth}), timeout=30) as r:
+              print(f"SonarQube {r.read().decode().strip()}")
           issues = pages("/api/issues/search", "issues", componentKeys=project, resolved="false")
           try:
               hotspots = pages("/api/hotspots/search", "hotspots", projectKey=project, status="TO_REVIEW")
