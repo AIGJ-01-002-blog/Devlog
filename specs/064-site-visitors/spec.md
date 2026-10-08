@@ -16,7 +16,7 @@
 
 - **FR-001**: V20 `site_visit(day, visitor, member, visits, first_at, last_at)`, 기본 키 `(day, visitor)`. 하루에 한 사람 한 행.
 - **FR-002**: 방문자 구분은 조회수와 같다(`ViewRecorder.visitorKey`): 회원 번호, 비회원은 방문자 쿠키(`vid`, 1년, HttpOnly), 쿠키가 없으면 IP·브라우저·그날 비밀값. 모두 해시 32자로만 남고 원래 IP는 저장하지 않는다. 처음 쿠키를 받는 요청은 그 쿠키 값으로 세어 다음 방문과 이어진다.
-- **FR-003**: `INSERT … ON CONFLICT (day, visitor) DO UPDATE`로 모으고, 마지막 방문에서 30분이 지났을 때만 `visits`를 늘린다. 한 사람 1분 20번까지.
+- **FR-003**: `INSERT … ON CONFLICT (day, visitor) DO UPDATE`로 모으고, 마지막 방문에서 30분(`blog.view.visit-session-gap`)이 지났을 때만 `visits`를 늘린다. `last_at`은 늦게 끝난 요청이 되돌리지 않게 더 나중 시각을 남긴다. 한 사람 1분 20번, 한 IP 1분 120번까지(쿠키를 바꿔 가며 부풀리는 것 막기).
 - **FR-004**: 400일이 지난 행은 매일 04:40(KST)에 지운다(`blog.view.visit-purge-cron`).
 - **FR-005**: 대시보드 응답에 `current/previous.visitors·visits`, `daily[].visitors·visits`, `visitors{today, yesterday, members}`를 더한다. 기간 방문자는 날짜별 합이 아니라 기간 안 서로 다른 방문자 수다. 집계는 view 모듈의 `ViewStats`가 하고 admin 모듈은 조립만 한다(헌법 IV).
 

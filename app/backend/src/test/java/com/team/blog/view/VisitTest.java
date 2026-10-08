@@ -61,6 +61,29 @@ class VisitTest extends IntegrationTest {
     }
 
     @Test
+    void 늦게_끝난_요청이_마지막_방문_시각을_되돌리지_않는다() throws Exception {
+        Browser guest = browser().from("203.0.113.66");
+        visit(guest, ViewTest.CHROME);
+        // 더 나중 시각의 요청이 먼저 반영된 상황: 저장된 시각이 지금보다 뒤다
+        jdbc.update("UPDATE site_visit SET last_at = now() + interval '10 minutes' WHERE NOT member AND first_at > now() - interval '1 minute'");
+        long visitsBefore = totalVisits();
+        visit(guest, ViewTest.CHROME);
+        assertThat(totalVisits()).isEqualTo(visitsBefore);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM site_visit WHERE last_at > now() + interval '9 minutes'", Long.class))
+                .isPositive();
+    }
+
+    @Test
+    void 방문자_쿠키를_바꿔_가며_보내도_IP마다_1분_120번까지만_센다() throws Exception {
+        long before = rows();
+        for (int i = 0; i < 125; i++) {
+            browser().from("203.0.113.67").perform(post("/api/visits").with(csrf()).header("User-Agent", ViewTest.CHROME)
+                    .cookie(new jakarta.servlet.http.Cookie("vid", java.util.UUID.randomUUID().toString())));
+        }
+        assertThat(rows()).isEqualTo(before + 120);
+    }
+
+    @Test
     void 운영진과_로봇과_미리_불러오기는_세지_않고_응답은_같다() throws Exception {
         Session admin = signup(uniqueLogin("vsa"));
         jdbc.update("UPDATE member SET role = 'MANAGER' WHERE id = ?", admin.memberId());

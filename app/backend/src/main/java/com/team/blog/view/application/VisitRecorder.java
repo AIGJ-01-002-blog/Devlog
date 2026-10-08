@@ -8,6 +8,7 @@ import java.time.LocalDate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,9 +26,10 @@ import com.team.blog.shared.web.RateLimiter;
 @Service
 public class VisitRecorder {
     private static final Logger log = LoggerFactory.getLogger(VisitRecorder.class);
-    static final Duration SESSION_GAP = Duration.ofMinutes(30);
     static final Duration RETENTION = Duration.ofDays(400);
     private static final int PER_MINUTE = 20;
+    /** 방문자 값(쿠키)을 바꿔 가며 보내도 막히도록 IP에도 건다. 회사·학교처럼 IP를 나눠 쓰는 곳을 생각해 넉넉히 */
+    private static final int PER_MINUTE_PER_IP = 120;
 
     public enum Outcome { COUNTED, EXCLUDED, SKIPPED }
 
@@ -36,8 +38,12 @@ public class VisitRecorder {
     private final RateLimiter rateLimiter;
     private final JobLock lock;
     private final Clock clock;
+    /** 이만큼 쉬었다 다시 오면 방문 한 번 더 (기본 30분) */
+    private final Duration sessionGap;
 
-    public VisitRecorder(JdbcTemplate jdbc, ViewRecorder views, RateLimiter rateLimiter, JobLock lock, Clock clock) {
+    public VisitRecorder(JdbcTemplate jdbc, ViewRecorder views, RateLimiter rateLimiter, JobLock lock, Clock clock,
+                         @Value("${blog.view.visit-session-gap:30m}") Duration sessionGap) {
+        this.sessionGap = sessionGap;
         this.jdbc = jdbc;
         this.views = views;
         this.rateLimiter = rateLimiter;
@@ -51,6 +57,8 @@ public class VisitRecorder {
         String visitor = visit.memberId() == null && visit.issuedVisitorId() != null
                 ? ViewRecorder.sha256("v:" + visit.issuedVisitorId()) : views.visitorKey(visit);
         if (visitor == null) return Outcome.SKIPPED;
+        if (visit.ip() != null && !rateLimiter.tryAcquire("visit-ip:" + ViewRecorder.sha256(visit.ip()), PER_MINUTE_PER_IP,
+                Duration.ofMinutes(1))) return Outcome.EXCLUDED;
         if (!rateLimiter.tryAcquire("visit:" + visitor, PER_MINUTE, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
         Instant now = Times.now(clock);
         try {
@@ -58,9 +66,9 @@ public class VisitRecorder {
                     INSERT INTO site_visit (day, visitor, member, visits, first_at, last_at) VALUES (?, ?, ?, 1, ?, ?)
                     ON CONFLICT (day, visitor) DO UPDATE SET
                         visits = site_visit.visits + CASE WHEN site_visit.last_at < EXCLUDED.last_at - ?::interval THEN 1 ELSE 0 END,
-                        last_at = EXCLUDED.last_at
+                        last_at = GREATEST(site_visit.last_at, EXCLUDED.last_at)
                     """, LocalDate.ofInstant(now, Counts.KST), visitor, visit.memberId() != null, Timestamp.from(now),
-                    Timestamp.from(now), SESSION_GAP.toMinutes() + " minutes");
+                    Timestamp.from(now), sessionGap.toSeconds() + " seconds");
             return Outcome.COUNTED;
         } catch (RuntimeException e) {
             log.warn("방문 기록을 건너뜁니다: {}", e.getClass().getSimpleName());
