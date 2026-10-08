@@ -18,7 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.team.blog.discovery.application.FeedQuery;
+import com.team.blog.post.query.PostCard;
+import com.team.blog.post.query.PostCardQuery;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.cursor.CursorCodec;
 import com.team.blog.shared.error.ApiException;
@@ -39,7 +40,7 @@ public class TrendingService {
     static final String SNAPSHOT = "trending:snapshot:";
 
     private final TrendingRanker ranker;
-    private final FeedQuery feed;
+    private final PostCardQuery feed;
     private final CursorCodec cursors;
     private final StringRedisTemplate redis;
     private final JobLock lock;
@@ -47,7 +48,7 @@ public class TrendingService {
     private final int pageSize;
     private final Duration keep;
 
-    public TrendingService(TrendingRanker ranker, FeedQuery feed, CursorCodec cursors, StringRedisTemplate redis, JobLock lock,
+    public TrendingService(TrendingRanker ranker, PostCardQuery feed, CursorCodec cursors, StringRedisTemplate redis, JobLock lock,
                            Clock clock, BlogProperties props, @Value("${blog.trending.keep:30m}") Duration keep) {
         this.ranker = ranker;
         this.feed = feed;
@@ -60,7 +61,7 @@ public class TrendingService {
     }
 
     /** @param temporary 보관소 장애로 바로 계산한 결과 (다음 쪽 없음) */
-    public record Page(List<FeedQuery.Card> items, String nextCursor, boolean temporary) {}
+    public record Page(List<PostCard> items, String nextCursor, boolean temporary) {}
 
     @Scheduled(cron = "${blog.trending.cron:0 */10 * * * *}", zone = "Asia/Seoul")
     public void scheduled() {
@@ -104,7 +105,7 @@ public class TrendingService {
         int offset = k == null ? 0 : (int) k[1];
         if (offset < 0 || offset > ids.size()) throw ApiException.badRequest("INVALID_CURSOR", "목록 위치 값이 올바르지 않아요. 처음부터 다시 불러와 주세요.");
         // 볼 수 없게 된 글을 건너뛰며 9개를 채운다
-        List<FeedQuery.Card> items = new ArrayList<>();
+        List<PostCard> items = new ArrayList<>();
         int pos = offset;
         while (items.size() < pageSize && pos < ids.size()) {
             int end = Math.min(ids.size(), pos + (pageSize - items.size()));

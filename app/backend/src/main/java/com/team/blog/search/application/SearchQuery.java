@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.team.blog.account.domain.Visibility;
-import com.team.blog.discovery.application.FeedQuery.Author;
+import com.team.blog.post.query.PostCard.Author;
 import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.post.infra.PostSql;
 import com.team.blog.shared.config.BlogProperties;

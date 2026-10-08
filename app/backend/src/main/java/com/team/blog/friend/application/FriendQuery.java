@@ -71,6 +71,11 @@ public class FriendQuery {
         return new Overview(friends, received, sent, mine);
     }
 
+    /** 두 회원이 수락된 친구인지. 같은 사람이면 친구가 아니다. */
+    public boolean areFriends(long a, long b) {
+        return FriendsVisibilityRule.areFriends(jdbc, a, b);
+    }
+
     /** 블로그 프로필에 넣을 최근 활동. 조건을 하나라도 못 채우면 비어 있다. */
     public Optional<Integer> lastActiveDaysAgo(long viewer, long target) {
         if (viewer == target) return Optional.empty();
