@@ -162,7 +162,7 @@ class AdminConsoleTest extends IntegrationTest {
     void 운영자_계정은_앱이_뜰_때_관리자가_되고_권한을_바꿀_수_없다() throws Exception {
         Session owner = signup(uniqueLogin("ado"));
         Session admin = signup(uniqueLogin("adp"));
-        RoleService service = new RoleService(members, jdbc, sessions, clock, owner.githubId());
+        RoleService service = new RoleService(members, jdbc, sessions, clock, owner.githubId(), "");
         service.promoteOwner();
         assertThat(jdbc.queryForObject("SELECT role FROM member WHERE id = ?", String.class, owner.memberId())).isEqualTo("ADMIN");
         // 이미 관리자면 그대로 (로그인을 다시 끊지 않는다)
@@ -173,6 +173,13 @@ class AdminConsoleTest extends IntegrationTest {
         as(admin, "ADMIN");
         assertThat(org.junit.jupiter.api.Assertions.assertThrows(com.team.blog.shared.error.ApiException.class,
                 () -> service.change(admin.memberId(), owner.handle(), "USER")).code()).isEqualTo("CANNOT_CHANGE_OWNER");
+    }
+
+    @Test
+    void 운영자는_블로그_주소로도_정할_수_있다() throws Exception {
+        Session owner = signup(uniqueLogin("adq"));
+        new RoleService(members, jdbc, sessions, clock, "", "@" + owner.handle()).promoteOwner();
+        assertThat(jdbc.queryForObject("SELECT role FROM member WHERE id = ?", String.class, owner.memberId())).isEqualTo("ADMIN");
     }
 
     @Test

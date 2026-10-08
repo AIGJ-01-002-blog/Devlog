@@ -108,8 +108,9 @@ management:
       enabled: true
 
 blog:
-  # 운영자 계정 (062): 이 GitHub 회원 번호로 가입한 계정을 앱이 뜰 때 관리자로 올린다. 비우면 아무도 올리지 않는다(비밀값 아님)
+  # 운영자 계정 (062): 이 블로그 주소(handle)나 GitHub 회원 번호의 계정을 앱이 뜰 때 관리자로 올린다. 비우면 아무도 올리지 않는다(비밀값 아님)
   owner:
+    handle: ${OWNER_HANDLE:}
     github-id: ${OWNER_GITHUB_ID:}
   site:
     base-url: ${SITE_BASE_URL:http://localhost:8080}

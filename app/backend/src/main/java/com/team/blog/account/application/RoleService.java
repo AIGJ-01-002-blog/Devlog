@@ -28,8 +28,8 @@ import com.team.blog.shared.security.SessionTerminator;
 import com.team.blog.shared.time.Times;
 
 /**
- * 권한 주기 (062). 관리자는 운영자 계정 하나다: 실행 설정 `OWNER_GITHUB_ID`(GitHub 회원 번호, 비밀값 아님)로 가입한 계정을
- * 앱이 뜰 때 관리자로 올린다. 화면에서는 관리자만 다른 회원을 매니저로 올리거나 일반 회원으로 내릴 수 있고, 관리자 권한은 줄 수 없다.
+ * 권한 주기 (062). 관리자는 운영자 계정 하나다: 실행 설정 `OWNER_HANDLE`(블로그 주소, 바뀌지 않음)이나 `OWNER_GITHUB_ID`
+ * (GitHub 회원 번호)에 맞는 계정을 앱이 뜰 때 관리자로 올린다. 둘 다 비밀값이 아니다. 화면에서는 관리자만 다른 회원을 매니저로 올리거나 일반 회원으로 내릴 수 있고, 관리자 권한은 줄 수 없다.
  * 세션에 권한이 담겨 있으므로 바꾸면 그 회원의 모든 로그인을 끊어 다시 로그인할 때 새 권한을 받게 한다.
  */
 @Service
@@ -41,14 +41,17 @@ public class RoleService {
     private final SessionTerminator sessions;
     private final Clock clock;
     private final String ownerGithubId;
+    private final String ownerHandle;
 
     public RoleService(MemberRepository members, JdbcTemplate jdbc, SessionTerminator sessions, Clock clock,
-                       @Value("${blog.owner.github-id:}") String ownerGithubId) {
+                       @Value("${blog.owner.github-id:}") String ownerGithubId, @Value("${blog.owner.handle:}") String ownerHandle) {
         this.members = members;
         this.jdbc = jdbc;
         this.sessions = sessions;
         this.clock = clock;
         this.ownerGithubId = ownerGithubId == null ? "" : ownerGithubId.strip();
+        String h = ownerHandle == null ? "" : ownerHandle.strip();
+        this.ownerHandle = h.startsWith("@") ? h.substring(1) : h;
     }
 
     /** 관리자 화면에서 고를 수 있는 권한. 관리자(ADMIN)는 고를 수 없다. */
@@ -80,14 +83,14 @@ public class RoleService {
     /** 운영자 계정을 관리자로 올린다. 이미 관리자면 아무것도 하지 않는다. 운영자가 아직 가입하지 않았으면 가입한 뒤 다음 배포에서 올라간다. */
     @EventListener(ApplicationReadyEvent.class)
     public void promoteOwner() {
-        if (ownerGithubId.isEmpty()) return;
+        if (ownerGithubId.isEmpty() && ownerHandle.isEmpty()) return;
         try {
             List<Long> ids = jdbc.queryForList("""
                     UPDATE member SET role = 'ADMIN', updated_at = ?
-                    WHERE id = (SELECT member_id FROM auth_identity WHERE provider = 'GITHUB' AND provider_user_id = ?)
+                    WHERE (handle = ? OR id IN (SELECT member_id FROM auth_identity WHERE provider = 'GITHUB' AND provider_user_id = ?))
                       AND role <> 'ADMIN' AND deleted_at IS NULL
                     RETURNING id
-                    """, Long.class, Timestamp.from(Times.now(clock)), ownerGithubId);
+                    """, Long.class, Timestamp.from(Times.now(clock)), ownerHandle, ownerGithubId);
             for (long id : ids) {
                 sessions.terminate(id, null);
                 log.info("운영자 계정(회원 {})을 관리자로 올렸습니다", id);
@@ -99,10 +102,11 @@ public class RoleService {
     }
 
     private boolean isOwner(long memberId) {
-        if (ownerGithubId.isEmpty()) return false;
-        return Boolean.TRUE.equals(jdbc.queryForObject(
-                "SELECT EXISTS (SELECT 1 FROM auth_identity WHERE member_id = ? AND provider = 'GITHUB' AND provider_user_id = ?)",
-                Boolean.class, memberId, ownerGithubId));
+        if (ownerGithubId.isEmpty() && ownerHandle.isEmpty()) return false;
+        return Boolean.TRUE.equals(jdbc.queryForObject("""
+                SELECT EXISTS (SELECT 1 FROM member m WHERE m.id = ? AND (m.handle = ? OR EXISTS (
+                    SELECT 1 FROM auth_identity a WHERE a.member_id = m.id AND a.provider = 'GITHUB' AND a.provider_user_id = ?)))
+                """, Boolean.class, memberId, ownerHandle, ownerGithubId));
     }
 
     private static Role parse(String raw) {
