@@ -21,6 +21,6 @@ describe('움직임 줄이기', () => {
   })
 
   it('키보드 초점도 마우스와 같이 카드를 띄운다', () => {
-    expect(css).toMatch(/\.card:hover, \.card:focus-within \{ transform: translateY\(-8px\)/)
+    expect(css).toMatch(/\.card:hover, \.card:focus-within \{ transform: translateY\(-4px\)/)
   })
 })

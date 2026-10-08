@@ -4,12 +4,28 @@ import type { Card } from '../lib/types'
 import { VISIBILITY_ICON, VISIBILITY_LABEL } from '../lib/visibility'
 import { Avatar } from './Avatar'
 
+/** 표지 색 번호(0~3). 같은 글은 언제나 같은 색이다. */
+export function coverTone(id: number): number {
+  return ((id % 4) + 4) % 4
+}
+
+/** 표지에 크게 올릴 제목 첫 글자. 이모지·한글도 한 글자로 센다. */
+export function coverGlyph(title: string): string {
+  return Array.from(title.trim())[0]?.toUpperCase() ?? '#'
+}
+
 /** 홈·블로그 카드. 썸네일이 없어도 높이가 같고, 요약은 짧아도 3줄 높이다 (docs/10 §2). */
 export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?: boolean }) {
   return (
     <article className="card">
       <Link to={card.url} className="card-thumb" tabIndex={-1} aria-hidden="true">
-        {card.thumbnailUrl ? <img src={card.thumbnailUrl} alt={card.title} loading="lazy" /> : <span className="card-thumb-empty" />}
+        {card.thumbnailUrl ? <img src={card.thumbnailUrl} alt={card.title} loading="lazy" /> : (
+          // 사진이 없으면 글마다 정해진 그라데이션 위에 제목 첫 글자를 크게 올린 표지 (048)
+          <span className="card-thumb-empty card-cover" data-tone={coverTone(card.id)}>
+            <span className="card-cover-mark">devlog/@{card.author.handle}</span>
+            <span className="card-cover-glyph">{coverGlyph(card.title)}</span>
+          </span>
+        )}
       </Link>
       <div className="card-body">
         <h2 className="card-title"><Link to={card.url}>{card.title}</Link></h2>
