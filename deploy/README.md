@@ -93,7 +93,8 @@ kubectl -n blog rollout status deploy/blog-app
 
 | 종류 | 이름 | 값 | 없으면 |
 |---|---|---|---|
-| Secret | `KUBECONFIG` | 클러스터 접속 파일 내용 | 배포 실패 |
+| Secret | `SCHOOL_SSH_PASSWORD` | 학교 실습 서버 SSH 비밀번호 (`target=school`, "학교 서버 준비") | 학교 서버 배포 실패 |
+| Secret | `KUBECONFIG` | 클러스터 접속 파일 내용. `target=oracle`일 때만 필요 | Oracle 배포 실패 |
 | Secret | `BLOG_SECRET_ENV` | 고른 overlay의 `secret.env` 내용 전체 (Environment Secret으로 overlay마다 따로 둘 수 있음) | 배포 실패 |
 | Secret | `SMTP_PASSWORD` | 운영 Gmail(devlogaip@gmail.com)의 앱 비밀번호 16자리. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어쓰고 `SMTP_HOST=smtp.gmail.com`도 채워 발송을 켬 | 메일 안 감(인증 메일 보관만), 앱은 정상 기동 |
 | Secret | `DISCORD_WEBHOOK_URL`, `DISCORD_PR_WEBHOOK_URL` | Discord 웹훅 주소 | 알림만 안 감 |
@@ -106,16 +107,19 @@ kubectl -n blog rollout status deploy/blog-app
 | Secret | `OLLAMA_ACCESS_CLIENT_ID`, `OLLAMA_ACCESS_CLIENT_SECRET` | 집 PC Ollama 앞 Cloudflare Access 서비스 토큰 (docs/61). 앱이 이 헤더를 붙여 보내는 것은 docs/61의 앱 변경이 들어간 뒤부터 | Access 없이 요청(Access를 켰다면 거절됨) |
 | Secret | `OLLAMA_AUTH_TOKEN` | Ollama 앞에 Bearer 프록시를 따로 둘 때만 | 헤더 안 붙임 |
 | Secret | `SONAR_TOKEN` | SonarCloud(sonarcloud.io → My Account → Security) 토큰 | 품질 검사 건너뜀 |
-| Secret | `SONAR_HOST_URL` | 학교 SonarQube를 쓸 때만 `http://s4.java21.net:9000` | SonarCloud 사용 |
+| Secret | `SONAR_HOST_URL` | 학교 SonarQube를 쓸 때만 그 주소 | SonarCloud 사용 |
 | Variable | `DISCORD_ENABLED` | `true`면 Discord 알림 켬 | 꺼짐 |
 | Variable | `TELEGRAM_ENABLED` | `true`면 텔레그램 알림 켬 | 꺼짐 |
 | Variable | `SONAR_ENABLED` | `true`면 SonarQube 켬 | 꺼짐 |
 | Variable | `SONAR_ORGANIZATION`, `SONAR_PROJECT_KEY` | SonarCloud 조직 키·프로젝트 키 | 프로젝트 키 `aigj-01-002-blog` |
 | Variable | `OLLAMA_BASE_URL` | 집 PC Ollama 주소(예: `https://ai.devlog.life`). 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어씀 | Ollama 안 씀(Gemini만). `BLOG_SECRET_ENV`에 있던 주소도 지움 |
+| Variable | `SCHOOL_SSH_HOST`, `SCHOOL_SSH_PORT`, `SCHOOL_SSH_USER` | 학교에서 받은 실습 서버 SSH 주소·포트·아이디 | 학교 서버 점검·준비·배포 실패 |
+| Variable | `SCHOOL_K8S_API_PORT` | 학교에서 받은 본인 포트 중 하나. 쿠버네티스 API를 서버 127.0.0.1의 이 포트에 연다 | 학교 서버 준비·배포 실패 |
+| Variable | `SCHOOL_PORT_RANGE` | 본인 포트 범위(예: `9000-9009`). 점검 때 포트를 두드려 볼 때만 | 포트 점검은 SSH만 |
 | Variable | `SERVICE_NAME` | 알림에 보일 이름 | 레포 이름 |
 | Variable | `ROLLOUT_TIMEOUT_SECONDS` | 배포 대기 초 | 300 |
 
-Run workflow의 `overlay`(기본 selfhosted)가 배포 대상과 GitHub Environment 이름(`selfhosted`·`nhn`)을 정하므로 Settings → Environments에서 승인자를 걸 수 있다. AI 리뷰는 [CodeRabbit 앱](https://github.com/apps/coderabbitai)을 설치하면 `.coderabbit.yaml`(한국어, 경로별 리뷰 기준)을 읽는다.
+Run workflow의 `target`(기본 school)이 배포할 서버를 고른다. `school`은 학교 실습 서버에 SSH 터널로 붙고, `oracle`은 Secret `KUBECONFIG`로 붙는다. `overlay`(기본 selfhosted)가 배포 대상과 GitHub Environment 이름(`selfhosted`·`nhn`)을 정하므로 Settings → Environments에서 승인자를 걸 수 있다. AI 리뷰는 [CodeRabbit 앱](https://github.com/apps/coderabbitai)을 설치하면 `.coderabbit.yaml`(한국어, 경로별 리뷰 기준)을 읽는다.
 
 ## 이중화와 무중단 배포
 
@@ -161,7 +165,33 @@ kubectl -n blog rollout status statefulset/postgres --timeout=300s
 kubectl apply -k deploy/k8s/overlays/selfhosted
 ```
 
+## 운영 서버 준비 (학교 실습 서버, 기본)
+
+Oracle 무료 VM이 "Out of capacity"로 만들어지지 않아 학교가 준 실습 서버에 올린다. 주소·SSH 포트·아이디·본인 포트는 저장소에 두지 않고 GitHub 변수(위 표)에만 넣는다. sudo 없이 docker 그룹 권한으로 k3d(Docker 안의 k3s) 클러스터 하나를 만든다.
+
+2026-10-08 점검 결과(Actions → 학교 서버 점검):
+
+| 항목 | 결과 |
+|---|---|
+| SSH, 계정 | 접속됨, docker 그룹 |
+| 서버 | Ubuntu 22.04, 16코어, 메모리 128GB(여유 약 82GB), 디스크 여유 326GB, Docker 29, cgroup v2 |
+| 특권 컨테이너(k3d에 필요) | 됨 |
+| 바깥으로 나가기 | ghcr.io·Docker Hub·GitHub·Cloudflare 됨, Cloudflare Tunnel 7844 됨 |
+| 바깥에서 들어오기 | 본인 포트 모두 시간 초과(학교 방화벽으로 보임) |
+
+들어오는 포트가 막혀 있으므로 도메인은 Cloudflare Tunnel로, GitHub 배포는 SSH 터널로 닿는다. 쿠버네티스 API는 서버의 127.0.0.1(변수 `SCHOOL_K8S_API_PORT`)에만 열어 다른 학생 계정에서도 인증서 없이는 쓸 수 없다. 여러 학생이 같이 쓰는 서버라 노드 메모리 상한을 10GB로 둔다(`NODE_MEMORY`).
+
+1. GitHub Secret `SCHOOL_SSH_PASSWORD`에 SSH 비밀번호를, 변수 `SCHOOL_SSH_HOST`·`SCHOOL_SSH_PORT`·`SCHOOL_SSH_USER`·`SCHOOL_K8S_API_PORT`에 학교에서 받은 값을 넣는다(저장소·문서에는 쓰지 않는다).
+2. Actions → 학교 서버 준비 → Run workflow. `deploy/scripts/school-setup.sh`를 SSH로 실행해 k3d·kubectl을 `~/.local/bin`에 받고, 클러스터 `devlog`와 ingress-nginx를 만들고, 접속 파일을 `~/devlog/kubeconfig.yaml`(권한 600)에 둔다. DB·사진 볼륨은 `~/devlog/storage`에 남는다. 여러 번 실행해도 된다.
+3. `BLOG_SECRET_ENV`, `GHCR_PULL_TOKEN`(+ 변수 `GHCR_PULL_USER`), 아래 "도메인 연결"의 `CLOUDFLARE_TUNNEL_TOKEN`을 넣는다.
+4. Actions → 블로그 배포 → Run workflow: `deploy` 켬, `target` school, `overlay` selfhosted.
+
+서버를 다시 켜면 k3d 컨테이너가 Docker 재시작 정책으로 다시 뜬다. 안 뜨면 "학교 서버 준비"를 한 번 더 실행한다. 서버에서 직접 볼 때: `KUBECONFIG=~/devlog/kubeconfig.yaml ~/.local/bin/kubectl -n blog get pods`.
+
 ## 운영 서버 준비 (Oracle Cloud 무료 VM)
+
+배포할 때 `target`을 `oracle`로 고른다.
+
 
 1. Oracle Cloud에서 인스턴스 생성: 이미지 Ubuntu 24.04, 모양 `VM.Standard.A1.Flex`(Ampere, 무료 범위 4 OCPU·24GB 안에서 2 OCPU·12GB 권장), SSH 키 등록.
 2. 인스턴스의 VCN → 보안 목록 → 수신 규칙에 TCP 6443(쿠버네티스 API, GitHub Actions 배포용) 추가. 80·443은 열지 않는다(Cloudflare Tunnel이 안에서 밖으로 연결).

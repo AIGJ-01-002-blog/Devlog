@@ -6,6 +6,19 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.27.1] - 2026-10-08
+
+학교 실습 서버에 쿠버네티스로 배포 (배포 구성). Oracle 무료 VM이 "Out of capacity"로 만들어지지 않아 학교 실습 서버를 기본 배포 대상으로 둔다.
+
+### 추가
+- Actions "학교 서버 점검": 포트와 SSH로 Docker 권한·자원·바깥 연결을 읽기 전용으로 확인한다
+- Actions "학교 서버 준비"와 `deploy/scripts/school-setup.sh`: sudo 없이 docker 그룹 권한으로 k3d 클러스터 `devlog`와 ingress-nginx를 만든다. API는 서버의 127.0.0.1에만 열고, 볼륨은 `~/devlog/storage`에 둔다
+
+### 바뀜
+- 학교 서버 주소·SSH 포트·아이디·API 포트는 저장소에 두지 않고 변수 `SCHOOL_SSH_HOST`·`SCHOOL_SSH_PORT`·`SCHOOL_SSH_USER`·`SCHOOL_K8S_API_PORT`로 받는다
+- "블로그 배포"에 `target`(school·oracle, 기본 school)을 더했다. school은 Secret `SCHOOL_SSH_PASSWORD`로 SSH 터널을 열어 배포하고, oracle은 지금처럼 Secret `KUBECONFIG`를 쓴다
+- `deploy/README.md`에 학교 서버 점검 결과와 준비 순서를 적었다. 들어오는 포트가 막혀 있어 devlog.life는 Cloudflare Tunnel로 연결한다
+
 ## [1.27.0] - 2026-10-08
 
 devlog MCP 서버와 접근 토큰·OAuth (spec 052). 모든 회원이 자기 AI 도구(Claude·ChatGPT·Cursor·Codex)에 devlog를 연결할 수 있다.
