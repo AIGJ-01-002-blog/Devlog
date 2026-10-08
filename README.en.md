@@ -368,6 +368,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
 | v1.33.0 | 2026-10-08 | Revision history, pre-publish check, Markdown export of your posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |
+| v1.32.1 | 2026-10-08 | Read-only "cluster status" workflow for the school-server cluster (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.1) |
 | v1.32.0 | 2026-10-08 | Hybrid search: finds posts with a similar meaning even without the exact words | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
 | v1.31.0 | 2026-10-08 | Your AI can edit published posts, upload images, and search all your own posts | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.31.0) |
 | v1.30.0 | 2026-10-08 | Tooltips on buttons, a mobile bottom tab bar, and an editor formatting toolbar | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.30.0) |

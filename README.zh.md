@@ -368,6 +368,7 @@ npm run dev        # http://localhost:5173
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
 | v1.33.0 | 2026-10-08 | 修改历史、发布前检查、导出文章为 Markdown | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.0) |
+| v1.32.1 | 2026-10-08 | 只读查看学校服务器集群状态的“集群状态”工作流（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.1) |
 | v1.32.0 | 2026-10-08 | 混合搜索：即使没有检索词也能找到意思相近的文章 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
 | v1.31.0 | 2026-10-08 | AI 可修改已发布文章、上传图片、搜索自己的全部文章 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.31.0) |
 | v1.30.0 | 2026-10-08 | 按钮提示、移动端底部标签栏、编辑器格式工具栏 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.30.0) |
