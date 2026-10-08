@@ -2,7 +2,7 @@
 
 **Feature Branch**: `050-post-query-module`
 **Created**: 2026-10-08
-**Status**: Implemented (v1.25.1)
+**Status**: Implemented (v1.25.2)
 **근거**: 2026-10-08 민서님 답 14 "옮겨줘 클린코드가 더 중요해". discovery 모듈이 post·post_draft·follow·post_like·friendship·post_tag·tag 테이블을 직접 읽어 헌법 원칙 IV(모듈은 다른 모듈의 테이블을 읽지 않는다)를 어기고 있었다.
 
 ## Requirements
