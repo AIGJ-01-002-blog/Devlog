@@ -16,6 +16,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param exactKeep       같은 내용 결과 보관 기간
  * @param similarKeep     같은 글 결과 보관 기간
  * @param similarity      같은 글로 볼 3글자 단위 유사도
+ * @param prefer          먼저 쓸 공급자. local = 집 PC Ollama가 켜져 있으면 먼저(2026-10-08 민서님 답 4번 변경), gemini = 외부 AI 먼저
  */
 @ConfigurationProperties("blog.ai")
 public record AiProperties(@DefaultValue("true") boolean enabled,
@@ -25,6 +26,7 @@ public record AiProperties(@DefaultValue("true") boolean enabled,
                            @DefaultValue("30d") Duration exactKeep,
                            @DefaultValue("7d") Duration similarKeep,
                            @DefaultValue("0.9") double similarity,
+                           @DefaultValue("local") String prefer,
                            @DefaultValue Gemini gemini,
                            @DefaultValue Local local) {
 
@@ -50,15 +52,46 @@ public record AiProperties(@DefaultValue("true") boolean enabled,
         }
     }
 
-    /** 자체 AI (우리 서버의 Ollama). */
+    /**
+     * 자체 AI (Ollama). 집 PC(12GB GPU)를 Cloudflare Tunnel로 열 때는 주소를 터널 주소로 두고, 그냥 열지 않도록
+     * 접근 토큰을 함께 보낸다: authToken은 Authorization: Bearer(토큰을 확인하는 프록시 뒤), accessClientId·Secret은
+     * Cloudflare Access 서비스 토큰 헤더. 셋 다 실행 환경 비밀값으로만 넣는다.
+     * @param downFor 연결 실패·시간 초과 뒤 자체 AI를 건너뛰는 시간 (집 PC가 꺼졌을 때 매번 기다리지 않게)
+     */
     public record Local(@DefaultValue("") String baseUrl,
                         @DefaultValue("qwen2.5:3b") String model,
                         @DefaultValue("30s") Duration timeout,
                         @DefaultValue("2000") int maxChars,
-                        @DefaultValue("1") int concurrency) {
+                        @DefaultValue("1") int concurrency,
+                        @DefaultValue("") String authToken,
+                        @DefaultValue("") String accessClientId,
+                        @DefaultValue("") String accessClientSecret,
+                        @DefaultValue("60s") Duration downFor) {
         public boolean configured() {
             return baseUrl != null && !baseUrl.isBlank();
         }
+
+        /** 요청에 붙일 접근 헤더 */
+        public java.util.Map<String, String> authHeaders() {
+            java.util.Map<String, String> h = new java.util.LinkedHashMap<>();
+            if (authToken != null && !authToken.isBlank()) h.put("Authorization", "Bearer " + authToken);
+            if (accessClientId != null && !accessClientId.isBlank() && accessClientSecret != null && !accessClientSecret.isBlank()) {
+                h.put("CF-Access-Client-Id", accessClientId);
+                h.put("CF-Access-Client-Secret", accessClientSecret);
+            }
+            return h;
+        }
+
+        /** 토큰이 로그·오류 화면에 찍히지 않게 한다 */
+        @Override
+        public String toString() {
+            return "Local[model=" + model + ", configured=" + configured() + ", auth=" + !authHeaders().isEmpty() + "]";
+        }
+    }
+
+    /** 집 PC(자체 AI)를 먼저 쓰는지 */
+    public boolean preferLocal() {
+        return !"gemini".equalsIgnoreCase(prefer) && local.configured();
     }
 
     public boolean available() {

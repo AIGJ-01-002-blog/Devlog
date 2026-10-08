@@ -323,7 +323,7 @@ public class PageController {
 
     /** 로그인이 필요하거나 개인적인 화면: 같은 껍데기, 수집 거부, 저장 안 함. React가 그린다. */
     @GetMapping({"/login", "/signup", "/signup/social", "/forgot-password", "/reset-password", "/verify-email", "/agreements", "/write", "/write/{id}", "/manage/posts", "/settings", "/notifications", "/feed", "/lists/liked", "/terms", "/privacy",
-            "/settings/{section}"})
+            "/settings/{section}", "/oauth/authorize"})
     public ResponseEntity<String> app(@PathVariable(required = false) String id, @PathVariable(required = false) String section) {
         // 글 번호·설정 칸은 React가 주소에서 읽는다. 서버는 같은 껍데기만 준다
         return appShell();

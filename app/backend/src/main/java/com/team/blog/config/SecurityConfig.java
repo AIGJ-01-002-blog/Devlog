@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,11 +17,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -30,6 +33,7 @@ import com.team.blog.account.infra.oauth.GithubOAuth2UserService;
 import com.team.blog.account.infra.oauth.OAuth2LoginHandlers;
 import com.team.blog.account.web.AccountStateFilter;
 import com.team.blog.account.web.LoginGuardFilter;
+import com.team.blog.mcp.web.McpController;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.web.ClientIpResolver;
 import com.team.blog.shared.web.RateLimiter;
@@ -51,7 +55,26 @@ public class SecurityConfig {
             "/api/markdown/preview-public", "/api/posts/*/views"
     };
 
+    /**
+     * MCP 서버와 OAuth 토큰·등록 (052): 세션 쿠키도 CSRF도 쓰지 않는다. MCP는 접근 토큰(Bearer)만 보고, 토큰 확인은 컨트롤러가 한다.
+     * 쿠키를 보지 않으니 다른 사이트가 로그인한 브라우저로 보내는 요청(CSRF)은 통하지 않는다.
+     */
     @Bean
+    @Order(0)
+    SecurityFilterChain mcpFilterChain(HttpSecurity http, ContentSecurityPolicy csp) throws Exception {
+        http
+                .securityMatcher(McpController.PATH, "/api/oauth/token", "/api/oauth/register")
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .securityContext(c -> c.securityContextRepository(new RequestAttributeSecurityContextRepository()))
+                .requestCache(c -> c.requestCache(new NullRequestCache()))
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .headers(h -> h.contentTypeOptions(c -> {}).frameOptions(f -> f.deny()).addHeaderWriter(csp));
+        return http.build();
+    }
+
+    @Bean
+    @Order(1)
     SecurityFilterChain securityFilterChain(HttpSecurity http, MemberRepository members, AuthIdentityRepository identities,
                                             GithubOAuth2UserService githubUsers,
                                             OAuth2LoginHandlers loginHandlers, RateLimiter rateLimiter,

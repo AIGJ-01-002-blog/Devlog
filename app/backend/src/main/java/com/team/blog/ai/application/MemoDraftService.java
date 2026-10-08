@@ -92,6 +92,19 @@ public class MemoDraftService {
     }
 
     private Draft call(String memo) {
+        // 집 PC 먼저(설정): 꺼졌거나 바쁘면 외부 AI로 넘긴다
+        if (props.preferLocal() && state.localUsable() && localSlots.tryAcquire()) {
+            try {
+                Draft d = parse(local.complete(prompt(memo, local.maxChars()), SCHEMA, MAX_TOKENS, 0.3));
+                if (d != null || !state.geminiUsable()) return d;
+            } catch (ModelException e) {
+                state.localFailed(e.kind());
+                log.warn("자체 AI 메모 다듬기 실패, 외부 AI로 넘깁니다: {}", e.kind());
+            } finally {
+                localSlots.release();
+            }
+            return callGemini(memo);
+        }
         if (state.geminiUsable()) {
             try {
                 Draft d = parse(gemini.complete(prompt(memo, gemini.maxChars()), SCHEMA, MAX_TOKENS, 0.3));
@@ -109,10 +122,24 @@ public class MemoDraftService {
         try {
             return parse(local.complete(prompt(memo, local.maxChars()), SCHEMA, MAX_TOKENS, 0.3));
         } catch (ModelException e) {
+            state.localFailed(e.kind());
             log.warn("자체 AI 메모 다듬기 실패: {}", e.kind());
             return null;
         } finally {
             localSlots.release();
+        }
+    }
+
+    private Draft callGemini(String memo) {
+        if (!state.geminiUsable()) return null;
+        try {
+            Draft d = parse(gemini.complete(prompt(memo, gemini.maxChars()), SCHEMA, MAX_TOKENS, 0.3));
+            state.succeeded();
+            return d;
+        } catch (ModelException e) {
+            state.failed(e.kind());
+            log.warn("외부 AI 메모 다듬기 실패: {}", e.kind());
+            return null;
         }
     }
 

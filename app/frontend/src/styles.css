@@ -795,6 +795,29 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .copy-code pre { margin: 0; padding: 16px 84px 16px 16px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-code-bg);
   overflow-x: auto; font-family: var(--mono); font-size: 0.8125rem; line-height: 1.6; }
 .copy-code-button { position: absolute; top: 10px; right: 10px; }
+/* 설정 › AI 연결 (052). 안내 화면에서 #ai로 오면 반투명 헤더에 가리지 않게 */
+.settings-section[id] { scroll-margin-top: 72px; }
+.ai-connect-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px 12px; align-items: end; margin: 16px 0 8px; }
+.ai-connect-form label { display: grid; gap: 6px; font-weight: 600; font-size: 0.875rem; }
+.ai-connect-form input { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--color-input-border); border-radius: var(--radius); background: var(--color-surface); color: var(--color-text); font: inherit; }
+.ai-connect-issued { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.ai-connect-issued p { margin: 0; }
+.token-list { list-style: none; padding: 0; margin: 8px 0 0; }
+.token-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--color-border); }
+.token-who { display: grid; gap: 2px; min-width: 0; }
+.token-who code { font-family: var(--mono); font-size: 0.8125rem; color: var(--color-text-muted); }
+.token-row .btn { margin-left: auto; }
+@media (max-width: 640px) {
+  .ai-connect-form { grid-template-columns: 1fr 1fr; }
+  .ai-connect-form label:first-child, .ai-connect-form button { grid-column: 1 / -1; }
+}
+.token-kind { font-size: 0.75rem; padding: 1px 8px; border-radius: 999px; background: var(--color-surface-2); color: var(--color-text-2); }
+/* AI 앱 연결 동의 (052) */
+.oauth-card { padding: 24px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); display: grid; gap: 12px; }
+.oauth-card p { margin: 0; }
+.oauth-lead { font-size: 1.0625rem; line-height: 1.6; word-break: keep-all; }
+.oauth-scope { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.oauth-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .mcp-tools { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
 .mcp-tools th, .mcp-tools td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
 .mcp-tools th { font-size: 0.8125rem; color: var(--color-text-muted); font-weight: 600; }

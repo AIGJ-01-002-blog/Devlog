@@ -1,4 +1,6 @@
-/** devlog MCP 서버 연결 안내 (051). 실제 주소는 지금 사이트 주소를 따라간다(로컬 개발이면 localhost). */
+import { api } from './api'
+
+/** devlog MCP 서버 연결 안내 (051·052). 실제 주소는 지금 사이트 주소를 따라간다(로컬 개발이면 localhost). */
 export const MCP_PATH = '/api/mcp'
 export const TOKEN_PLACEHOLDER = '<내 토큰>'
 
@@ -25,5 +27,63 @@ export const MCP_TOOLS: ReadonlyArray<{ name: string; does: string; scope: '읽�
   { name: 'search_posts', does: '내 글·공개 글 검색', scope: '읽기' },
   { name: 'get_post', does: '글 본문(Markdown) 읽기. 웹과 같은 공개 범위를 따라요', scope: '읽기' },
   { name: 'list_my_posts', does: '내 글·임시글 목록', scope: '읽기' },
-  { name: 'suggest_tags', does: '본문에 맞는 태그 추천', scope: '읽기' },
+  { name: 'list_tags', does: '내가 자주 쓴 태그·인기 태그 보기 (태그 제안에 써요)', scope: '읽기' },
 ]
+
+// 개인 접근 토큰 (052). 원문(secret)은 만든 직후 한 번만 받는다.
+
+export type TokenScope = 'READ' | 'WRITE'
+
+export interface AccessToken {
+  id: number
+  name: string
+  prefix: string
+  scope: TokenScope
+  createdAt: string
+  expiresAt: string | null
+  lastUsedAt: string | null
+  expired: boolean
+  /** ChatGPT처럼 OAuth(로그인)로 연결한 앱. expiresAt은 연결 만료 */
+  oauth: boolean
+}
+
+export interface IssuedToken { token: AccessToken; secret: string }
+
+export const TOKEN_EXPIRY_DAYS = [30, 90, 365] as const
+export const TOKEN_NAME_MAX = 40
+
+export const tokensApi = {
+  list: () => api<AccessToken[]>('/api/me/tokens'),
+  create: (name: string, scope: TokenScope, expiresInDays: number) =>
+    api<IssuedToken>('/api/me/tokens', { method: 'POST', body: { name, scope, expiresInDays } }),
+  revoke: (id: number) => api<void>(`/api/me/tokens/${id}`, { method: 'DELETE' }),
+}
+
+/** AI가 만든 임시글의 태그 제안·발행 요청. 없으면 null(204) */
+export interface AiHint { tags: string[]; publishRequestedAt: string | null }
+
+export const aiHint = (postId: number) => api<AiHint | undefined>(`/api/posts/${postId}/ai-hint`).then((h) => h ?? null)
+
+// OAuth 동의 화면 (052). ChatGPT처럼 토큰을 붙여 넣을 수 없는 앱이 쓴다.
+
+export interface OAuthView { clientName: string; redirectHost: string; scope: TokenScope }
+
+/** 주소창의 OAuth 매개변수를 동의 API 본문 모양으로 */
+export function oauthParams(search: string) {
+  const q = new URLSearchParams(search)
+  const get = (k: string) => q.get(k) ?? undefined
+  return {
+    clientId: get('client_id'), redirectUri: get('redirect_uri'), responseType: get('response_type'),
+    codeChallenge: get('code_challenge'), codeChallengeMethod: get('code_challenge_method'),
+    scope: get('scope'), state: get('state'), resource: get('resource'),
+  }
+}
+
+export const oauthApi = {
+  view: (search: string) => api<OAuthView>(`/api/oauth/authorize${search}`),
+}
+
+/** Codex CLI 설정 (~/.codex/config.toml). 토큰은 환경 변수로 넘긴다 */
+export function codexConfig(origin: string): string {
+  return `[mcp_servers.devlog]\nurl = "${mcpEndpoint(origin)}"\nbearer_token_env_var = "DEVLOG_TOKEN"`
+}
