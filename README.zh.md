@@ -369,7 +369,6 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
-| v1.39.1 | 2026-10-09 | 仓库名称改为小写 devlog | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.39.1) |
 | v1.39.0 | 2026-10-09 | 注册页面检查账号(邮箱)并用邮件验证码完成验证 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.39.0) |
 | v1.38.0 | 2026-10-09 | 管理后台仪表盘新增网站访客数（独立访客与访问次数） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.38.0) |
 | v1.37.2 | 2026-10-09 | 请求头值无效(如带换行的令牌)时返回 400 和提示，而不是 500 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.37.2) |

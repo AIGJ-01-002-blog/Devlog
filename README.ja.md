@@ -369,7 +369,6 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
-| v1.39.1 | 2026-10-09 | リポジトリ名を小文字の devlog に変更 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.39.1) |
 | v1.39.0 | 2026-10-09 | 登録画面で ID(メール)の確認と認証コードによるメール認証 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.39.0) |
 | v1.38.0 | 2026-10-09 | 管理者ダッシュボードにサイト訪問者数（ユニーク訪問者・訪問回数） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.38.0) |
 | v1.37.2 | 2026-10-09 | ヘッダー値が不正なリクエスト(改行付きトークンなど)を 500 ではなく 400 で案内 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.37.2) |
