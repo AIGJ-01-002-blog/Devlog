@@ -1,5 +1,5 @@
 /**
- * RSS 구독 안내 (062). 브라우저로 RSS 주소를 열면 XML 대신 이 안내가 보인다(서버가 Sec-Fetch-Dest로 가른다).
+ * RSS 구독 안내 (063). 브라우저로 RSS 주소를 열면 XML 대신 이 안내가 보인다(서버가 Sec-Fetch-Dest로 가른다).
  * 구독 앱 바로가기는 앱이 공개한 "구독 추가" 주소에 피드 주소를 넣은 것이다.
  */
 export function rssPath(handle: string | null): string {

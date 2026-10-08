@@ -65,8 +65,11 @@ export interface AuthorInfo {
   joinedAt: string
   hiddenCount: number
   suspended: boolean
+  /** 관리자·매니저면 정지할 수 없다 (062) */
   admin: boolean
   suspensions: Suspension[]
+  /** USER·MANAGER·ADMIN (062) */
+  role?: string
 }
 
 export interface CaseDetail {

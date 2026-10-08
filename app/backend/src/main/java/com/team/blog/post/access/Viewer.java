@@ -7,7 +7,7 @@ public record Viewer(Long memberId, boolean admin) {
     public static final Viewer ANONYMOUS = new Viewer(null, false);
 
     public static Viewer of(MemberPrincipal p) {
-        return p == null ? ANONYMOUS : new Viewer(p.id(), p.isAdmin());
+        return p == null ? ANONYMOUS : new Viewer(p.id(), p.isStaff());
     }
 
     public boolean is(long memberId) {

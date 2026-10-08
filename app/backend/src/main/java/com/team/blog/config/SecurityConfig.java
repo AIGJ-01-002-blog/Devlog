@@ -87,7 +87,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.spa())
                 .requestCache(c -> c.requestCache(new NullRequestCache()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/me/**").authenticated()
                         .requestMatchers(HttpMethod.POST, PUBLIC_WRITES).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
@@ -97,7 +97,7 @@ public class SecurityConfig {
                 .exceptionHandling(e -> e
                         .defaultAuthenticationEntryPointFor(SecurityConfig::unauthorized, api)
                         .defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), request -> true)
-                        // 관리자 전용 주소에 일반 회원이 오면 404로 숨긴다 (docs/42 P-10)
+                        // 관리자·매니저 전용 주소에 일반 회원이 오면 404로 숨긴다 (docs/42 P-10, 062)
                         .accessDeniedHandler((req, res, ex) -> {
                             if (req.getRequestURI().startsWith("/api/admin/")) notFound(res);
                             else forbidden(res);

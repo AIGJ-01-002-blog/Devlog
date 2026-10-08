@@ -6,7 +6,7 @@ import { Link } from '../lib/router';
 import { feedUrl, rawXmlPath, READERS } from '../lib/rss';
 import { NotFoundPage } from './NotFoundPage';
 /**
- * RSS 구독 안내 (062). "RSS를 누르니 이상한 XML만 나온다"는 말에서 나왔다.
+ * RSS 구독 안내 (063). "RSS를 누르니 이상한 XML만 나온다"는 말에서 나왔다.
  * 같은 주소를 구독 앱은 XML로 받고, 사람이 브라우저로 열면 이 화면을 본다.
  */
 export function RssGuidePage({ handle }) {

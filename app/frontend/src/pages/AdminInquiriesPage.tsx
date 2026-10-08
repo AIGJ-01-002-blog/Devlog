@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AdminNav } from '../components/AdminNav'
 import { fullDate, relativeDate } from '../lib/format'
 import { adminInquiryApi, CATEGORIES, STATUS_HINT, STATUS_LABEL, categoryLabel, type Inquiry, type InquiryCategory } from '../lib/inquiry'
 import { Link, useLocation } from '../lib/router'
@@ -44,6 +45,7 @@ export function AdminInquiriesPage() {
   return (
     <main className="container narrow admin">
       <h1 className="page-title">문의 관리</h1>
+      <AdminNav />
       <nav className="tabs" aria-label="문의 목록">
         <Link to={href('open', category)} aria-current={tab === 'open' ? 'page' : undefined} title="접수·처리 중인 문의 (오래된 순)">처리할 것</Link>
         <Link to={href('done', category)} aria-current={tab === 'done' ? 'page' : undefined} title="해결·닫힌 문의 (최근 순)">처리함</Link>

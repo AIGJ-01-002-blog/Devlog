@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AdminNav } from '../components/AdminNav'
 import { fullDate, relativeDate } from '../lib/format'
 import { adminApi, reasonSummary, STATUS_LABEL, type CaseRow } from '../lib/moderation'
 import { Link, useLocation } from '../lib/router'
@@ -40,6 +41,7 @@ export function AdminReportsPage() {
   return (
     <main className="container narrow admin">
       <h1 className="page-title">신고 관리</h1>
+      <AdminNav />
       <nav className="tabs" aria-label="신고 목록">
         <Link to="/admin/reports" aria-current={tab === 'pending' ? 'page' : undefined}>대기</Link>
         <Link to="/admin/reports?tab=handled" aria-current={tab === 'handled' ? 'page' : undefined}>처리됨</Link>

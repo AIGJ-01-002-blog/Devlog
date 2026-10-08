@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { isStaff } from '../lib/admin'
 import { loginPath, useAuth } from '../lib/auth'
 import { Link, navigate, useLocation } from '../lib/router'
 import { Avatar } from './Avatar'
@@ -9,7 +10,7 @@ import { ThemeToggle } from './ThemeToggle'
 interface NavItem { to: string; label: string; tip: string; icon: IconName; on: (p: string) => boolean; memberOnly?: boolean }
 
 /**
- * 머리말 메뉴 (062). 순서는 "피드 · 좋아한 글 · 태그 · 문의·신고 · 릴리스 노트 · 🔔"(민서님 요청).
+ * 머리말 메뉴 (063). 순서는 "피드 · 좋아한 글 · 태그 · 문의·신고 · 릴리스 노트 · 🔔"(민서님 요청).
  * 넓은 화면은 아이콘과 이름을, 중간 화면(641~1180px)은 아이콘만 보이고 툴팁으로 이름을 알린다.
  * 휴대폰(640px 이하)은 아래 탭과 내 메뉴가 같은 곳으로 데려간다.
  */
@@ -70,6 +71,12 @@ export function Header() {
           })}
           {member ? (
             <>
+              {isStaff(member.role) && (
+                <Link to="/admin" className={`btn btn-text header-admin header-nav header-link${path.startsWith('/admin') ? ' on' : ''}`} aria-label="관리자 페이지"
+                      data-tip="관리자 페이지: 통계·글·회원·신고 관리" aria-current={path.startsWith('/admin') ? 'page' : undefined}>
+                  <NavIcon name="shield" />
+                </Link>
+              )}
               <NotificationBell />
               <Link to="/write" className="btn btn-outline header-write" aria-label="새 글 작성" data-tip="새 글 쓰기"><span className="long">새 글 작성</span><span className="short" aria-hidden="true">글쓰기</span><span className="icon" aria-hidden="true">✏️</span></Link>
               <div className="menu" ref={menuRef}>
@@ -91,11 +98,10 @@ export function Header() {
                       <div className="menu-sep" role="separator" />
                       {mobileExtra.map((it) => <Link key={it.icon} to={it.to} role="menuitem"><NavIcon name={it.icon} />{it.label}</Link>)}
                     </div>
-                    {member.role === 'ADMIN' && (
+                    {isStaff(member.role) && (
                       <>
                         <div className="menu-sep" role="separator" />
-                        <Link to="/admin/reports" role="menuitem"><NavIcon name="shield" />신고 관리</Link>
-                        <Link to="/admin/inquiries" role="menuitem"><NavIcon name="inbox" />문의 관리</Link>
+                        <Link to="/admin" role="menuitem" title="통계·글·회원·신고·문의 관리"><NavIcon name="shield" />관리자 페이지</Link>
                       </>
                     )}
                     <div className="menu-sep" role="separator" />

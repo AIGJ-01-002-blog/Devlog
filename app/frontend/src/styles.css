@@ -909,6 +909,82 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .admin .check { display: block; margin: 12px 0; }
 .suspend-form .btn, .admin-section > .btn { margin-top: 8px; }
 
+/* 관리자 페이지 (spec 062) */
+.admin-wide { max-width: 1080px; }
+.admin-nav { margin: 8px 0 20px; }
+.admin-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.segmented { display: inline-flex; border: 1px solid var(--color-border); border-radius: 999px; padding: 2px; background: var(--color-surface-2); }
+.segmented button { border: 0; background: none; color: var(--color-text-muted); padding: 6px 14px; border-radius: 999px; font: inherit; cursor: pointer; min-height: 32px; }
+.segmented button[aria-pressed="true"] { background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow); font-weight: 600; }
+.admin-todo { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.admin-todo-item { padding: 8px 14px; border-radius: var(--radius); background: var(--color-warn-bg); color: var(--color-warn-text); }
+.admin-todo-item strong { font-size: 1.125rem; margin: 0 2px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.stat-grid.compact { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.stat-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px; text-align: left; font: inherit; color: inherit;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); }
+button.stat-tile { cursor: pointer; }
+button.stat-tile:hover { background: var(--color-hover); }
+.stat-tile[aria-pressed="true"] { border-color: var(--color-brand); box-shadow: inset 0 0 0 1px var(--color-brand); }
+.stat-label { font-size: 0.8125rem; color: var(--color-text-muted); }
+.stat-value { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.stat-change { font-size: 0.75rem; color: var(--color-text-muted); }
+.stat-change.up { color: var(--color-ok-text); }
+.stat-change.down { color: var(--color-danger); }
+.admin-card { padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); margin-bottom: 16px; min-width: 0; }
+.admin-card h2 { font-size: 1rem; margin: 0 0 10px; }
+.admin-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.rank-list { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.rank-list li { display: flex; flex-direction: column; gap: 2px; }
+.rank-list li .badge { align-self: flex-start; }
+.rank-title { font-weight: 600; overflow-wrap: anywhere; }
+.totals { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 16px; margin: 0; }
+.totals dt { font-size: 0.8125rem; color: var(--color-text-muted); }
+.totals dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.totals dd.muted { font-weight: 400; }
+/* 막대그래프: 계열 하나라 브랜드 색 하나, 막대 끝은 4px 둥글게, 막대 사이 2px */
+.bar-chart { margin: 0; }
+.bar-chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.bar-chart-title { font-weight: 600; }
+.bar-chart-plot { position: relative; height: 180px; border-bottom: 1px solid var(--color-border); padding-top: 18px; }
+.bar-chart-max { position: absolute; top: 0; left: 0; font-size: 0.6875rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.bar-chart-plot::before { content: ""; position: absolute; left: 0; right: 0; top: 18px; border-top: 1px dashed var(--color-border); }
+.bar-chart-bars { display: flex; align-items: flex-end; height: 100%; gap: 2px; }
+.bar-chart-col { flex: 1 1 0; height: 100%; display: flex; align-items: flex-end; min-width: 0; }
+.bar-chart-col:hover { background: var(--color-hover); }
+.bar-chart-bar { width: 100%; background: var(--color-brand); border-radius: 4px 4px 0 0; min-height: 2px; }
+.bar-chart-bar.zero { min-height: 0; }
+.bar-chart-axis { display: flex; gap: 2px; margin-top: 4px; }
+.bar-chart-axis span { flex: 1 1 0; min-width: 0; font-size: 0.6875rem; color: var(--color-text-muted); white-space: nowrap; overflow: visible; text-align: center; }
+.bar-chart-axis span:first-child { text-align: left; }
+.bar-chart-axis span:last-child { text-align: right; }
+.admin-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.admin-filters input[type="search"] { flex: 1 1 200px; min-width: 0; }
+.admin-filters select, .admin-filters input, .hide-form select, .role-form select { min-height: 38px; padding: 6px 10px; border: 1px solid var(--color-input-border);
+  border-radius: var(--radius); background: var(--color-surface); color: var(--color-text); font: inherit; }
+.admin-table-wrap { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.admin-table th, .admin-table td { padding: 10px 8px; border-bottom: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+.admin-table th { font-size: 0.8125rem; font-weight: 600; color: var(--color-text-muted); }
+.admin-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.admin-case-actions { margin-top: 8px; }
+.hide-form { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 20px 0; }
+.header-admin[aria-current="page"] { color: var(--color-brand); }
+@media (max-width: 767px) {
+  .admin-columns { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-value { font-size: 1.25rem; }
+  .bar-chart-plot { height: 140px; }
+  /* 좁은 화면의 회원 표는 줄마다 카드로 쌓는다 */
+  .admin-table thead { display: none; }
+  .admin-table, .admin-table tbody, .admin-table tr, .admin-table td { display: block; width: 100%; }
+  .admin-table tr { padding: 10px 0; border-bottom: 1px solid var(--color-border); }
+  .admin-table td { border: 0; padding: 2px 0; text-align: left; }
+  .admin-table td.num { text-align: left; }
+  .admin-table td[data-label]:not(:first-child)::before { content: attr(data-label) " "; color: var(--color-text-muted); font-size: 0.8125rem; margin-right: 6px; }
+}
+
 /* 회원 탈퇴·복구 (020) */
 .withdraw-link { border-bottom: 0; }
 .withdraw-link .btn { padding: 0; }
@@ -1118,7 +1194,7 @@ a.attachment-name:hover { color: var(--color-brand); }
   .post-stats .like-button, .post-stats .report-button { min-height: 40px; }
 }
 
-/* 머리말 메뉴 (062): 피드 · 좋아한 글 · 태그 · 문의·신고 · 릴리스 노트 · 🔔. 중간 너비에서는 아이콘만, 이름은 툴팁으로 */
+/* 머리말 메뉴 (063): 피드 · 좋아한 글 · 태그 · 문의·신고 · 릴리스 노트 · 🔔. 중간 너비에서는 아이콘만, 이름은 툴팁으로 */
 .header-sep { width: 1px; height: 20px; background: var(--color-border); margin: 0 4px; }
 .header-link { gap: 6px; border-radius: 999px; padding: 0 12px; }
 .header-link .nav-icon { flex-shrink: 0; }
@@ -1129,7 +1205,7 @@ a.attachment-name:hover { color: var(--color-brand); }
   .header-link { width: 36px; padding: 0; }
 }
 
-/* 내 메뉴 (062): 내 설정을 맨 위에. 아이콘과 둥근 줄로 */
+/* 내 메뉴 (063): 내 설정을 맨 위에. 아이콘과 둥근 줄로 */
 .menu-list.profile-menu { min-width: 248px; padding: 6px; }
 .profile-menu a, .profile-menu button {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius); font-weight: 500; color: var(--color-text);
@@ -1150,7 +1226,7 @@ a.attachment-name:hover { color: var(--color-brand); }
   .menu-list.notification-panel { position: fixed; top: 64px; left: 12px; right: 12px; width: auto; }
 }
 
-/* 내 설정 (062): 왼쪽 탭 목록에서 고른 항목 하나만. 휴대폰은 탭이 위에서 옆으로 밀린다 */
+/* 내 설정 (063): 왼쪽 탭 목록에서 고른 항목 하나만. 휴대폰은 탭이 위에서 옆으로 밀린다 */
 .settings-page { max-width: 1080px; padding-bottom: 64px; }
 .settings-head .page-title { margin-bottom: 4px; }
 .settings-head p { margin: 0 0 24px; }
@@ -1181,7 +1257,7 @@ a.attachment-name:hover { color: var(--color-brand); }
   .settings-panel { padding: 4px 16px; }
 }
 
-/* 내 블로그 (062): 색 표지 위에 큰 프로필, 숫자 카드, 알약 탭 */
+/* 내 블로그 (063): 색 표지 위에 큰 프로필, 숫자 카드, 알약 탭 */
 .blog-hero { margin: 24px 0 8px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); overflow: hidden; }
 .blog-cover {
   height: 168px; position: relative;
@@ -1235,7 +1311,7 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
   .blog-tags .tag-link, .blog-tags .btn { flex-shrink: 0; }
 }
 
-/* 내 글 관리 (062): 상태 숫자 카드가 탭이 되고, 글은 표지 색과 상태 칩이 있는 카드로 */
+/* 내 글 관리 (063): 상태 숫자 카드가 탭이 되고, 글은 표지 색과 상태 칩이 있는 카드로 */
 .manage-page { max-width: 1080px; padding-bottom: 64px; }
 .manage-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 32px 0 20px; }
 .manage-head .page-title { margin: 0 0 4px; }
@@ -1299,7 +1375,7 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
   .manage-actions .btn, .manage-actions select { min-height: 36px; }
 }
 
-/* RSS 구독 안내 (062) */
+/* RSS 구독 안내 (063) */
 .rss-guide { padding-bottom: 64px; }
 .rss-badge {
   width: 56px; height: 56px; margin-top: 40px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;

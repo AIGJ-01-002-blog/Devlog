@@ -15,8 +15,14 @@ public record MemberPrincipal(long id, String handle, String role, String provid
     @Serial
     private static final long serialVersionUID = 1L;
 
+    /** 권한을 줄 수 있는 관리자 (062) */
     public boolean isAdmin() {
         return "ADMIN".equals(role);
+    }
+
+    /** 관리자 페이지를 쓸 수 있는 관리자·매니저 (062) */
+    public boolean isStaff() {
+        return isAdmin() || "MANAGER".equals(role);
     }
 
     public MemberPrincipal withAgreementAccepted() {

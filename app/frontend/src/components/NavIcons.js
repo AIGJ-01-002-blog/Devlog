@@ -1,5 +1,5 @@
 import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
-/** 머리말·아래 탭·내 메뉴가 같이 쓰는 선 아이콘 (055·062). 크기만 다르고 선 굵기와 모양은 같다. */
+/** 머리말·아래 탭·내 메뉴가 같이 쓰는 선 아이콘 (055·063). 크기만 다르고 선 굵기와 모양은 같다. */
 function Icon({ size, children }) {
     return (_jsx("svg", { width: size, height: size, viewBox: "0 0 24 24", "aria-hidden": "true", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: "nav-icon", children: children }));
 }

@@ -26,7 +26,7 @@ const BIO_LINES = 4;
 export const normalizeBio = (s) => s.replace(/\r\n?/g, '\n').normalize('NFC').trim().replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
 /** 소개 글자 수: 서버와 같이 코드 포인트로 센다(이모지 하나 = 1자). */
 const bioLength = (s) => Array.from(s).length;
-/** 내 설정 탭 (062). 주소 뒤 #이름으로 바로 열린다(/settings#ai). 예전 항목 주소(#telegram)는 그 항목이 든 탭으로 간다. */
+/** 내 설정 탭 (063). 주소 뒤 #이름으로 바로 열린다(/settings#ai). 예전 항목 주소(#telegram)는 그 항목이 든 탭으로 간다. */
 export const SETTINGS_TABS = [
     { id: 'profile', label: '프로필', hint: '사진·닉네임·소개·소셜 정보', icon: 'user' },
     { id: 'account', label: '계정', hint: '로그인·공개 범위·비밀번호·탈퇴', icon: 'lock' },
@@ -41,7 +41,7 @@ export function tabFromHash(hash) {
     const found = SETTINGS_TABS.find((t) => t.id === key);
     return found ? found.id : HASH_ALIASES[key] ?? 'profile';
 }
-/** 내 설정 (005·062): 옆 탭 목록에서 고른 항목 하나만 보인다. 휴대폰에서는 탭 목록이 위에서 옆으로 밀린다. */
+/** 내 설정 (005·063): 옆 탭 목록에서 고른 항목 하나만 보인다. 휴대폰에서는 탭 목록이 위에서 옆으로 밀린다. */
 export function SettingsPage() {
     const [settings, setSettings] = useState(null);
     const [error, setError] = useState(false);

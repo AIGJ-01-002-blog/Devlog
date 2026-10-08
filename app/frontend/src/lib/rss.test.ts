@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { feedUrl, rawXmlPath, READERS, rssPath } from './rss'
 
-describe('RSS 구독 안내 (062)', () => {
+describe('RSS 구독 안내 (063)', () => {
   it('블로그와 전체 피드 주소를 만든다', () => {
     expect(rssPath('minseo')).toBe('/@minseo/rss')
     expect(rssPath(null)).toBe('/rss')

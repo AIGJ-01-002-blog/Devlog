@@ -9,6 +9,7 @@ import { PageAnnouncer } from './components/PageAnnouncer';
 import { MAIN_ID } from './lib/focusMain';
 import { VerifyBanner } from './components/VerifyBanner';
 import { loginPath, useAuth } from './lib/auth';
+import { isStaff } from './lib/admin';
 import { match, navigate, useLocation } from './lib/router';
 import { BlogPage } from './pages/BlogPage';
 import { SeriesPage } from './pages/SeriesPage';
@@ -49,6 +50,9 @@ const McpPage = lazyPage(() => import('./pages/McpPage'), 'McpPage');
 const OAuthAuthorizePage = lazyPage(() => import('./pages/OAuthAuthorizePage'), 'OAuthAuthorizePage');
 const SupportPage = lazyPage(() => import('./pages/SupportPage'), 'SupportPage');
 const ReleasesPage = lazyPage(() => import('./pages/ReleasesPage'), 'ReleasesPage');
+const AdminDashboardPage = lazyPage(() => import('./pages/AdminDashboardPage'), 'AdminDashboardPage');
+const AdminPostsPage = lazyPage(() => import('./pages/AdminPostsPage'), 'AdminPostsPage');
+const AdminMembersPage = lazyPage(() => import('./pages/AdminMembersPage'), 'AdminMembersPage');
 const AdminInquiriesPage = lazyPage(() => import('./pages/AdminInquiriesPage'), 'AdminInquiriesPage');
 const RssGuidePage = lazyPage(() => import('./pages/RssGuidePage'), 'RssGuidePage');
 const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage');
@@ -130,6 +134,12 @@ function route(path) {
         return _jsx(WithdrawnPage, {});
     if (path === '/account/restore')
         return _jsx(RequireLogin, { children: _jsx(RestorePage, {}) });
+    if (path === '/admin')
+        return _jsx(RequireAdmin, { children: _jsx(AdminDashboardPage, {}) });
+    if (path === '/admin/posts')
+        return _jsx(RequireAdmin, { children: _jsx(AdminPostsPage, {}) });
+    if (path === '/admin/members')
+        return _jsx(RequireAdmin, { children: _jsx(AdminMembersPage, {}) });
     if (path === '/admin/reports')
         return _jsx(RequireAdmin, { children: _jsx(AdminReportsPage, {}) });
     if ((p = match('/admin/reports/:id', path)))
@@ -155,14 +165,14 @@ function RequireLogin({ children }) {
         return _jsx(Loading, {});
     return _jsx(_Fragment, { children: children });
 }
-/** 관리자 화면: 서버가 비회원은 로그인으로, 일반 회원은 404로 보내므로 여기서는 화면 안에서 옮겨 온 경우만 막는다. */
+/** 관리자 화면(관리자·매니저, 062): 서버가 비회원은 로그인으로, 일반 회원은 404로 보내므로 여기서는 화면 안에서 옮겨 온 경우만 막는다. */
 function RequireAdmin({ children }) {
     const { me, loading } = useAuth();
     if (loading)
         return _jsx(Loading, {});
     if (!me?.authenticated)
         return _jsx(RequireLogin, { children: children });
-    if (me.member?.role !== 'ADMIN')
+    if (!isStaff(me.member?.role))
         return _jsx(NotFoundPage, {});
     return _jsx(_Fragment, { children: children });
 }

@@ -20,7 +20,7 @@ import com.team.blog.shared.config.BlogProperties;
 
 /**
  * RSS 구독 주소 (026). 공개 글만 담겨 누구에게나 같으므로 공유 캐시에 10분 둔다.
- * 브라우저 주소창으로 직접 열면(Sec-Fetch-Dest: document) XML 대신 "RSS가 무엇이고 어떻게 구독하는지" 안내 화면을 준다 (062).
+ * 브라우저 주소창으로 직접 열면(Sec-Fetch-Dest: document) XML 대신 "RSS가 무엇이고 어떻게 구독하는지" 안내 화면을 준다 (063).
  * 구독 앱·크롤러는 이 머리글을 보내지 않으므로 지금처럼 XML을 받는다. ?format=xml이면 브라우저에서도 XML 그대로.
  */
 @RestController

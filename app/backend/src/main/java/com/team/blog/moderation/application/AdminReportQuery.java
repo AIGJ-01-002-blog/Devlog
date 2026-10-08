@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.team.blog.account.infra.MemberSuspensionRepository;
 import com.team.blog.shared.cursor.CursorCodec;
 import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.shared.stats.Counts;
 import com.team.blog.shared.time.Times;
 
 /**
@@ -50,9 +52,12 @@ public class AdminReportQuery {
 
     public record Suspension(long id, String reason, Instant startedAt, Instant endsAt, Instant liftedAt) {}
 
-    /** @param admin 관리자면 정지할 수 없다 (FR-035) */
+    /**
+     * @param admin 관리자·매니저면 정지할 수 없다 (FR-035, 062)
+     * @param role  USER·MANAGER·ADMIN (062 권한 바꾸기)
+     */
     public record AuthorInfo(String handle, String nickname, Instant joinedAt, long hiddenCount, boolean suspended, boolean admin,
-                             List<Suspension> suspensions) {}
+                             List<Suspension> suspensions, String role) {}
 
     /**
      * @param link       대상 주소 (지금 볼 수 있든 없든 화면이 링크로 보여 준다. 관리자도 볼 수 없으면 404)
@@ -88,13 +93,13 @@ public class AdminReportQuery {
         List<Row> rows = jdbc.query("""
                 SELECT * FROM (
                     SELECT rc.id, rc.target_type, rc.status, rc.snapshot_title, rc.snapshot_content, rc.handled_at, m.handle,
-                           count(r.id) AS report_count, max(r.created_at) AS latest_at,
+                           count(r.id) AS report_count, COALESCE(max(r.created_at), rc.created_at) AS latest_at,
                            count(*) FILTER (WHERE r.reason = 'SPAM') AS spam, count(*) FILTER (WHERE r.reason = 'ABUSE') AS abuse,
                            count(*) FILTER (WHERE r.reason = 'SEXUAL') AS sexual, count(*) FILTER (WHERE r.reason = 'PRIVACY') AS privacy,
                            count(*) FILTER (WHERE r.reason = 'COPYRIGHT') AS copyright, count(*) FILTER (WHERE r.reason = 'OTHER') AS other,
                            COALESCE(p.hidden_at, c.hidden_at) IS NOT NULL AS hidden_now
                     FROM report_case rc
-                    JOIN report r ON r.case_id = rc.id
+                    LEFT JOIN report r ON r.case_id = rc.id
                     JOIN member m ON m.id = rc.target_author_id
                     LEFT JOIN post p ON p.id = rc.post_id
                     LEFT JOIN comment c ON c.id = rc.comment_id
@@ -185,11 +190,25 @@ public class AdminReportQuery {
                 .map(s -> new Suspension(s.getId(), s.getReason(), s.getStartedAt(), s.getEndsAt(), s.getLiftedAt())).toList();
         AuthorInfo author = new AuthorInfo(rs.getString("handle"), withdrawn ? null : rs.getString("nickname"),
                 rs.getTimestamp("joined_at").toInstant(), rs.getLong("hidden_count"), "SUSPENDED".equals(rs.getString("member_status")),
-                "ADMIN".equals(rs.getString("member_role")), history);
+                !"USER".equals(rs.getString("member_role")), history, rs.getString("member_role"));
         Timestamp handled = rs.getTimestamp("handled_at");
         return new Detail(caseId, type, targetId, rs.getString("status"), state, link, rs.getString("snapshot_title"),
                 rs.getString("snapshot_content"), reasons, reports, hiddenReason == null ? null : ReportReason.valueOf(hiddenReason),
                 rs.getTimestamp("created_at").toInstant(), handled == null ? null : handled.toInstant(), author, authorId == adminId);
+    }
+
+    /** 관리자 대시보드(062): 처리를 기다리는 신고 사건 수 */
+    public long pendingCount() {
+        Long n = jdbc.queryForObject("SELECT count(*) FROM report_case WHERE status = 'PENDING'", Long.class);
+        return n == null ? 0 : n;
+    }
+
+    /** 관리자 대시보드(062): 날짜별 접수된 신고 수 */
+    public Map<LocalDate, Long> reportsByDay(Instant from) {
+        return Counts.byDay(jdbc, """
+                SELECT (created_at AT TIME ZONE 'Asia/Seoul')::date AS d, count(*) AS n
+                FROM report WHERE created_at >= ? GROUP BY d
+                """, from);
     }
 
     /** 회원 화면 `/admin/members/{handle}`: 가입일·숨겨진 콘텐츠 수·정지 이력 */
@@ -200,9 +219,10 @@ public class AdminReportQuery {
                        + (SELECT count(*) FROM comment y WHERE y.author_id = m.id AND y.hidden_at IS NOT NULL) AS hidden_count
                 FROM member m WHERE m.handle = ? AND m.deleted_at IS NULL
                 """, (rs, i) -> new AuthorInfo(rs.getString("handle"), rs.getString("nickname"), rs.getTimestamp("created_at").toInstant(),
-                rs.getLong("hidden_count"), "SUSPENDED".equals(rs.getString("status")), "ADMIN".equals(rs.getString("role")),
+                rs.getLong("hidden_count"), "SUSPENDED".equals(rs.getString("status")), !"USER".equals(rs.getString("role")),
                 suspensions.findByMemberIdOrderByStartedAtDesc(rs.getLong("id")).stream()
-                        .map(s -> new Suspension(s.getId(), s.getReason(), s.getStartedAt(), s.getEndsAt(), s.getLiftedAt())).toList()),
+                        .map(s -> new Suspension(s.getId(), s.getReason(), s.getStartedAt(), s.getEndsAt(), s.getLiftedAt())).toList(),
+                rs.getString("role")),
                 handle);
         if (found.isEmpty()) throw new NotFoundException();
         return found.get(0);

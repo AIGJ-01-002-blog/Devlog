@@ -21,7 +21,7 @@ import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
 
 /**
- * 관리자 API (019 FR-011·FR-044). `/api/admin/**`는 보안 설정이 관리자만 들이고, 일반 회원은 404, 비회원은 401이다.
+ * 관리자 API (019 FR-011·FR-044). `/api/admin/**`는 보안 설정이 관리자·매니저(062)만 들이고, 일반 회원은 404, 비회원은 401이다.
  * 여기서도 역할을 다시 확인한다(서버가 매번 확인).
  */
 @RestController
@@ -99,7 +99,7 @@ public class AdminController {
     }
 
     private static void admin(MemberPrincipal me) {
-        if (!me.isAdmin()) throw new NotFoundException();
+        if (!me.isStaff()) throw new NotFoundException();
     }
 
     private static ModerationService.Action parse(String raw) {

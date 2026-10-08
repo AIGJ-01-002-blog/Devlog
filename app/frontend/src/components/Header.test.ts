@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { headerItems } from './Header'
 import { blogTone } from '../pages/BlogPage'
 
-describe('머리말 메뉴 (062)', () => {
+describe('머리말 메뉴 (063)', () => {
   it('피드 · 좋아한 글 · 태그 · 문의·신고 · 릴리스 노트 순서이고 모두 툴팁 글이 있다', () => {
     const items = headerItems('/')
     expect(items.map((i) => i.label)).toEqual(['피드', '좋아한 글', '태그', '문의·신고', '릴리스 노트'])
@@ -16,7 +16,7 @@ describe('머리말 메뉴 (062)', () => {
   })
 })
 
-describe('블로그 표지 색 (062)', () => {
+describe('블로그 표지 색 (063)', () => {
   it('같은 블로그는 같은 색, 0~3 중 하나', () => {
     for (const h of ['minseo', 'a', 'devlog', 'z9']) {
       expect(blogTone(h)).toBe(blogTone(h))
