@@ -58,9 +58,14 @@ public class AdminStats {
                          long openInquiries) {}
 
     /** 기간 합계. activeMembers는 지금 기준 최근 N일 안에 활동한 회원 수라 이전 기간 값이 없다 */
-    public record Sums(long signups, long posts, long comments, long likes, long views, long reports) {}
+    /** visitors는 기간 동안 온 사람 수(여러 날 와도 한 명), visits는 들어온 횟수 합 (064) */
+    public record Sums(long signups, long posts, long comments, long likes, long views, long reports, long visitors, long visits) {}
 
-    public record Day(LocalDate date, long signups, long posts, long comments, long likes, long views, long reports) {}
+    public record Day(LocalDate date, long signups, long posts, long comments, long likes, long views, long reports, long visitors,
+                      long visits) {}
+
+    /** 오늘·어제 순방문자와, 기간 방문자 중 회원 수 (064) */
+    public record VisitorSummary(long today, long yesterday, long members) {}
 
     /** @param title 공개 글만 (비공개면 null) */
     public record PostLine(long id, String title, String authorHandle, String visibility, boolean hidden, long views, long likes,
@@ -69,7 +74,7 @@ public class AdminStats {
     public record AuthorLine(String handle, String nickname, long posts) {}
 
     public record Dashboard(int days, LocalDate from, LocalDate to, Totals totals, Sums current, Sums previous, long activeMembers,
-                            List<Day> daily, List<PostLine> topPosts, List<AuthorLine> topAuthors) {}
+                            VisitorSummary visitors, List<Day> daily, List<PostLine> topPosts, List<AuthorLine> topAuthors) {}
 
     public Dashboard dashboard(int days) {
         int n = PERIODS.contains(days) ? days : 30;
@@ -85,19 +90,25 @@ public class AdminStats {
         Map<LocalDate, Long> liked = likes.byDay(since);
         Map<LocalDate, Long> viewed = views.byDay(since);
         Map<LocalDate, Long> reported = reports.reportsByDay(since);
+        Map<LocalDate, Long> visitorsByDay = views.visitorsByDay(since);
+        Map<LocalDate, Long> visitsByDay = views.visitsByDay(since);
 
         List<Day> daily = new ArrayList<>(n);
         for (LocalDate d = from; !d.isAfter(today); d = d.plusDays(1)) {
-            daily.add(new Day(d, get(signups, d), get(published, d), get(commented, d), get(liked, d), get(viewed, d), get(reported, d)));
+            daily.add(new Day(d, get(signups, d), get(published, d), get(commented, d), get(liked, d), get(viewed, d), get(reported, d),
+                    get(visitorsByDay, d), get(visitsByDay, d)));
         }
-        Sums current = sum(from, today, signups, published, commented, liked, viewed, reported);
-        Sums previous = sum(prevFrom, from.minusDays(1), signups, published, commented, liked, viewed, reported);
+        ViewStats.Visitors inPeriod = views.visitors(from, today);
+        ViewStats.Visitors before = views.visitors(prevFrom, from.minusDays(1));
+        Sums current = sum(from, today, inPeriod, signups, published, commented, liked, viewed, reported);
+        Sums previous = sum(prevFrom, from.minusDays(1), before, signups, published, commented, liked, viewed, reported);
+        VisitorSummary visitors = new VisitorSummary(get(visitorsByDay, today), get(visitorsByDay, today.minusDays(1)), inPeriod.members());
 
         Instant periodStart = from.atStartOfDay(Counts.KST).toInstant();
         PostStats.Summary postSummary = posts.summary();
         Totals totals = new Totals(members.summary(), postSummary, comments.total(), likes.total(), views.total(),
                 reports.pendingCount(), inquiries.openCount());
-        return new Dashboard(n, from, today, totals, current, previous, members.activeSince(periodStart), daily,
+        return new Dashboard(n, from, today, totals, current, previous, members.activeSince(periodStart), visitors, daily,
                 topPosts(periodStart), topAuthors(periodStart));
     }
 
@@ -204,13 +215,13 @@ public class AdminStats {
     }
 
     @SafeVarargs
-    private static Sums sum(LocalDate from, LocalDate to, Map<LocalDate, Long>... series) {
+    private static Sums sum(LocalDate from, LocalDate to, ViewStats.Visitors v, Map<LocalDate, Long>... series) {
         long[] t = new long[series.length];
         for (int i = 0; i < series.length; i++) {
             for (Map.Entry<LocalDate, Long> e : series[i].entrySet()) {
                 if (!e.getKey().isBefore(from) && !e.getKey().isAfter(to)) t[i] += e.getValue();
             }
         }
-        return new Sums(t[0], t[1], t[2], t[3], t[4], t[5]);
+        return new Sums(t[0], t[1], t[2], t[3], t[4], t[5], v.visitors(), v.visits());
     }
 }

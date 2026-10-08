@@ -53,7 +53,7 @@ public class SecurityConfig {
             "/api/auth/signup", "/api/auth/redirect", "/api/dev/login",
             "/api/auth/login", "/api/auth/signup/email", "/api/auth/email/verify", "/api/auth/email/resend",
             "/api/auth/password/reset-request", "/api/auth/password/reset", "/api/auth/password/reset-check",
-            "/api/markdown/preview-public", "/api/posts/*/views"
+            "/api/markdown/preview-public", "/api/posts/*/views", "/api/visits"
     };
 
     /**

@@ -19,6 +19,7 @@ import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
 import com.team.blog.shared.web.ClientIpResolver;
 import com.team.blog.view.application.ViewRecorder;
+import com.team.blog.view.application.VisitRecorder;
 
 /**
  * 조회 기록 (spec 013, docs/40 §4). 글이 화면에 1초 이상 보이면 화면이 한 번 보낸다. 비회원도 보낼 수 있고 CSRF 값은 함께 온다.
@@ -30,12 +31,14 @@ public class ViewController {
     private static final Duration VISITOR_TTL = Duration.ofDays(365);
 
     private final ViewRecorder recorder;
+    private final VisitRecorder visits;
     private final ClientIpResolver ipResolver;
     private final boolean secureCookie;
 
-    public ViewController(ViewRecorder recorder, ClientIpResolver ipResolver,
+    public ViewController(ViewRecorder recorder, VisitRecorder visits, ClientIpResolver ipResolver,
                           @Value("${server.servlet.session.cookie.secure:false}") boolean secureCookie) {
         this.recorder = recorder;
+        this.visits = visits;
         this.ipResolver = ipResolver;
         this.secureCookie = secureCookie;
     }
@@ -44,11 +47,30 @@ public class ViewController {
     public ResponseEntity<Void> record(@PathVariable String postId, @CurrentMember(required = false) MemberPrincipal me,
                                        HttpServletRequest request) {
         if (postId == null || !postId.matches("[1-9][0-9]{0,17}")) throw new NotFoundException();
-        String visitorId = cookie(request, VISITOR_COOKIE);
-        // 첫 방문 비회원에게 무작위 방문자 값을 준다: 1년, 스크립트로 못 읽음, 보안 연결에서만 (FR-005)
-        String issued = me == null && visitorId == null ? UUID.randomUUID().toString() : null;
-        recorder.record(Long.parseLong(postId), new ViewRecorder.Visit(me == null ? null : me.id(), me != null && me.isStaff(),
-                visitorId, issued, ipResolver.resolve(request), request.getHeader("User-Agent"), isPrefetch(request)));
+        String issued = issueVisitor(me, request);
+        recorder.record(Long.parseLong(postId), toVisit(me, request, issued));
+        return noContent(request, issued);
+    }
+
+    /** 사이트 방문 (spec 064). 화면을 처음 열 때 한 번 보낸다. 셌든 안 셌든 같은 204다. */
+    @PostMapping("/api/visits")
+    public ResponseEntity<Void> visit(@CurrentMember(required = false) MemberPrincipal me, HttpServletRequest request) {
+        String issued = issueVisitor(me, request);
+        visits.record(toVisit(me, request, issued));
+        return noContent(request, issued);
+    }
+
+    /** 첫 방문 비회원에게 무작위 방문자 값을 준다: 1년, 스크립트로 못 읽음, 보안 연결에서만 (FR-005) */
+    private static String issueVisitor(MemberPrincipal me, HttpServletRequest request) {
+        return me == null && cookie(request, VISITOR_COOKIE) == null ? UUID.randomUUID().toString() : null;
+    }
+
+    private ViewRecorder.Visit toVisit(MemberPrincipal me, HttpServletRequest request, String issued) {
+        return new ViewRecorder.Visit(me == null ? null : me.id(), me != null && me.isStaff(), cookie(request, VISITOR_COOKIE), issued,
+                ipResolver.resolve(request), request.getHeader("User-Agent"), isPrefetch(request));
+    }
+
+    private ResponseEntity<Void> noContent(HttpServletRequest request, String issued) {
         ResponseEntity.HeadersBuilder<?> res = ResponseEntity.noContent().cacheControl(CacheControl.noStore());
         if (issued != null) {
             res.header("Set-Cookie", ResponseCookie.from(VISITOR_COOKIE, issued).maxAge(VISITOR_TTL)

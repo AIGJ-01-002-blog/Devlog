@@ -154,7 +154,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>複数 Pod]
     I -->|/blog-images| M[(MinIO / S3<br/>画像・添付)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V19)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V20)]
     A --> R[(Redis<br/>セッション・レート制限・閲覧数・キャッシュ)]
     A --> M
     A -.任意.-> G[Google Gemini]
@@ -246,7 +246,7 @@ GitHub Actions でテストし、イメージを作って GHCR に上げたあ�
 
 | パス | 説明 |
 | --- | --- |
-| [app/backend](app/backend) | バックエンド：Spring Boot 4.1、Java 21。機能モジュール、Flyway マイグレーション（V1~V19）、テスト |
+| [app/backend](app/backend) | バックエンド：Spring Boot 4.1、Java 21。機能モジュール、Flyway マイグレーション（V1~V20）、テスト |
 | [app/frontend](app/frontend) | フロントエンド：React 19 SPA、TypeScript、Vite。画面、自動保存（IndexedDB）、ダークモード |
 | [deploy](deploy) | デプロイ：Dockerfile、Kubernetes マニフェスト（base・selfhosted・nhn・local）、デプロイ・ロールバック・シークレット検査のスクリプト |
 | [.github](.github) | CI/CD：バックエンドと画面のテスト、イメージのビルドとデプロイ、リリース、Discord・Telegram 通知 |
@@ -323,7 +323,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub・Google ログイン、セッション、CSRF、パスごとの権限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | ドメイン全体 | 会員・記事・コメントなどドメインデータの保存 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | セッション、レート制限、閲覧数、キャッシュ | 複数の Pod が同じセッションを共有し、同時リクエストも Redis スクリプト 1 つで判定します |
-| Flyway | Boot 4.1 | DB | スキーマを V1~V19 のマイグレーションで管理し、起動時に適用します |
+| Flyway | Boot 4.1 | DB | スキーマを V1~V20 のマイグレーションで管理し、起動時に適用します |
 | commonmark-java (+ GFM 拡張) | 0.30.0 | 本文のレンダリング | Markdown → HTML。表・取り消し線・チェックリスト・自動リンク・見出しアンカー |
 | OWASP Java HTML Sanitizer | 20260924.2 | 本文のサニタイズ | レンダリングした HTML を許可リストでサニタイズし XSS を防ぎます |
 | AWS SDK for Java (S3) | 2.55.12 | media | MinIO・S3 に画像と添付をアップロードします |
@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.38.0 | 2026-10-09 | 管理者ダッシュボードにサイト訪問者数（ユニーク訪問者・訪問回数） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.38.0) |
 | v1.37.2 | 2026-10-09 | ヘッダー値が不正なリクエスト(改行付きトークンなど)を 500 ではなく 400 で案内 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.2) |
 | v1.37.1 | 2026-10-08 | /mcp の案内に Claude アプリのコネクタ接続方法を追加 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.1) |
 | v1.37.0 | 2026-10-08 | ヘッダーメニューの並べ替え、タブに分けたマイ設定、ブログと記事管理の新デザイン、ブラウザ向けRSS案内 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.0) |
