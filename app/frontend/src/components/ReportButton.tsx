@@ -47,7 +47,7 @@ export function ReportButton({ targetType, targetId, label = '신고' }: { targe
 
   return (
     <>
-      <button type="button" className="btn btn-text report-button" onClick={start}>{label}</button>
+      <button type="button" className="btn btn-text report-button" data-tip="규칙에 어긋나는 내용을 운영진에게 알려요" onClick={start}>{label}</button>
       {notice && <span className="like-notice" role="status">{notice}</span>}
       {open && (
         <Modal labelledBy={titleId} onClose={() => setOpen(false)} closeOnBackdrop>

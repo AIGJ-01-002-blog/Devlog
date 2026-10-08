@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { formatTextarea, MarkdownToolbar } from '../components/MarkdownToolbar'
+import { formatForKey } from '../lib/mdFormat'
 import { ConflictDialog } from '../components/ConflictDialog'
 import { Modal } from '../components/Modal'
 import { AiTagSuggest } from '../components/AiTagSuggest'
@@ -238,6 +240,18 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     }
   }, [title, content, view.id])
 
+  // Ctrl(⌘)+S: 브라우저의 "페이지 저장" 대신 이 글을 바로 저장한다(제목·본문 어디에 있든)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        void saveNow()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [saveNow])
+
   const handleError = (e: unknown) => {
     if (e instanceof ApiError && e.code === 'VERSION_CONFLICT') {
       setState({ kind: 'conflict', server: (e.details as { server: import('../lib/types').ServerContent }).server })
@@ -292,7 +306,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     <main className="editor">
       <div className="editor-toolbar">
         <div className="row">
-          <button type="button" className="btn btn-text" onClick={() => history.length > 1 ? history.back() : navigate('/manage/posts')}>← 나가기</button>
+          <button type="button" className="btn btn-text" data-tip="에디터 닫기. 쓴 내용은 자동으로 저장돼요" onClick={() => history.length > 1 ? history.back() : navigate('/manage/posts')}>← 나가기</button>
           <SaveIndicator state={state} localStored={localStored} onCompare={() => setShowConflict(true)} />
         </div>
         <div className="row">
@@ -301,14 +315,14 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
             <button type="button" role="tab" aria-selected={tab === 'preview'} onClick={() => setTab('preview')}>미리보기</button>
           </div>
           <button type="button" className="btn btn-text" onClick={() => fileRef.current?.click()}
-                  title="jpg·png·gif·webp, 10MB까지. 움직이는 webp·png는 첫 장면만 남아요.">🖼 사진</button>
+                  data-tip="사진 넣기: jpg·png·gif·webp, 10MB까지. 움직이는 webp·png는 첫 장면만 남아요">🖼 사진</button>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden
                  onChange={(e) => { addFiles(e.target.files); e.target.value = '' }} />
-          <button type="button" className="btn btn-outline" onClick={() => saveNow()}>저장</button>
+          <button type="button" className="btn btn-outline" data-tip="지금 바로 저장 (Ctrl+S). 평소에도 몇 초마다 자동 저장돼요" onClick={() => saveNow()}>저장</button>
           {backups.length > 0 && (
-            <button type="button" className="btn btn-text" onClick={() => setShowBackups(true)}>이 기기 백업 {backups.length}</button>
+            <button type="button" className="btn btn-text" data-tip="이 브라우저에 따로 남겨 둔 사본 보기" onClick={() => setShowBackups(true)}>이 기기 백업 {backups.length}</button>
           )}
-          <button type="button" className="btn btn-primary" onClick={() => saver.current!.isConflict ? setShowConflict(true) : setShowPublish(true)}>
+          <button type="button" className="btn btn-primary" data-tip="공개 범위·태그·썸네일을 정하고 발행해요" onClick={() => saver.current!.isConflict ? setShowConflict(true) : setShowPublish(true)}>
             {view.status === 'PUBLISHED' ? '다시 발행' : '발행'}
           </button>
         </div>
@@ -357,9 +371,16 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           <input className="editor-title" placeholder="제목을 입력하세요" value={title} maxLength={100}
                  onChange={(e) => setTitle(e.target.value)} aria-label="제목" aria-invalid={!!errors.title} />
           {errors.title && <small className="error">{errors.title}</small>}
+          <MarkdownToolbar bodyRef={bodyRef} onChange={setContent} />
           <textarea ref={bodyRef} className={`editor-body${dragging ? ' dragging' : ''}`}
                     placeholder="Markdown으로 내용을 쓰세요… 사진은 붙여 넣거나 끌어 놓으세요" value={content}
                     onChange={(e) => setContent(e.target.value)} aria-label="본문" aria-invalid={!!errors.contentMd}
+                    onKeyDown={(e) => {
+                      // Ctrl(⌘)+B·I·K는 서식
+                      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return
+                      const f = formatForKey(e.key)
+                      if (f) { e.preventDefault(); formatTextarea(e.currentTarget, f, setContent) }
+                    }}
                     spellCheck={false}
                     onPaste={(e) => { if (addFiles(e.clipboardData?.files)) e.preventDefault() }}
                     onDragOver={(e) => { if (e.dataTransfer?.types.includes('Files')) { e.preventDefault(); setDragging(true) } }}

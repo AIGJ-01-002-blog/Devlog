@@ -363,6 +363,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.30.0 | 2026-10-08 | 按钮提示、移动端底部标签栏、编辑器格式工具栏 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.30.0) |
 | v1.29.0 | 2026-10-08 | 咨询与举报受理、AI 错误报告（report_bug）、发布说明页面 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.29.0) |
 | v1.28.1 | 2026-10-08 | 开启 AI 发布和删除后提示重新连接 AI | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.28.1) |
 | v1.28.0 | 2026-10-08 | 在设置中开启后 AI 可直接发布和删除文章（默认关闭） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.28.0) |
