@@ -1,6 +1,6 @@
 <div align="center">
 
-🌐 **[한국어](./README.md)** | **English**
+🌐 **[한국어](./README.md)** | **English** | **[日本語](./README.ja.md)** | **[简体中文](./README.zh.md)**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
@@ -147,7 +147,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>multiple pods]
     I -->|/blog-images| M[(MinIO / S3<br/>images · attachments)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V10)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V12)]
     A --> R[(Redis<br/>sessions · rate limits · views · cache)]
     A --> M
     A -.optional.-> G[Google Gemini]
@@ -237,7 +237,7 @@ All code and documentation live in this one repository.
 
 | Path | Description |
 | --- | --- |
-| [app/backend](app/backend) | Backend: Spring Boot 4.1, Java 21. Feature modules, Flyway migrations (V1~V10), tests |
+| [app/backend](app/backend) | Backend: Spring Boot 4.1, Java 21. Feature modules, Flyway migrations (V1~V12), tests |
 | [app/frontend](app/frontend) | Frontend: React 19 SPA, TypeScript, Vite. Screens, autosave (IndexedDB), dark mode |
 | [deploy](deploy) | Deployment: Dockerfile, Kubernetes manifests (base, selfhosted, nhn, local), deploy, rollback and secret-check scripts |
 | [.github](.github) | CI/CD: backend and frontend tests, image build and deploy, releases, Discord and Telegram notifications |
@@ -314,7 +314,7 @@ To try it on Kubernetes, run `kubectl apply -k deploy/k8s/overlays/local` on kin
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub and Google login, sessions, CSRF, per-path authorization |
 | Spring Data JPA (Hibernate) | Boot 4.1 | All domains | Storing members, posts, comments and other domain data |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | Sessions, rate limits, views, cache | Lets multiple pods share sessions, and decides concurrent requests with a single Redis script |
-| Flyway | Boot 4.1 | Database | Manages the schema as migrations V1~V10, applied at startup |
+| Flyway | Boot 4.1 | Database | Manages the schema as migrations V1~V12, applied at startup |
 | commonmark-java (+ GFM extensions) | 0.30.0 | Body rendering | Markdown → HTML: tables, strikethrough, task lists, autolinks, heading anchors |
 | OWASP Java HTML Sanitizer | 20260924.2 | Body sanitizing | Sanitizes rendered HTML against an allow list to prevent XSS |
 | AWS SDK for Java (S3) | 2.55.12 | media | Uploads images and attachments to MinIO and S3 |
@@ -360,6 +360,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.24.0 | 2026-10-08 | Modern developer-blog look | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.24.0) |
 | v1.23.2 | 2026-10-08 | Corrected the production mail account address | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.2) |
 | v1.23.1 | 2026-10-08 | Fixed SonarQube security and reliability findings | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.1) |
 | v1.23.0 | 2026-10-08 | Choosing a post thumbnail | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.0) |

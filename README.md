@@ -1,6 +1,6 @@
 <div align="center">
 
-🌐 **한국어** | **[English](./README.en.md)**
+🌐 **한국어** | **[English](./README.en.md)** | **[日本語](./README.ja.md)** | **[简体中文](./README.zh.md)**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
