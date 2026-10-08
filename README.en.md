@@ -369,6 +369,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.37.1 | 2026-10-08 | /mcp guide adds how to connect from the Claude app as a connector | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.1) |
 | v1.37.0 | 2026-10-08 | Reordered header menu, tabbed My settings, redesigned blog and post manager, readable RSS page in browsers | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.0) |
 | v1.36.0 | 2026-10-08 | Search engine indexing: sitemap, robots.txt, Naver site verification | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.36.0) |
 | v1.35.0 | 2026-10-08 | Admin console: stats dashboard, post and member management, manager role | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.35.0) |

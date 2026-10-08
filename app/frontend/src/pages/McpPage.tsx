@@ -20,7 +20,7 @@ export function McpPage() {
       </p>
 
       <ol className="mcp-steps">
-        <li><b>토큰 만들기</b><span>설정 › AI 연결에서 개인 접근 토큰을 만들어요. 읽기·쓰기 범위와 만료일을 고르고, 언제든 폐기할 수 있어요. ChatGPT는 토큰 없이 로그인으로 연결해요.</span></li>
+        <li><b>토큰 만들기</b><span>설정 › AI 연결에서 개인 접근 토큰을 만들어요. 읽기·쓰기 범위와 만료일을 고르고, 언제든 폐기할 수 있어요. Claude 앱 커넥터와 ChatGPT는 토큰 없이 로그인으로 연결해요.</span></li>
         <li><b>AI에 연결하기</b><span>아래 명령이나 설정을 내 AI 도구에 붙여 넣어요.</span></li>
         <li><b>"개발 일지 써 줘"</b><span>AI가 임시글을 만들고 링크를 알려 줘요. 확인하고 발행하면 끝.</span></li>
       </ol>
@@ -39,6 +39,15 @@ export function McpPage() {
       <h3>Codex (터미널)</h3>
       <CopyCode label="Codex 설정 (~/.codex/config.toml)" code={codexConfig(origin)} />
       <p className="muted small">토큰은 설정 파일 대신 환경 변수 <code>DEVLOG_TOKEN</code>에 넣어 두세요.</p>
+      <h3>Claude 앱 (커넥터)</h3>
+      <p className="mcp-chatgpt">
+        Claude 앱은 토큰 대신 <b>devlog 로그인</b>으로 연결해요. claude.ai나 Claude 데스크톱의 설정 › 커넥터에서 <b>사용자 지정 커넥터 추가</b>를 누르고
+        아래 서버 주소를 넣은 뒤 [연결]을 누르세요. devlog 동의 화면에서 [허용]을 누르면 끝이에요. 연결한 커넥터는 설정 › AI 연결에 "로그인 연결"로 보여요.
+      </p>
+      <p className="muted small">
+        모바일 앱에서는 새 커넥터를 추가할 수 없고, claude.ai나 데스크톱에서 추가한 커넥터를 그대로 쓸 수 있어요. 사용자 지정 커넥터를 쓸 수 있는
+        요금제는 Claude 쪽 정책을 따르고, Team·Enterprise는 조직 관리자가 먼저 켜 두어야 해요.
+      </p>
       <h3>ChatGPT (커넥터)</h3>
       <p className="mcp-chatgpt">
         ChatGPT는 토큰 대신 <b>devlog 로그인</b>으로 연결해요. 설정 › 앱과 커넥터에서 개발자 모드를 켜고 커넥터를 만든 뒤,
