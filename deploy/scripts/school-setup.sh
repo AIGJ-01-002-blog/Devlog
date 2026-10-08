@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# 학교 실습 서버(s2.java21.net, 여러 학생이 같이 쓰는 Ubuntu + Docker)에 블로그용 쿠버네티스를 만든다.
+# 학교 실습 서버(여러 학생이 같이 쓰는 Ubuntu + Docker)에 블로그용 쿠버네티스를 만든다.
 # sudo 없이 docker 그룹 권한만 쓴다: k3d(Docker 안의 k3s) 클러스터 하나 + ingress-nginx.
 # 바깥에서 들어오는 포트는 열지 않는다. 쿠버네티스 API는 127.0.0.1에만 열고(GitHub 배포는 SSH 터널로 닿음),
 # devlog.life는 클러스터 안 cloudflared(Cloudflare Tunnel)가 바깥으로 나가 연결한다.
 # 여러 번 실행해도 된다. 보통은 GitHub Actions "학교 서버 준비"가 SSH로 이 파일을 실행한다.
 #
-# 선택 환경 변수: CLUSTER(devlog), API_PORT(8318, 본인 포트 범위 8310~8319 안), K3D_VERSION, K3S_IMAGE,
+# 필수 환경 변수: API_PORT(학교에서 받은 본인 포트 중 하나, 서버 127.0.0.1에만 열림)
+# 선택 환경 변수: CLUSTER(devlog), K3D_VERSION, K3S_IMAGE,
 #                 INGRESS_NGINX_VERSION, NODE_MEMORY(10g, 공용 서버라 상한을 둔다)
 set -euo pipefail
 
 CLUSTER="${CLUSTER:-devlog}"
-API_PORT="${API_PORT:-8318}"
+API_PORT="${API_PORT:?API_PORT(학교에서 받은 본인 포트 중 하나)를 주세요}"
 K3D_VERSION="${K3D_VERSION:-v5.8.3}"
 K3S_IMAGE="${K3S_IMAGE:-rancher/k3s:v1.33.4-k3s1}"
 KUBECTL_VERSION="${KUBECTL_VERSION:-v1.33.4}"

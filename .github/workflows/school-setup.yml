@@ -1,5 +1,5 @@
 # 학교 실습 서버에 블로그용 쿠버네티스(k3d)와 ingress-nginx를 만든다. deploy/scripts/school-setup.sh를 SSH로 실행한다.
-# 여러 번 실행해도 된다(이미 있으면 그대로 둠). 필요: Secret SCHOOL_SSH_PASSWORD. 수동 실행(Actions → 학교 서버 준비).
+# 여러 번 실행해도 된다(이미 있으면 그대로 둠). 필요: Secret SCHOOL_SSH_PASSWORD, 변수 SCHOOL_SSH_HOST·SCHOOL_SSH_PORT·SCHOOL_SSH_USER·SCHOOL_K8S_API_PORT. 수동 실행(Actions → 학교 서버 준비).
 name: 학교 서버 준비
 
 on:
@@ -17,15 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      HOST: ${{ vars.SCHOOL_SSH_HOST || 's2.java21.net' }}
-      SSH_PORT: ${{ vars.SCHOOL_SSH_PORT || '8822' }}
-      SSH_USER: ${{ vars.SCHOOL_SSH_USER || 'AIGJ_01_002' }}
+      HOST: ${{ vars.SCHOOL_SSH_HOST }}
+      SSH_PORT: ${{ vars.SCHOOL_SSH_PORT }}
+      SSH_USER: ${{ vars.SCHOOL_SSH_USER }}
+      API_PORT: ${{ vars.SCHOOL_K8S_API_PORT }}
       SSHPASS: ${{ secrets.SCHOOL_SSH_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - name: 서버에 클러스터 만들기
         run: |
           [ -n "$SSHPASS" ] || { echo "::error::Secret SCHOOL_SSH_PASSWORD가 없습니다"; exit 1; }
+          for v in HOST SSH_PORT SSH_USER API_PORT; do [ -n "${!v}" ] || { echo "::error::변수 SCHOOL_SSH_HOST·SCHOOL_SSH_PORT·SCHOOL_SSH_USER·SCHOOL_K8S_API_PORT를 설정하세요"; exit 1; }; done
           sudo apt-get install -y -qq sshpass >/dev/null
           sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 \
-            "$SSH_USER@$HOST" 'bash -s' < deploy/scripts/school-setup.sh
+            "$SSH_USER@$HOST" "API_PORT=$API_PORT bash -s" < deploy/scripts/school-setup.sh

@@ -1,4 +1,4 @@
-# 학교 실습 서버(s2.java21.net)에 블로그를 쿠버네티스로 올릴 수 있는지 읽기 전용으로 확인한다.
+# 학교 실습 서버에 블로그를 쿠버네티스로 올릴 수 있는지 읽기 전용으로 확인한다.
 # 1단계는 비밀번호 없이 포트만 두드린다. 2단계는 Secret SCHOOL_SSH_PASSWORD가 있을 때만 SSH로 들어가
 # Docker 권한·자원·포트 사용 여부를 본다. 비밀번호는 로그에 찍지 않는다. 수동 실행(Actions → 학교 서버 점검).
 name: 학교 서버 점검
@@ -14,17 +14,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      HOST: s2.java21.net
-      SSH_PORT: "8822"
-      SSH_USER: ${{ vars.SCHOOL_SSH_USER || 'AIGJ_01_002' }}
+      HOST: ${{ vars.SCHOOL_SSH_HOST }}
+      SSH_PORT: ${{ vars.SCHOOL_SSH_PORT }}
+      SSH_USER: ${{ vars.SCHOOL_SSH_USER }}
+      # 학교에서 받은 내 포트 범위, 예: 9000-9009
+      PORTS: ${{ vars.SCHOOL_PORT_RANGE }}
     steps:
       - name: 포트 점검(비밀번호 사용 안 함)
         shell: python
         run: |
           import os, socket
           host = os.environ["HOST"]
+          if not host or not os.environ["SSH_PORT"]:
+              raise SystemExit("::error::변수 SCHOOL_SSH_HOST·SCHOOL_SSH_PORT·SCHOOL_SSH_USER를 설정하세요")
+          lo, _, hi = os.environ.get("PORTS", "").partition("-")
+          mine = list(range(int(lo), int(hi or lo) + 1)) if lo else []
           print("주소:", sorted({a[4][0] for a in socket.getaddrinfo(host, None)}))
-          for port in [int(os.environ["SSH_PORT"]), *range(8310, 8320)]:
+          for port in [int(os.environ["SSH_PORT"]), *mine]:
               try:
                   with socket.create_connection((host, port), timeout=5) as c:
                       c.settimeout(5)
@@ -44,6 +50,7 @@ jobs:
             echo "::warning::Secret SCHOOL_SSH_PASSWORD가 없어 서버 안 점검을 건너뜁니다"
             exit 0
           fi
+          [ -n "$SSH_USER" ] || { echo "::error::변수 SCHOOL_SSH_USER를 설정하세요"; exit 1; }
           sudo apt-get install -y -qq sshpass >/dev/null
           # 서버에서 실행할 명령. 아무것도 남기지 않는다(시험 컨테이너는 --rm)
           cat > "$RUNNER_TEMP/remote.sh" <<'EOF'
@@ -54,8 +61,8 @@ jobs:
           docker version --format 'client={{.Client.Version}} server={{.Server.Version}}' 2>&1 | head -3
           docker info --format 'rootless={{range .SecurityOptions}}{{.}} {{end}} cgroup={{.CgroupVersion}}/{{.CgroupDriver}} cpus={{.NCPU}} mem={{.MemTotal}} storage={{.Driver}}' 2>&1 | head -3
           echo "running_containers=$(docker ps -q 2>/dev/null | wc -l)"
-          echo "== 내 포트(8310~8319) 사용 중인 컨테이너"
-          docker ps --format '{{.Names}} {{.Ports}}' 2>/dev/null | grep -E ':831[0-9]->' || echo "(없음)"
+          echo "== 호스트 포트를 쓰는 컨테이너 수"
+          docker ps --format '{{.Ports}}' 2>/dev/null | grep -c -- '->' || true
           echo "== 특권 컨테이너(k3d·kind에 필요)"
           if docker run --rm --privileged alpine:3.20 true 2>/tmp/priv.err; then echo "privileged=OK"; else echo "privileged=FAIL $(head -c 300 /tmp/priv.err)"; fi
           rm -f /tmp/priv.err
