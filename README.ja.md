@@ -122,7 +122,7 @@ AI の利用に同意していれば AI がタイトルを付けて文章を整�
 
 - **ホーム**：最新タブとトレンドタブ。トレンドは直近 7 日間が対象で、いいね・コメント・閲覧を記事の経過時間で減衰させてスコアを付け、10 分ごとに更新し、1 人の記事は 3 件までです。
 - **記事ページ**：目次、読了時間、シリーズ、前後の記事、著者紹介とソーシャルリンク、共有ボタン、リンクプレビュー（Open Graph）。
-- **タグと検索**：タグ別の記事一覧、タイトル・タグ・本文の検索（関連度順・新しい順）、人の検索。
+- **タグと検索**：タグ別の記事一覧、タイトル・タグ・本文のキーワードと意味を合わせて見るハイブリッド検索（関連度順・新しい順）、人の検索。
 - **RSS**：ブログごとの `/@your-id/rss` とサイト全体の `/rss`。
 
 ### 反応とつながり
@@ -150,7 +150,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>複数 Pod]
     I -->|/blog-images| M[(MinIO / S3<br/>画像・添付)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V15)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V16)]
     A --> R[(Redis<br/>セッション・レート制限・閲覧数・キャッシュ)]
     A --> M
     A -.任意.-> G[Google Gemini]
@@ -166,7 +166,7 @@ flowchart LR
 | **post** | 執筆・自動保存・公開・編集、公開範囲、ゴミ箱、記事管理、Markdown プレビュー | PostgreSQL、Redis（自動保存・冪等キー） |
 | **media** | 画像・GIF・添付ファイルのアップロードと検査、使われていないファイルの整理 | MinIO/S3（未設定ならローカルフォルダー） |
 | **discovery · page** | ホーム・ブログ・記事ページ、前後の記事、RSS、リンクプレビュー用の head 情報を入れた画面シェル | PostgreSQL |
-| **tag · search · trending** | タグ一覧、記事・人の検索、トレンド順位（10 分ごと） | PostgreSQL（pg_trgm があれば使用） |
+| **tag · search · trending** | タグ一覧、記事・人の検索、トレンド順位（10 分ごと） | PostgreSQL（pg_trgm・pgvector があれば使用）、埋め込み bge-m3 |
 | **comment · like · view** | コメント・返信、いいね、閲覧数（Redis に集めて 1 分ごとに移す） | PostgreSQL、Redis |
 | **follow · friend · notification** | フォローとフィード、友だち、アプリ内通知 | PostgreSQL |
 | **series** | シリーズのまとめと並び順 | PostgreSQL |
@@ -240,7 +240,7 @@ GitHub Actions でテストし、イメージを作って GHCR に上げたあ�
 
 | パス | 説明 |
 | --- | --- |
-| [app/backend](app/backend) | バックエンド：Spring Boot 4.1、Java 21。機能モジュール、Flyway マイグレーション（V1~V15）、テスト |
+| [app/backend](app/backend) | バックエンド：Spring Boot 4.1、Java 21。機能モジュール、Flyway マイグレーション（V1~V16）、テスト |
 | [app/frontend](app/frontend) | フロントエンド：React 19 SPA、TypeScript、Vite。画面、自動保存（IndexedDB）、ダークモード |
 | [deploy](deploy) | デプロイ：Dockerfile、Kubernetes マニフェスト（base・selfhosted・nhn・local）、デプロイ・ロールバック・シークレット検査のスクリプト |
 | [.github](.github) | CI/CD：バックエンドと画面のテスト、イメージのビルドとデプロイ、リリース、Discord・Telegram 通知 |
@@ -317,7 +317,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub・Google ログイン、セッション、CSRF、パスごとの権限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | ドメイン全体 | 会員・記事・コメントなどドメインデータの保存 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | セッション、レート制限、閲覧数、キャッシュ | 複数の Pod が同じセッションを共有し、同時リクエストも Redis スクリプト 1 つで判定します |
-| Flyway | Boot 4.1 | DB | スキーマを V1~V15 のマイグレーションで管理し、起動時に適用します |
+| Flyway | Boot 4.1 | DB | スキーマを V1~V16 のマイグレーションで管理し、起動時に適用します |
 | commonmark-java (+ GFM 拡張) | 0.30.0 | 本文のレンダリング | Markdown → HTML。表・取り消し線・チェックリスト・自動リンク・見出しアンカー |
 | OWASP Java HTML Sanitizer | 20260924.2 | 本文のサニタイズ | レンダリングした HTML を許可リストでサニタイズし XSS を防ぎます |
 | AWS SDK for Java (S3) | 2.55.12 | media | MinIO・S3 に画像と添付をアップロードします |
@@ -338,7 +338,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | 技術 | 使う場所 | 役割 |
 | --- | --- | --- |
-| PostgreSQL 16 · 17 | ローカル · クラスター | サービス DB。検索に `pg_trgm` があれば使います |
+| PostgreSQL 16 · 17 | ローカル · クラスター | サービス DB。検索に `pg_trgm` と `pgvector` があれば使います |
 | Redis 7 · 7.4 | ローカル · クラスター | セッション、レート制限、閲覧数の集計、レンダリングキャッシュ、自動保存、定期ジョブのロック |
 | MinIO | クラスター | 画像・添付の保存（S3 互換）。初回デプロイ時にバケットを作り、公開は取得のみにします |
 | Docker · GHCR | イメージ | 画面をビルドしてバックエンドに入れ、1 つのイメージにします。root 以外のユーザーで実行します |
@@ -363,6 +363,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.32.0 | 2026-10-08 | ハイブリッド検索：検索語がなくても意味の近い記事を探す | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.32.0) |
 | v1.31.0 | 2026-10-08 | AI が公開済み記事の修正・画像アップロード・自分の記事全体の検索まで | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.31.0) |
 | v1.30.0 | 2026-10-08 | ボタンのツールチップ、モバイルの下部タブ、エディターの書式ツールバー | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.30.0) |
 | v1.29.0 | 2026-10-08 | お問い合わせ・通報の受付、AI のバグ報告（report_bug）、リリースノート画面 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.29.0) |

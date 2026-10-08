@@ -18,6 +18,10 @@ blog:
   # 최근창을 줄여 인덱스 후보 경로도 시험한다 (014)
   search:
     recent-window: 5
+    # 하이브리드(054)는 HybridSearchTest가 켜서 본다. 다른 검색 시험은 키워드 결과만 본다. 임베딩 작업은 테스트가 직접 부른다
+    semantic:
+      enabled: false
+      index-interval: 1h
   # 순위표는 테스트가 직접 만든다 (017)
   trending:
     cron: "-"
