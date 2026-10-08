@@ -1,0 +1,65 @@
+# PostgreSQL은 한 대라(서버 한 대에서 둘로 늘려도 서버가 꺼지면 같이 꺼짐) 이중화 대신 매일 백업한다.
+# 매일 03:30(KST) pg_dump를 압축해 별도 볼륨에 두고 7일치만 남긴다. 복구: README "DB 백업과 복구".
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pg-backup
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources: {requests: {storage: 5Gi}}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-backup
+spec:
+  schedule: "30 3 * * *"
+  timeZone: Asia/Seoul
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels: {app.kubernetes.io/name: pg-backup}
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 70
+            fsGroup: 70
+            seccompProfile: {type: RuntimeDefault}
+          containers:
+            - name: dump
+              image: postgres:17-alpine
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  # 새 파드의 네트워크 허용 규칙이 잡힐 때까지 잠시 기다린다
+                  n=0; until pg_isready -h postgres -q; do n=$((n+1)); [ "$n" -lt 30 ] || exit 1; sleep 2; done
+                  f="/backup/blog-$(date +%Y%m%d-%H%M).sql.gz"
+                  pg_dump -h postgres -U "$PGUSER" -d blog --no-owner | gzip > "$f.part"
+                  [ "$(gzip -dc "$f.part" | wc -c)" -gt 0 ] || { echo "빈 백업"; exit 1; }
+                  mv "$f.part" "$f"
+                  find /backup -name 'blog-*.sql.gz' -mtime +7 -delete
+                  ls -lh /backup
+              env:
+                - name: PGUSER
+                  valueFrom: {secretKeyRef: {name: blog-app-secret, key: DB_USERNAME}}
+                - name: PGPASSWORD
+                  valueFrom: {secretKeyRef: {name: blog-app-secret, key: DB_PASSWORD}}
+              resources:
+                requests: {cpu: 50m, memory: 64Mi}
+                limits: {memory: 256Mi}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: ["ALL"]}
+              volumeMounts:
+                - {name: backup, mountPath: /backup}
+          volumes:
+            - name: backup
+              persistentVolumeClaim: {claimName: pg-backup}

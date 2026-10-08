@@ -9,6 +9,7 @@ resources:
   - redis.yaml
   - minio.yaml
   - networkpolicy.yaml
+  - pg-backup.yaml
 patches:
   # 앱이 뜨기 전에 사진 버킷을 만들고 파일 받기만 공개한다 (이미 있으면 정책만 다시 맞춤)
   - target: {kind: Deployment, name: blog-app}

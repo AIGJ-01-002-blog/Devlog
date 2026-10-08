@@ -49,7 +49,7 @@ selfhosted (기본):
 
 ```bash
 deploy/scripts/gen-secret-env.sh selfhosted   # DB·Redis·MinIO 비밀번호를 임의 값으로 채운 secret.env (커밋 금지)
-# secret.env의 GITHUB_CLIENT_ID/SECRET(필수), SMTP_PASSWORD(운영 Gmail devlogauth@gmail.com의 앱 비밀번호)를 채운다
+# secret.env의 GITHUB_CLIENT_ID/SECRET(필수), SMTP_PASSWORD(운영 Gmail devlogauth@gmail.com의 앱 비밀번호)와 SMTP_HOST=smtp.gmail.com을 채운다(비워 두면 메일은 보내지 않고 보관만)
 # 도메인은 devlog.life (app.env의 SITE_BASE_URL·IMAGE_PUBLIC_BASE_URL, kustomization.yaml의 ingress host)
 kubectl apply -k deploy/k8s/overlays/selfhosted
 kubectl -n blog rollout status deploy/blog-app
@@ -93,7 +93,7 @@ kubectl -n blog rollout status deploy/blog-app
 |---|---|---|---|
 | Secret | `KUBECONFIG` | 클러스터 접속 파일 내용 | 배포 실패 |
 | Secret | `BLOG_SECRET_ENV` | 고른 overlay의 `secret.env` 내용 전체 (Environment Secret으로 overlay마다 따로 둘 수 있음) | 배포 실패 |
-| Secret | `SMTP_PASSWORD` | 운영 Gmail(devlogauth@gmail.com)의 앱 비밀번호 16자리. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어씀 | 메일 안 감(인증 메일 보관만) |
+| Secret | `SMTP_PASSWORD` | 운영 Gmail(devlogauth@gmail.com)의 앱 비밀번호 16자리. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어쓰고 `SMTP_HOST=smtp.gmail.com`도 채워 발송을 켬 | 메일 안 감(인증 메일 보관만), 앱은 정상 기동 |
 | Secret | `DISCORD_WEBHOOK_URL`, `DISCORD_PR_WEBHOOK_URL` | Discord 웹훅 주소 | 알림만 안 감 |
 | Secret | `TELEGRAM_BOT_TOKEN` | 텔레그램 @BotFather → `/newbot`이 준 토큰. `APP_TELEGRAM_BOT_TOKEN`이 없으면 앱 봇(023)도 이 봇을 쓴다 | 텔레그램 알림 안 감 |
 | Secret | `APP_TELEGRAM_BOT_TOKEN` | 사용자용 앱 봇(023)을 배포 알림 봇과 나눌 때만. 있으면 `BLOG_SECRET_ENV`의 `TELEGRAM_BOT_TOKEN`을 덮어씀 | 배포 알림 봇을 같이 씀 |
@@ -108,6 +108,28 @@ kubectl -n blog rollout status deploy/blog-app
 | Variable | `ROLLOUT_TIMEOUT_SECONDS` | 배포 대기 초 | 300 |
 
 Run workflow의 `overlay`(기본 selfhosted)가 배포 대상과 GitHub Environment 이름(`selfhosted`·`nhn`)을 정하므로 Settings → Environments에서 승인자를 걸 수 있다. AI 리뷰는 [CodeRabbit 앱](https://github.com/apps/coderabbitai)을 설치하면 `.coderabbit.yaml`(한국어, 경로별 리뷰 기준)을 읽는다.
+
+## 이중화와 무중단 배포
+
+| 대상 | 방식 | 근거 |
+|---|---|---|
+| 앱(blog-app) | 항상 2개 이상 실행(`replicas: 2`, HPA 2~4), 서버가 여럿이면 다른 서버에 나눠 배치 | `base/deployment.yaml`, `base/hpa.yaml` |
+| 배포 | 순차 교체: 새 파드가 준비(readiness UP)된 뒤에만 옛 파드를 하나씩 내림(`maxSurge: 1`, `maxUnavailable: 0`). 내리는 파드는 5초 기다려 인그레스 목록에서 빠지고 진행 중 요청을 마친 뒤 종료(`preStop`, Spring `shutdown: graceful`) | `base/deployment.yaml` |
+| 장애 시 | 준비 안 된 파드는 요청에서 빠지고(readiness), 멈춘 파드는 다시 시작(liveness). 노드 점검 때도 1개는 남김(PDB `minAvailable: 1`). 새 버전이 시간 안에 준비 안 되면 직전 버전으로 자동 롤백 | `base/pdb.yaml`, `scripts/rollout.sh` |
+| PostgreSQL·Redis·MinIO | 1개씩 실행 + 영구 볼륨. 서버가 한 대라 둘로 늘려도 서버가 꺼지면 같이 꺼지므로, 대신 PostgreSQL을 매일 백업 | `components/in-cluster-deps/` |
+| 세션 | Redis에 저장해 어느 앱 파드로 가도 로그인 유지. Redis는 AOF로 재시작해도 세션이 남음 | `redis.yaml` |
+
+이 구성에서는 데이터 서비스가 잠깐 재시작되는 동안(수 초) 요청이 실패할 수 있다. 서버를 2대 이상 쓰게 되면 PostgreSQL 복제(CloudNativePG 등)를 더한다.
+
+### DB 백업과 복구
+
+`pg-backup` CronJob이 매일 03:30(KST) `pg_dump`를 압축해 `pg-backup` 볼륨에 두고 7일치를 남긴다. 덤프가 비어 있으면 실패로 끝난다.
+
+```bash
+kubectl -n blog create job pg-backup-now --from=cronjob/pg-backup   # 지금 바로 백업
+# 복구: pg-backup 볼륨을 붙인 파드(라벨 app.kubernetes.io/name=pg-backup)에서
+#   gzip -dc /backup/blog-<날짜>.sql.gz | psql -h postgres -d blog -v ON_ERROR_STOP=1
+```
 
 ## 로컬에서 검증
 
@@ -134,6 +156,10 @@ selfhosted 검증 (2026-10-07, k3s v1.33.4, 앱 v0.7.0 = main f6311ed를 이 Doc
 - 세션이 Redis(`blog:session:*`)에 저장되고, PostgreSQL·Redis·MinIO 파드를 지웠다 다시 띄워도 발행한 글이 남음
 - 앱이 아닌 파드에서 Redis·MinIO 접속이 거절됨(NetworkPolicy), 앱은 정상
 - 인그레스 `/blog-images` 경로는 이 클러스터에 ingress-nginx가 없어 매니페스트 검사만 함
+
+무중단 배포·백업 검증 (2026-10-08, k3s, 앱 v0.12.0, selfhosted):
+- ingress-nginx 네임스페이스의 파드에서 Service로 0.1초마다 요청을 보내며 `rollout restart`: 42초 동안 파드 2개가 모두 교체됐고 요청 892건 중 실패 0건
+- `pg-backup`을 바로 실행해 11.7KB 덤프 생성, 그 덤프를 빈 DB에 복구해 테이블 30개·글·회원 수가 원본과 같음을 확인
 
 ## 클라우드 세션에서 학교 서버 접속 확인 결과 (2026-10-07)
 
