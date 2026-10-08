@@ -92,6 +92,16 @@ public class PostCardQuery {
         return jdbc.query(sql, this::card, args);
     }
 
+    /** 검색 엔진 사이트맵용 공개 글 주소와 마지막 발행 시각. 본문·통계를 읽지 않는 가벼운 쿼리다 */
+    public List<SitemapEntry> sitemapEntries(int limit) {
+        String sql = "SELECT p.id, m.handle, p.published_at FROM post p JOIN member m ON m.id = p.author_id WHERE "
+                + PostAccessPolicy.PUBLIC_LIST_CONDITION + " ORDER BY p.first_public_at DESC, p.id DESC LIMIT " + limit;
+        return jdbc.query(sql, (rs, i) -> new SitemapEntry(rs.getString("handle"), rs.getLong("id"),
+                rs.getTimestamp("published_at").toInstant()));
+    }
+
+    public record SitemapEntry(String handle, long postId, Instant publishedAt) {}
+
     public PostCardPage page(PostListSpec spec, String cursor) {
         boolean friendsView = spec.friendsView();
         StringBuilder sql = new StringBuilder(CARD_SELECT)

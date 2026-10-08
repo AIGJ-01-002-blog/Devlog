@@ -127,6 +127,7 @@ If you have agreed to AI use, the AI adds a title and tidies up the text; otherw
 - **Post page**: table of contents, reading time, series, previous/next post, author bio and social links, share button, link previews (Open Graph).
 - **Tags and search**: browse posts by tag, hybrid search over title, tag and body keywords plus meaning (by relevance or newest), and search for people.
 - **RSS**: per-blog `/@your-id/rss` and site-wide `/rss`.
+- **Search engines**: `/sitemap.xml` lists every public post and `/robots.txt` points crawlers to it, so Google and Naver pick up new posts.
 
 ### Reactions and relationships
 
@@ -368,7 +369,8 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
-| v1.36.0 | 2026-10-08 | Reordered header menu, tabbed My settings, redesigned blog and post manager, readable RSS page in browsers | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.36.0) |
+| v1.37.0 | 2026-10-08 | Reordered header menu, tabbed My settings, redesigned blog and post manager, readable RSS page in browsers | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.0) |
+| v1.36.0 | 2026-10-08 | Search engine indexing: sitemap, robots.txt, Naver site verification | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.36.0) |
 | v1.35.0 | 2026-10-08 | Admin console: stats dashboard, post and member management, manager role | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.35.0) |
 | v1.34.0 | 2026-10-08 | AI post proposals (title and scope when a topic ends) and an optional midnight diary | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.34.0) |
 | v1.33.1 | 2026-10-08 | Startup log shows whether semantic search is on; cluster status shows embedding progress | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.1) |

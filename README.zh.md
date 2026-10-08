@@ -127,6 +127,7 @@ cd app/frontend && npm install && npm run dev            # http://localhost:5173
 - **文章页面**：目录、阅读时长、系列、上下篇文章、作者简介和社交链接、分享按钮、链接预览（Open Graph）。
 - **标签与搜索**：按标签列出文章，结合标题、标签、正文关键词与语义的混合搜索（按相关度或最新排序），搜索用户。
 - **RSS**：每个博客的 `/@your-id/rss` 以及全站的 `/rss`。
+- **搜索引擎**：包含全部公开文章的 `/sitemap.xml` 与 `/robots.txt`，让 Google 和 NAVER 发现新文章。
 
 ### 互动与连接
 
@@ -368,7 +369,8 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
-| v1.36.0 | 2026-10-08 | 重新排列页眉菜单、分标签的我的设置、重新设计的博客与文章管理、浏览器可读的 RSS 说明页 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.36.0) |
+| v1.37.0 | 2026-10-08 | 重新排列页眉菜单、分标签的我的设置、重新设计的博客与文章管理、浏览器可读的 RSS 说明页 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.37.0) |
+| v1.36.0 | 2026-10-08 | 搜索引擎收录：站点地图、robots.txt、NAVER 站点验证 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.36.0) |
 | v1.35.0 | 2026-10-08 | 管理后台：统计仪表盘、文章与会员管理、管理员助理（Manager）权限 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.35.0) |
 | v1.34.0 | 2026-10-08 | AI 文章建议（话题结束时建议标题和范围）与可开关的午夜日记 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.34.0) |
 | v1.33.1 | 2026-10-08 | 启动日志显示语义搜索是否开启，集群状态显示嵌入进度 | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.33.1) |
