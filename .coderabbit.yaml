@@ -14,7 +14,7 @@ reviews:
   path_instructions:
     - path: "app/backend/**/*.java"
       instructions: >-
-        헌법(.specify/memory/constitution.md)과 docs/ 설계 문서를 기준으로 본다.
+        헌법(.specify/memory/constitution.md)과 설계 문서(AIGJ-01-002-blog/docs 저장소의 design/)를 기준으로 본다.
         N+1 쿼리, 트랜잭션 경계, 권한 확인(작성자 본인·관리자), 비공개 글 노출, 입력 검증을 우선 확인한다.
     - path: "app/backend/src/main/resources/db/migration/**"
       instructions: >-

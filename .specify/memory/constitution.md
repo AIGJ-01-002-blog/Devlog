@@ -2,7 +2,7 @@
 
 이 헌법은 세 팀원이 공통 회원·글·권한·데이터 규칙을 공유하고 각자 개인 서비스를 확장하는
 velog형 블로그 플랫폼에 적용한다. 모든 Spec Kit 산출물(spec, plan, tasks, checklist)은
-한국어로 작성한다. 근거 문서는 `docs/`이며, 특히 `docs/01-common-requirements.md`의
+한국어로 작성한다. 근거 문서는 문서 저장소(AIGJ-01-002-blog/docs)의 `design/`이며(이 헌법의 `docs/NN` 표기는 그 폴더의 NN번 문서), 특히 `docs/01-common-requirements.md`의
 "공통 원칙"과 "결정 기록"을 우선한다. 문서끼리 다르면 가장 최근 날짜의 결정 기록을 따른다.
 
 ## Core Principles

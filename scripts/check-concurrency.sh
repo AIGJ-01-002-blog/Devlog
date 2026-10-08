@@ -3,6 +3,7 @@
 # 좋아요·취소 SQL은 30-like.md에서 꺼낸다 (없으면 03 대표 쿼리의 좋아요만).
 # 사용: scripts/check-concurrency.sh     (Docker 필요)
 source "$(dirname "$0")/lib/common.sh"
+require_docs
 start_pg conc
 docker exec "$PG" psql -U postgres -qc "alter system set max_connections = 200" >/dev/null; docker restart "$PG" >/dev/null
 for _ in $(seq 1 60); do docker exec "$PG" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done; sleep 1

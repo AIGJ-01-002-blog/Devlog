@@ -2,6 +2,7 @@
 # 33 문서의 검색 방식을 실제 스키마 + 글 10만 개(본문 평균 약 2,000자)로 실행해 결과와 속도를 확인한다. (Docker 필요, 약 1분)
 # 스키마는 통합 ERD(V1). 33-search.md §6의 검색 인덱스가 V1에 모두 들어 있는지 확인한 뒤 실행한다.
 source "$(dirname "$0")/../lib/common.sh"
+require_docs
 [ -f "$DOCS/33-search.md" ] || { echo "33-search.md가 없어 건너뜁니다"; exit 0; }
 start_pg search
 qf < "$V1" || exit 1

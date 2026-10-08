@@ -6,6 +6,16 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.27.2] - 2026-10-08
+
+소스코드와 문서를 저장소 두 개로 나눴다 (동작 변화 없음). 이 저장소 이름이 `docs`에서 `Devlog`로 바뀌었고, 설계 문서는 새 문서 저장소 [AIGJ-01-002-blog/docs](https://github.com/AIGJ-01-002-blog/docs)로 git 기록째 옮겼다.
+
+### 바뀜
+- 설계 문서 `docs/*.md`는 문서 저장소의 `design/`으로, `verification/`은 문서 저장소로 옮겼다. 코드 주석의 `docs/NN §n` 표기는 그 저장소 `design/NN-…md`를 뜻한다
+- README 사진은 `docs/images/`에서 `assets/images/`로 옮겼다
+- README 4개 언어의 "설계 문서" 링크와 폴더 표가 문서 저장소를 가리킨다 (배지·릴리스 링크의 Devlog 주소는 #86)
+- 설계 검증 스크립트(`scripts/check-*.sh`)는 코드 저장소 옆에 받은 문서 저장소(`../docs/design`)를 읽는다. 다른 곳이면 `DOCS=경로`
+
 ## [1.27.1] - 2026-10-08
 
 학교 실습 서버에 쿠버네티스로 배포 (배포 구성). Oracle 무료 VM이 "Out of capacity"로 만들어지지 않아 학교 실습 서버를 기본 배포 대상으로 둔다.

@@ -4,6 +4,7 @@
 # 2026-10-07부터 기준은 V1이다 (03의 DDL은 기록용).
 # 사용: scripts/check-ddl.sh        (Docker 필요)
 source "$(dirname "$0")/lib/common.sh"
+require_docs
 
 echo "== 1. 통합 스키마 적용 (erd/V1__common_schema.sql)"
 start_pg ddl

@@ -7,7 +7,7 @@ on:
     branches: [main]
     paths:
       - "README.md"
-      - "docs/images/**"
+      - "assets/images/**"
       - "scripts/build-org-profile.py"
       - ".github/workflows/org-profile-sync.yml"
   workflow_dispatch:

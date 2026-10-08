@@ -3,6 +3,7 @@
 #   04 자동 저장(버전 확인 후 저장) / 05 발행 후 자동 저장 키 조건부 삭제 / 31 조회수 중복 판정(있으면)
 # 사용: scripts/check-redis.sh       (Docker 필요)
 source "$(dirname "$0")/lib/common.sh"
+require_docs
 start_redis redis
 load() { local t; t=$(mktemp) && $EXTRACT block "$1" lua "$2" > "$t" && docker cp "$t" "$RD:/$3.lua" >/dev/null; rm -f "$t"; }   # 고정 경로 대신 임시 파일 (동시 실행·찌꺼기 방지)
 

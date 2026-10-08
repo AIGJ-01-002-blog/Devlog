@@ -3,8 +3,8 @@
 🌐 **[한국어](./README.md)** | **[English](./README.en.md)** | **日本語** | **[简体中文](./README.zh.md)**
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
-  <img src="docs/images/logo-light.png" alt="devlog" width="72" />
+  <source media="(prefers-color-scheme: dark)" srcset="assets/images/logo-dark.png" />
+  <img src="assets/images/logo-light.png" alt="devlog" width="72" />
 </picture>
 
 # devlog
@@ -20,12 +20,12 @@
 [![Domain](https://img.shields.io/badge/domain-devlog.life%20(準備中)-0ea5e9.svg)](#デプロイ)
 [![Stack](https://img.shields.io/badge/Java%2021%20·%20Spring%20Boot%204.1%20·%20React%2019-f97316.svg)](#技術スタック)
 
-[自分で動かす](#自分で動かす) · [変更履歴](CHANGELOG.md)（韓国語） · [リリース](https://github.com/AIGJ-01-002-blog/Devlog/releases) · [設計ドキュメント](docs/)（韓国語） · [機能仕様](specs/)（韓国語）
+[自分で動かす](#自分で動かす) · [変更履歴](CHANGELOG.md)（韓国語） · [リリース](https://github.com/AIGJ-01-002-blog/Devlog/releases) · [設計ドキュメント](https://github.com/AIGJ-01-002-blog/docs)（韓国語） · [機能仕様](specs/)（韓国語）
 
 </div>
 
 <p align="center">
-  <img src="docs/images/home.webp" alt="devlog のホーム画面。最新・トレンドのタブと記事カード" width="860" />
+  <img src="assets/images/home.webp" alt="devlog のホーム画面。最新・トレンドのタブと記事カード" width="860" />
 </p>
 
 名前は **development log（開発記録）** から取りました。正式なアドレスとして [devlog.life](https://devlog.life) を取得済みで、本番サーバーの準備ができしだいこのアドレスで公開します。
@@ -95,16 +95,16 @@ AI の利用に同意していれば AI がタイトルを付けて文章を整�
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/editor.webp" alt="エディター" /><br/><b>執筆</b>：Markdown とリアルタイムプレビュー、自動保存、シリーズ、添付ファイル</td>
-<td width="50%"><img src="docs/images/post-detail.webp" alt="記事ページ" /><br/><b>閲覧</b>：目次、読了時間、タグ、コードハイライト、公開範囲の切り替え</td>
+<td width="50%"><img src="assets/images/editor.webp" alt="エディター" /><br/><b>執筆</b>：Markdown とリアルタイムプレビュー、自動保存、シリーズ、添付ファイル</td>
+<td width="50%"><img src="assets/images/post-detail.webp" alt="記事ページ" /><br/><b>閲覧</b>：目次、読了時間、タグ、コードハイライト、公開範囲の切り替え</td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/images/blog.webp" alt="個人ブログ" /><br/><b>個人ブログ</b>：記事・シリーズ・紹介タブ、ブログ内検索、タグ別の記事数、RSS</td>
-<td width="50%"><img src="docs/images/notifications.webp" alt="通知" /><br/><b>通知</b>：コメント・返信・いいね・フォローをまとめて、Telegram にも</td>
+<td width="50%"><img src="assets/images/blog.webp" alt="個人ブログ" /><br/><b>個人ブログ</b>：記事・シリーズ・紹介タブ、ブログ内検索、タグ別の記事数、RSS</td>
+<td width="50%"><img src="assets/images/notifications.webp" alt="通知" /><br/><b>通知</b>：コメント・返信・いいね・フォローをまとめて、Telegram にも</td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/images/search.webp" alt="検索" /><br/><b>検索</b>：記事・人のタブ、関連度順、検索語のハイライト</td>
-<td width="50%"><img src="docs/images/home-dark.webp" alt="ダークモード" /><br/><b>ダークモード</b>：システム・ライト・ダーク、読み込み時のちらつきなし</td>
+<td width="50%"><img src="assets/images/search.webp" alt="検索" /><br/><b>検索</b>：記事・人のタブ、関連度順、検索語のハイライト</td>
+<td width="50%"><img src="assets/images/home-dark.webp" alt="ダークモード" /><br/><b>ダークモード</b>：システム・ライト・ダーク、読み込み時のちらつきなし</td>
 </tr>
 </table>
 
@@ -142,7 +142,7 @@ AI の利用に同意していれば AI がタイトルを付けて文章を整�
 
 ## アーキテクチャ
 
-devlog は **モジュラーモノリス** です。1 つの Spring Boot アプリが React の画面（静的ファイル）と API を両方返し、機能はパッケージ単位のモジュールに分けています。モジュール同士はドメインイベント（例：いいねが付く → 通知）でゆるくつながります。設計の根拠は [docs/02-architecture.md](docs/02-architecture.md)（韓国語）にあります。
+devlog は **モジュラーモノリス** です。1 つの Spring Boot アプリが React の画面（静的ファイル）と API を両方返し、機能はパッケージ単位のモジュールに分けています。モジュール同士はドメインイベント（例：いいねが付く → 通知）でゆるくつながります。設計の根拠は [docs/02-architecture.md](https://github.com/AIGJ-01-002-blog/docs/blob/main/design/02-architecture.md)（韓国語）にあります。
 
 ```mermaid
 flowchart LR
@@ -236,7 +236,7 @@ GitHub Actions でテストし、イメージを作って GHCR に上げたあ�
 
 ## リポジトリ構成
 
-コードとドキュメントはすべてこの 1 つのリポジトリで管理しています。
+コードはこのリポジトリで、設計ドキュメントはドキュメント用リポジトリ [AIGJ-01-002-blog/docs](https://github.com/AIGJ-01-002-blog/docs) で管理しています。
 
 | パス | 説明 |
 | --- | --- |
@@ -245,8 +245,8 @@ GitHub Actions でテストし、イメージを作って GHCR に上げたあ�
 | [deploy](deploy) | デプロイ：Dockerfile、Kubernetes マニフェスト（base・selfhosted・nhn・local）、デプロイ・ロールバック・シークレット検査のスクリプト |
 | [.github](.github) | CI/CD：バックエンドと画面のテスト、イメージのビルドとデプロイ、リリース、Discord・Telegram 通知 |
 | [specs](specs) | 機能仕様：[GitHub Spec Kit](https://github.com/github/spec-kit) の流れに沿った機能ごとの spec・plan・tasks（001~044） |
-| [docs](docs) | 設計ドキュメント：共通要件、アーキテクチャ、統合 ERD、機能別設計、権限表 |
-| [erd](erd) · [scripts](scripts) · [verification](verification) | 基準スキーマとその動作テスト、設計検証スクリプトとレポート |
+| [docs](https://github.com/AIGJ-01-002-blog/docs) | 設計ドキュメント：共通要件、アーキテクチャ、統合 ERD、機能別設計、権限表 |
+| [erd](erd) · [scripts](scripts) | 基準スキーマとその動作テスト、設計検証スクリプトとレポート |
 
 ## 自分で動かす
 
@@ -363,6 +363,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.27.2 | 2026-10-08 | ソースコードとドキュメントのリポジトリを分離（ドキュメントは AIGJ-01-002-blog/docs） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.2) |
 | v1.27.1 | 2026-10-08 | 学校の実習サーバーに Kubernetes（k3d）でデプロイ（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.1) |
 | v1.27.0 | 2026-10-08 | devlog MCP サーバー、ChatGPT・Codex 接続、自宅 PC の AI 優先 | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.0) |
 | v1.26.1 | 2026-10-08 | デプロイが Gemini キーと自宅 PC の Ollama 設定をアプリに渡す（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.26.1) |

@@ -3,7 +3,7 @@
 **Feature Branch**: `048-modern-ui`
 **Created**: 2026-10-08
 **Status**: Implemented (v1.24.0)
-**근거**: 2026-10-08 민서님 요청("velog처럼 할 필요 없고 트렌디한 블로그 느낌으로, 형식을 바꿔도 된다"). 방향 문서: [docs/60](../../docs/60-direction-ai-mcp-premium.md)
+**근거**: 2026-10-08 민서님 요청("velog처럼 할 필요 없고 트렌디한 블로그 느낌으로, 형식을 바꿔도 된다"). 방향 문서: [docs/60](https://github.com/AIGJ-01-002-blog/docs/blob/main/design/60-direction-ai-mcp-premium.md)
 
 ## 사용자 시나리오
 

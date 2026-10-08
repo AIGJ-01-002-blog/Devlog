@@ -3,8 +3,8 @@
 🌐 **[한국어](./README.md)** | **[English](./README.en.md)** | **[日本語](./README.ja.md)** | **简体中文**
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
-  <img src="docs/images/logo-light.png" alt="devlog" width="72" />
+  <source media="(prefers-color-scheme: dark)" srcset="assets/images/logo-dark.png" />
+  <img src="assets/images/logo-light.png" alt="devlog" width="72" />
 </picture>
 
 # devlog
@@ -20,12 +20,12 @@
 [![Domain](https://img.shields.io/badge/domain-devlog.life%20(筹备中)-0ea5e9.svg)](#部署)
 [![Stack](https://img.shields.io/badge/Java%2021%20·%20Spring%20Boot%204.1%20·%20React%2019-f97316.svg)](#技术栈)
 
-[自己运行](#自己运行) · [更新日志](CHANGELOG.md)（韩语） · [版本发布](https://github.com/AIGJ-01-002-blog/Devlog/releases) · [设计文档](docs/)（韩语） · [功能规格](specs/)（韩语）
+[自己运行](#自己运行) · [更新日志](CHANGELOG.md)（韩语） · [版本发布](https://github.com/AIGJ-01-002-blog/Devlog/releases) · [设计文档](https://github.com/AIGJ-01-002-blog/docs)（韩语） · [功能规格](specs/)（韩语）
 
 </div>
 
 <p align="center">
-  <img src="docs/images/home.webp" alt="devlog 首页，带有最新、热门标签页和文章卡片" width="860" />
+  <img src="assets/images/home.webp" alt="devlog 首页，带有最新、热门标签页和文章卡片" width="860" />
 </p>
 
 名字取自 **development log（开发记录）**。我们已经注册了正式域名 [devlog.life](https://devlog.life)，生产服务器准备就绪后会在这个地址上线。
@@ -95,16 +95,16 @@ cd app/frontend && npm install && npm run dev            # http://localhost:5173
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/editor.webp" alt="编辑器" /><br/><b>写作</b>：Markdown 与实时预览、自动保存、系列、附件</td>
-<td width="50%"><img src="docs/images/post-detail.webp" alt="文章页面" /><br/><b>阅读</b>：目录、阅读时长、标签、代码高亮、切换公开范围</td>
+<td width="50%"><img src="assets/images/editor.webp" alt="编辑器" /><br/><b>写作</b>：Markdown 与实时预览、自动保存、系列、附件</td>
+<td width="50%"><img src="assets/images/post-detail.webp" alt="文章页面" /><br/><b>阅读</b>：目录、阅读时长、标签、代码高亮、切换公开范围</td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/images/blog.webp" alt="个人博客" /><br/><b>个人博客</b>：文章、系列、简介标签页，博客内搜索，按标签统计文章数，RSS</td>
-<td width="50%"><img src="docs/images/notifications.webp" alt="通知" /><br/><b>通知</b>：评论、回复、点赞、关注汇总在一起，也可推送到 Telegram</td>
+<td width="50%"><img src="assets/images/blog.webp" alt="个人博客" /><br/><b>个人博客</b>：文章、系列、简介标签页，博客内搜索，按标签统计文章数，RSS</td>
+<td width="50%"><img src="assets/images/notifications.webp" alt="通知" /><br/><b>通知</b>：评论、回复、点赞、关注汇总在一起，也可推送到 Telegram</td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/images/search.webp" alt="搜索" /><br/><b>搜索</b>：文章与用户标签页、按相关度排序、高亮搜索词</td>
-<td width="50%"><img src="docs/images/home-dark.webp" alt="深色模式" /><br/><b>深色模式</b>：跟随系统、浅色、深色，加载时不闪烁</td>
+<td width="50%"><img src="assets/images/search.webp" alt="搜索" /><br/><b>搜索</b>：文章与用户标签页、按相关度排序、高亮搜索词</td>
+<td width="50%"><img src="assets/images/home-dark.webp" alt="深色模式" /><br/><b>深色模式</b>：跟随系统、浅色、深色，加载时不闪烁</td>
 </tr>
 </table>
 
@@ -142,7 +142,7 @@ cd app/frontend && npm install && npm run dev            # http://localhost:5173
 
 ## 架构
 
-devlog 是一个 **模块化单体**。一个 Spring Boot 应用同时提供 React 界面（静态文件）和 API，功能按包划分为模块。模块之间通过领域事件（例如：收到点赞 → 发送通知）松散地连接。设计依据见 [docs/02-architecture.md](docs/02-architecture.md)（韩语）。
+devlog 是一个 **模块化单体**。一个 Spring Boot 应用同时提供 React 界面（静态文件）和 API，功能按包划分为模块。模块之间通过领域事件（例如：收到点赞 → 发送通知）松散地连接。设计依据见 [docs/02-architecture.md](https://github.com/AIGJ-01-002-blog/docs/blob/main/design/02-architecture.md)（韩语）。
 
 ```mermaid
 flowchart LR
@@ -236,7 +236,7 @@ sequenceDiagram
 
 ## 仓库结构
 
-代码和文档都在这一个仓库中管理。
+代码在本仓库中管理，设计文档在文档仓库 [AIGJ-01-002-blog/docs](https://github.com/AIGJ-01-002-blog/docs) 中管理。
 
 | 路径 | 说明 |
 | --- | --- |
@@ -245,8 +245,8 @@ sequenceDiagram
 | [deploy](deploy) | 部署：Dockerfile、Kubernetes 清单（base、selfhosted、nhn、local），部署、回滚、密钥检查脚本 |
 | [.github](.github) | CI/CD：后端与界面测试、镜像构建与部署、版本发布、Discord 与 Telegram 通知 |
 | [specs](specs) | 功能规格：按 [GitHub Spec Kit](https://github.com/github/spec-kit) 流程编写的各功能 spec、plan、tasks（001~044） |
-| [docs](docs) | 设计文档：通用需求、架构、整合 ERD、各功能设计、权限表 |
-| [erd](erd) · [scripts](scripts) · [verification](verification) | 基准模式及其运行测试、设计验证脚本与报告 |
+| [docs](https://github.com/AIGJ-01-002-blog/docs) | 设计文档：通用需求、架构、整合 ERD、各功能设计、权限表 |
+| [erd](erd) · [scripts](scripts) | 基准模式及其运行测试、设计验证脚本与报告 |
 
 ## 自己运行
 
@@ -363,6 +363,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.27.2 | 2026-10-08 | 源代码与文档仓库分离（文档移至 AIGJ-01-002-blog/docs） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.2) |
 | v1.27.1 | 2026-10-08 | 用 Kubernetes（k3d）部署到学校实习服务器（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.1) |
 | v1.27.0 | 2026-10-08 | devlog MCP 服务器、ChatGPT・Codex 连接、优先使用家用电脑 AI | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.0) |
 | v1.26.1 | 2026-10-08 | 部署时将 Gemini 密钥和家用 PC 的 Ollama 设置传给应用（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.26.1) |

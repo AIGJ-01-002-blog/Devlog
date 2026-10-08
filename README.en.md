@@ -3,8 +3,8 @@
 🌐 **[한국어](./README.md)** | **English** | **[日本語](./README.ja.md)** | **[简体中文](./README.zh.md)**
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
-  <img src="docs/images/logo-light.png" alt="devlog" width="72" />
+  <source media="(prefers-color-scheme: dark)" srcset="assets/images/logo-dark.png" />
+  <img src="assets/images/logo-light.png" alt="devlog" width="72" />
 </picture>
 
 # devlog
@@ -20,12 +20,12 @@ Write → autosave → publish → read → react: a velog-style blogging platfo
 [![Domain](https://img.shields.io/badge/domain-devlog.life%20(coming%20soon)-0ea5e9.svg)](#deployment)
 [![Stack](https://img.shields.io/badge/Java%2021%20·%20Spring%20Boot%204.1%20·%20React%2019-f97316.svg)](#tech-stack)
 
-[Run it yourself](#run-it-yourself) · [Changelog](CHANGELOG.md) (Korean) · [Releases](https://github.com/AIGJ-01-002-blog/Devlog/releases) · [Design docs](docs/) (Korean) · [Feature specs](specs/) (Korean)
+[Run it yourself](#run-it-yourself) · [Changelog](CHANGELOG.md) (Korean) · [Releases](https://github.com/AIGJ-01-002-blog/Devlog/releases) · [Design docs](https://github.com/AIGJ-01-002-blog/docs) (Korean) · [Feature specs](specs/) (Korean)
 
 </div>
 
 <p align="center">
-  <img src="docs/images/home.webp" alt="devlog home page with Latest and Trending tabs and post cards" width="860" />
+  <img src="assets/images/home.webp" alt="devlog home page with Latest and Trending tabs and post cards" width="860" />
 </p>
 
 The name comes from **development log**. We have registered [devlog.life](https://devlog.life) as the official address and will open the service there once the production server is up.
@@ -95,16 +95,16 @@ If you have agreed to AI use, the AI adds a title and tidies up the text; otherw
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/editor.webp" alt="Editor" /><br/><b>Writing</b>: Markdown with live preview, autosave, series, attachments</td>
-<td width="50%"><img src="docs/images/post-detail.webp" alt="Post page" /><br/><b>Reading</b>: table of contents, reading time, tags, code highlighting, visibility switch</td>
+<td width="50%"><img src="assets/images/editor.webp" alt="Editor" /><br/><b>Writing</b>: Markdown with live preview, autosave, series, attachments</td>
+<td width="50%"><img src="assets/images/post-detail.webp" alt="Post page" /><br/><b>Reading</b>: table of contents, reading time, tags, code highlighting, visibility switch</td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/images/blog.webp" alt="Personal blog" /><br/><b>Personal blog</b>: Posts, Series and About tabs, in-blog search, post counts per tag, RSS</td>
-<td width="50%"><img src="docs/images/notifications.webp" alt="Notifications" /><br/><b>Notifications</b>: comments, replies, likes and follows, grouped, and on Telegram too</td>
+<td width="50%"><img src="assets/images/blog.webp" alt="Personal blog" /><br/><b>Personal blog</b>: Posts, Series and About tabs, in-blog search, post counts per tag, RSS</td>
+<td width="50%"><img src="assets/images/notifications.webp" alt="Notifications" /><br/><b>Notifications</b>: comments, replies, likes and follows, grouped, and on Telegram too</td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/images/search.webp" alt="Search" /><br/><b>Search</b>: Posts and People tabs, relevance ranking, highlighted matches</td>
-<td width="50%"><img src="docs/images/home-dark.webp" alt="Dark mode" /><br/><b>Dark mode</b>: system, light or dark, with no flash on load</td>
+<td width="50%"><img src="assets/images/search.webp" alt="Search" /><br/><b>Search</b>: Posts and People tabs, relevance ranking, highlighted matches</td>
+<td width="50%"><img src="assets/images/home-dark.webp" alt="Dark mode" /><br/><b>Dark mode</b>: system, light or dark, with no flash on load</td>
 </tr>
 </table>
 
@@ -142,7 +142,7 @@ If you have agreed to AI use, the AI adds a title and tidies up the text; otherw
 
 ## Architecture
 
-devlog is a **modular monolith**. A single Spring Boot application serves both the React UI (as static files) and the API, and features are split into package-level modules. Modules are loosely connected through domain events (for example, a new like → a notification). The design rationale is in [docs/02-architecture.md](docs/02-architecture.md) (Korean).
+devlog is a **modular monolith**. A single Spring Boot application serves both the React UI (as static files) and the API, and features are split into package-level modules. Modules are loosely connected through domain events (for example, a new like → a notification). The design rationale is in [docs/02-architecture.md](https://github.com/AIGJ-01-002-blog/docs/blob/main/design/02-architecture.md) (Korean).
 
 ```mermaid
 flowchart LR
@@ -236,7 +236,7 @@ The current production baseline is `overlays/selfhosted`. It runs PostgreSQL 17,
 
 ## Repository layout
 
-All code and documentation live in this one repository.
+Code lives in this repository; design documents live in the documentation repository [AIGJ-01-002-blog/docs](https://github.com/AIGJ-01-002-blog/docs).
 
 | Path | Description |
 | --- | --- |
@@ -245,8 +245,8 @@ All code and documentation live in this one repository.
 | [deploy](deploy) | Deployment: Dockerfile, Kubernetes manifests (base, selfhosted, nhn, local), deploy, rollback and secret-check scripts |
 | [.github](.github) | CI/CD: backend and frontend tests, image build and deploy, releases, Discord and Telegram notifications |
 | [specs](specs) | Feature specs: spec, plan and tasks per feature (001~044) following the [GitHub Spec Kit](https://github.com/github/spec-kit) flow |
-| [docs](docs) | Design documents: common requirements, architecture, unified ERD, per-feature designs, permission matrix |
-| [erd](erd) · [scripts](scripts) · [verification](verification) | Baseline schema and its tests, design-check scripts and reports |
+| [docs](https://github.com/AIGJ-01-002-blog/docs) | Design documents: common requirements, architecture, unified ERD, per-feature designs, permission matrix |
+| [erd](erd) · [scripts](scripts) | Baseline schema and its tests, design-check scripts and reports |
 
 ## Run it yourself
 
@@ -363,6 +363,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.27.2 | 2026-10-08 | Source code and documents split into separate repositories (docs now in AIGJ-01-002-blog/docs) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.2) |
 | v1.27.1 | 2026-10-08 | Deploy to the school practice server with Kubernetes (k3d) (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.1) |
 | v1.27.0 | 2026-10-08 | devlog MCP server, ChatGPT and Codex connections, home PC AI first | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.27.0) |
 | v1.26.1 | 2026-10-08 | Deploy passes the Gemini key and home-PC Ollama settings to the app (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.26.1) |
