@@ -1,0 +1,28 @@
+# 언어별 README(한·영·일·중)와 조직 프로필이 저장소와 맞는지 확인한다. 검사 내용은 scripts/check-readmes.py 맨 위에 있다.
+name: README 검사
+
+on:
+  pull_request:
+    paths: &paths
+      - "README*.md"
+      - "CHANGELOG.md"
+      - "docs/images/**"
+      - "app/backend/pom.xml"
+      - "app/backend/src/main/resources/db/migration/**"
+      - "app/frontend/package.json"
+      - "scripts/check-readmes.py"
+      - "scripts/build-org-profile.py"
+      - ".github/workflows/readme-check.yml"
+  push:
+    branches: [main]
+    paths: *paths
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/check-readmes.py
