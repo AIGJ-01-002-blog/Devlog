@@ -3,6 +3,8 @@ import { ConflictDialog } from '../components/ConflictDialog'
 import { Modal } from '../components/Modal'
 import { AiTagSuggest } from '../components/AiTagSuggest'
 import { AttachmentEditor } from '../components/AttachmentEditor'
+import { PrepublishCheck } from '../components/PrepublishCheck'
+import { RevisionHistory } from '../components/RevisionHistory'
 import { SeriesPicker } from '../components/SeriesPicker'
 import { TagInput } from '../components/TagInput'
 import { ThumbnailPicker } from '../components/ThumbnailPicker'
@@ -70,6 +72,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
   const [localStored, setLocalStored] = useState(false)
   const [backups, setBackups] = useState<LocalBackup[]>([])
   const [showBackups, setShowBackups] = useState(false)
+  const [showRevisions, setShowRevisions] = useState(false)
   const [preview, setPreview] = useState('')
   const [previewError, setPreviewError] = useState<string | null>(null)
   const [tab, setTab] = useState<'write' | 'preview'>('write')
@@ -305,6 +308,10 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden
                  onChange={(e) => { addFiles(e.target.files); e.target.value = '' }} />
           <button type="button" className="btn btn-outline" onClick={() => saveNow()}>저장</button>
+          {view.status === 'PUBLISHED' && (
+            <button type="button" className="btn btn-text" onClick={() => setShowRevisions(true)}
+                    title="발행한 판을 지금 내용과 비교하고, 이전 판을 불러와요">🕘 수정 이력</button>
+          )}
           {backups.length > 0 && (
             <button type="button" className="btn btn-text" onClick={() => setShowBackups(true)}>이 기기 백업 {backups.length}</button>
           )}
@@ -406,6 +413,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           <ThumbnailPicker value={thumbnail} content={content} error={errors.thumbnail} onBusy={setThumbnailBusy}
                            onChange={(c) => { setThumbnail(c); setErrors(({ thumbnail: _, ...rest }) => rest) }} />
           {Object.keys(errors).some((k) => !isPublishField(k)) && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
+          <PrepublishCheck title={title} contentMd={content} summary={summary} tags={tags} thumbnail={thumbnail} />
           {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
           <AltTexts content={content} open={showAlts} onOpen={() => setShowAlts(true)}
                     localUrls={images.localUrls.current} onChange={(i, alt) => setContent((c) => setAlt(c, i, alt))} />
@@ -417,6 +425,21 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
             </button>
           </footer>
         </Modal>
+      )}
+
+      {showRevisions && (
+        <RevisionHistory postId={view.id} current={current()} onClose={() => setShowRevisions(false)}
+          onLoad={async (r) => {
+            // 지금 내용은 이 기기 백업에 남겨 둔다: 불러오기로 사라지지 않게 (백업 불러오기와 같은 규칙)
+            const mine = { memberId, postId: view.id, ...current(), at: Date.now() }
+            if (mine.title !== r.title || mine.contentMd !== r.contentMd) await localDrafts.addBackup(mine)
+            setTitle(r.title)
+            setContent(r.contentMd)
+            setSummary(r.summary ?? '')
+            setBackups(await localDrafts.backups(memberId, view.id))
+            setShowRevisions(false)
+            setNotice(`${r.no}판을 불러왔어요. 다시 발행하면 독자에게 보여요. 바로 전 내용은 이 기기 백업에 있어요.`)
+          }} />
       )}
 
       {showBackups && (

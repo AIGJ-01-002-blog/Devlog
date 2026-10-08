@@ -450,6 +450,7 @@ select { width: auto; }
   background: var(--color-surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: 0 8px 32px var(--shadow-color);
 }
 .dialog-wide { max-width: 1100px; }
+.dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .dialog-header h2 { margin: 0 0 8px; font-size: 1.25rem; }
 .dialog .dialog-footer { margin-top: 24px; justify-content: flex-end; }
 .vis { display: flex; gap: 8px; }
@@ -463,6 +464,7 @@ select { width: auto; }
 /* 충돌 비교 */
 .diff { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
 .diff-col { min-width: 0; border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; }
+.diff-col h3 { margin: 0; padding: 8px 12px; font-size: 0.8125rem; font-weight: 700; background: var(--color-surface-2); border-bottom: 1px solid var(--color-border); }
 .diff-title { padding: 8px 12px; background: var(--color-surface-2); font-weight: 700; font-size: 0.875rem; }
 .diff pre { margin: 0; max-height: 50vh; overflow: auto; font-family: var(--mono); font-size: 0.8125rem; line-height: 1.5; }
 .diff-same, .diff-add, .diff-del, .diff-fold, .diff-gap { display: block; padding: 0 12px; white-space: pre-wrap; word-break: break-all; }
@@ -578,6 +580,36 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
   display: grid; place-items: center; font-size: 22px; pointer-events: none;
 }
 .alt-texts { display: grid; gap: 8px; }
+/* 054 수정 이력: 넓은 화면은 판 목록 | 비교, 좁은 화면은 위아래로 쌓는다 */
+.revisions { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; margin-top: 8px; }
+.revision-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow: auto; }
+.revision-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 8px 10px; text-align: left; background: none; color: inherit; border: 1px solid var(--color-border); border-radius: var(--radius); cursor: pointer; font: inherit; }
+.revision-item:hover, .revision-item.active { background: var(--color-surface-2); }
+.revision-item.active { border-color: currentColor; }
+.revision-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.revision-compare { min-width: 0; }
+.revision-compare .diff { margin-top: 8px; }
+@media (max-width: 767px) {
+  .revisions { grid-template-columns: 1fr; }
+  .revision-list { flex-direction: row; overflow-x: auto; max-height: none; padding-bottom: 4px; }
+  .revision-list li { flex: 0 0 auto; }
+  .revision-item { width: auto; min-width: 140px; }
+  .revision-title { max-width: 160px; }
+  .revision-compare .diff pre { max-height: 32vh; }
+  .revisions-footer { position: sticky; bottom: -1px; background: var(--color-surface); padding-top: 8px; }
+}
+
+/* 056 발행 전 점검: 색과 함께 기호(✓ ⚠ ℹ)로 상태를 알린다 */
+.prepublish { border: 1px solid var(--color-border); border-radius: var(--radius); padding: 8px 12px; margin: 12px 0; }
+.prepublish summary { cursor: pointer; font-weight: 700; min-height: 32px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.prepublish-count { font-size: 0.8125rem; font-weight: 600; color: var(--color-warn-text); background: var(--color-warn-bg); padding: 1px 8px; border-radius: 999px; }
+.prepublish ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 0.875rem; }
+.prepublish li { display: flex; gap: 8px; align-items: baseline; }
+.prepublish-icon { width: 1.2em; flex: 0 0 auto; text-align: center; font-weight: 700; }
+.prepublish-ok .prepublish-icon { color: var(--color-ok-text); }
+.prepublish-warn .prepublish-icon { color: var(--color-warn-text); }
+.prepublish-info .prepublish-icon { color: var(--color-text-muted); }
+
 .alt-row { display: flex; gap: 8px; align-items: flex-start; }
 .alt-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 4px; background: var(--color-border); flex: none; }
 .alt-input { display: grid; gap: 2px; flex: 1; }

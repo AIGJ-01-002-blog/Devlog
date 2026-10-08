@@ -58,6 +58,9 @@
 | [051-mcp-devlog-home](./051-mcp-devlog-home/spec.md) | MCP 개발 일지 중심 첫 화면 | 2026-10-08 추가 (민서님 답 5·6번) | 이후 단계 (Tier C) | 6 |
 | [052-mcp-server](./052-mcp-server/spec.md) | devlog MCP 서버와 접근 토큰·OAuth | 2026-10-08 추가 (민서님 답 5번) | 이후 단계 (Tier C) | 9 |
 | [053-ai-publish-toggle](./053-ai-publish-toggle/spec.md) | AI 발행·삭제 허용 설정 | 2026-10-08 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 7 |
+| [054-post-revisions](./054-post-revisions/spec.md) | 글 수정 이력 | 2026-10-08 추가 (블로그 주인 요청, Crowfoot 버전 기록) | 이후 단계 (Tier C) | 6 |
+| [055-post-export](./055-post-export/spec.md) | 내 글 내보내기 | 2026-10-08 추가 (블로그 주인 요청, Crowfoot Markdown 내보내기) | 이후 단계 (Tier C) | 5 |
+| [056-prepublish-check](./056-prepublish-check/spec.md) | 발행 전 점검 | 2026-10-08 추가 (블로그 주인 요청, Crowfoot 설계 검증) | 이후 단계 (Tier C) | 3 |
 
 ## 여러 spec에 걸치는 문서
 

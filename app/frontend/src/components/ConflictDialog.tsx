@@ -1,7 +1,7 @@
-import { diffLines, diffWordsWithSpace } from 'diff'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { clock } from '../lib/format'
 import { Modal } from './Modal'
+import { TextDiff } from './TextDiff'
 import type { Content } from '../lib/autosave'
 import type { ServerContent } from '../lib/types'
 
@@ -18,7 +18,6 @@ export function ConflictDialog({ server, mine, onOverwrite, onLoadServer, onSave
   onClose: () => void
 }) {
   const [confirming, setConfirming] = useState(false)
-  const rows = useMemo(() => buildRows(server.contentMd, mine.contentMd), [server.contentMd, mine.contentMd])
   const savedAt = clock(server.savedAt)
 
   return (
@@ -33,16 +32,8 @@ export function ConflictDialog({ server, mine, onOverwrite, onLoadServer, onSave
           <div><span className="diff-add">+ {mine.title || '(제목 없음)'}</span></div>
         </div>
       )}
-      <div className="diff">
-        <div className="diff-col">
-          <h3>저장된 내용 · {savedAt} (다른 탭·기기)</h3>
-          <pre>{rows.map((r, i) => <Line key={i} row={r} side="left" />)}</pre>
-        </div>
-        <div className="diff-col">
-          <h3>지금 편집 중인 내용 · 이 탭</h3>
-          <pre>{rows.map((r, i) => <Line key={i} row={r} side="right" />)}</pre>
-        </div>
-      </div>
+      <TextDiff before={server.contentMd} after={mine.contentMd}
+                beforeLabel={`저장된 내용 · ${savedAt} (다른 탭·기기)`} afterLabel="지금 편집 중인 내용 · 이 탭" />
       {confirming ? (
         <footer className="dialog-footer">
           <p>{savedAt}에 저장된 내용이 지금 편집 중인 내용으로 바뀌어요. 정말 저장할까요?</p>
@@ -58,51 +49,4 @@ export function ConflictDialog({ server, mine, onOverwrite, onLoadServer, onSave
       )}
     </Modal>
   )
-}
-
-interface Row {
-  kind: 'same' | 'del' | 'add' | 'change'
-  left: string
-  right: string
-}
-
-function buildRows(oldText: string, newText: string): Row[] {
-  const parts = diffLines(oldText, newText)
-  const rows: Row[] = []
-  for (let i = 0; i < parts.length; i++) {
-    const p = parts[i]
-    const next = parts[i + 1]
-    if (p.removed && next?.added) {
-      rows.push({ kind: 'change', left: p.value, right: next.value })
-      i++
-    } else if (p.removed) rows.push({ kind: 'del', left: p.value, right: '' })
-    else if (p.added) rows.push({ kind: 'add', left: '', right: p.value })
-    else rows.push({ kind: 'same', left: p.value, right: p.value })
-  }
-  return rows
-}
-
-function Line({ row, side }: { row: Row; side: 'left' | 'right' }) {
-  if (row.kind === 'same') {
-    const text = row.left
-    const lines = text.split('\n')
-    // 바뀌지 않은 긴 구간은 접는다
-    if (lines.length > 8) {
-      return <span className="diff-same">{lines.slice(0, 3).join('\n')}{'\n'}<span className="diff-fold">⋯ 같은 내용 {lines.length - 6}줄 ⋯</span>{'\n'}{lines.slice(-3).join('\n')}</span>
-    }
-    return <span className="diff-same">{text}</span>
-  }
-  if (row.kind === 'change') {
-    const words = diffWordsWithSpace(row.left, row.right)
-    return (
-      <span className={side === 'left' ? 'diff-del' : 'diff-add'}>
-        {side === 'left' ? '− ' : '+ '}
-        {words.filter((w) => (side === 'left' ? !w.added : !w.removed)).map((w, i) =>
-          (w.added || w.removed) ? <mark key={i}>{w.value}</mark> : <span key={i}>{w.value}</span>)}
-      </span>
-    )
-  }
-  const text = side === 'left' ? row.left : row.right
-  if (!text) return <span className="diff-gap">{'\n'.repeat(Math.max(0, (row.left || row.right).split('\n').length - 1))}</span>
-  return <span className={row.kind === 'del' ? 'diff-del' : 'diff-add'}>{row.kind === 'del' ? '− ' : '+ '}{text}</span>
 }

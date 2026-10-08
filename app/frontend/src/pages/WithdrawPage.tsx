@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { clearLocalData, useAuth } from '../lib/auth'
-import { navigate } from '../lib/router'
+import { Link, navigate } from '../lib/router'
 import { CONFIRM_TEXT, deadline, withdrawApi, withdrawErrorText, withdrawReady, type WithdrawalSummary } from '../lib/withdraw'
 
 /**
@@ -62,6 +62,9 @@ export function WithdrawPage() {
               답글이 달린 댓글은 내용 없이 자리만 남아요.</li>
             <li>블로그 주소 <b>@{s.handle}</b>는 다른 사람도, 나도 다시 쓸 수 없어요.</li>
           </ul>
+          {s.posts > 0 && (
+            <p className="small">글을 간직하고 싶다면 먼저 <Link to="/settings#export">설정 › 내 글 내보내기</Link>에서 Markdown으로 받아 두세요.</p>
+          )}
           <label className="check" htmlFor={checkId}>
             <input id={checkId} type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} /> 위 내용을 확인했어요
           </label>
