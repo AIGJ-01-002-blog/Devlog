@@ -140,12 +140,13 @@ kubectl -n blog create job pg-backup-now --from=cronjob/pg-backup   # 지금 바
 1.24.1부터 DB 이미지가 `postgres:17-alpine`(사용자 UID 70)에서 `pgvector/pgvector`(Debian, UID 999)로 바뀌었다. 기존 `data-postgres-0` 볼륨은 UID 70 소유라 그대로 쓰면 PostgreSQL이 데이터 디렉터리 소유권 검사에서 멈추고, 문자 정렬 라이브러리(musl→glibc)도 달라 인덱스가 어긋날 수 있다. 기존 볼륨은 재사용하지 말고 덤프로 옮긴다. 새로 설치하는 클러스터는 이 절차가 필요 없다.
 
 ```bash
-# 1) 올리기 전에(옛 이미지 그대로) 백업을 만들고 끝날 때까지 기다린다
+# 1) 앱을 멈춘다(백업 뒤 쓰기가 사라지지 않게, 재시작한 앱이 빈 DB에 테이블을 만들지 않게. replicas가 0이면 HPA도 늘리지 않는다)
+kubectl -n blog scale deployment/blog-app --replicas=0
+kubectl -n blog wait --for=delete pod -l app.kubernetes.io/name=blog-app --timeout=120s
+#    그다음(옛 이미지 그대로) 백업을 만들고 끝날 때까지 기다린다
 kubectl -n blog create job pg-backup-before-1241 --from=cronjob/pg-backup
 kubectl -n blog wait --for=condition=complete job/pg-backup-before-1241 --timeout=600s
-# 2) 앱을 멈추고(재시작한 앱이 빈 DB에 테이블을 만들지 않게. replicas가 0이면 HPA도 늘리지 않는다)
-#    옛 DB와 그 볼륨만 지운다(pg-backup 볼륨은 남는다)
-kubectl -n blog scale deployment/blog-app --replicas=0
+# 2) 옛 DB와 그 볼륨만 지운다(pg-backup 볼륨은 남는다)
 kubectl -n blog delete statefulset postgres
 kubectl -n blog delete pvc data-postgres-0
 # 3) DB만 새 버전으로 띄운다. 앱까지 한꺼번에 올리면 앱이 빈 DB에 Flyway로 테이블을 먼저 만들어 4)의 복구가 충돌한다
