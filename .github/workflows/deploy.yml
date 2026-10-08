@@ -111,18 +111,30 @@ jobs:
           SMTP_HOST: ${{ secrets.SMTP_PASSWORD != '' && 'smtp.gmail.com' || '' }}
           # 앱 텔레그램 봇(023). 따로 만든 봇이 없으면 배포 알림 봇을 같이 쓴다
           TELEGRAM_BOT_TOKEN: ${{ secrets.APP_TELEGRAM_BOT_TOKEN || secrets.TELEGRAM_BOT_TOKEN }}
+          # AI(018·061): Gemini 열쇠, 집 PC Ollama 주소(변수)와 그 앞 Cloudflare Access 서비스 토큰.
+          # 주소가 비면 Ollama를 쓰지 않는다(앱은 Gemini만 씀)
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OLLAMA_BASE_URL: ${{ vars.OLLAMA_BASE_URL }}
+          OLLAMA_ACCESS_CLIENT_ID: ${{ secrets.OLLAMA_ACCESS_CLIENT_ID }}
+          OLLAMA_ACCESS_CLIENT_SECRET: ${{ secrets.OLLAMA_ACCESS_CLIENT_SECRET }}
+          OLLAMA_AUTH_TOKEN: ${{ secrets.OLLAMA_AUTH_TOKEN }}
         run: |
           umask 077
           printf '%s' "$KUBECONFIG_CONTENT" > "$RUNNER_TEMP/kubeconfig"
           f="deploy/k8s/overlays/$OVERLAY/secret.env"
           printf '%s\n' "$BLOG_SECRET_ENV" > "$f"
-          for key in SMTP_PASSWORD SMTP_HOST TELEGRAM_BOT_TOKEN; do
+          for key in SMTP_PASSWORD SMTP_HOST TELEGRAM_BOT_TOKEN GEMINI_API_KEY OLLAMA_BASE_URL OLLAMA_ACCESS_CLIENT_ID OLLAMA_ACCESS_CLIENT_SECRET OLLAMA_AUTH_TOKEN; do
             val="${!key}"
             [ -n "$val" ] || continue
             grep -v "^${key}=" "$f" > "$f.tmp" || true
             printf '%s=%s\n' "$key" "$val" >> "$f.tmp"
             mv "$f.tmp" "$f"
           done
+          # 변수 OLLAMA_BASE_URL이 비면 BLOG_SECRET_ENV에 남은 옛 주소도 지워 Ollama를 끈다(README 설명과 같게)
+          if [ -z "$OLLAMA_BASE_URL" ]; then
+            grep -v '^OLLAMA_BASE_URL=' "$f" > "$f.tmp" || true
+            mv "$f.tmp" "$f"
+          fi
           echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
       - name: 이미지 받기 권한 (GHCR 비공개 이미지)
         env:
