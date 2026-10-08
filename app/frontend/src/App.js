@@ -45,6 +45,10 @@ const WithdrawnPage = lazyPage(() => import('./pages/WithdrawnPage'), 'Withdrawn
 const WithdrawPage = lazyPage(() => import('./pages/WithdrawPage'), 'WithdrawPage');
 const McpPage = lazyPage(() => import('./pages/McpPage'), 'McpPage');
 const OAuthAuthorizePage = lazyPage(() => import('./pages/OAuthAuthorizePage'), 'OAuthAuthorizePage');
+const SupportPage = lazyPage(() => import('./pages/SupportPage'), 'SupportPage');
+const ReleasesPage = lazyPage(() => import('./pages/ReleasesPage'), 'ReleasesPage');
+const AdminInquiriesPage = lazyPage(() => import('./pages/AdminInquiriesPage'), 'AdminInquiriesPage');
+const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage');
 export function App() {
     const { path } = useLocation();
     return (_jsxs(_Fragment, { children: [_jsx(SkipLink, {}), _jsx(PageAnnouncer, {}), !path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx("div", { id: MAIN_ID, tabIndex: -1, children: _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: _jsx(PageErrorBoundary, { path: path, children: _jsx(Suspense, { fallback: _jsx(Loading, {}), children: route(path) }) }) }) }) })] }));
@@ -73,6 +77,10 @@ function route(path) {
         return _jsx(McpPage, {});
     if (path === '/oauth/authorize')
         return _jsx(RequireLogin, { children: _jsx(OAuthAuthorizePage, {}) });
+    if (path === '/support')
+        return _jsx(SupportPage, {});
+    if (path === '/releases')
+        return _jsx(ReleasesPage, {});
     if (path === '/tags')
         return _jsx(TagsPage, {});
     if ((p = match('/tags/:name', path)))
@@ -119,6 +127,10 @@ function route(path) {
         return _jsx(RequireAdmin, { children: _jsx(AdminReportsPage, {}) });
     if ((p = match('/admin/reports/:id', path)))
         return _jsx(RequireAdmin, { children: _jsx(AdminReportPage, { id: p.id }, p.id) });
+    if (path === '/admin/inquiries')
+        return _jsx(RequireAdmin, { children: _jsx(AdminInquiriesPage, {}) });
+    if ((p = match('/admin/inquiries/:id', path)))
+        return _jsx(RequireAdmin, { children: _jsx(AdminInquiryPage, { id: p.id }, p.id) });
     if ((p = match('/admin/members/:handle', path)))
         return _jsx(RequireAdmin, { children: _jsx(AdminMemberPage, { handle: p.handle }, p.handle) });
     return _jsx(NotFoundPage, {});

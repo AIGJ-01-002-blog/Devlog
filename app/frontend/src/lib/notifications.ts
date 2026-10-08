@@ -3,7 +3,7 @@ import { reasonLabel } from './moderation'
 
 // 인앱 알림 (spec 015, docs/25). 문구와 이동 위치는 docs/25 §2 표. 서버가 볼 수 없는 글의 제목·링크를 빼서 보낸다.
 
-export type NotificationType = 'COMMENT' | 'REPLY' | 'LIKE' | 'FOLLOW' | 'NEW_POST' | 'REPORT_RESOLVED' | 'CONTENT_HIDDEN'
+export type NotificationType = 'COMMENT' | 'REPLY' | 'LIKE' | 'FOLLOW' | 'NEW_POST' | 'REPORT_RESOLVED' | 'CONTENT_HIDDEN' | 'INQUIRY_ANSWERED'
 export type MutableType = 'COMMENT' | 'REPLY' | 'LIKE' | 'FOLLOW' | 'NEW_POST'
 
 export interface NotificationItem {
@@ -22,6 +22,8 @@ export interface NotificationItem {
   result?: 'ACTION_TAKEN' | 'NO_VIOLATION' | null
   /** 내 콘텐츠 숨김 (CONTENT_HIDDEN). 그 사이 풀렸으면 stillHidden=false */
   hidden?: { targetType: 'POST' | 'COMMENT'; reason: string | null; stillHidden: boolean } | null
+  /** 답변이 온 내 문의 (INQUIRY_ANSWERED, spec 054) */
+  inquiry?: { id: number; title: string; status: string } | null
 }
 
 export interface NotificationPage {
@@ -77,6 +79,9 @@ export function messageOf(n: NotificationItem): Message {
       : { who: null, text: '신고하신 내용을 검토했지만 운영 정책 위반은 아니었어요', quote: null }
   }
   if (n.type === 'CONTENT_HIDDEN') return hiddenMessage(n)
+  if (n.type === 'INQUIRY_ANSWERED') {
+    return { who: null, text: `남기신 문의${n.inquiry ? `「${n.inquiry.title}」` : ''}에 답변이 왔어요`, quote: null }
+  }
   const unreadable = n.post != null && !n.post.readable
   const title = n.post?.title ? `「${n.post.title}」` : ''
   if (unreadable) {

@@ -45,6 +45,7 @@ final class TelegramMessages {
                     ? "🛡️ 신고하신 내용을 검토해 조치했어요. 알려 주셔서 고마워요."
                     : "🛡️ 신고하신 내용을 검토했지만 운영 정책 위반은 아니었어요.";
             case CONTENT_HIDDEN -> hidden(n);
+            case INQUIRY_ANSWERED -> "📮 남기신 문의에 답변이 왔어요" + (n.inquiry() == null ? "" : ": 「" + n.inquiry().title() + "」");
         };
         if (text == null) return null;
         return n.link() == null ? text : text + "\n" + baseUrl + n.link();

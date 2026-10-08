@@ -215,6 +215,17 @@ public class NotificationService {
         });
     }
 
+    /** 문의 답변 (054): 답변이 새로 붙거나 바뀔 때마다 접수한 회원에게. 탈퇴 신청한 회원에게는 만들지 않는다. 운영 알림이라 끌 수 없다. */
+    public void inquiryAnswered(long inquiryId, long memberId, Instant at) {
+        tx.executeWithoutResult(s -> {
+            Boolean active = jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM member WHERE id = ? AND status <> 'WITHDRAWN' AND deleted_at IS NULL)",
+                    Boolean.class, memberId);
+            if (!Boolean.TRUE.equals(active)) return;
+            long id = insert(memberId, NotificationType.INQUIRY_ANSWERED, Timestamp.from(at));
+            jdbc.update("INSERT INTO notification_inquiry (notification_id, type, inquiry_id) VALUES (?, 'INQUIRY_ANSWERED', ?)", id, inquiryId);
+        });
+    }
+
     private boolean following(long followerId, long followeeId) {
         return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM follow WHERE follower_id = ? AND followee_id = ?)",
                 Boolean.class, followerId, followeeId));

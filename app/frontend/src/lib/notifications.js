@@ -37,6 +37,9 @@ export function messageOf(n) {
     }
     if (n.type === 'CONTENT_HIDDEN')
         return hiddenMessage(n);
+    if (n.type === 'INQUIRY_ANSWERED') {
+        return { who: null, text: `남기신 문의${n.inquiry ? `「${n.inquiry.title}」` : ''}에 답변이 왔어요`, quote: null };
+    }
     const unreadable = n.post != null && !n.post.readable;
     const title = n.post?.title ? `「${n.post.title}」` : '';
     if (unreadable) {
