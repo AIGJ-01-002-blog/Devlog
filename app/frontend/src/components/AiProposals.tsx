@@ -13,8 +13,23 @@ export function AiProposals() {
   const [busy, setBusy] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => { aiProposalsApi.list().then(setItems).catch(() => setItems([])) }, [])
+  const [loadFailed, setLoadFailed] = useState(false)
 
+  const load = () => {
+    setLoadFailed(false)
+    aiProposalsApi.list().then(setItems).catch(() => setLoadFailed(true))
+  }
+  useEffect(load, [])
+
+  if (loadFailed) {
+    return (
+      <section className="ai-proposals" aria-label="AI가 제안한 글">
+        <p className="error" role="status">
+          AI가 제안한 글을 불러오지 못했어요. <button type="button" className="btn btn-text" title="제안 목록을 다시 불러와요" onClick={load}>다시 시도</button>
+        </p>
+      </section>
+    )
+  }
   if (items.length === 0) return null
 
   const run = async (p: AiProposal, action: 'draft' | 'dismiss') => {

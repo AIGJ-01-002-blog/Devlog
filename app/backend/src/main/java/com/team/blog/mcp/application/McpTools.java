@@ -323,17 +323,13 @@ public class McpTools {
         String content = text(a, "content_md");
         if (title.isBlank() || content.isBlank()) return Result.fail("제목(title)과 본문(content_md)이 필요해요.");
         List<String> suggested = tags(a);
-        Long proposal = a.path("proposal_id").canConvertToLong() ? a.path("proposal_id").asLong() : null;
-        if (proposal != null) {
-            Optional<AiJournal.Proposal> p = journal.find(caller.memberId(), proposal);
-            if (p.isEmpty()) return Result.fail("제안을 찾을 수 없어요 (proposal_id " + proposal + "). list_post_proposals로 번호를 확인해 주세요.");
-            if (p.get().status() == AiJournal.Status.DRAFTED && p.get().postId() != null) {
-                return Result.fail("이 제안은 이미 임시글 " + p.get().postId() + "번으로 만들었어요. get_post로 읽고 update_draft로 채워 주세요.");
-            }
+        long id;
+        if (a.path("proposal_id").canConvertToLong()) {
+            id = journal.draftWith(caller.memberId(), a.path("proposal_id").asLong(), title, content, suggested);
+        } else {
+            id = commands.create(caller.memberId(), title, content).id();
+            if (!suggested.isEmpty()) hints.suggestTags(id, suggested);
         }
-        long id = commands.create(caller.memberId(), title, content).id();
-        if (!suggested.isEmpty()) hints.suggestTags(id, suggested);
-        if (proposal != null) journal.markDrafted(caller.memberId(), proposal, id);
         return Result.ok("devlog에 임시글을 만들었어요 (글 번호 " + id + ").\n"
                 + "아직 공개되지 않았어요. 사용자에게 이 링크에서 읽어 보고 발행하라고 알려 주세요: " + editUrl(id)
                 + (suggested.isEmpty() ? "" : "\n제안한 태그: " + String.join(", ", suggested)));

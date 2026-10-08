@@ -94,7 +94,12 @@ function AiDiaryToggle() {
     const [enabled, setEnabled] = useState(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
-    useEffect(() => { aiDiaryApi.get().then((s) => setEnabled(s.enabled)).catch(() => setEnabled(null)); }, []);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const load = () => {
+        setLoadFailed(false);
+        aiDiaryApi.get().then((s) => setEnabled(s.enabled)).catch(() => setLoadFailed(true));
+    };
+    useEffect(load, []);
     const change = async (on) => {
         if (!on && !confirm('자정에 일기 쓰기를 끌까요?\n오늘 AI가 남긴 메모도 함께 지워져요. 이미 만든 일기 임시글은 그대로 남아요.'))
             return;
@@ -110,5 +115,5 @@ function AiDiaryToggle() {
             setBusy(false);
         }
     };
-    return (_jsxs("div", { className: "ai-publish ai-diary", children: [_jsx("h3", { children: "\uC790\uC815 \uC77C\uAE30" }), _jsxs("label", { title: "AI\uB97C \uC4F4 \uB0A0\uB9C8\uB2E4 \uC790\uC815\uC5D0 \uADF8\uB0A0 \uC791\uC5C5 \uBA54\uBAA8\uB97C \uC77C\uAE30 \uC784\uC2DC\uAE00\uB85C \uBAA8\uC544\uC694", children: [_jsx("input", { type: "checkbox", checked: enabled === true, disabled: busy || enabled === null, onChange: (e) => change(e.target.checked) }), ' ', "\uC790\uC815\uC5D0 \uC77C\uAE30 \uC4F0\uAE30"] }), _jsxs("p", { className: "muted small", children: ["\uCF1C\uBA74 \uC5F0\uACB0\uD55C AI\uAC00 \uC791\uC5C5\uC744 \uB9C8\uCE60 \uB54C\uB9C8\uB2E4 \uD55C\uB450 \uBB38\uC7A5 \uBA54\uBAA8\uB97C \uB0A8\uAE30\uACE0, \uB9E4\uC77C \uC790\uC815(\uD55C\uAD6D \uC2DC\uAC04)\uC5D0 \uADF8\uB0A0 \uBA54\uBAA8\uAC00 \uC8FC\uC81C\uBCC4\uB85C \uBB36\uC778 ", _jsx("b", { children: "\uC77C\uAE30 \uC784\uC2DC\uAE00" }), "\uC774 \uB3FC\uC694. AI\uB97C \uC4F0\uC9C0 \uC54A\uC740 \uB0A0\uC740 \uB9CC\uB4E4\uC9C0 \uC54A\uACE0, \uBC1C\uD589\uC740 \uB0B4\uAC00 \uD574\uC694."] }), _jsx("p", { className: "muted small ai-publish-reconnect", children: "\uCF20 \uB4A4\uC5D0\uB294 AI \uC571\uC5D0\uC11C devlog \uC5F0\uACB0\uC744 \uB2E4\uC2DC \uC2DC\uC791\uD574\uC57C \uBA54\uBAA8 \uB3C4\uAD6C\uAC00 \uBCF4\uC5EC\uC694. \uB044\uBA74 \uC544\uC9C1 \uBB36\uC9C0 \uC54A\uC740 \uBA54\uBAA8\uB3C4 \uC9C0\uC6CC\uC694." }), error && _jsx("p", { className: "error", role: "status", children: error })] }));
+    return (_jsxs("div", { className: "ai-publish ai-diary", children: [_jsx("h3", { children: "\uC790\uC815 \uC77C\uAE30" }), _jsxs("label", { title: "AI\uB97C \uC4F4 \uB0A0\uB9C8\uB2E4 \uC790\uC815\uC5D0 \uADF8\uB0A0 \uC791\uC5C5 \uBA54\uBAA8\uB97C \uC77C\uAE30 \uC784\uC2DC\uAE00\uB85C \uBAA8\uC544\uC694", children: [_jsx("input", { type: "checkbox", checked: enabled === true, disabled: busy || enabled === null, onChange: (e) => change(e.target.checked) }), ' ', "\uC790\uC815\uC5D0 \uC77C\uAE30 \uC4F0\uAE30"] }), _jsxs("p", { className: "muted small", children: ["\uCF1C\uBA74 \uC5F0\uACB0\uD55C AI\uAC00 \uC791\uC5C5\uC744 \uB9C8\uCE60 \uB54C\uB9C8\uB2E4 \uD55C\uB450 \uBB38\uC7A5 \uBA54\uBAA8\uB97C \uB0A8\uAE30\uACE0, \uB9E4\uC77C \uC790\uC815(\uD55C\uAD6D \uC2DC\uAC04)\uC5D0 \uADF8\uB0A0 \uBA54\uBAA8\uAC00 \uC8FC\uC81C\uBCC4\uB85C \uBB36\uC778 ", _jsx("b", { children: "\uC77C\uAE30 \uC784\uC2DC\uAE00" }), "\uC774 \uB3FC\uC694. AI\uB97C \uC4F0\uC9C0 \uC54A\uC740 \uB0A0\uC740 \uB9CC\uB4E4\uC9C0 \uC54A\uACE0, \uBC1C\uD589\uC740 \uB0B4\uAC00 \uD574\uC694."] }), _jsx("p", { className: "muted small ai-publish-reconnect", children: "\uCF20 \uB4A4\uC5D0\uB294 AI \uC571\uC5D0\uC11C devlog \uC5F0\uACB0\uC744 \uB2E4\uC2DC \uC2DC\uC791\uD574\uC57C \uBA54\uBAA8 \uB3C4\uAD6C\uAC00 \uBCF4\uC5EC\uC694. \uB044\uBA74 \uC544\uC9C1 \uBB36\uC9C0 \uC54A\uC740 \uBA54\uBAA8\uB3C4 \uC9C0\uC6CC\uC694." }), loadFailed && (_jsxs("p", { className: "error", role: "status", children: ["\uC124\uC815\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. ", _jsx("button", { type: "button", className: "btn btn-text", title: "\uC790\uC815 \uC77C\uAE30 \uC124\uC815\uC744 \uB2E4\uC2DC \uBD88\uB7EC\uC640\uC694", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] })), error && _jsx("p", { className: "error", role: "status", children: error })] }));
 }

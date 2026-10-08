@@ -145,10 +145,26 @@ public class AiJournal {
                 id, memberId).stream().findFirst();
     }
 
-    /** AI가 제안대로 글을 썼을 때 (create_draft의 proposal_id). 이미 정한 제안이면 그대로 둔다. */
-    public void markDrafted(long memberId, long id, long postId) {
-        jdbc.update("UPDATE ai_post_proposal SET status = 'DRAFTED', post_id = ?, decided_at = ? WHERE id = ? AND member_id = ? AND status = 'OPEN'",
-                postId, Timestamp.from(Times.now(clock)), id, memberId);
+    /**
+     * AI가 제안대로 쓴 글 (create_draft의 proposal_id). 먼저 제안을 잡고(OPEN → DRAFTED) 같은 트랜잭션에서 글을 만든다.
+     * 그 사이 사용자가 [임시글로 만들기]나 [넘기기]를 눌렀으면 글을 만들지 않고 거절한다. @return 만든 글 번호
+     */
+    public long draftWith(long memberId, long id, String title, String content, List<String> tags) {
+        return tx.execute(s -> {
+            int claimed = jdbc.update("UPDATE ai_post_proposal SET status = 'DRAFTED', decided_at = ? WHERE id = ? AND member_id = ? AND status = 'OPEN'",
+                    Timestamp.from(Times.now(clock)), id, memberId);
+            if (claimed == 0) {
+                Proposal p = find(memberId, id).orElseThrow(() -> ApiException.badRequest("PROPOSAL_NOT_FOUND",
+                        "제안을 찾을 수 없어요 (proposal_id " + id + "). list_post_proposals로 번호를 확인해 주세요."));
+                if (p.status() == Status.DISMISSED) throw ApiException.conflict("PROPOSAL_DISMISSED", "사용자가 넘긴 제안이에요. 다시 쓰려면 사용자에게 먼저 물어봐 주세요.");
+                throw ApiException.conflict("PROPOSAL_DRAFTED", "이 제안은 이미 임시글" + (p.postId() == null ? "로" : " " + p.postId() + "번으로")
+                        + " 만들었어요. get_post로 읽고 update_draft로 채워 주세요.");
+            }
+            long postId = commands.create(memberId, title, content).id();
+            if (!tags.isEmpty()) hints.suggestTags(postId, tags);
+            jdbc.update("UPDATE ai_post_proposal SET post_id = ? WHERE id = ?", postId, id);
+            return postId;
+        });
     }
 
     /**

@@ -36,6 +36,16 @@ describe('AiProposals', () => {
         await act(async () => { root.render(_jsx(AiProposals, {})); });
         expect(host.innerHTML).toBe('');
     });
+    it('불러오지 못하면 오류와 다시 시도를 보여 준다', async () => {
+        let fail = true;
+        vi.stubGlobal('fetch', vi.fn(async () => (fail ? new Response('{}', { status: 500, headers: { 'Content-Type': 'application/json' } })
+            : new Response(JSON.stringify(list), { status: 200, headers: { 'Content-Type': 'application/json' } }))));
+        await act(async () => { root.render(_jsx(AiProposals, {})); });
+        expect(host.textContent).toContain('불러오지 못했어요');
+        fail = false;
+        await act(async () => { [...host.querySelectorAll('button')].find((b) => b.textContent === '다시 시도').click(); });
+        expect(host.querySelectorAll('.ai-proposal')).toHaveLength(2);
+    });
     it('넘기면 목록에서 빠지고, 임시글로 만들면 편집 화면으로 간다', async () => {
         await act(async () => { root.render(_jsx(AiProposals, {})); });
         expect(host.textContent).toContain('AI가 제안한 글');

@@ -12,7 +12,15 @@ export function AiProposals() {
     const [items, setItems] = useState([]);
     const [busy, setBusy] = useState(null);
     const [error, setError] = useState(null);
-    useEffect(() => { aiProposalsApi.list().then(setItems).catch(() => setItems([])); }, []);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const load = () => {
+        setLoadFailed(false);
+        aiProposalsApi.list().then(setItems).catch(() => setLoadFailed(true));
+    };
+    useEffect(load, []);
+    if (loadFailed) {
+        return (_jsx("section", { className: "ai-proposals", "aria-label": "AI\uAC00 \uC81C\uC548\uD55C \uAE00", children: _jsxs("p", { className: "error", role: "status", children: ["AI\uAC00 \uC81C\uC548\uD55C \uAE00\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. ", _jsx("button", { type: "button", className: "btn btn-text", title: "\uC81C\uC548 \uBAA9\uB85D\uC744 \uB2E4\uC2DC \uBD88\uB7EC\uC640\uC694", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] }) }));
+    }
     if (items.length === 0)
         return null;
     const run = async (p, action) => {

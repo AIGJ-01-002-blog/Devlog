@@ -173,7 +173,13 @@ function AiDiaryToggle() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => { aiDiaryApi.get().then((s) => setEnabled(s.enabled)).catch(() => setEnabled(null)) }, [])
+  const [loadFailed, setLoadFailed] = useState(false)
+
+  const load = () => {
+    setLoadFailed(false)
+    aiDiaryApi.get().then((s) => setEnabled(s.enabled)).catch(() => setLoadFailed(true))
+  }
+  useEffect(load, [])
 
   const change = async (on: boolean) => {
     if (!on && !confirm('자정에 일기 쓰기를 끌까요?\n오늘 AI가 남긴 메모도 함께 지워져요. 이미 만든 일기 임시글은 그대로 남아요.')) return
@@ -202,6 +208,11 @@ function AiDiaryToggle() {
       <p className="muted small ai-publish-reconnect">
         켠 뒤에는 AI 앱에서 devlog 연결을 다시 시작해야 메모 도구가 보여요. 끄면 아직 묶지 않은 메모도 지워요.
       </p>
+      {loadFailed && (
+        <p className="error" role="status">
+          설정을 불러오지 못했어요. <button type="button" className="btn btn-text" title="자정 일기 설정을 다시 불러와요" onClick={load}>다시 시도</button>
+        </p>
+      )}
       {error && <p className="error" role="status">{error}</p>}
     </div>
   )

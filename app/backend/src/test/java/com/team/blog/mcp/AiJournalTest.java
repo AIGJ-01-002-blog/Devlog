@@ -117,6 +117,13 @@ class AiJournalTest extends IntegrationTest {
         assertThat(dup.path("isError").asBoolean()).isTrue();
         assertThat(text(dup)).contains("이미 임시글 " + postId + "번");
 
+        // 넘긴 제안으로는 글을 만들지 않는다
+        int before = jdbc.queryForObject("SELECT count(*) FROM post WHERE author_id = ?", Integer.class, me.memberId());
+        JsonNode dismissed = call(t, "create_draft", Map.of("title", "x", "content_md", "y", "proposal_id", skipId));
+        assertThat(dismissed.path("isError").asBoolean()).isTrue();
+        assertThat(text(dismissed)).contains("넘긴 제안");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM post WHERE author_id = ?", Integer.class, me.memberId())).isEqualTo(before);
+
         // 대화에서 바로 쓰면 create_draft의 proposal_id로 제안이 닫힌다
         call(t, "propose_post", Map.of("title", "바로 쓸 제안", "scope", "- 범위"));
         long direct = journal.proposals(me.memberId(), false).getFirst().id();
