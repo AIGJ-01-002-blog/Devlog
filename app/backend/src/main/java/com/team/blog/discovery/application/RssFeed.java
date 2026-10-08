@@ -5,15 +5,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 
 import com.team.blog.account.application.MemberQueryService;
-import com.team.blog.post.access.PostAccessPolicy;
-import com.team.blog.post.infra.PostSql;
+import com.team.blog.post.query.PostCard;
+import com.team.blog.post.query.PostCardQuery;
 import com.team.blog.shared.config.BlogProperties;
-import com.team.blog.shared.markdown.ContentRenderer;
 import com.team.blog.shared.text.TextCleaner;
 
 /**
@@ -25,15 +23,13 @@ public class RssFeed {
     public static final int SIZE = 20;
     private static final DateTimeFormatter RFC_1123 = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC);
 
-    private final JdbcTemplate jdbc;
-    private final ContentRenderer renderer;
+    private final PostCardQuery posts;
     private final MemberQueryService members;
     private final BlogProperties.Site site;
 
-    public RssFeed(JdbcTemplate jdbc, ContentRenderer renderer, MemberQueryService members, BlogProperties props) {
-        this.jdbc = jdbc;
+    public RssFeed(PostCardQuery posts, MemberQueryService members, BlogProperties props) {
+        this.posts = posts;
         this.members = members;
-        this.renderer = renderer;
         this.site = props.site();
     }
 
@@ -51,13 +47,11 @@ public class RssFeed {
     }
 
     private List<Item> items(Long authorId) {
-        String sql = "SELECT p.id, p.title, p.first_public_at, m.handle, m.nickname, " + PostSql.SUMMARY_SOURCE
-                + " FROM post p JOIN member m ON m.id = p.author_id WHERE " + PostAccessPolicy.PUBLIC_LIST_CONDITION
-                + (authorId == null ? "" : " AND p.author_id = ?")
-                + " ORDER BY p.first_public_at DESC, p.id DESC LIMIT " + SIZE;
-        Object[] args = authorId == null ? new Object[0] : new Object[] {authorId};
-        return jdbc.query(sql, (rs, i) -> new Item(rs.getLong("id"), rs.getString("title"), renderer.summary(rs.getString("summary"), rs.getString("content_head")),
-                rs.getTimestamp("first_public_at").toInstant(), rs.getString("handle"), rs.getString("nickname")), args);
+        return posts.recentPublic(authorId, SIZE).stream().map(RssFeed::item).toList();
+    }
+
+    private static Item item(PostCard c) {
+        return new Item(c.id(), c.title(), c.excerpt(), c.firstPublicAt(), c.author().handle(), c.author().nickname());
     }
 
     private String channel(String title, String path, String description, List<Item> items) {

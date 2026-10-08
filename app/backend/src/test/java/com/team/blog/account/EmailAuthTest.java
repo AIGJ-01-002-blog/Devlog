@@ -165,6 +165,16 @@ class EmailAuthTest extends IntegrationTest {
         long no = read(g.perform(get("/api/auth/me")).andReturn()).path("member").path("id").asLong();
         assertThat(jdbc.queryForList("SELECT type FROM member_agreement WHERE member_id = ? ORDER BY type", String.class, no))
                 .containsExactly("PRIVACY", "TERMS");
+
+        // 소셜 가입: 선택 항목에 동의하면 AI도 지금 버전으로 기록된다
+        String login2 = uniqueLogin("aisocial");
+        Browser s = githubAuthenticated(String.valueOf(System.nanoTime() % 1_000_000_000L + 30_000_000L), login2, login2, login2 + "@example.com");
+        s.perform(asJson(post("/api/auth/signup"), Map.of("handleBody", login2.toLowerCase().replace('-', '_'), "nickname", "에이아이소",
+                        "agreeTerms", true, "agreePrivacy", true, "agreeAi", true)))
+                .andExpect(status().isCreated());
+        long social = read(s.perform(get("/api/auth/me")).andReturn()).path("member").path("id").asLong();
+        assertThat(jdbc.queryForObject("SELECT version FROM member_agreement WHERE member_id = ? AND type = 'AI'", String.class, social))
+                .isEqualTo(agreementService.currentVersion(AgreementType.AI));
     }
 
     @Test

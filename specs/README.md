@@ -54,7 +54,8 @@
 | [047-post-thumbnail](./047-post-thumbnail/spec.md) | 글 썸네일 고르기 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 7 |
 | [048-modern-ui](./048-modern-ui/spec.md) | 모던 개발 블로그 화면 | 2026-10-08 추가 (민서님 UI 방향) | 이후 단계 (Tier C) | 9 |
 | [049-signup-ai-consent](./049-signup-ai-consent/spec.md) | 가입 화면의 AI 기능 동의 (선택) | 2026-10-08 추가 (민서님 답 7-1) | 이후 단계 (Tier C) | 5 |
-| [050-mcp-devlog-home](./050-mcp-devlog-home/spec.md) | MCP 개발 일지 중심 첫 화면 | 2026-10-08 추가 (민서님 답 5·6번) | 이후 단계 (Tier C) | 6 |
+| [050-post-query-module](./050-post-query-module/spec.md) | 글 조회를 글 모듈로 옮기기 (리팩터링) | 2026-10-08 추가 (민서님 답 14) | 이후 단계 (Tier C) | 4 |
+| [051-mcp-devlog-home](./051-mcp-devlog-home/spec.md) | MCP 개발 일지 중심 첫 화면 | 2026-10-08 추가 (민서님 답 5·6번) | 이후 단계 (Tier C) | 6 |
 
 ## 여러 spec에 걸치는 문서
 

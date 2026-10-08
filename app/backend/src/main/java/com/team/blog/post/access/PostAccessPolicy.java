@@ -38,4 +38,12 @@ public class PostAccessPolicy {
     public static final String PUBLIC_LIST_CONDITION =
             "p.status = 'PUBLISHED' AND p.visibility = 'PUBLIC' AND p.deleted_at IS NULL AND p.hidden_at IS NULL"
                     + " AND m.withdrawn_at IS NULL";
+
+    /**
+     * 친구 공개 글까지 포함한 목록 조건 (docs/06 §6-3). ix_post_blog_friends의 WHERE를 그대로 포함한다.
+     * 친구인지는 이 조건에 없다: 쓰는 쪽이 친구 관계를 확인한 뒤에만 쓴다.
+     */
+    public static final String FRIENDS_LIST_CONDITION =
+            "p.status = 'PUBLISHED' AND p.visibility IN ('PUBLIC', 'FRIENDS') AND p.deleted_at IS NULL AND p.hidden_at IS NULL"
+                    + " AND m.withdrawn_at IS NULL";
 }

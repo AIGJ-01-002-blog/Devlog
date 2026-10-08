@@ -15,6 +15,7 @@ import com.team.blog.shared.error.NotFoundException;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
 import com.team.blog.tag.application.TagNormalizer;
+import com.team.blog.post.query.PostCardPage;
 
 /** 읽기 API: 홈 목록, 개인 블로그, 글 상세 (docs/10 §4-2, docs/40). size 파라미터는 받지 않는다(9개 고정). */
 @RestController
@@ -30,7 +31,7 @@ public class DiscoveryController {
     }
 
     @GetMapping("/api/posts")
-    public ResponseEntity<FeedQuery.Page> home(@RequestParam(required = false) String cursor) {
+    public ResponseEntity<PostCardPage> home(@RequestParam(required = false) String cursor) {
         return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(feed.home(cursor));
     }
 
@@ -42,12 +43,12 @@ public class DiscoveryController {
     }
 
     @GetMapping("/api/members/{handle}/posts")
-    public ResponseEntity<FeedQuery.Page> blog(@PathVariable String handle, @RequestParam(required = false) String cursor,
+    public ResponseEntity<PostCardPage> blog(@PathVariable String handle, @RequestParam(required = false) String cursor,
                                                @RequestParam(required = false) String tag,
                                                @CurrentMember(required = false) MemberPrincipal me) {
         // 블로그 안 태그 필터 (010 FR-031). 형식에 맞지 않는 태그는 404
         String name = tag == null || tag.isEmpty() ? null : TagNormalizer.canonical(tag).orElseThrow(NotFoundException::new);
-        FeedQuery.Page page = feed.blog(handle, name, cursor, me == null ? null : me.id());
+        PostCardPage page = feed.blog(handle, name, cursor, me == null ? null : me.id());
         // 친구에게만 보이는 글이 섞인 목록은 저장하지 않는다 (docs/06 R-5)
         return ResponseEntity.ok().cacheControl(page.friendsView() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache())
                 .body(page);
@@ -55,7 +56,7 @@ public class DiscoveryController {
 
     /** 내가 좋아한 글 (027). 개인 목록이라 어디에도 저장하지 않는다. */
     @GetMapping("/api/me/liked-posts")
-    public ResponseEntity<FeedQuery.Page> liked(@CurrentMember MemberPrincipal me, @RequestParam(required = false) String cursor) {
+    public ResponseEntity<PostCardPage> liked(@CurrentMember MemberPrincipal me, @RequestParam(required = false) String cursor) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore().cachePrivate()).body(feed.liked(me.id(), cursor));
     }
 

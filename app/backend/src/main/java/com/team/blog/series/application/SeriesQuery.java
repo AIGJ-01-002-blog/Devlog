@@ -9,13 +9,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.team.blog.account.domain.Visibility;
-import com.team.blog.discovery.application.FeedQuery;
+import com.team.blog.account.application.MemberProfileQuery;
 import com.team.blog.friend.application.FriendsVisibilityRule;
 import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.post.access.ReadablePost;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
 import com.team.blog.post.infra.PostSql;
+import com.team.blog.post.query.PostCard;
+import com.team.blog.post.query.PostCardQuery;
 import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.markdown.ImageUrls;
 
@@ -29,13 +31,15 @@ public class SeriesQuery {
     static final String OWNER_CONDITION = "p.status = 'PUBLISHED' AND p.deleted_at IS NULL";
 
     private final JdbcTemplate jdbc;
-    private final FeedQuery feed;
+    private final PostCardQuery cards;
+    private final MemberProfileQuery members;
     private final PostAccessPolicy policy;
     private final ImageUrls imageUrls;
 
-    public SeriesQuery(JdbcTemplate jdbc, FeedQuery feed, PostAccessPolicy policy, ImageUrls imageUrls) {
+    public SeriesQuery(JdbcTemplate jdbc, PostCardQuery cards, MemberProfileQuery members, PostAccessPolicy policy, ImageUrls imageUrls) {
         this.jdbc = jdbc;
-        this.feed = feed;
+        this.cards = cards;
+        this.members = members;
         this.policy = policy;
         this.imageUrls = imageUrls;
     }
@@ -46,7 +50,7 @@ public class SeriesQuery {
     public record Listing(List<Summary> items, boolean personal) {}
 
     /** @param personal 친구·주인이라 남과 다른 응답. 어디에도 저장하지 않는다 (docs/06 R-5) */
-    public record Detail(long id, String name, String slug, Instant updatedAt, boolean mine, List<FeedQuery.Card> posts,
+    public record Detail(long id, String name, String slug, Instant updatedAt, boolean mine, List<PostCard> posts,
                          @com.fasterxml.jackson.annotation.JsonIgnore boolean personal) {}
 
     public record Item(long id, String title, String url) {}
@@ -60,7 +64,7 @@ public class SeriesQuery {
 
     private record Scope(long ownerId, boolean mine, boolean friend) {
         String condition() {
-            return mine ? OWNER_CONDITION : friend ? FeedQuery.FRIENDS_BLOG_CONDITION : PostAccessPolicy.PUBLIC_LIST_CONDITION;
+            return mine ? OWNER_CONDITION : friend ? PostAccessPolicy.FRIENDS_LIST_CONDITION : PostAccessPolicy.PUBLIC_LIST_CONDITION;
         }
     }
 
@@ -92,7 +96,7 @@ public class SeriesQuery {
                 s.ownerId(), slug).stream().findFirst().flatMap(row -> {
                     long id = (Long) row[0];
                     List<Long> ids = Columns.longs(jdbc, "SELECT post_id FROM series_post WHERE series_id = ? ORDER BY position", id);
-                    List<FeedQuery.Card> posts = feed.cards(ids, s.condition());
+                    List<PostCard> posts = cards.cards(ids, s.condition());
                     if (posts.isEmpty() && !s.mine()) return Optional.empty();
                     return Optional.of(new Detail(id, (String) row[1], (String) row[2], ((Timestamp) row[3]).toInstant(), s.mine(),
                             posts, s.mine() || s.friend()));
@@ -134,7 +138,7 @@ public class SeriesQuery {
     }
 
     private Optional<Scope> scope(String handle, Long viewerId) {
-        return feed.ownerId(handle).map(ownerId -> {
+        return members.activeId(handle).map(ownerId -> {
             boolean mine = ownerId.equals(viewerId); // 둘 다 Long이라 == 는 참조 비교
             boolean friend = !mine && viewerId != null && FriendsVisibilityRule.areFriends(jdbc, ownerId, viewerId);
             return new Scope(ownerId, mine, friend);

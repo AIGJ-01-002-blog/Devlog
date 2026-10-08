@@ -36,6 +36,8 @@ import com.team.blog.shared.security.MemberPrincipal;
 import com.team.blog.tag.application.TagNormalizer;
 import com.team.blog.tag.application.TagQuery;
 import com.team.blog.tag.web.TagController;
+import com.team.blog.post.query.PostCardPage;
+import com.team.blog.post.query.PostCard;
 
 /**
  * 화면 주소를 React 앱으로 연결하면서, 링크 미리보기·검색 엔진이 읽을 머리말과 첫 화면 HTML을 서버에서 채운다.
@@ -45,7 +47,7 @@ import com.team.blog.tag.web.TagController;
 @Controller
 public class PageController {
     private static final Pattern HANDLE_CHARS = Pattern.compile("[A-Za-z0-9_-]{1,23}");
-    /** 서비스 슬로건 (050). 첫 화면 설명과 링크 미리보기에 같이 쓴다 */
+    /** 서비스 슬로건 (051). 첫 화면 설명과 링크 미리보기에 같이 쓴다 */
     static final String SLOGAN = "코딩은 AI와, 기록은 devlog가.";
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(ZoneId.of("Asia/Seoul"));
 
@@ -109,7 +111,7 @@ public class PageController {
         TagController.TagPage page = tagApi.page(name, null);
         String body = "<main><h1>#" + SpaShell.esc(name) + "</h1><p>공개 글 " + page.postCount() + "</p>"
                 + (page.items().isEmpty() ? "<p>아직 이 태그로 공개된 글이 없어요.</p>"
-                : cards(new FeedQuery.Page(page.items(), page.nextCursor()))) + "</main>";
+                : cards(new PostCardPage(page.items(), page.nextCursor()))) + "</main>";
         HeadMeta meta = HeadMeta.site("#" + name + " - " + site.name(), "#" + name + " 태그가 달린 글", absolute(tagPath(name)),
                 absolute(site.defaultOgImage()));
         return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "tag", "tag", page)), CacheControl.noCache());
@@ -144,19 +146,19 @@ public class PageController {
         if ("trending".equals(tab)) {
             // 트렌딩 탭 (017): 첫 9개를 함께 내려준다. 순위표 문제로 바로 계산한 결과면 저장하지 않는다
             TrendingService.Page t = trending.page(null);
-            FeedQuery.Page asFeed = new FeedQuery.Page(t.items(), t.nextCursor());
+            PostCardPage asFeed = new PostCardPage(t.items(), t.nextCursor());
             String body = "<main><h1>트렌딩</h1>" + cards(asFeed) + "</main>";
             HeadMeta meta = HeadMeta.site(site.name(), "최근 7일 동안 반응이 많은 글", absolute("/?tab=trending"), absolute(site.defaultOgImage()));
             return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "home", "trending", asFeed)),
                     t.temporary() ? CacheControl.noStore() : CacheControl.noCache());
         }
-        FeedQuery.Page first = feed.home(null);
+        PostCardPage first = feed.home(null);
         String body = "<main><h1>" + SpaShell.esc(site.name()) + "</h1>" + cards(first) + "</main>";
         HeadMeta meta = HeadMeta.site(site.name(), SLOGAN + " AI 도구에 연결하면 개발 일지를 써 주는 개발자 블로그", absolute("/"), absolute(site.defaultOgImage()));
         return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "home", "feed", first)), CacheControl.noCache());
     }
 
-    /** AI에 devlog 연결하기 (050): 검색 엔진·링크 미리보기에 보이는 공개 안내 화면. React가 연결 명령과 도구 목록을 그린다. */
+    /** AI에 devlog 연결하기 (051): 검색 엔진·링크 미리보기에 보이는 공개 안내 화면. React가 연결 명령과 도구 목록을 그린다. */
     @GetMapping("/mcp")
     public ResponseEntity<String> mcpGuide() {
         String body = "<main><h1>당신의 AI가 개발 일지를 씁니다</h1><p>Claude·Cursor 같은 AI 도구에 devlog MCP를 연결하면, "
@@ -187,7 +189,7 @@ public class PageController {
         var profile = feed.profile(handle, me == null ? null : me.id());
         if (profile.isEmpty()) return notFound();
         FeedQuery.BlogProfile p = profile.get();
-        FeedQuery.Page first = feed.blog(handle, filter, null, me == null ? null : me.id());
+        PostCardPage first = feed.blog(handle, filter, null, me == null ? null : me.id());
         var blogTags = tags.blogTags(p.id());
         String body = "<main><header><h1>" + SpaShell.esc(p.nickname()) + "</h1><p>@" + SpaShell.esc(p.handle()) + "</p>"
                 + (p.bio() == null ? "" : "<p>" + SpaShell.esc(p.bio()) + "</p>") + "</header>" + cards(first) + "</main>";
@@ -277,7 +279,7 @@ public class PageController {
                 .append("</a></li>"));
         body.append("</ol></main>");
         String owner = d.posts().isEmpty() ? handle : d.posts().getFirst().author().nickname();
-        String image = d.posts().stream().map(FeedQuery.Card::thumbnailUrl).filter(java.util.Objects::nonNull).findFirst()
+        String image = d.posts().stream().map(PostCard::thumbnailUrl).filter(java.util.Objects::nonNull).findFirst()
                 .orElse(absolute(site.defaultOgImage()));
         HeadMeta meta = new HeadMeta(d.name() + " - " + owner, owner + "의 시리즈 · 글 " + d.posts().size() + "개",
                 absolute(seriesPath(handle, d.slug())), "website", image, null, d.updatedAt(), !d.posts().isEmpty());
@@ -372,9 +374,9 @@ public class PageController {
         return sb.toString();
     }
 
-    private String cards(FeedQuery.Page page) {
+    private String cards(PostCardPage page) {
         StringBuilder sb = new StringBuilder("<ul>");
-        for (FeedQuery.Card c : page.items()) {
+        for (PostCard c : page.items()) {
             sb.append("<li><a href=\"").append(SpaShell.esc(c.url())).append("\">").append(SpaShell.esc(c.title()))
                     .append("</a> <span>").append(SpaShell.esc(c.author().nickname())).append("</span>");
             if (c.excerpt() != null) sb.append("<p>").append(SpaShell.esc(c.excerpt())).append("</p>");

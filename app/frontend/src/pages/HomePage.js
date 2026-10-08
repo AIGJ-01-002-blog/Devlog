@@ -16,7 +16,7 @@ export function HomePage() {
                             : _jsx(Link, { to: loginPath('/write'), className: "btn btn-primary", children: "\uB85C\uADF8\uC778" })] }) }, "latest"))] }));
 }
 /**
- * 비회원 첫 화면 소개 (048, 050). 슬로건과 "AI에 devlog 연결하기", 그리고 AI가 개발 일지를 쓰는 모습을 보여 준다.
+ * 비회원 첫 화면 소개 (048, 051). 슬로건과 "AI에 devlog 연결하기", 그리고 AI가 개발 일지를 쓰는 모습을 보여 준다.
  * 로그인한 사람에게는 바로 글 목록을 보인다. 제목 구조를 흐트리지 않게 소제목 태그는 쓰지 않는다.
  */
 function HomeHero() {

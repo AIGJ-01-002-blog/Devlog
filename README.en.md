@@ -1,6 +1,6 @@
 <div align="center">
 
-🌐 **[한국어](./README.md)** | **English**
+🌐 **[한국어](./README.md)** | **English** | **[日本語](./README.ja.md)** | **[简体中文](./README.zh.md)**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png" />
@@ -70,8 +70,11 @@ Once the production server is up, the service opens at https://devlog.life. Unti
 ### Run it locally in five minutes
 
 ```bash
+# Terminal 1: dependencies and backend
 docker compose -f app/compose.yaml up -d                 # PostgreSQL 16 · Redis 7
 cd app/backend && DEV_LOGIN_ENABLED=true SITE_BASE_URL=http://localhost:5173 ./mvnw spring-boot:run
+
+# Terminal 2: frontend (from the repository root)
 cd app/frontend && npm install && npm run dev            # http://localhost:5173
 ```
 
@@ -147,7 +150,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>multiple pods]
     I -->|/blog-images| M[(MinIO / S3<br/>images · attachments)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V10)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V12)]
     A --> R[(Redis<br/>sessions · rate limits · views · cache)]
     A --> M
     A -.optional.-> G[Google Gemini]
@@ -221,7 +224,7 @@ sequenceDiagram
 - **404 that hides existence**: private, friends-only, trashed and hidden posts return the same 404 as missing posts to anyone without permission.
 - **Rate limits**: requests that can be repeated, such as writing, autosave, image uploads, likes, search, reports and AI suggestions, have rate limits (429 with `Retry-After`).
 - **Minimal personal data**: view counts never store the original IP, and search terms are not logged. Mail failures and malformed tokens are logged by exception type only, so addresses and tokens never reach the logs. `X-Forwarded-For` is trusted only from trusted proxy ranges.
-- **Image bucket**: anonymous users may only download files (GetObject); listing is blocked so image URLs of private posts can't be discovered.
+- **Image bucket**: anonymous users may only download image files (GetObject on `images/` and `profiles/`); listing the bucket is blocked, so image URLs of private posts can't be discovered by listing. Anyone who already knows an image URL can still download that file.
 - **Network policy**: PostgreSQL and Redis accept connections only from app pods, and MinIO only from the app and the ingress.
 - **Secrets**: credentials are never committed. They go in only as Kubernetes Secrets or GitHub Secrets, and `deploy/scripts/check-no-secrets.sh` checks for leaks in CI.
 
@@ -237,7 +240,7 @@ All code and documentation live in this one repository.
 
 | Path | Description |
 | --- | --- |
-| [app/backend](app/backend) | Backend: Spring Boot 4.1, Java 21. Feature modules, Flyway migrations (V1~V10), tests |
+| [app/backend](app/backend) | Backend: Spring Boot 4.1, Java 21. Feature modules, Flyway migrations (V1~V12), tests |
 | [app/frontend](app/frontend) | Frontend: React 19 SPA, TypeScript, Vite. Screens, autosave (IndexedDB), dark mode |
 | [deploy](deploy) | Deployment: Dockerfile, Kubernetes manifests (base, selfhosted, nhn, local), deploy, rollback and secret-check scripts |
 | [.github](.github) | CI/CD: backend and frontend tests, image build and deploy, releases, Discord and Telegram notifications |
@@ -291,11 +294,11 @@ Defaults work for local development. Production values go in only as Kubernetes 
 # Dependencies
 docker compose -f app/compose.yaml up -d
 
-# Backend
+# Backend (terminal 1)
 cd app/backend
 DEV_LOGIN_ENABLED=true SITE_BASE_URL=http://localhost:5173 ./mvnw spring-boot:run
 
-# Frontend
+# Frontend (terminal 2, from the repository root)
 cd app/frontend
 npm install
 npm run dev        # http://localhost:5173
@@ -314,7 +317,7 @@ To try it on Kubernetes, run `kubectl apply -k deploy/k8s/overlays/local` on kin
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub and Google login, sessions, CSRF, per-path authorization |
 | Spring Data JPA (Hibernate) | Boot 4.1 | All domains | Storing members, posts, comments and other domain data |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | Sessions, rate limits, views, cache | Lets multiple pods share sessions, and decides concurrent requests with a single Redis script |
-| Flyway | Boot 4.1 | Database | Manages the schema as migrations V1~V10, applied at startup |
+| Flyway | Boot 4.1 | Database | Manages the schema as migrations V1~V12, applied at startup |
 | commonmark-java (+ GFM extensions) | 0.30.0 | Body rendering | Markdown → HTML: tables, strikethrough, task lists, autolinks, heading anchors |
 | OWASP Java HTML Sanitizer | 20260924.2 | Body sanitizing | Sanitizes rendered HTML against an allow list to prevent XSS |
 | AWS SDK for Java (S3) | 2.55.12 | media | Uploads images and attachments to MinIO and S3 |
@@ -361,6 +364,8 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
 | v1.26.0 | 2026-10-08 | Home centered on MCP dev logs, AI connection guide | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.26.0) |
+| v1.25.2 | 2026-10-08 | Post list and detail queries moved into the post module (no behavior change) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.2) |
+| v1.25.1 | 2026-10-08 | Production DB switched to PostgreSQL with pgvector (deployment config) | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.1) |
 | v1.25.0 | 2026-10-08 | Optional AI feature consent on the sign-up screen | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.0) |
 | v1.24.0 | 2026-10-08 | Modern developer blog look | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.24.0) |
 | v1.23.2 | 2026-10-08 | Corrected the production mail account address | [View](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.2) |

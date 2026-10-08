@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import com.team.blog.support.IntegrationTest;
 
-/** 050: AI 연결 안내 화면과 첫 화면 설명에 슬로건이 들어간다. */
+/** 051: AI 연결 안내 화면과 첫 화면 설명에 슬로건이 들어간다. */
 class McpGuidePageTest extends IntegrationTest {
 
     @Test
