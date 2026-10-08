@@ -63,7 +63,7 @@ export function repeatsTitle(title, md) {
 }
 export function prepublishChecks(p) {
     const items = [];
-    const images = bodyImages(p.contentMd);
+    const images = bodyImages(outsideFences(p.contentMd));
     const noAlt = images.filter((i) => !i.alt.trim()).length;
     const fences = codeFences(p.contentMd);
     const empty = emptyLinks(p.contentMd);

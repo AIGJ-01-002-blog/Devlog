@@ -3,6 +3,7 @@ package com.team.blog.export;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,6 +58,9 @@ class ExportTest extends IntegrationTest {
         Session s = signup(uniqueLogin("export"));
         long pub = newPost(s, "초안", "");
         publish(s, pub, "JPA: N+1 정리", "## 문제\n지연 로딩", List.of("jpa", "spring"));
+        long sid = read(s.http().perform(asJson(post("/api/me/series"), Map.of("name", "JPA 입문"))).andExpect(status().isOk())
+                .andReturn()).path("id").asLong();
+        s.http().perform(asJson(put("/api/posts/" + pub + "/series"), Map.of("seriesId", sid))).andExpect(status().is2xxSuccessful());
         newPost(s, "쓰는 중", "아직");
         long trashed = newPost(s, "지울 글", "x");
         jdbc.update("UPDATE post SET deleted_at = now() WHERE id = ?", trashed);
@@ -68,12 +72,12 @@ class ExportTest extends IntegrationTest {
         String published = files.entrySet().stream().filter(e -> e.getKey().startsWith("posts/")).findFirst().orElseThrow().getValue();
         assertThat(files.keySet()).anyMatch(n -> n.matches("posts/\\d{4}-\\d{2}-\\d{2}-" + pub + "-JPA-N\\+1-정리\\.md"));
         assertThat(published).startsWith("---\ntitle: \"JPA: N+1 정리\"\n")
-                .contains("status: published\n", "tags: [\"jpa\", \"spring\"]\n", "summary: \"짧은 \\\"소개\\\"\"\n",
+                .contains("status: published\n", "tags: [\"jpa\", \"spring\"]\n", "series: \"JPA 입문\"\n", "summary: \"짧은 \\\"소개\\\"\"\n",
                         "/@" + s.handle() + "/posts/" + pub + "\"\n")
                 .endsWith("---\n\n## 문제\n지연 로딩\n");
         assertThat(files.keySet()).anyMatch(n -> n.startsWith("drafts/") && n.endsWith("-쓰는-중.md"));
         assertThat(String.join("", files.values())).doesNotContain("지울 글");
-        assertThat(files.get("README.md")).contains("글 2개", "— 임시글");
+        assertThat(files.get("README.md")).contains("글 2개", "— 임시글", "- [JPA: N+1 정리](<posts/");
     }
 
     @Test

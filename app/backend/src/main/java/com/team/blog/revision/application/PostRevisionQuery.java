@@ -2,11 +2,11 @@ package com.team.blog.revision.application;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.team.blog.post.query.AuthorPostQuery;
 import com.team.blog.shared.error.NotFoundException;
 
 /**
@@ -16,9 +16,11 @@ import com.team.blog.shared.error.NotFoundException;
 @Service
 public class PostRevisionQuery {
     private final JdbcTemplate jdbc;
+    private final AuthorPostQuery posts;
 
-    public PostRevisionQuery(JdbcTemplate jdbc) {
+    public PostRevisionQuery(JdbcTemplate jdbc, AuthorPostQuery posts) {
         this.jdbc = jdbc;
+        this.posts = posts;
     }
 
     /** 목록 한 줄. 본문 대신 글자 수만 보낸다. */
@@ -46,8 +48,6 @@ public class PostRevisionQuery {
     }
 
     private void requireOwn(long memberId, long postId) {
-        Optional<Long> found = jdbc.query("SELECT id FROM post WHERE id = ? AND author_id = ? AND deleted_at IS NULL",
-                (rs, i) -> rs.getLong(1), postId, memberId).stream().findFirst();
-        if (found.isEmpty()) throw new NotFoundException();
+        if (!posts.owns(memberId, postId)) throw new NotFoundException();
     }
 }

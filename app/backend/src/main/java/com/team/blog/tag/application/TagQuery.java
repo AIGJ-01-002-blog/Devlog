@@ -1,7 +1,11 @@
 package com.team.blog.tag.application;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +53,22 @@ public class TagQuery {
     public List<String> tagsOf(long postId) {
         return Columns.strings(jdbc, "SELECT t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = ? ORDER BY pt.position",
                 postId);
+    }
+
+    /** 여러 글의 태그를 한 번에 (056 내보내기). 글마다 입력한 순서대로, 태그 없는 글은 빠진다. */
+    public Map<Long, List<String>> tagsOf(Collection<Long> postIds) {
+        Map<Long, List<String>> byPost = new LinkedHashMap<>();
+        if (postIds.isEmpty()) return byPost;
+        jdbc.query(con -> {
+            var ps = con.prepareStatement("""
+                    SELECT pt.post_id, t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id
+                    WHERE pt.post_id = ANY (?) ORDER BY pt.post_id, pt.position""");
+            ps.setArray(1, con.createArrayOf("bigint", postIds.toArray()));
+            return ps;
+        }, rs -> {
+            byPost.computeIfAbsent(rs.getLong(1), k -> new ArrayList<>()).add(rs.getString(2));
+        });
+        return byPost;
     }
 
     /** 태그 페이지 상단의 공개 글 수. 없는 태그는 0이다. */

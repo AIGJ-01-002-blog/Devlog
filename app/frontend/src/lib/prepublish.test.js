@@ -20,6 +20,12 @@ describe('발행 전 점검 (057)', () => {
         expect(items.some((c) => c.id === 'heading')).toBe(true);
         expect(items.find((c) => c.id === 'links')?.level).toBe('warn');
     });
+    it('코드 블록 안 사진 문법은 세지 않는다', () => {
+        const items = prepublishChecks({ ...base, contentMd: '```md\n![](https://x.test/a.png)\n```\n![화면](https://x.test/b.png)' });
+        expect(items.find((c) => c.id === 'alt')?.level).toBe('ok');
+        const onlyCode = prepublishChecks({ ...base, contentMd: '```md\n![](https://x.test/a.png)\n```' });
+        expect(onlyCode.some((c) => c.id === 'alt')).toBe(false);
+    });
     it('썸네일을 없애면 사진이 있어도 대표 사진이 없다', () => {
         const items = prepublishChecks({ ...base, thumbnail: { kind: 'none' }, contentMd: '![a](https://x.test/a.png)' });
         expect(items.find((c) => c.id === 'thumbnail')?.level).toBe('info');

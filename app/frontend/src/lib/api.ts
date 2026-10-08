@@ -77,13 +77,44 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   if (res.status === 204) return undefined as T
   const text = await res.text()
   const data = text ? safeJson(text) : null
-  if (!res.ok) {
-    const body = (data ?? {}) as Partial<{ code: string; message: string; errors: FieldError[]; details: unknown }>
-    const retry = res.headers.get('Retry-After')
-    throw new ApiError(res.status, body.code ?? `HTTP_${res.status}`, body.message ?? '잠시 후 다시 시도해 주세요.',
-      body.errors ?? [], body.details ?? null, retry ? Number(retry) : null)
-  }
+  if (!res.ok) throw errorOf(res, data)
   return data as T
+}
+
+/** 파일로 받는 GET (056 내보내기). 오류는 {@link api}와 같은 ApiError로 던진다. */
+export async function apiFile(path: string): Promise<{ blob: Blob; fileName: string | null }> {
+  let res: Response
+  try {
+    res = await fetch(path, { credentials: 'same-origin' })
+  } catch {
+    throw new ApiError(0, 'NETWORK', '네트워크에 연결할 수 없어요.')
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw errorOf(res, text ? safeJson(text) : null)
+  }
+  return { blob: await res.blob(), fileName: attachmentName(res.headers.get('Content-Disposition')) }
+}
+
+/** Content-Disposition의 파일 이름. filename*=UTF-8''…(RFC 5987)을 먼저 본다. */
+export function attachmentName(header: string | null): string | null {
+  if (!header) return null
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(header)?.[1]
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded.trim())
+    } catch {
+      // 잘못 인코딩된 값이면 아래의 filename=을 쓴다
+    }
+  }
+  return /filename="?([^";]+)"?/i.exec(header)?.[1] ?? null
+}
+
+function errorOf(res: Response, data: unknown): ApiError {
+  const body = (data ?? {}) as Partial<{ code: string; message: string; errors: FieldError[]; details: unknown }>
+  const retry = res.headers.get('Retry-After')
+  return new ApiError(res.status, body.code ?? `HTTP_${res.status}`, body.message ?? '잠시 후 다시 시도해 주세요.',
+    body.errors ?? [], body.details ?? null, retry ? Number(retry) : null)
 }
 
 function safeJson(text: string): unknown {

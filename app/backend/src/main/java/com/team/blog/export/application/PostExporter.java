@@ -3,7 +3,6 @@ package com.team.blog.export.application;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,10 +13,14 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.team.blog.account.application.MemberQueryService;
+import com.team.blog.post.query.AuthorPostQuery;
+import com.team.blog.series.application.SeriesQuery;
 import com.team.blog.shared.config.BlogProperties;
+import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.tag.application.TagQuery;
 
 /**
  * 내 글 내보내기 (056). 휴지통에 없는 내 글을 글마다 Markdown 파일 하나로 묶어 zip으로 준다.
@@ -26,11 +29,17 @@ import com.team.blog.shared.config.BlogProperties;
  */
 @Service
 public class PostExporter {
-    private final JdbcTemplate jdbc;
+    private final AuthorPostQuery posts;
+    private final TagQuery tags;
+    private final SeriesQuery series;
+    private final MemberQueryService members;
     private final String baseUrl;
 
-    public PostExporter(JdbcTemplate jdbc, BlogProperties props) {
-        this.jdbc = jdbc;
+    public PostExporter(AuthorPostQuery posts, TagQuery tags, SeriesQuery series, MemberQueryService members, BlogProperties props) {
+        this.posts = posts;
+        this.tags = tags;
+        this.series = series;
+        this.members = members;
         String b = props.site().baseUrl() == null ? "" : props.site().baseUrl();
         this.baseUrl = b.endsWith("/") ? b.substring(0, b.length() - 1) : b;
     }
@@ -40,25 +49,17 @@ public class PostExporter {
 
     /** 내보낼 글이 몇 개인지 (화면 안내용). */
     public int count(long memberId) {
-        Integer n = jdbc.queryForObject("SELECT count(*) FROM post WHERE author_id = ? AND deleted_at IS NULL", Integer.class, memberId);
-        return n == null ? 0 : n;
+        return posts.liveCount(memberId);
     }
 
     public void writeZip(long memberId, OutputStream out) throws IOException {
-        String handle = jdbc.queryForObject("SELECT handle FROM member WHERE id = ?", String.class, memberId);
-        List<Row> rows = jdbc.query("""
-                SELECT p.id, p.title, p.content_md, p.summary, p.status, p.visibility, p.created_at, p.published_at, p.edited_at,
-                       s.name AS series
-                FROM post p
-                LEFT JOIN series_post sp ON sp.post_id = p.id
-                LEFT JOIN series s ON s.id = sp.series_id
-                WHERE p.author_id = ? AND p.deleted_at IS NULL
-                ORDER BY COALESCE(p.published_at, p.created_at), p.id
-                """, (rs, i) -> new Row(rs.getLong("id"), rs.getString("title"), rs.getString("content_md"),
-                rs.getString("summary"), rs.getString("status"), rs.getString("visibility"),
-                instant(rs.getTimestamp("created_at")), instant(rs.getTimestamp("published_at")),
-                instant(rs.getTimestamp("edited_at")), rs.getString("series")), memberId);
-        Map<Long, List<String>> tags = tagsOf(memberId);
+        String handle = members.findById(memberId).map(MemberQueryService.MemberSummary::handle).orElseThrow(NotFoundException::new);
+        List<AuthorPostQuery.Source> sources = posts.all(memberId);
+        List<Long> ids = sources.stream().map(AuthorPostQuery.Source::id).toList();
+        Map<Long, String> seriesNames = series.seriesNamesOf(ids);
+        Map<Long, List<String>> tagNames = tags.tagsOf(ids);
+        List<Row> rows = sources.stream().map(p -> new Row(p.id(), p.title(), p.contentMd(), p.summary(), p.status(), p.visibility(),
+                p.createdAt(), p.publishedAt(), p.editedAt(), seriesNames.get(p.id()))).toList();
 
         try (ZipOutputStream zip = new ZipOutputStream(out, StandardCharsets.UTF_8)) {
             Set<String> used = new HashSet<>();
@@ -66,23 +67,13 @@ public class PostExporter {
             for (Row r : rows) {
                 boolean published = "PUBLISHED".equals(r.status());
                 String name = unique((published ? "posts/" : "drafts/") + fileName(r), used);
-                put(zip, name, markdown(r, tags.getOrDefault(r.id(), List.of()), handle, published));
-                index.add("- [" + (r.title().isBlank() ? "(제목 없음)" : r.title().replace("]", "\\]")) + "](" + name + ")"
+                put(zip, name, markdown(r, tagNames.getOrDefault(r.id(), List.of()), handle, published));
+                // 파일 이름에 괄호·공백이 들어가도 링크가 끊기지 않게 <주소>로 감싼다.
+                index.add("- [" + (r.title().isBlank() ? "(제목 없음)" : r.title().replace("]", "\\]")) + "](<" + name + ">)"
                         + (published ? "" : " — 임시글"));
             }
             put(zip, "README.md", readme(handle, rows.size(), index));
         }
-    }
-
-    private Map<Long, List<String>> tagsOf(long memberId) {
-        return jdbc.query("""
-                SELECT pt.post_id, t.name FROM post_tag pt
-                JOIN tag t ON t.id = pt.tag_id
-                JOIN post p ON p.id = pt.post_id
-                WHERE p.author_id = ? AND p.deleted_at IS NULL
-                ORDER BY pt.post_id, pt.position
-                """, (rs, i) -> Map.entry(rs.getLong(1), rs.getString(2)), memberId).stream()
-                .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
     }
 
     String markdown(Row r, List<String> tags, String handle, boolean published) {
@@ -148,9 +139,5 @@ public class PostExporter {
         zip.putNextEntry(new ZipEntry(name));
         zip.write(text.getBytes(StandardCharsets.UTF_8));
         zip.closeEntry();
-    }
-
-    private static Instant instant(Timestamp t) {
-        return t == null ? null : t.toInstant();
     }
 }

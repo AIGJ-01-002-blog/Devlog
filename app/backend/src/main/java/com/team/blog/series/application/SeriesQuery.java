@@ -2,7 +2,10 @@ package com.team.blog.series.application;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -66,6 +69,22 @@ public class SeriesQuery {
         String condition() {
             return mine ? OWNER_CONDITION : friend ? PostAccessPolicy.FRIENDS_LIST_CONDITION : PostAccessPolicy.PUBLIC_LIST_CONDITION;
         }
+    }
+
+    /** 여러 글이 들어 있는 시리즈 이름 (056 내보내기). 시리즈에 없는 글은 빠진다. */
+    public Map<Long, String> seriesNamesOf(Collection<Long> postIds) {
+        Map<Long, String> byPost = new HashMap<>();
+        if (postIds.isEmpty()) return byPost;
+        jdbc.query(con -> {
+            var ps = con.prepareStatement("""
+                    SELECT sp.post_id, s.name FROM series_post sp JOIN series s ON s.id = sp.series_id
+                    WHERE sp.post_id = ANY (?)""");
+            ps.setArray(1, con.createArrayOf("bigint", postIds.toArray()));
+            return ps;
+        }, rs -> {
+            byPost.put(rs.getLong(1), rs.getString(2));
+        });
+        return byPost;
     }
 
     /** 블로그의 시리즈 탭. 최근 수정 순. 남에게는 읽을 수 있는 글이 없는 시리즈를 숨긴다 (US2-3). */

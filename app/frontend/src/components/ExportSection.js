@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { downloadExport, exportErrorText, exportSummary } from '../lib/export';
 /**
  * 내 글 내보내기 (056). Crowfoot의 Markdown 내보내기처럼, 내 글을 언제든 들고 나갈 수 있게 한다.
  * 받는 동안 버튼을 막고, 요청 제한(10분 5번)이나 오류는 글로 알린다.
@@ -10,29 +10,17 @@ export function ExportSection() {
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState(null);
     useEffect(() => {
-        api('/api/me/export').then((r) => setCount(r.posts)).catch(() => setCount(null));
+        exportSummary().then((r) => setCount(r.posts)).catch(() => setCount(null));
     }, []);
     async function download() {
         setBusy(true);
         setMessage(null);
         try {
-            const res = await fetch('/api/me/export.zip', { credentials: 'same-origin' });
-            if (!res.ok) {
-                const text = res.status === 429 ? '잠시 뒤에 다시 받아 주세요. 10분에 5번까지 받을 수 있어요.' : '내보내기 파일을 만들지 못했어요.';
-                setMessage({ ok: false, text });
-                return;
-            }
-            const name = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? 'devlog-export.zip';
-            const url = URL.createObjectURL(await res.blob());
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = name;
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            const name = await downloadExport();
             setMessage({ ok: true, text: `${name} 파일을 받았어요.` });
         }
-        catch {
-            setMessage({ ok: false, text: '연결이 끊겨 받지 못했어요. 다시 시도해 주세요.' });
+        catch (e) {
+            setMessage({ ok: false, text: exportErrorText(e) });
         }
         finally {
             setBusy(false);
