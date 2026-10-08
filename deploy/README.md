@@ -135,6 +135,23 @@ kubectl -n blog create job pg-backup-now --from=cronjob/pg-backup   # 지금 바
 #   gzip -dc /backup/blog-<날짜>.sql.gz | psql -h postgres -d blog -v ON_ERROR_STOP=1
 ```
 
+#### 1.24.0 이전에 만든 클러스터를 1.24.1 이상으로 올릴 때
+
+1.24.1부터 DB 이미지가 `postgres:17-alpine`(사용자 UID 70)에서 `pgvector/pgvector`(Debian, UID 999)로 바뀌었다. 기존 `data-postgres-0` 볼륨은 UID 70 소유라 그대로 쓰면 PostgreSQL이 데이터 디렉터리 소유권 검사에서 멈추고, 문자 정렬 라이브러리(musl→glibc)도 달라 인덱스가 어긋날 수 있다. 기존 볼륨은 재사용하지 말고 덤프로 옮긴다. 새로 설치하는 클러스터는 이 절차가 필요 없다.
+
+```bash
+# 1) 올리기 전에(옛 이미지 그대로) 백업을 만들고 끝날 때까지 기다린다
+kubectl -n blog create job pg-backup-before-1241 --from=cronjob/pg-backup
+kubectl -n blog wait --for=condition=complete job/pg-backup-before-1241 --timeout=600s
+# 2) 옛 DB와 그 볼륨만 지운다(pg-backup 볼륨은 남는다)
+kubectl -n blog delete statefulset postgres
+kubectl -n blog delete pvc data-postgres-0
+# 3) 새 버전을 적용하면 새 볼륨으로 빈 DB가 뜬다
+kubectl apply -k deploy/k8s/overlays/selfhosted
+kubectl -n blog rollout status statefulset/postgres --timeout=300s
+# 4) 위 "복구" 명령으로 1)의 덤프(blog-<날짜>.sql.gz 중 가장 최근 것)를 넣는다
+```
+
 ## 운영 서버 준비 (Oracle Cloud 무료 VM)
 
 1. Oracle Cloud에서 인스턴스 생성: 이미지 Ubuntu 24.04, 모양 `VM.Standard.A1.Flex`(Ampere, 무료 범위 4 OCPU·24GB 안에서 2 OCPU·12GB 권장), SSH 키 등록.
