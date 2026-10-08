@@ -6,6 +6,14 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.24.1] - 2026-10-08
+
+운영(selfhosted) DB를 pgvector가 들어 있는 PostgreSQL로 바꿨다.
+
+### 변경
+- 서버 안 PostgreSQL 이미지를 `postgres:17-alpine`에서 `pgvector/pgvector:0.8.7-pg17-bookworm`으로 바꿨다. 글 임베딩(pgvector)과 부분 일치 검색 인덱스(pg_trgm)를 운영 DB에서 바로 만들 수 있다. 학교 공용 DB(Crowfoot)는 확장 생성 권한이 없어 pg_trgm도 만들지 못했으므로 운영 DB로 쓰지 않는다
+- 운영 서버에 아직 데이터가 없을 때 바꿔 두는 것이다. 이미 alpine 이미지로 데이터를 만든 클러스터라면 pg_dump로 옮긴다(문자 정렬 라이브러리가 달라 그대로 붙이면 인덱스가 어긋날 수 있다)
+
 ## [1.24.0] - 2026-10-08
 
 모던 개발 블로그 화면 (spec 048). velog를 닮은 화면에서 devlog만의 모습으로 바꿨다.
