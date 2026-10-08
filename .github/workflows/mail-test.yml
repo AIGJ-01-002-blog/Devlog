@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      SMTP_USERNAME: devlogauth@gmail.com
+      SMTP_USERNAME: devlogaip@gmail.com
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
     steps:
       - name: 메일 서버 접속 점검(비밀번호 사용 안 함)

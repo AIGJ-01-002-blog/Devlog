@@ -51,7 +51,7 @@ selfhosted (기본):
 
 ```bash
 deploy/scripts/gen-secret-env.sh selfhosted   # DB·Redis·MinIO 비밀번호를 임의 값으로 채운 secret.env (커밋 금지)
-# secret.env의 GITHUB_CLIENT_ID/SECRET(필수), SMTP_PASSWORD(운영 Gmail devlogauth@gmail.com의 앱 비밀번호)와 SMTP_HOST=smtp.gmail.com을 채운다(비워 두면 메일은 보내지 않고 보관만)
+# secret.env의 GITHUB_CLIENT_ID/SECRET(필수), SMTP_PASSWORD(운영 Gmail devlogaip@gmail.com의 앱 비밀번호)와 SMTP_HOST=smtp.gmail.com을 채운다(비워 두면 메일은 보내지 않고 보관만)
 # 도메인은 devlog.life (app.env의 SITE_BASE_URL·IMAGE_PUBLIC_BASE_URL, kustomization.yaml의 ingress host)
 kubectl apply -k deploy/k8s/overlays/selfhosted
 kubectl -n blog rollout status deploy/blog-app
@@ -95,7 +95,7 @@ kubectl -n blog rollout status deploy/blog-app
 |---|---|---|---|
 | Secret | `KUBECONFIG` | 클러스터 접속 파일 내용 | 배포 실패 |
 | Secret | `BLOG_SECRET_ENV` | 고른 overlay의 `secret.env` 내용 전체 (Environment Secret으로 overlay마다 따로 둘 수 있음) | 배포 실패 |
-| Secret | `SMTP_PASSWORD` | 운영 Gmail(devlogauth@gmail.com)의 앱 비밀번호 16자리. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어쓰고 `SMTP_HOST=smtp.gmail.com`도 채워 발송을 켬 | 메일 안 감(인증 메일 보관만), 앱은 정상 기동 |
+| Secret | `SMTP_PASSWORD` | 운영 Gmail(devlogaip@gmail.com)의 앱 비밀번호 16자리. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어쓰고 `SMTP_HOST=smtp.gmail.com`도 채워 발송을 켬 | 메일 안 감(인증 메일 보관만), 앱은 정상 기동 |
 | Secret | `DISCORD_WEBHOOK_URL`, `DISCORD_PR_WEBHOOK_URL` | Discord 웹훅 주소 | 알림만 안 감 |
 | Secret | `TELEGRAM_BOT_TOKEN` | 텔레그램 @BotFather → `/newbot`이 준 토큰. `APP_TELEGRAM_BOT_TOKEN`이 없으면 앱 봇(023)도 이 봇을 쓴다 | 텔레그램 알림 안 감 |
 | Secret | `APP_TELEGRAM_BOT_TOKEN` | 사용자용 앱 봇(023)을 배포 알림 봇과 나눌 때만. 있으면 `BLOG_SECRET_ENV`의 `TELEGRAM_BOT_TOKEN`을 덮어씀 | 배포 알림 봇을 같이 씀 |
