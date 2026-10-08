@@ -6,6 +6,12 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [Unreleased]
+
+### 배포
+- 클러스터 안 PostgreSQL을 매일 03:30(KST) 백업하고 7일치를 남긴다(`pg-backup` CronJob). 빈 덤프는 실패로 처리한다
+- 배포 문서에 이중화·무중단 배포 구성과 근거, 백업·복구 방법을 정리했다
+
 ## [1.22.0] - 2026-10-08
 
 글 짧은 소개 (spec 045).

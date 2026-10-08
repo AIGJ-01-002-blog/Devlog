@@ -13,6 +13,13 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: blog-app
+    # 매일 DB 백업(pg-backup)은 PostgreSQL에만 접속한다
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: pg-backup
+      ports:
+        - port: 5432
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
