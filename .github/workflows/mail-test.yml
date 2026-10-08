@@ -1,13 +1,11 @@
 # Gmail 앱 비밀번호(Secret SMTP_PASSWORD)가 맞는지 시험 메일 1통으로 확인한다.
 # 받는 사람은 보내는 계정 자신뿐이다. 비밀번호는 로그에 찍지 않는다.
-# 수동 실행(Actions → 메일 시험 발송 → Run workflow). 이 파일을 고친 push에서도 한 번 돈다.
+# 수동 실행(Actions → 메일 시험 발송 → Run workflow).
+# 참고: 2026-10-08 GitHub 러너(Azure)에서는 Gmail이 AUTH 직후 응답 없이 연결을 끊었다(데이터센터 IP 차단으로 추정). 그 경우 비밀번호 판정 전 단계다.
 name: 메일 시험 발송
 
 on:
   workflow_dispatch:
-  push:
-    branches: ['claude/**']
-    paths: ['.github/workflows/mail-test.yml']
 
 permissions:
   contents: read
@@ -78,5 +76,5 @@ jobs:
                   continue
               print(f"성공({name}): {user} 로 시험 메일을 보냈습니다")
               sys.exit(0)
-          print("::error::두 포트 모두 접속하지 못했습니다(비밀번호 확인 전 단계)")
+          print("::error::두 포트 모두 실패했습니다. 로그인(AUTH) 중 끊겼다면 Gmail이 이 접속 위치를 막은 것이고 비밀번호가 틀렸다는 뜻은 아닙니다")
           sys.exit(1)
