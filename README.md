@@ -358,6 +358,7 @@ npm run dev        # http://localhost:5173
 
 | 버전 | 날짜 | 주요 내용 | 릴리스 노트 |
 | --- | --- | --- | --- |
+| v1.25.1 | 2026-10-08 | 운영 DB를 pgvector가 들어 있는 PostgreSQL로 바꾸기(배포 구성) | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.1) |
 | v1.25.0 | 2026-10-08 | 가입 화면에서 AI 기능 동의를 선택 항목으로 받기 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.25.0) |
 | v1.24.0 | 2026-10-08 | 모던 개발 블로그 화면 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.24.0) |
 | v1.23.2 | 2026-10-08 | 운영 메일 계정 주소 바로잡기 | [보기](https://github.com/AIGJ-01-002-blog/docs/releases/tag/v1.23.2) |
