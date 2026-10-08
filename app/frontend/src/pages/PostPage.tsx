@@ -137,12 +137,17 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
           {post.mine && (
             <span className="post-owner-actions">
               <Link to={`/write/${post.id}`} className="btn btn-text" data-tip="에디터에서 이 글 고치기">수정</Link>
-              <select aria-label="공개 범위" data-tip="누가 이 글을 볼 수 있는지 바로 바꿔요" value={post.visibility}
-                      onChange={(e) => changeVisibility(e.target.value as Visibility)}>
-                <option value="PUBLIC">🌐 전체 공개</option>
-                <option value="FRIENDS">👥 친구에게만</option>
-                <option value="PRIVATE">🔒 비공개</option>
-              </select>
+              {/* 옆의 수정·삭제와 같은 글자 버튼 모양. 누르면 기기 기본 선택 메뉴가 떠서 휴대폰에서도 고르기 쉽다 */}
+              <span className="visibility-picker">
+                <select aria-label="공개 범위" data-tip="누가 이 글을 볼 수 있는지 바로 바꿔요" value={post.visibility}
+                        onChange={(e) => changeVisibility(e.target.value as Visibility)}>
+                  <option value="PUBLIC">🌐 전체 공개</option>
+                  <option value="FRIENDS">👥 친구에게만</option>
+                  <option value="PRIVATE">🔒 비공개</option>
+                </select>
+                <svg className="visibility-chevron" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" fill="none"
+                     stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+              </span>
               <button type="button" className="btn btn-text danger" data-tip="휴지통으로 옮겨요. 30일 안에 되돌릴 수 있어요" onClick={remove}>삭제</button>
             </span>
           )}

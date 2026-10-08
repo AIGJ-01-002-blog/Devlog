@@ -31,3 +31,7 @@ export function compactNumber(n) {
         return `${(Math.floor(n / 1_000) / 10).toString()}만`;
     return n.toLocaleString('ko-KR');
 }
+/** 카드처럼 좁은 곳의 수: 99를 넘으면 99+ (정확한 수는 툴팁으로 보인다) */
+export function cappedCount(n) {
+    return n > 99 ? '99+' : String(Math.max(0, n));
+}

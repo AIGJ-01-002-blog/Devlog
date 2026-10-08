@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { coverGlyph, coverTone, PostCard } from './PostCard';
 const card = (over = {}) => ({
     id: 7, url: '/@minseo/posts/7', title: '운영체제 기초', excerpt: '요약', thumbnailUrl: null, firstPublicAt: '2026-10-08T00:00:00Z',
-    publishedAt: '2026-10-08T00:00:00Z', visibility: 'PUBLIC', commentCount: 0, likeCount: 0,
+    publishedAt: '2026-10-08T00:00:00Z', visibility: 'PUBLIC', commentCount: 0, likeCount: 0, viewCount: 0, tags: [],
     author: { id: 1, handle: 'minseo', nickname: '민서', profileImageUrl: null }, ...over,
 });
 async function render(c) {
@@ -47,5 +47,29 @@ describe('PostCard 하이브리드 검색 (054)', () => {
         expect(badge.getAttribute('title')).toContain('내용이 비슷해');
         const exact = await render(card({ snippetHtml: '<mark>롤백</mark> 전략', similar: false }));
         expect(exact.querySelector('.badge-similar')).toBeNull();
+    });
+});
+describe('PostCard 태그·조회·댓글 (068)', () => {
+    it('태그는 3개까지, 넘치면 …에 나머지를 툴팁으로', async () => {
+        const few = await render(card({ tags: ['spring', 'jpa'] }));
+        expect([...few.querySelectorAll('.card-tag')].map((a) => a.textContent)).toEqual(['#spring', '#jpa']);
+        expect(few.querySelector('.card-tag-more')).toBeNull();
+        const many = await render(card({ tags: ['a', 'b', 'c', 'd', 'e'] }));
+        expect(many.querySelectorAll('.card-tag')).toHaveLength(3);
+        expect(many.querySelector('.card-tag')?.getAttribute('href')).toBe('/tags/a');
+        const more = many.querySelector('.card-tag-more');
+        expect(more.textContent).toBe('…');
+        expect(more.getAttribute('data-tip')).toBe('#d #e');
+        const none = await render(card());
+        expect(none.querySelector('.card-tags')).toBeNull();
+    });
+    it('조회·댓글·좋아요는 99를 넘으면 99+, 정확한 수는 툴팁으로', async () => {
+        const el = await render(card({ viewCount: 12950, commentCount: 100, likeCount: 99 }));
+        const shown = (cls) => el.querySelector(`${cls} [aria-hidden="true"]`)?.textContent;
+        expect(shown('.card-view')).toBe('99+');
+        expect(shown('.card-comment')).toBe('99+');
+        expect(shown('.card-like')).toBe('99');
+        expect(el.querySelector('.card-view')?.getAttribute('data-tip')).toBe('조회 12,950회');
+        expect(el.querySelector('.card-comment .sr-only')?.textContent).toBe('댓글 100개');
     });
 });

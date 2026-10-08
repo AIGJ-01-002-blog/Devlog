@@ -25,9 +25,13 @@ class NormalizedSchemaTest extends IntegrationTest {
     @Autowired ImageUrls imageUrls;
 
     long publish(Session s, String title, String content) throws Exception {
+        return publish(s, title, content, List.of());
+    }
+
+    long publish(Session s, String title, String content, List<String> tags) throws Exception {
         long id = read(s.http().perform(asJson(post("/api/posts"), Map.of())).andExpect(status().isCreated()).andReturn()).path("id").asLong();
         s.http().perform(asJson(post("/api/posts/" + id + "/publish"),
-                Map.of("title", title, "contentMd", content, "visibility", "PUBLIC", "baseVersion", 0, "tags", List.of())))
+                Map.of("title", title, "contentMd", content, "visibility", "PUBLIC", "baseVersion", 0, "tags", tags)))
                 .andExpect(status().isOk());
         return id;
     }
@@ -93,7 +97,7 @@ class NormalizedSchemaTest extends IntegrationTest {
     void 조회수_좋아요_댓글_수는_행을_세어_보여_준다() throws Exception {
         Session s = signup(uniqueLogin("stat"));
         Session fan = signup(uniqueLogin("statfan"));
-        long id = publish(s, "통계", "본문");
+        long id = publish(s, "통계", "본문", List.of("자바", "spring", "db", "redis"));
         jdbc.update("INSERT INTO post_view (post_id) SELECT ?::bigint FROM generate_series(1, 7)", id);
         jdbc.update("INSERT INTO post_like (post_id, member_id) VALUES (?, ?)", id, fan.memberId());
         jdbc.update("INSERT INTO comment (post_id, author_id, content) VALUES (?, ?, '좋아요')", id, fan.memberId());
@@ -106,6 +110,9 @@ class NormalizedSchemaTest extends IntegrationTest {
         JsonNode card = read(mvc.perform(get("/api/members/" + s.handle() + "/posts")).andReturn()).path("items").get(0);
         assertThat(card.path("likeCount").asInt()).isEqualTo(1);
         assertThat(card.path("commentCount").asInt()).isEqualTo(1);
+        // 카드에도 조회수와 태그(입력 순서 그대로, 전부)가 실린다
+        assertThat(card.path("viewCount").asLong()).isEqualTo(7);
+        assertThat(card.path("tags").valueStream().map(JsonNode::asString).toList()).containsExactly("자바", "spring", "db", "redis");
     }
 
     @Test

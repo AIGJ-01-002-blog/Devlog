@@ -1,5 +1,6 @@
 package com.team.blog.post.query;
 
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -29,9 +30,12 @@ import com.team.blog.shared.time.Times;
  */
 @Service
 public class PostCardQuery {
+    /** 카드 태그: 입력 순서대로 글마다 배열 하나 (같은 쿼리 안에서 읽어 목록당 쿼리 1번을 지킨다) */
+    private static final String TAGS =
+            "ARRAY(SELECT t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = p.id ORDER BY pt.position) AS tags";
     private static final String CARD_SELECT =
-            "SELECT p.id, p.title, p.first_public_at, p.published_at, p.visibility, s.comment_count, s.like_count, m.id AS author_id, m.handle, m.nickname, "
-            + PostSql.SUMMARY_SOURCE + ", " + PostSql.THUMBNAIL_KEY + ", " + PostSql.PROFILE_IMAGE_KEY
+            "SELECT p.id, p.title, p.first_public_at, p.published_at, p.visibility, s.comment_count, s.like_count, s.view_count, m.id AS author_id, m.handle, m.nickname, "
+            + PostSql.SUMMARY_SOURCE + ", " + PostSql.THUMBNAIL_KEY + ", " + PostSql.PROFILE_IMAGE_KEY + ", " + TAGS
             + " FROM post p JOIN member m ON m.id = p.author_id " + PostSql.STAT_JOIN + " " + PostSql.PROFILE_IMAGE_JOIN
             + " WHERE ";
 
@@ -136,9 +140,13 @@ public class PostCardQuery {
                 renderer.summary(rs.getString("summary"), rs.getString("content_head")), imageUrls.urlOf(rs.getString("thumbnail_key")),
                 instant(rs.getTimestamp("first_public_at")), rs.getTimestamp("published_at").toInstant(),
                 Visibility.valueOf(rs.getString("visibility")),
-                rs.getInt("comment_count"), rs.getInt("like_count"),
+                rs.getInt("comment_count"), rs.getInt("like_count"), rs.getLong("view_count"), tags(rs.getArray("tags")),
                 new PostCard.Author(rs.getLong("author_id"), handle, rs.getString("nickname"),
                         imageUrls.urlOf(rs.getString("profile_image_key"))));
+    }
+
+    private static List<String> tags(Array array) throws SQLException {
+        return array == null ? List.of() : List.of((String[]) array.getArray());
     }
 
     private static Instant instant(Timestamp t) {

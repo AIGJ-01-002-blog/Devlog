@@ -41,6 +41,9 @@ export interface Card {
   visibility: Visibility
   commentCount: number
   likeCount: number
+  viewCount: number
+  /** 입력 순서대로 전부. 카드는 앞 3개만 보인다 */
+  tags: string[]
   author: CardAuthor
   /** 검색 결과면 검색어 주변 문장 (mark 외 태그 없음, 014) */
   snippetHtml?: string | null
