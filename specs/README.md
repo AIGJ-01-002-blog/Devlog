@@ -49,6 +49,7 @@
 | [042-blog-about](./042-blog-about/spec.md) | 블로그 소개 탭 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 2 |
 | [043-social-links](./043-social-links/spec.md) | 블로그 소셜 정보 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 2 |
 | [044-author-social-links](./044-author-social-links/spec.md) | 글 아래 작성자 소셜 정보 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 2 |
+| [045-post-summary](./045-post-summary/spec.md) | 글 짧은 소개 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 5 |
 
 ## 여러 spec에 걸치는 문서
 

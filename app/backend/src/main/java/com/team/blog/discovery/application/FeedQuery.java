@@ -36,7 +36,7 @@ import com.team.blog.shared.time.Times;
 public class FeedQuery {
     private static final String CARD_SELECT =
             "SELECT p.id, p.title, p.first_public_at, p.published_at, p.visibility, s.comment_count, s.like_count, m.id AS author_id, m.handle, m.nickname, "
-            + PostSql.CONTENT_HEAD + ", " + PostSql.THUMBNAIL_KEY + ", " + PostSql.PROFILE_IMAGE_KEY
+            + PostSql.SUMMARY_SOURCE + ", " + PostSql.THUMBNAIL_KEY + ", " + PostSql.PROFILE_IMAGE_KEY
             + " FROM post p JOIN member m ON m.id = p.author_id " + PostSql.STAT_JOIN + " " + PostSql.PROFILE_IMAGE_JOIN
             + " WHERE ";
     /** 친구가 보는 블로그 목록 조건 (docs/06 §6-3). ix_post_blog_friends의 WHERE를 그대로 포함한다. */
@@ -269,7 +269,7 @@ public class FeedQuery {
         String handle = rs.getString("handle");
         long id = rs.getLong("id");
         return new Card(id, "/@" + handle + "/posts/" + id, rs.getString("title"),
-                renderer.excerpt(rs.getString("content_head")), imageUrls.urlOf(rs.getString("thumbnail_key")),
+                renderer.summary(rs.getString("summary"), rs.getString("content_head")), imageUrls.urlOf(rs.getString("thumbnail_key")),
                 instant(rs.getTimestamp("first_public_at")), rs.getTimestamp("published_at").toInstant(),
                 Visibility.valueOf(rs.getString("visibility")),
                 rs.getInt("comment_count"), rs.getInt("like_count"),

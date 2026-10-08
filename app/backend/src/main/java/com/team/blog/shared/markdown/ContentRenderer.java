@@ -158,6 +158,11 @@ public class ContentRenderer {
         }
     }
 
+    /** 목록 요약: 작성자가 쓴 짧은 소개(spec 045)가 있으면 그대로, 없으면 원문 앞부분으로 계산한다. */
+    public String summary(String written, String markdownHead) {
+        return written != null ? written : excerpt(markdownHead);
+    }
+
     /**
      * 목록 요약만 만든다 (V3: 요약을 저장하지 않고 content_md 앞부분으로 계산). HTML을 만들지 않아 가볍다.
      * 잘린 원문이라 코드 블록이 열린 채 끝나도 코드는 요약에서 빠지므로 결과가 안전하다.

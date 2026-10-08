@@ -7,8 +7,12 @@ package com.team.blog.post.infra;
 public final class PostSql {
     private PostSql() {}
 
-    /** 목록 요약용 원문 앞부분. 긴 글도 앞부분만 풀어 읽는다. */
-    public static final String CONTENT_HEAD = "left(p.content_md, 600) AS content_head";
+    /**
+     * 목록 요약 재료: 작성자가 쓴 짧은 소개(045)와, 소개가 없을 때만 원문 앞부분. 긴 글도 앞부분만 풀어 읽고,
+     * 소개가 있으면 본문을 읽지 않는다. ContentRenderer.summary(summary, content_head)로 요약을 만든다.
+     */
+    public static final String SUMMARY_SOURCE =
+            "p.summary, CASE WHEN p.summary IS NULL THEN left(p.content_md, 600) END AS content_head";
 
     /** 대표 사진: 본문 첫 사진(가장 작은 position)의 썸네일, 없으면 원본. */
     public static final String THUMBNAIL_KEY = """

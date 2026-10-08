@@ -50,12 +50,12 @@ public class RssFeed {
     }
 
     private List<Item> items(Long authorId) {
-        String sql = "SELECT p.id, p.title, p.first_public_at, m.handle, m.nickname, " + PostSql.CONTENT_HEAD
+        String sql = "SELECT p.id, p.title, p.first_public_at, m.handle, m.nickname, " + PostSql.SUMMARY_SOURCE
                 + " FROM post p JOIN member m ON m.id = p.author_id WHERE " + PostAccessPolicy.PUBLIC_LIST_CONDITION
                 + (authorId == null ? "" : " AND p.author_id = ?")
                 + " ORDER BY p.first_public_at DESC, p.id DESC LIMIT " + SIZE;
         Object[] args = authorId == null ? new Object[0] : new Object[] {authorId};
-        return jdbc.query(sql, (rs, i) -> new Item(rs.getLong("id"), rs.getString("title"), renderer.excerpt(rs.getString("content_head")),
+        return jdbc.query(sql, (rs, i) -> new Item(rs.getLong("id"), rs.getString("title"), renderer.summary(rs.getString("summary"), rs.getString("content_head")),
                 rs.getTimestamp("first_public_at").toInstant(), rs.getString("handle"), rs.getString("nickname")), args);
     }
 

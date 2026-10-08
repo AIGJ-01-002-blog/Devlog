@@ -54,7 +54,7 @@ public class PostController {
 
     public record ContentRequest(String title, String contentMd, Long baseVersion) {}
 
-    public record PublishRequest(String title, String contentMd, List<String> tags, String visibility, Long baseVersion) {}
+    public record PublishRequest(String title, String contentMd, String summary, List<String> tags, String visibility, Long baseVersion) {}
 
     public record VisibilityRequest(String visibility) {}
 
@@ -102,7 +102,7 @@ public class PostController {
                                                     @RequestHeader(name = "Idempotency-Key", required = false) String key,
                                                     HttpServletRequest request) {
         checkSize(request);
-        PublishCommand cmd = new PublishCommand(postId, me.id(), body.title(), body.contentMd(),
+        PublishCommand cmd = new PublishCommand(postId, me.id(), body.title(), body.contentMd(), body.summary(),
                 parseVisibility(body.visibility(), true), body.tags(), requireVersion(body.baseVersion()));
         return commands.publish(cmd, me.handle(), key);
     }

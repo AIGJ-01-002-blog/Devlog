@@ -45,6 +45,10 @@ public class Post {
     @Column(nullable = false)
     private long editVersion;
 
+    /** 작성자가 쓴 짧은 소개. null이면 목록이 본문 앞부분으로 요약한다 (spec 045). */
+    @Column(length = 150)
+    private String summary;
+
     private Instant publishedAt;
     private Instant firstPublicAt;
     private Instant editedAt;
@@ -90,10 +94,11 @@ public class Post {
      * 최초 발행과 다시 발행 (docs/05 §7 ⑦, §8).
      * @return 최초 발행이면 true
      */
-    public boolean publish(String title, String contentMd, Visibility visibility, long version, Instant now) {
+    public boolean publish(String title, String contentMd, String summary, Visibility visibility, long version, Instant now) {
         boolean first = status == PostStatus.DRAFT;
         this.title = title;
         this.contentMd = contentMd;
+        this.summary = summary;
         this.status = PostStatus.PUBLISHED;
         if (publishedAt == null) publishedAt = now;
         if (!first) editedAt = now;
@@ -132,6 +137,7 @@ public class Post {
     public long getAuthorId() { return authorId; }
     public String getTitle() { return title; }
     public String getContentMd() { return contentMd; }
+    public String getSummary() { return summary; }
     public PostStatus getStatus() { return status; }
     public Visibility getVisibility() { return visibility; }
     public long getEditVersion() { return editVersion; }

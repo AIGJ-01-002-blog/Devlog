@@ -241,7 +241,8 @@ public class PostCommandService {
         if (cmd.visibility() == null) {
             errors.add(new FieldErrorItem("visibility", "INVALID_VISIBILITY", "공개 범위를 골라 주세요."));
         }
-        PublishCommand cleaned = new PublishCommand(cmd.postId(), cmd.memberId(), in.title(), in.contentMd(),
+        String summary = PostInput.cleanSummary(cmd.summary(), errors);
+        PublishCommand cleaned = new PublishCommand(cmd.postId(), cmd.memberId(), in.title(), in.contentMd(), summary,
                 cmd.visibility(), cmd.tags() == null ? List.of() : cmd.tags(), cmd.baseVersion());
         extensions.forEach(e -> e.validate(cleaned, errors));
         if (!errors.isEmpty()) throw ApiException.validation(errors);
@@ -282,7 +283,7 @@ public class PostCommandService {
             Instant now = Times.now(clock);
             long version = gate(post, draft, cmd.baseVersion(), in, now, true);
             boolean wasPublic = post.getFirstPublicAt() != null;
-            boolean first = post.publish(in.title(), in.contentMd(), cmd.visibility(), version, now);
+            boolean first = post.publish(in.title(), in.contentMd(), cmd.summary(), cmd.visibility(), version, now);
             draft.ifPresent(drafts::delete);
             extensions.forEach(e -> e.onPublish(post, rendered, cmd));
             if (first) {
@@ -321,7 +322,7 @@ public class PostCommandService {
     private static String hash(PublishCommand c) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            for (String part : List.of(c.title(), c.contentMd(), String.valueOf(c.visibility()),
+            for (String part : List.of(c.title(), c.contentMd(), String.valueOf(c.summary()), String.valueOf(c.visibility()),
                     String.join("\u0001", c.tags()), String.valueOf(c.baseVersion()))) {
                 md.update(part.getBytes(StandardCharsets.UTF_8));
                 md.update((byte) 0);
