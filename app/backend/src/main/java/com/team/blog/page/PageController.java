@@ -21,6 +21,7 @@ import org.springframework.web.util.UriUtils;
 import com.team.blog.comment.application.CommentQuery;
 import com.team.blog.discovery.application.FeedQuery;
 import com.team.blog.follow.application.FollowQuery;
+import com.team.blog.shared.text.TextCleaner;
 import com.team.blog.trending.application.TrendingService;
 import com.team.blog.discovery.application.PostDetailQuery;
 import com.team.blog.post.access.Viewer;
@@ -309,7 +310,12 @@ public class PageController {
     /** 로그인이 필요하거나 개인적인 화면: 같은 껍데기, 수집 거부, 저장 안 함. React가 그린다. */
     @GetMapping({"/login", "/signup", "/signup/social", "/forgot-password", "/reset-password", "/verify-email", "/agreements", "/write", "/write/{id}", "/manage/posts", "/settings", "/notifications", "/feed", "/lists/liked", "/terms", "/privacy",
             "/settings/{section}"})
-    public ResponseEntity<String> app() {
+    public ResponseEntity<String> app(@PathVariable(required = false) String id, @PathVariable(required = false) String section) {
+        // 글 번호·설정 칸은 React가 주소에서 읽는다. 서버는 같은 껍데기만 준다
+        return appShell();
+    }
+
+    private ResponseEntity<String> appShell() {
         return html(HttpStatus.OK, shell.render(HeadMeta.privatePage(site.name(), null), "", Map.of("page", "app")),
                 CacheControl.noStore());
     }
@@ -324,7 +330,7 @@ public class PageController {
             return redirect(HttpStatus.FOUND, "/login?redirect=" + UriUtils.encodeQueryParam(back, java.nio.charset.StandardCharsets.UTF_8));
         }
         if (!me.isAdmin()) return notFound();
-        return app();
+        return appShell();
     }
 
     private ResponseEntity<String> notFound() {
@@ -368,7 +374,7 @@ public class PageController {
     private String absolute(String path) {
         if (path == null) return null;
         if (path.startsWith("http://") || path.startsWith("https://")) return path;
-        String base = site.baseUrl() == null ? "" : site.baseUrl().replaceAll("/+$", "");
+        String base = site.baseUrl() == null ? "" : TextCleaner.trimEnd(site.baseUrl(), '/');
         return base + path;
     }
 

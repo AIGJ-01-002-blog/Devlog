@@ -3,6 +3,8 @@ package com.team.blog.account.application;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.team.blog.account.infra.AuthTokens;
 import com.team.blog.account.infra.LoginAttempts;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.scheduling.JobLock;
 import com.team.blog.shared.security.SessionTerminator;
 import com.team.blog.shared.web.RateLimiter;
@@ -61,8 +64,7 @@ public class WithdrawalPurgeJob {
         int done = 0;
         long after = 0;
         while (true) {
-            List<Long> ids = jdbc.queryForList("SELECT id FROM member WHERE " + DUE + " AND id > ? ORDER BY id LIMIT " + BATCH,
-                    Long.class, after);
+            List<Long> ids = Columns.longs(jdbc, "SELECT id FROM member WHERE " + DUE + " AND id > ? ORDER BY id LIMIT " + BATCH, after);
             if (ids.isEmpty()) break;
             for (long id : ids) {
                 if (purgeOne(id)) done++;
@@ -78,24 +80,25 @@ public class WithdrawalPurgeJob {
 
     /** 회원 한 명. 그 사이 복구했으면 건너뛴다. */
     boolean purgeOne(long memberId) {
-        String email;
+        Optional<String> email;
         try {
-            email = tx.execute(s -> {
-                List<Long> locked = jdbc.queryForList("SELECT id FROM member WHERE id = ? AND " + DUE + " FOR UPDATE SKIP LOCKED",
-                        Long.class, memberId);
-                if (locked.isEmpty()) return null;
+            // 비어 있으면 그 사이 복구했거나 다른 실행이 잡고 있어 건너뛴다
+            email = Objects.requireNonNullElse(tx.execute(s -> {
+                List<Long> locked = Columns.longs(jdbc, "SELECT id FROM member WHERE id = ? AND " + DUE + " FOR UPDATE SKIP LOCKED",
+                        memberId);
+                if (locked.isEmpty()) return Optional.<String>empty();
                 // 로그인 수단 단계(50)가 지우기 전에 실패 횟수 키를 지울 이메일을 읽어 둔다
-                List<String> emails = jdbc.queryForList("SELECT email FROM auth_identity WHERE member_id = ? AND email IS NOT NULL",
-                        String.class, memberId);
+                List<String> emails = Columns.strings(jdbc, "SELECT email FROM auth_identity WHERE member_id = ? AND email IS NOT NULL",
+                        memberId);
                 steps.forEach(step -> step.purge(memberId));
-                return emails.isEmpty() ? "" : emails.getFirst();
-            });
+                return Optional.of(emails.isEmpty() ? "" : emails.getFirst());
+            }), Optional.empty());
         } catch (RuntimeException e) {
             log.warn("탈퇴 회원 정리에 실패해 다음에 다시 합니다 ({}): {}", memberId, e.getClass().getSimpleName());
             return false;
         }
-        if (email == null) return false;
-        forgetTransient(memberId, email);
+        if (email.isEmpty()) return false;
+        forgetTransient(memberId, email.get());
         return true;
     }
 

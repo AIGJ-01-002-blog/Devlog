@@ -16,6 +16,7 @@ import com.team.blog.post.access.ReadablePost;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
 import com.team.blog.post.infra.PostSql;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.markdown.ImageUrls;
 
 /**
@@ -90,8 +91,7 @@ public class SeriesQuery {
                 (rs, i) -> new Object[] {rs.getLong(1), rs.getString(2), rs.getString(3), rs.getTimestamp(4)},
                 s.ownerId(), slug).stream().findFirst().flatMap(row -> {
                     long id = (Long) row[0];
-                    List<Long> ids = jdbc.queryForList("SELECT post_id FROM series_post WHERE series_id = ? ORDER BY position",
-                            Long.class, id);
+                    List<Long> ids = Columns.longs(jdbc, "SELECT post_id FROM series_post WHERE series_id = ? ORDER BY position", id);
                     List<FeedQuery.Card> posts = feed.cards(ids, s.condition());
                     if (posts.isEmpty() && !s.mine()) return Optional.empty();
                     return Optional.of(new Detail(id, (String) row[1], (String) row[2], ((Timestamp) row[3]).toInstant(), s.mine(),

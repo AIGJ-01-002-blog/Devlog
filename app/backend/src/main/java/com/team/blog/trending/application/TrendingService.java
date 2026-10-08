@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -86,7 +87,8 @@ public class TrendingService {
                 String current = redis.opsForValue().get(CURRENT);
                 snapshot = current == null ? refresh() : Long.parseLong(current);
                 ids = load(snapshot);
-                if (ids == null) ids = load(snapshot = refresh()); // 지금 순위표가 막 만료됐다
+                // 지금 순위표가 막 만료됐다. 새로 만든 것까지 바로 사라졌으면 빈 목록이다
+                if (ids == null) ids = Objects.requireNonNullElseGet(load(snapshot = refresh()), List::of);
             } else {
                 snapshot = k[0];
                 ids = load(snapshot);

@@ -1,6 +1,7 @@
 package com.team.blog.account.infra.oauth;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,7 +31,7 @@ public class OAuth2LoginHandlers implements AuthenticationSuccessHandler, Authen
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
             throws IOException {
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
-        OAuth2User user = token.getPrincipal();
+        OAuth2User user = Objects.requireNonNull(token.getPrincipal(), "로그인한 사용자 정보가 없습니다");
         SocialProfile profile = switch (token.getAuthorizedClientRegistrationId()) {
             case "github" -> new SocialProfile(AuthProvider.GITHUB,
                     String.valueOf(user.getAttributes().get("id")),

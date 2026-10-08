@@ -22,7 +22,6 @@ public class TagNormalizer {
     private static final Pattern LEADING_HASH = Pattern.compile("^#+");
     private static final Pattern SPACES = Pattern.compile("[\\s\\p{Z}]+");
     private static final Pattern DASHES = Pattern.compile("-{2,}");
-    private static final Pattern EDGE_DASHES = Pattern.compile("^-+|-+$");
     private static final Pattern ALLOWED = Pattern.compile("^[가-힣a-z0-9._+#-]+$");
     private static final Pattern HAS_WORD = Pattern.compile("[가-힣a-z0-9]");
 
@@ -63,7 +62,7 @@ public class TagNormalizer {
         s = s.toLowerCase(Locale.ROOT);
         s = SPACES.matcher(s).replaceAll("-");
         s = DASHES.matcher(s).replaceAll("-");
-        return EDGE_DASHES.matcher(s).replaceAll("");
+        return TextCleaner.trim(s, '-');
     }
 
     /** ⑧ 형식 검사 (금칙어 제외). 자동완성 검색어와 주소에도 쓴다. */

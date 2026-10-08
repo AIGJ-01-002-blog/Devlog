@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.scheduling.JobLock;
 import com.team.blog.shared.time.Times;
 
@@ -41,8 +42,8 @@ public class TrashPurgeJob {
         Instant cutoff = Times.now(clock).minus(PostTrashService.RETENTION);
         int purged = 0;
         while (true) {
-            List<Long> ids = jdbc.queryForList(
-                    "SELECT id FROM post WHERE deleted_at < ? ORDER BY deleted_at LIMIT 500", Long.class, Timestamp.from(cutoff));
+            List<Long> ids = Columns.longs(jdbc,
+                    "SELECT id FROM post WHERE deleted_at < ? ORDER BY deleted_at LIMIT 500", Timestamp.from(cutoff));
             int before = purged;
             for (long id : ids) {
                 try {

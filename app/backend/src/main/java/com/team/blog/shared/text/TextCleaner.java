@@ -25,4 +25,22 @@ public final class TextCleaner {
         String n = Normalizer.normalize(raw.replace("\r\n", "\n").replace('\r', '\n'), Normalizer.Form.NFC);
         return INVISIBLE_KEEP_NEWLINE.matcher(n).replaceAll("").strip();
     }
+
+    /** 앞뒤의 c를 모두 뗀다. 정규식 "^c+|c+$"와 같고 긴 입력에서도 한 번만 훑는다. */
+    public static String trim(String s, char c) {
+        return trimEnd(s.substring(start(s, c)), c);
+    }
+
+    /** 끝의 c를 모두 뗀다 (주소 끝 "/" 등) */
+    public static String trimEnd(String s, char c) {
+        int end = s.length();
+        while (end > 0 && s.charAt(end - 1) == c) end--;
+        return s.substring(0, end);
+    }
+
+    private static int start(String s, char c) {
+        int i = 0;
+        while (i < s.length() && s.charAt(i) == c) i++;
+        return i;
+    }
 }

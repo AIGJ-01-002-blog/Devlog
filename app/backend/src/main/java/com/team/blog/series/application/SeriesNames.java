@@ -3,6 +3,8 @@ package com.team.blog.series.application;
 import java.text.Normalizer;
 import java.util.Locale;
 
+import com.team.blog.shared.text.TextCleaner;
+
 /** 시리즈 이름 정리와 주소(slug) 만들기 (024 FR-001). */
 public final class SeriesNames {
     public static final int MAX_NAME = 50;
@@ -18,6 +20,6 @@ public final class SeriesNames {
     /** 소문자, 글자·숫자 밖의 문자 묶음은 "-" 하나로. 글자·숫자가 없으면 빈 문자열. */
     public static String slug(String name) {
         String s = clean(name).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", "-");
-        return s.replaceAll("^-+|-+$", "");
+        return TextCleaner.trim(s, '-');
     }
 }

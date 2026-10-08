@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class WordFilter {
     private final List<String> banned;
     private final List<String> exceptions;
 
+    @Autowired
     public WordFilter() {
         this(load("policy/banned-words.txt"), load("policy/banned-words-exceptions.txt"));
     }

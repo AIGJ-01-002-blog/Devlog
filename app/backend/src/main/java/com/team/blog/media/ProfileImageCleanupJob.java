@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.scheduling.JobLock;
 import com.team.blog.shared.time.Times;
 
@@ -49,7 +50,7 @@ public class ProfileImageCleanupJob {
         Instant now = Times.now(clock);
         int total = 0;
         while (true) {
-            List<String> keys = jdbc.queryForList("""
+            List<String> keys = Columns.strings(jdbc, """
                     DELETE FROM resource WHERE id IN (
                         SELECT r.id FROM resource r
                         WHERE r.storage_key LIKE 'profiles/%'
@@ -57,7 +58,7 @@ public class ProfileImageCleanupJob {
                           AND ((r.detached_at IS NULL AND r.created_at < ?) OR r.detached_at < ?)
                         ORDER BY r.id LIMIT ? FOR UPDATE SKIP LOCKED)
                     RETURNING storage_key
-                    """, String.class, Timestamp.from(now.minus(UNSAVED_TTL)), Timestamp.from(now.minus(DETACHED_TTL)), BATCH);
+                    """, Timestamp.from(now.minus(UNSAVED_TTL)), Timestamp.from(now.minus(DETACHED_TTL)), BATCH);
             keys.forEach(images::deleteQuietly);
             total += keys.size();
             if (keys.size() < BATCH) break;

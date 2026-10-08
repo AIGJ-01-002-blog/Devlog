@@ -13,6 +13,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 import com.team.blog.post.access.PostAccessPolicy;
+import com.team.blog.shared.jdbc.Columns;
 
 /**
  * 태그 읽기 (docs/22 §5~§9). 글 수는 모두 "공개 목록 조건"(발행·전체 공개·휴지통 아님·숨김 아님·작성자 탈퇴 신청 아님)의 글만
@@ -46,8 +47,8 @@ public class TagQuery {
 
     /** 글 상세·에디터: 입력한 순서대로. */
     public List<String> tagsOf(long postId) {
-        return jdbc.queryForList("SELECT t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = ? ORDER BY pt.position",
-                String.class, postId);
+        return Columns.strings(jdbc, "SELECT t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = ? ORDER BY pt.position",
+                postId);
     }
 
     /** 태그 페이지 상단의 공개 글 수. 없는 태그는 0이다. */

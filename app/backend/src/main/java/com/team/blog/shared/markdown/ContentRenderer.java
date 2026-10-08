@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 
 import org.commonmark.Extension;
 import org.commonmark.ext.autolink.AutolinkExtension;
-import org.commonmark.ext.gfm.strikethrough.Strikethrough;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TableBlock;
 import org.commonmark.ext.gfm.tables.TablesExtension;
@@ -26,7 +25,6 @@ import org.commonmark.node.BlockQuote;
 import org.commonmark.node.BulletList;
 import org.commonmark.node.Code;
 import org.commonmark.node.CustomBlock;
-import org.commonmark.node.CustomNode;
 import org.commonmark.node.FencedCodeBlock;
 import org.commonmark.node.HardLineBreak;
 import org.commonmark.node.Heading;
@@ -286,7 +284,6 @@ public class ContentRenderer {
             @Override public void visit(Paragraph p) { visitChildren(p); sb.append(' '); }
             @Override public void visit(Heading h) { visitChildren(h); sb.append(' '); }
             @Override public void visit(CustomBlock b) { if (!(b instanceof TableBlock)) { visitChildren(b); sb.append(' '); } }
-            @Override public void visit(CustomNode n) { if (n instanceof Strikethrough) visitChildren(n); else visitChildren(n); }
         });
         String text = SPACES.matcher(sb).replaceAll(" ").strip();
         if (text.length() <= excerptLength) return text;

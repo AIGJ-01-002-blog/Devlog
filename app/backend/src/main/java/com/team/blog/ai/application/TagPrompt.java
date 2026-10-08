@@ -54,7 +54,12 @@ public final class TagPrompt {
     public static List<String> parse(String text) throws TagModel.ModelException {
         if (text == null) throw invalid();
         String s = text.strip();
-        if (s.startsWith("```")) s = s.replaceFirst("^```[a-zA-Z]*\\s*", "").replaceFirst("\\s*```$", "");
+        if (s.startsWith("```")) {
+            // ```json ... ``` 울타리를 벗긴다. 끝은 정규식 없이 잘라 긴 응답에서도 한 번만 훑는다
+            s = s.substring(3).replaceFirst("^[a-zA-Z]*+", "");
+            if (s.endsWith("```")) s = s.substring(0, s.length() - 3);
+            s = s.strip();
+        }
         JsonNode root;
         try {
             root = JSON.readTree(s);

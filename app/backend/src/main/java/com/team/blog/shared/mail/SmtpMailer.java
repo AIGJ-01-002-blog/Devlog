@@ -11,14 +11,15 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
 /**
- * SMTP 발송. 가상 스레드에서 보내 요청 응답이 메일 서버를 기다리지 않는다. 실패는 받는 사람을 가려 기록한다.
+ * SMTP 발송. 별도 스레드에서 보내 요청 응답이 메일 서버를 기다리지 않는다.
+ * JavaMail은 synchronized 안에서 소켓을 기다려 가상 스레드를 운반 스레드에 묶어 버리므로 작은 플랫폼 스레드 풀을 쓴다. 실패는 받는 사람을 가려 기록한다.
  * 예외 메시지는 기록하지 않는다: SMTP 거절 응답("550 <주소> User unknown")에 받는 사람 주소가 그대로 들어 있다 (spec 041).
  */
 public class SmtpMailer implements Mailer {
     private static final Logger log = LoggerFactory.getLogger(SmtpMailer.class);
     private final JavaMailSender sender;
     private final String from;
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService executor = Executors.newFixedThreadPool(2, Thread.ofPlatform().name("smtp-", 0).daemon().factory());
 
     public SmtpMailer(JavaMailSender sender, String from) {
         this.sender = sender;

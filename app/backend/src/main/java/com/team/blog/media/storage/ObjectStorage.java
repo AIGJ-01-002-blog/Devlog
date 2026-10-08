@@ -1,5 +1,7 @@
 package com.team.blog.media.storage;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -17,5 +19,12 @@ public interface ObjectStorage {
         return Optional.empty();
     }
 
-    record StoredObject(byte[] data, String contentType) {}
+    /** 배열 필드라 내용으로 비교하고, 문자열에는 크기만 남긴다 */
+    record StoredObject(byte[] data, String contentType) {
+        @Override public boolean equals(Object o) {
+            return o instanceof StoredObject(byte[] bytes, String type) && Arrays.equals(data, bytes) && Objects.equals(contentType, type);
+        }
+        @Override public int hashCode() { return 31 * Arrays.hashCode(data) + Objects.hashCode(contentType); }
+        @Override public String toString() { return "StoredObject[" + contentType + ", " + data.length + " bytes]"; }
+    }
 }

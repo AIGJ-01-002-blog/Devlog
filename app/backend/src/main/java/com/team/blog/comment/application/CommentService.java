@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.time.Times;
 import com.team.blog.shared.web.RateLimiter;
 import com.team.blog.shared.web.TooManyRequestsException;
@@ -96,7 +98,7 @@ public class CommentService {
                 rootAuthor = t.authorId;
             } else {
                 // 답글에 답하면 같은 최상위 아래에, 그 답글 작성자를 대상으로 (내 답글에 답하면 대상 없음)
-                List<Long> root = jdbc.queryForList("SELECT author_id FROM comment WHERE id = ? FOR SHARE", Long.class, t.parentId);
+                List<Long> root = Columns.longs(jdbc, "SELECT author_id FROM comment WHERE id = ? FOR SHARE", t.parentId);
                 if (root.isEmpty()) throw unavailable();
                 parentId = t.parentId;
                 rootAuthor = root.get(0);
@@ -104,10 +106,10 @@ public class CommentService {
             }
         }
         Instant now = Times.now(clock);
-        Long id = jdbc.queryForObject("""
+        long id = Objects.requireNonNull(jdbc.queryForObject("""
                 INSERT INTO comment (post_id, author_id, parent_id, reply_to_member_id, content, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
-                """, Long.class, gate.postId(), memberId, parentId, replyToMember, content, Timestamp.from(now), Timestamp.from(now));
+                """, Long.class, gate.postId(), memberId, parentId, replyToMember, content, Timestamp.from(now), Timestamp.from(now)));
         events.publishEvent(new CommentEvents.CommentCreated(id, gate.postId(), gate.authorId(), memberId, parentId, rootAuthor,
                 replyToMember, now));
         return id;
@@ -175,7 +177,7 @@ public class CommentService {
                 }
             } else {
                 jdbc.update("DELETE FROM comment WHERE id = ?", commentId);
-                jdbc.queryForList("SELECT id FROM comment WHERE id = ? FOR UPDATE", Long.class, rootId);
+                Columns.longs(jdbc, "SELECT id FROM comment WHERE id = ? FOR UPDATE", rootId);
                 jdbc.update("""
                         DELETE FROM comment r WHERE r.id = ? AND r.deleted_at IS NOT NULL
                           AND NOT EXISTS (SELECT 1 FROM comment x WHERE x.parent_id = r.id)

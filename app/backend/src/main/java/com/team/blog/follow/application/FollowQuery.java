@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.team.blog.post.infra.PostSql;
 import com.team.blog.shared.cursor.CursorCodec;
 import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.markdown.ImageUrls;
 import com.team.blog.shared.text.BioText;
 import com.team.blog.shared.time.Times;
@@ -102,6 +103,6 @@ public class FollowQuery {
     /** 탈퇴 신청하지 않은 회원의 번호. 없거나 탈퇴 신청했으면 비어 있다 (FR-006). */
     static Optional<Long> activeMember(JdbcTemplate jdbc, String handle) {
         if (handle == null) return Optional.empty();
-        return jdbc.queryForList("SELECT m.id FROM member m WHERE m.handle = ? AND " + ACTIVE, Long.class, handle).stream().findFirst();
+        return Columns.firstLong(jdbc, "SELECT m.id FROM member m WHERE m.handle = ? AND " + ACTIVE, handle);
     }
 }

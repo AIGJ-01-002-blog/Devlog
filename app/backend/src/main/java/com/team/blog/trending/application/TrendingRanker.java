@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import com.team.blog.post.access.PostAccessPolicy;
+import com.team.blog.shared.jdbc.Columns;
 
 /**
  * 트렌딩 점수 계산 (017 FR-006~FR-011, docs/32). 쿼리 하나로 상위 글 번호를 순서대로 낸다.
@@ -32,7 +33,7 @@ public class TrendingRanker {
 
     public List<Long> rank(Instant now, int limit) {
         Timestamp ts = Timestamp.from(now);
-        return jdbc.queryForList("""
+        return Columns.longs(jdbc, """
                 WITH candidates AS (
                     SELECT p.id, p.author_id, p.first_public_at,
                            (SELECT count(*) FROM post_like l WHERE l.post_id = p.id) AS likes,
@@ -55,6 +56,6 @@ public class TrendingRanker {
                 SELECT id FROM capped WHERE nth <= ?
                 ORDER BY score DESC, first_public_at DESC, id DESC
                 LIMIT ?
-                """, Long.class, ts, WINDOW_DAYS, ts, PER_AUTHOR, limit);
+                """, ts, WINDOW_DAYS, ts, PER_AUTHOR, limit);
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import com.team.blog.account.domain.AuthProvider;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.mail.Mail;
+import com.team.blog.shared.text.TextCleaner;
 
 /** 계정 메일 문구 (docs/07 §3·§4-1, docs/11 §6-2). 링크는 사이트 주소(SITE_BASE_URL) 기준 절대 주소다. */
 @Component
@@ -19,7 +20,7 @@ public class AccountMails {
     public AccountMails(BlogProperties props) {
         this.site = props.site().name();
         String b = props.site().baseUrl() == null ? "" : props.site().baseUrl();
-        this.base = b.replaceAll("/+$", "");
+        this.base = TextCleaner.trimEnd(b, '/');
     }
 
     public Mail verify(String to, String token, Duration ttl) {

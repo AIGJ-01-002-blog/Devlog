@@ -3,6 +3,7 @@ package com.team.blog.shared.web;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -79,6 +80,11 @@ public class ClientIpResolver {
             int mask = (0xFF << (8 - rest)) & 0xFF;
             return (target[full] & mask) == (network[full] & mask);
         }
+
+        // 배열 필드라 내용으로 비교한다
+        @Override public boolean equals(Object o) { return o instanceof Cidr(byte[] net, int bits) && prefix == bits && Arrays.equals(network, net); }
+        @Override public int hashCode() { return 31 * Arrays.hashCode(network) + prefix; }
+        @Override public String toString() { return "Cidr[" + Arrays.toString(network) + "/" + prefix + "]"; }
 
         /** DNS 조회 없이 숫자 주소만 해석한다 (헤더 값으로 DNS 질의를 일으키지 않게). */
         static byte[] toBytes(String ip) {

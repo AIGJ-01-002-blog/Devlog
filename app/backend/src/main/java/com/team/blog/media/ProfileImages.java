@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.team.blog.media.storage.ObjectStorage;
 import com.team.blog.shared.error.ApiException;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.markdown.ImageUrls;
 import com.team.blog.shared.time.Times;
 import com.team.blog.shared.web.RateLimiter;
@@ -101,8 +102,7 @@ public class ProfileImages {
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public void attach(long memberId, Long resourceId) {
-        List<Long> current = jdbc.queryForList("SELECT resource_id FROM member_profile_image WHERE member_id = ?",
-                Long.class, memberId);
+        List<Long> current = Columns.longs(jdbc, "SELECT resource_id FROM member_profile_image WHERE member_id = ?", memberId);
         Long old = current.isEmpty() ? null : current.getFirst();
         if (java.util.Objects.equals(old, resourceId)) return;
         if (old != null) {
@@ -117,9 +117,9 @@ public class ProfileImages {
 
     @Transactional(readOnly = true)
     public Optional<String> currentUrl(long memberId) {
-        return jdbc.queryForList("""
+        return Columns.firstString(jdbc, """
                 SELECT r.storage_key FROM member_profile_image p JOIN resource r ON r.id = p.resource_id WHERE p.member_id = ?
-                """, String.class, memberId).stream().findFirst().map(urls::urlOf);
+                """, memberId).map(urls::urlOf);
     }
 
     void deleteQuietly(String key) {

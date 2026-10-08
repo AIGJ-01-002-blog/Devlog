@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.team.blog.shared.error.ApiException;
+import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.time.Times;
 import com.team.blog.telegram.infra.TelegramApi;
 
@@ -93,9 +94,9 @@ public class TelegramLinks {
         // 그 사이 새 코드를 받았으면 새 코드의 역방향 키는 남긴다
         redis.execute(DELETE_IF_SAME, List.of(MEMBER_CODE_PREFIX + memberId), code);
         return Optional.ofNullable(tx.execute(s -> {
-            List<String> nick = jdbc.queryForList("""
+            List<String> nick = Columns.strings(jdbc, """
                     SELECT nickname FROM member m WHERE id = ? AND status <> 'WITHDRAWN' AND deleted_at IS NULL AND %s FOR UPDATE
-                    """.formatted(props.audienceSql()), String.class, memberId);
+                    """.formatted(props.audienceSql()), memberId);
             if (nick.isEmpty()) return null;
             jdbc.update("DELETE FROM member_telegram WHERE chat_id = ? AND member_id <> ?", chatId, memberId);
             jdbc.update("""
@@ -134,7 +135,7 @@ public class TelegramLinks {
     }
 
     public Optional<Long> memberOf(long chatId) {
-        return jdbc.queryForList("SELECT t.member_id FROM member_telegram t JOIN member m ON m.id = t.member_id WHERE t.chat_id = ? AND "
-                + props.audienceSql(), Long.class, chatId).stream().findFirst();
+        return Columns.firstLong(jdbc, "SELECT t.member_id FROM member_telegram t JOIN member m ON m.id = t.member_id WHERE t.chat_id = ? AND "
+                + props.audienceSql(), chatId);
     }
 }
