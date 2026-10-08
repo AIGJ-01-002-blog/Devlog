@@ -42,7 +42,7 @@ import com.team.blog.tag.application.TagQuery;
  * 회원이 웹 설정에서 "AI가 발행·삭제하도록 허용"을 켜면(053) publish_post·delete_post가 열린다.
  * report_bug(054)는 어느 토큰으로나 devlog 도구의 버그를 신고한다. 관리자 토큰에는 문의 관리 도구(list·get·update_inquiry)가 더 보인다.
  * 둘 다 웹의 발행·삭제와 같은 서비스(PostCommandService.publish, PostTrashService.trash)를 그대로 부른다.
- * 발행한 글 고치기·다시 발행, 사진 올리기, 내 글 전체 검색은 060에서 더했다. 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
+ * 발행한 글 고치기·다시 발행, 사진 올리기, 내 글 전체 검색은 060에서, 글 제안(propose_post)과 자정 일기 메모(add_note)는 061에서 더했다. 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
  */
 @Service
 public class McpTools {
@@ -59,8 +59,9 @@ public class McpTools {
     /**
      * 누가 볼 수 있는 도구인가. AI_PUBLISH는 회원이 "AI가 발행·삭제하도록 허용"을 켰을 때만(053), ADMIN은 관리자 회원만(054) 목록에 보이고 부를 수 있다.
      * REPORT는 읽기 토큰으로도 부르는 신고 도구다(글을 쓰지 않으므로). 자체 요청 제한을 따른다.
+     * DIARY는 회원이 "자정에 일기 쓰기"를 켰을 때만(061) 보인다.
      */
-    enum Gate { NONE, AI_PUBLISH, REPORT, ADMIN }
+    enum Gate { NONE, AI_PUBLISH, REPORT, ADMIN, DIARY }
 
     /** 도구 하나. write면 WRITE 토큰과 메일 인증이 필요하다. */
     record Tool(String name, String title, String description, boolean write, String inputSchema, Gate gate, boolean destructive) {
@@ -72,6 +73,7 @@ public class McpTools {
             return switch (gate) {
                 case AI_PUBLISH -> caller.aiPublishAllowed();
                 case ADMIN -> caller.admin();
+                case DIARY -> caller.aiDiaryEnabled();
                 case NONE, REPORT -> true;
             };
         }
@@ -88,7 +90,8 @@ public class McpTools {
             {"type":"object","properties":{
               "title":{"type":"string","description":"글 제목 (100자까지)"},
               "content_md":{"type":"string","description":"본문 Markdown"},
-              "tags":{"type":"array","items":{"type":"string"},"description":"태그 제안 (10개까지). 발행 창에 미리 채워진다"}},
+              "tags":{"type":"array","items":{"type":"string"},"description":"태그 제안 (10개까지). 발행 창에 미리 채워진다"},
+              "proposal_id":{"type":"integer","description":"propose_post로 남긴 제안대로 쓴 글이면 그 제안 번호"}},
              "required":["title","content_md"]}""";
 
     static final List<Tool> TOOLS = List.of(
@@ -157,6 +160,30 @@ public class McpTools {
                             + "사진 한 장마다 새 주소를 만든다.", true, """
                     {"type":"object","properties":{
                       "alt":{"type":"string","description":"사진 설명(대체 문구)"}}}"""),
+            new Tool("propose_post", "글 제안하기",
+                    "사용자와 함께 한 작업에서 한 주제(기능 하나, 버그 하나, 조사 하나)가 끝났다고 판단되면, 글을 쓰기 전에 블로그 글로 남길지 제안한다. "
+                            + "대화에서 사용자에게 제목과 쓸 범위를 먼저 보여 주고 이 도구로 같은 제안을 남긴다. 제안은 devlog 내 글 관리에 보여 "
+                            + "사용자가 나중에 [임시글로 만들기]나 [넘기기]를 고를 수 있다. 사용자가 대화에서 바로 쓰라고 하면 create_draft에 proposal_id를 함께 준다. "
+                            + "포트폴리오용 글이면 범위에 '우리 팀이 한 일'과 '제 역할'을 나눠 적고 사용자에게 확인받는다. "
+                            + "같은 제목의 정하지 않은 제안이 있으면 범위·태그를 새로 바꾼다. 비밀번호·토큰·개인 정보·회사 내부 주소는 넣지 않는다.", true, """
+                    {"type":"object","properties":{
+                      "title":{"type":"string","description":"제안하는 글 제목 (100자까지)"},
+                      "scope":{"type":"string","description":"쓸 범위. 다룰 내용과 빼는 내용을 Markdown 목록으로 (2,000자까지)"},
+                      "tags":{"type":"array","items":{"type":"string"},"description":"태그 제안 (10개까지)"}},
+                     "required":["title","scope"]}"""),
+            new Tool("list_post_proposals", "글 제안 보기",
+                    "사용자가 아직 정하지 않은 글 제안과 최근 임시글로 만든 제안을 본다. 사용자가 '제안한 글 써 줘'라고 하면 여기서 고른다. "
+                            + "이미 임시글로 만든 제안은 그 글을 get_post로 읽고 update_draft로 채운다.", false, """
+                    {"type":"object","properties":{}}"""),
+            new Tool("add_note", "일기 메모 남기기",
+                    "사용자가 '자정에 일기 쓰기'를 켜 두었을 때, 의미 있는 작업 단위(기능 완성, 버그 원인 발견, 결정, 막힌 점)를 마칠 때마다 "
+                            + "한두 문장 메모를 남긴다. 매일 자정(한국 시간)에 그날 메모가 주제별로 묶여 일기 임시글이 된다. 메모가 없는 날은 일기를 만들지 않는다. "
+                            + "사소한 대화나 같은 내용 반복은 남기지 않는다. 비밀번호·토큰·개인 정보·회사 내부 주소는 넣지 않는다. 하루 60개까지.", true, """
+                    {"type":"object","properties":{
+                      "content":{"type":"string","description":"무엇을 했고 무엇을 알게 됐는지 한두 문장 (1,000자까지)"},
+                      "topic":{"type":"string","description":"주제 (일기의 소제목이 된다, 50자까지). 같은 주제는 같은 표기로"},
+                      "tags":{"type":"array","items":{"type":"string"},"description":"태그 제안"}},
+                     "required":["content"]}""", Gate.DIARY, false),
             new Tool("list_tags", "태그 보기",
                     "사용자가 자주 쓴 태그와 devlog 인기 태그를 돌려준다. 태그를 제안할 때 이 목록의 표기를 따르면 좋다.", false, """
                     {"type":"object","properties":{}}"""),
@@ -204,6 +231,7 @@ public class McpTools {
     private final PostTrashService trash;
     private final McpImages images;
     private final InquiryService inquiries;
+    private final AiJournal journal;
     private final RateLimiter rateLimiter;
     private final JdbcTemplate jdbc;
     private final Clock clock;
@@ -212,7 +240,7 @@ public class McpTools {
 
     public McpTools(PostCommandService commands, PostEditorQuery editor, MyPostsQuery myPosts, SearchQuery search,
                     PostDetailQuery details, TagQuery tags, AiDraftHints hints, PostTrashService trash, InquiryService inquiries,
-                    McpImages images, RateLimiter rateLimiter, JdbcTemplate jdbc, Clock clock, BlogProperties props) {
+                    McpImages images, AiJournal journal, RateLimiter rateLimiter, JdbcTemplate jdbc, Clock clock, BlogProperties props) {
         this.commands = commands;
         this.editor = editor;
         this.myPosts = myPosts;
@@ -223,6 +251,7 @@ public class McpTools {
         this.trash = trash;
         this.images = images;
         this.inquiries = inquiries;
+        this.journal = journal;
         this.rateLimiter = rateLimiter;
         this.jdbc = jdbc;
         this.clock = clock;
@@ -253,8 +282,11 @@ public class McpTools {
             if (!caller.canWrite()) return Result.fail("이 토큰은 읽기 전용이에요. devlog 설정 › AI 연결에서 쓰기 권한 토큰을 만들어 주세요.");
             // 목록에서 숨겨도 이름을 알면 부를 수 있으니 부를 때 다시 확인한다
             if (tool.get().gate() == Gate.AI_PUBLISH && !caller.aiPublishAllowed()) return Result.fail(AI_PUBLISH_OFF);
+            if (tool.get().gate() == Gate.DIARY && !caller.aiDiaryEnabled()) return Result.fail(AiJournal.AI_DIARY_OFF);
             if (!caller.emailVerified()) return Result.fail("이메일 인증을 마친 뒤 글을 쓸 수 있어요. devlog에서 인증 메일을 확인해 주세요.");
-            if (!rateLimiter.tryAcquire("mcp-write:" + caller.memberId(), WRITES_PER_HOUR, Duration.ofHours(1))) {
+            // 일기 메모는 하루 상한(60개)이 따로 있어 글쓰기 한도를 쓰지 않는다
+            if (tool.get().gate() != Gate.DIARY
+                    && !rateLimiter.tryAcquire("mcp-write:" + caller.memberId(), WRITES_PER_HOUR, Duration.ofHours(1))) {
                 return Result.fail("글쓰기 요청은 한 시간에 " + WRITES_PER_HOUR + "번까지예요. 잠시 뒤 다시 시도해 주세요.");
             }
         }
@@ -270,6 +302,9 @@ public class McpTools {
                 case "get_post" -> getPost(caller, a);
                 case "list_my_posts" -> listMyPosts(caller, a);
                 case "list_tags" -> listTags(caller);
+                case "propose_post" -> proposePost(caller, a);
+                case "list_post_proposals" -> listProposals(caller);
+                case "add_note" -> addNote(caller, a);
                 case "upload_image" -> uploadImage(caller, a);
                 case "create_image_upload_link" -> createUploadLink(caller, a);
                 case "report_bug" -> reportBug(caller, a);
@@ -288,8 +323,13 @@ public class McpTools {
         String content = text(a, "content_md");
         if (title.isBlank() || content.isBlank()) return Result.fail("제목(title)과 본문(content_md)이 필요해요.");
         List<String> suggested = tags(a);
-        long id = commands.create(caller.memberId(), title, content).id();
-        if (!suggested.isEmpty()) hints.suggestTags(id, suggested);
+        long id;
+        if (a.path("proposal_id").canConvertToLong()) {
+            id = journal.draftWith(caller.memberId(), a.path("proposal_id").asLong(), title, content, suggested);
+        } else {
+            id = commands.create(caller.memberId(), title, content).id();
+            if (!suggested.isEmpty()) hints.suggestTags(id, suggested);
+        }
         return Result.ok("devlog에 임시글을 만들었어요 (글 번호 " + id + ").\n"
                 + "아직 공개되지 않았어요. 사용자에게 이 링크에서 읽어 보고 발행하라고 알려 주세요: " + editUrl(id)
                 + (suggested.isEmpty() ? "" : "\n제안한 태그: " + String.join(", ", suggested)));
@@ -499,6 +539,34 @@ public class McpTools {
         List<String> popular = tags.top(30).stream().map(TagQuery.TagCount::name).toList();
         return Result.ok("내가 자주 쓴 태그: " + (mine.isEmpty() ? "(없음)" : String.join(", ", mine))
                 + "\ndevlog 인기 태그: " + (popular.isEmpty() ? "(없음)" : String.join(", ", popular)));
+    }
+
+    /** 글 제안 (061). 같은 제목의 정하지 않은 제안은 새로 바꾼다 */
+    private Result proposePost(AccessTokens.Caller caller, JsonNode a) {
+        List<String> suggested = tags(a);
+        long id = journal.propose(caller.memberId(), text(a, "title"), text(a, "scope"), suggested);
+        return Result.ok("글 제안을 남겼어요 (제안 번호 " + id + "). 사용자가 devlog 내 글 관리에서도 볼 수 있어요: " + baseUrl + "/manage/posts\n"
+                + "사용자가 지금 쓰라고 하면 create_draft에 proposal_id " + id + "를 함께 주세요.");
+    }
+
+    private Result listProposals(AccessTokens.Caller caller) {
+        List<AiJournal.Proposal> list = journal.proposals(caller.memberId(), true);
+        if (list.isEmpty()) return Result.ok("남긴 글 제안이 없어요.");
+        StringBuilder out = new StringBuilder("글 제안:\n");
+        for (AiJournal.Proposal p : list) {
+            out.append("- [제안 ").append(p.id()).append("] ").append(p.title()).append(" · ")
+                    .append(p.status() == AiJournal.Status.OPEN ? "대기" : "임시글 " + p.postId() + "번으로 만듦")
+                    .append(" · ").append(DATE.format(p.createdAt()))
+                    .append(p.tags().isEmpty() ? "" : " · 태그 " + String.join(", ", p.tags())).append('\n')
+                    .append("  범위: ").append(p.scope().replace("\n", "\n  ")).append('\n');
+        }
+        return Result.ok(out.toString().stripTrailing());
+    }
+
+    /** 일기 메모 (061). 자정에 묶인다 */
+    private Result addNote(AccessTokens.Caller caller, JsonNode a) {
+        AiJournal.NoteSaved n = journal.addNote(caller.memberId(), text(a, "topic"), text(a, "content"), tags(a));
+        return Result.ok("메모를 남겼어요 (오늘 " + n.todayCount() + "개). 오늘 자정(한국 시간)에 일기 임시글로 묶여요.");
     }
 
     /** 버그 신고 (054). 웹 문의와 같은 서비스·요청 제한(한 시간 10번, 하루 30번)을 쓴다. 신고자는 토큰 주인이다 */

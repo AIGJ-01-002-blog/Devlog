@@ -24,6 +24,9 @@ export const MCP_TOOLS = [
     { name: 'request_publish', does: '"발행 대기"로 올리기. 내가 화면에서 [발행]을 눌러야 공개돼요', scope: '쓰기' },
     { name: 'publish_post', does: '임시글을 바로 발행하거나 고친 글을 다시 발행하기 (웹의 [발행하기]와 같아요)', scope: '쓰기', aiPublish: true },
     { name: 'delete_post', does: '내 글 삭제하기. 웹에서 지울 때처럼 휴지통으로 가고 30일 안에 복구할 수 있어요', scope: '쓰기', aiPublish: true },
+    { name: 'propose_post', does: '한 주제가 끝나면 글로 남길지 제목·쓸 범위를 제안해요. 내 글 관리에서 임시글로 만들거나 넘겨요', scope: '쓰기' },
+    { name: 'list_post_proposals', does: '남긴 글 제안 보기 ("제안한 글 써 줘"라고 할 때 써요)', scope: '읽기' },
+    { name: 'add_note', does: '작업 단위마다 한두 문장 메모 남기기. 매일 자정에 그날 메모가 일기 임시글이 돼요', scope: '쓰기', diary: true },
     { name: 'upload_image', does: '스크린샷·그림을 올리고 본문에 넣을 이미지 문법 받기 (2MB까지)', scope: '쓰기' },
     { name: 'create_image_upload_link', does: '큰 사진(10MB까지)을 명령줄로 올리는 1회용 주소 만들기', scope: '쓰기' },
     { name: 'search_posts', does: '공개 글 검색. 내 글에서 찾으면 임시글·비공개 글까지 찾아요', scope: '읽기' },
@@ -42,6 +45,15 @@ export const tokensApi = {
 export const aiPublishApi = {
     get: () => api('/api/me/ai-publish'),
     set: (allowed) => api('/api/me/ai-publish', { method: 'PUT', body: { allowed } }),
+};
+export const aiDiaryApi = {
+    get: () => api('/api/me/ai-diary'),
+    set: (enabled) => api('/api/me/ai-diary', { method: 'PUT', body: { enabled } }),
+};
+export const aiProposalsApi = {
+    list: () => api('/api/me/ai-proposals'),
+    draft: (id) => api(`/api/me/ai-proposals/${id}/draft`, { method: 'POST' }),
+    dismiss: (id) => api(`/api/me/ai-proposals/${id}/dismiss`, { method: 'POST' }),
 };
 export const aiHint = (postId) => api(`/api/posts/${postId}/ai-hint`).then((h) => h ?? null);
 /** 주소창의 OAuth 매개변수를 동의 API 본문 모양으로 */
