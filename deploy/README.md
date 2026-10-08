@@ -102,12 +102,16 @@ kubectl -n blog rollout status deploy/blog-app
 | Secret | `TELEGRAM_CHAT_ID` | 알림 받을 대화방 ID (봇에게 말을 건 뒤 `https://api.telegram.org/bot<토큰>/getUpdates`의 `chat.id`) | 텔레그램 알림 안 감 |
 | Secret | `GHCR_PULL_TOKEN` | GHCR 이미지를 받을 토큰(classic PAT, `read:packages`만). 변수 `GHCR_PULL_USER`에 토큰 주인 GitHub 아이디 | 배포 실행 토큰으로 대신(1시간 뒤 만료라 나중에 파드를 새로 띄울 때 이미지를 못 받을 수 있음) |
 | Secret | `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Tunnel 토큰 (아래 "도메인 연결") | 도메인 연결 건너뜀 |
+| Secret | `GEMINI_API_KEY` | Google AI Studio의 Gemini API 열쇠. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어씀 | Gemini 안 씀(Ollama도 없으면 AI 기능 꺼짐) |
+| Secret | `OLLAMA_ACCESS_CLIENT_ID`, `OLLAMA_ACCESS_CLIENT_SECRET` | 집 PC Ollama 앞 Cloudflare Access 서비스 토큰 (docs/61) | Access 없이 요청(Access를 켰다면 거절됨) |
+| Secret | `OLLAMA_AUTH_TOKEN` | Ollama 앞에 Bearer 프록시를 따로 둘 때만 | 헤더 안 붙임 |
 | Secret | `SONAR_TOKEN` | SonarCloud(sonarcloud.io → My Account → Security) 토큰 | 품질 검사 건너뜀 |
 | Secret | `SONAR_HOST_URL` | 학교 SonarQube를 쓸 때만 `http://s4.java21.net:9000` | SonarCloud 사용 |
 | Variable | `DISCORD_ENABLED` | `true`면 Discord 알림 켬 | 꺼짐 |
 | Variable | `TELEGRAM_ENABLED` | `true`면 텔레그램 알림 켬 | 꺼짐 |
 | Variable | `SONAR_ENABLED` | `true`면 SonarQube 켬 | 꺼짐 |
 | Variable | `SONAR_ORGANIZATION`, `SONAR_PROJECT_KEY` | SonarCloud 조직 키·프로젝트 키 | 프로젝트 키 `aigj-01-002-blog` |
+| Variable | `OLLAMA_BASE_URL` | 집 PC Ollama 주소(예: `https://ai.devlog.life`). 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어씀 | Ollama 안 씀(Gemini만) |
 | Variable | `SERVICE_NAME` | 알림에 보일 이름 | 레포 이름 |
 | Variable | `ROLLOUT_TIMEOUT_SECONDS` | 배포 대기 초 | 300 |
 

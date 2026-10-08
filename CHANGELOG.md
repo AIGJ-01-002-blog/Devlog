@@ -6,6 +6,17 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.25.3] - 2026-10-08
+
+배포가 AI 설정(Gemini 열쇠, 집 PC Ollama)을 넣어 준다.
+
+### 수정
+- 저장소 Secret `GEMINI_API_KEY`를 넣어도 배포가 앱에 전달하지 않던 문제를 고쳤다. 이제 SMTP 비밀번호처럼 `BLOG_SECRET_ENV`의 같은 값을 덮어쓴다
+
+### 추가
+- 집 PC Ollama 연결(docs/61): GitHub 변수 `OLLAMA_BASE_URL`과 Secret `OLLAMA_ACCESS_CLIENT_ID`·`OLLAMA_ACCESS_CLIENT_SECRET`·`OLLAMA_AUTH_TOKEN`을 배포가 앱에 넣는다. 주소 변수가 비어 있으면 Ollama를 쓰지 않는다
+- 운영(selfhosted) 설정에 `OLLAMA_MODEL=qwen2.5:14b`, `OLLAMA_CONCURRENCY=1`, `OLLAMA_DOWN_FOR=60s`
+
 ## [1.25.2] - 2026-10-08
 
 글 조회 코드 정리 (spec 050). 화면과 API는 그대로입니다.
