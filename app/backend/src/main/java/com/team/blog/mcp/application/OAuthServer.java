@@ -36,6 +36,8 @@ public class OAuthServer {
     static final Duration CODE_TTL = Duration.ofMinutes(5);
     private static final String CODE_KEY = "oauth:code:";
     private static final int MAX_REDIRECTS = 10;
+    /** RFC 7636: code_verifier와 code_challenge 모두 unreserved 문자 43~128자 */
+    private static final String PKCE_PATTERN = "[A-Za-z0-9._~-]{43,128}";
     private static final SecureRandom RANDOM = new SecureRandom();
 
     public record Client(String clientId, String clientName, List<String> redirectUris) {}
@@ -114,7 +116,7 @@ public class OAuthServer {
             throw new OAuthError("invalid_request", "등록되지 않은 돌아갈 주소예요.", false);
         }
         if (!"code".equals(responseType)) throw new OAuthError("unsupported_response_type", "response_type=code만 받아요.", true);
-        if (codeChallenge == null || !codeChallenge.matches("[A-Za-z0-9._~-]{43,128}") || !"S256".equals(challengeMethod)) {
+        if (codeChallenge == null || !codeChallenge.matches(PKCE_PATTERN) || !"S256".equals(challengeMethod)) {
             throw new OAuthError("invalid_request", "PKCE(S256)가 필요해요.", true);
         }
         if (resource != null && !resource.isBlank() && !resource.equals(resource())) {
@@ -143,6 +145,7 @@ public class OAuthServer {
     /** 코드 교환 (grant_type=authorization_code). 코드는 맞든 틀리든 한 번 꺼내면 사라진다. */
     public AccessTokens.OAuthGrant exchange(String code, String clientId, String redirectUri, String verifier) {
         if (code == null || verifier == null) throw new OAuthError("invalid_request", "code와 code_verifier가 필요해요.", false);
+        if (!verifier.matches(PKCE_PATTERN)) throw new OAuthError("invalid_request", "code_verifier는 43~128자예요 (RFC 7636).", false);
         String raw = redis.opsForValue().getAndDelete(CODE_KEY + AccessTokens.hash(code));
         if (raw == null) throw new OAuthError("invalid_grant", "코드가 없거나 이미 썼거나 만료됐어요.", false);
         CodeData data = json.readValue(raw, CodeData.class);
@@ -165,13 +168,11 @@ public class OAuthServer {
         return scope == AccessTokens.Scope.WRITE ? SCOPE_READ + " " + SCOPE_WRITE : SCOPE_READ;
     }
 
-    /** 범위를 따로 고르지 않으면 쓰기까지(핵심 기능이 개발 일지 쓰기). 모르는 범위는 무시한다 */
+    /** 쓰기는 devlog.write를 요청했을 때만 준다. 범위가 없거나 모르는 값이면 읽기만 (가장 좁은 권한) */
     static AccessTokens.Scope parseScope(String scope) {
-        if (scope == null || scope.isBlank()) return AccessTokens.Scope.WRITE;
+        if (scope == null || scope.isBlank()) return AccessTokens.Scope.READ;
         List<String> parts = Arrays.asList(scope.trim().split("\\s+"));
-        if (parts.contains(SCOPE_WRITE)) return AccessTokens.Scope.WRITE;
-        if (parts.contains(SCOPE_READ)) return AccessTokens.Scope.READ;
-        return AccessTokens.Scope.WRITE;
+        return parts.contains(SCOPE_WRITE) ? AccessTokens.Scope.WRITE : AccessTokens.Scope.READ;
     }
 
     static boolean allowedRedirect(String uri) {

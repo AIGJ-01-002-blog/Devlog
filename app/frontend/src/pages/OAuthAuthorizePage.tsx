@@ -40,13 +40,18 @@ export function OAuthAuthorizePage() {
       {!view && !error && <p className="muted">확인하는 중…</p>}
       {view && (
         <section className="oauth-card">
+          <p className="oauth-unverified" role="note">devlog가 확인하지 않은 앱이에요. 이름은 앱이 스스로 정한 것이라 아래 주소로 진짜 앱인지 확인해 주세요.</p>
           <p className="oauth-lead"><b>{view.clientName}</b>이(가) {me?.member?.nickname ? <><b>{me.member.nickname}</b>님의</> : '내'} devlog에 연결하려고 해요.</p>
           <ul className="oauth-scope">
             <li>내 글과 공개 글 읽기 (웹에서 볼 수 있는 글만)</li>
             {view.scope === 'WRITE' && <li>임시글 만들기·고치기, "발행 대기" 표시</li>}
             <li className="muted">발행·공개 범위 바꾸기·삭제는 할 수 없어요. 발행은 언제나 내가 해요.</li>
           </ul>
-          <p className="muted small">허용하면 <code>{view.redirectHost}</code>(으)로 돌아가요. 설정 › AI 연결에서 언제든 연결을 끊을 수 있어요.</p>
+          <div className="oauth-host">
+            <span className="muted small">허용하면 이 주소로 돌아가요</span>
+            <strong>{view.redirectHost}</strong>
+          </div>
+          <p className="muted small">설정 › AI 연결에서 언제든 연결을 끊을 수 있어요.</p>
           <div className="oauth-actions">
             <button type="button" className="btn btn-primary btn-lg" disabled={busy} onClick={() => decide(true)}>허용</button>
             <button type="button" className="btn btn-outline btn-lg" disabled={busy} onClick={() => decide(false)}>거부</button>
