@@ -9,9 +9,9 @@
 
 # devlog
 
-**글만 올리고 끝나는 블로그는 많습니다. devlog는 쓰는 순간부터 읽히는 순간까지 챙깁니다.**
+**코딩은 AI와, 기록은 devlog가.**
 
-쓰기 → 자동 저장 → 발행 → 읽기 → 반응까지, 개발자를 위한 velog형 블로그 플랫폼
+Claude·Cursor에 devlog MCP를 연결하면 AI가 개발 일지 초안을 써 주는 개발자 블로그. 쓰기 → 자동 저장 → 발행 → 읽기 → 반응까지 챙깁니다
 
 [![Release](https://img.shields.io/github/v/release/AIGJ-01-002-blog/docs?color=10b981&label=release)](https://github.com/AIGJ-01-002-blog/docs/releases/latest)
 [![Backend CI](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/AIGJ-01-002-blog/docs/actions/workflows/backend-ci.yml)
@@ -24,7 +24,7 @@
 </div>
 
 <p align="center">
-  <img src="docs/images/home.webp" alt="devlog 홈 — 최신·트렌딩 탭과 글 카드" width="860" />
+  <img src="docs/images/home.webp" alt="devlog 홈 — 슬로건, AI 개발 일지 예시, 글 카드" width="860" />
 </p>
 
 이름은 **개발 기록(development log)** 에서 따왔습니다. 정식 주소로 [devlog.life](https://devlog.life) 도메인을 마련해 두었고, 운영 서버가 정해지면 이 주소로 엽니다.

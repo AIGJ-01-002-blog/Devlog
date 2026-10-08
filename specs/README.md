@@ -53,6 +53,7 @@
 | [046-logo](./046-logo/spec.md) | 새 로고 (파비콘·헤더) | 2026-10-08 추가 (민서님 로고) | 이후 단계 (Tier C) | 3 |
 | [047-post-thumbnail](./047-post-thumbnail/spec.md) | 글 썸네일 고르기 | 2026-10-08 추가 (velog 기능) | 이후 단계 (Tier C) | 7 |
 | [048-modern-ui](./048-modern-ui/spec.md) | 모던 개발 블로그 화면 | 2026-10-08 추가 (민서님 UI 방향) | 이후 단계 (Tier C) | 9 |
+| [049-mcp-devlog-home](./049-mcp-devlog-home/spec.md) | MCP 개발 일지 중심 첫 화면 | 2026-10-08 추가 (민서님 답 5·6번) | 이후 단계 (Tier C) | 6 |
 
 ## 여러 spec에 걸치는 문서
 
