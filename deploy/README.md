@@ -186,6 +186,8 @@ Oracle 무료 VM이 "Out of capacity"로 만들어지지 않아 학교가 준 �
 3. `BLOG_SECRET_ENV`, `GHCR_PULL_TOKEN`(+ 변수 `GHCR_PULL_USER`), 아래 "도메인 연결"의 `CLOUDFLARE_TUNNEL_TOKEN`을 넣는다.
 4. Actions → 블로그 배포 → Run workflow: `deploy` 켬, `target` school, `overlay` selfhosted.
 
+학교망은 공용 DNS(8.8.8.8 등)를 막아서, "학교 서버 준비"가 서버의 DNS 주소를 클러스터(kubelet `resolv-conf`)에 넣어 준다. 이게 없으면 클러스터 안에서 바깥 주소를 찾지 못해 cloudflared가 "server misbehaving"으로 멈춘다.
+
 서버를 다시 켜면 k3d 컨테이너가 Docker 재시작 정책으로 다시 뜬다. 안 뜨면 "학교 서버 준비"를 한 번 더 실행한다. 서버에서 직접 볼 때: `KUBECONFIG=~/devlog/kubeconfig.yaml ~/.local/bin/kubectl -n blog get pods`.
 
 ## 운영 서버 준비 (Oracle Cloud 무료 VM)

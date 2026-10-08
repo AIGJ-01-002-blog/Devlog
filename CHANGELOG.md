@@ -6,6 +6,14 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.27.4] - 2026-10-08
+
+학교 서버 클러스터 안에서 바깥 주소를 찾지 못해 cloudflared가 멈추던 문제를 고쳤다 (배포 구성).
+
+### 고침
+- cloudflared 로그: `lookup region1.v2.argotunnel.com on 10.43.0.10:53: server misbehaving`. 학교망이 공용 DNS(8.8.8.8)를 막는데, k3s는 노드의 DNS가 루프백이면 8.8.8.8을 쓴다
+- "학교 서버 준비"가 서버가 쓰는 DNS 주소를 찾아 k3s(kubelet `resolv-conf`)에 넣고, 노드와 CoreDNS를 다시 띄운 뒤 클러스터 안에서 `region1.v2.argotunnel.com` 조회로 확인한다. 볼륨·데이터는 그대로다
+
 ## [1.27.3] - 2026-10-08
 
 학교 서버 첫 배포에서 앱은 떴지만 도메인 연결(cloudflared)이 준비되지 않아 배포가 실패했다 (배포 구성).
