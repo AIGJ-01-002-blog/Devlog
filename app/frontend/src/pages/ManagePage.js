@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { clock, fullDate, monthDay, relativeDate } from '../lib/format';
 import { useAuth } from '../lib/auth';
@@ -24,11 +24,16 @@ export function ManagePage() {
     const [loadError, setLoadError] = useState(false);
     const [busy, setBusy] = useState(null);
     const query = `tab=${tab}${filter ? `&visibility=${filter}` : ''}`;
+    // 탭을 빨리 바꾸면 늦게 끝난 이전 요청이 지금 탭의 목록·오류를 덮지 않게 마지막 요청만 반영한다
+    const latest = useRef(0);
     const load = useCallback(async (next) => {
+        const req = ++latest.current;
         setLoading(true);
         setLoadError(false);
         try {
             const page = await api(`/api/me/posts?${query}${next ? `&cursor=${encodeURIComponent(next)}` : ''}`);
+            if (req !== latest.current)
+                return;
             setItems((prev) => {
                 const base = next ? prev : [];
                 const seen = new Set(base.map((i) => i.id));
@@ -39,13 +44,16 @@ export function ManagePage() {
                 setCounts(page.counts);
         }
         catch {
+            if (req !== latest.current)
+                return;
             // 다른 탭의 목록이 남아 이 탭의 글처럼 보이지 않게 비운다
             if (!next)
                 setItems([]);
             setLoadError(true);
         }
         finally {
-            setLoading(false);
+            if (req === latest.current)
+                setLoading(false);
         }
     }, [query]);
     useEffect(() => { void load(null); }, [load]);

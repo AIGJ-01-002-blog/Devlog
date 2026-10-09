@@ -26,6 +26,8 @@ export function AdminReportPage({ id }) {
     const invalidRef = useRef(null);
     useEffect(() => { if (invalid)
         invalidRef.current?.focus(); }, [invalid]);
+    // 고르거나 고치면 지난 확인 오류는 지운다
+    useEffect(() => { setInvalid(null); }, [action, hideReason, suspend, days, suspendReason]);
     useEffect(() => {
         document.title = '신고 처리 - devlog';
         adminApi.detail(Number(id)).then((d) => {

@@ -48,7 +48,10 @@ export function ImageCropper({ image, onApply, onCancel, busy }) {
     // 화살표 키는 끌기와 같은 쪽으로 사진을 옮긴다 (한 번에 보이는 폭의 1/20)
     const onKey = (e) => {
         const step = crop.size / 20;
-        const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+        const directions = {
+            ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1],
+        };
+        const d = directions[e.key];
         if (!d)
             return;
         e.preventDefault();

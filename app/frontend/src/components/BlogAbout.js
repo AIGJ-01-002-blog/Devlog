@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { enhanceGifs } from '../lib/gifPlayer';
 import { highlightWithin } from '../lib/highlight';
+import { setLeaveGuard } from '../lib/router';
 /** 서버와 같은 길이 제한 (spec 042 FR-002) */
 export const ABOUT_MAX = 10_000;
 export const aboutApi = {
@@ -35,13 +36,17 @@ export function BlogAbout({ handle }) {
     useEffect(() => { if (editing)
         editorRef.current?.focus(); }, [editing]);
     const dirty = draft != null && draft !== (about?.contentMd ?? '');
-    // 고치던 소개가 있으면 탭을 닫거나 새로 고치기 전에 브라우저가 묻게 한다
+    // 고치던 소개가 있으면 탭을 닫거나 새로 고칠 때, 앱 안에서 다른 화면으로 갈 때 한 번 묻는다
     useEffect(() => {
         if (!dirty)
             return;
         const guard = (e) => { e.preventDefault(); e.returnValue = ''; };
         window.addEventListener('beforeunload', guard);
-        return () => window.removeEventListener('beforeunload', guard);
+        setLeaveGuard(() => confirm('작성 중인 소개를 버릴까요?'));
+        return () => {
+            window.removeEventListener('beforeunload', guard);
+            setLeaveGuard(null);
+        };
     }, [dirty]);
     if (failed)
         return _jsx("p", { className: "muted center", children: "\uC18C\uAC1C\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694." });
