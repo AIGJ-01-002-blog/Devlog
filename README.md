@@ -367,6 +367,7 @@ npm run dev        # http://localhost:5173
 
 | 버전 | 날짜 | 주요 내용 | 릴리스 노트 |
 | --- | --- | --- | --- |
+| v1.46.0 | 2026-10-09 | 새 디자인 1단계: 홈 브랜치 그래프(시리즈·비슷한 주제 자동 묶음), 브랜치로 걸러 보기, 새 글꼴·색, 글 읽은 위치 막대 | [보기](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.46.0) |
 | v1.45.0 | 2026-10-09 | AI 글 제안 알림, 일기 시각 고르기·자동 발행, Mermaid 다이어그램, 주제별 개발 일지 나눠 쓰기 | [보기](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.45.0) |
 | v1.44.0 | 2026-10-09 | 관리자 대시보드에 유입 경로(검색·SNS·직접)와 많이 본 화면 | [보기](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.44.0) |
 | v1.43.0 | 2026-10-09 | 목록 무한 스크롤: 끝까지 내리면 다음 글이 저절로 이어서 붙음, 실패하면 [다시 시도] | [보기](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.43.0) |

@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
@@ -109,6 +110,41 @@ public class SemanticSearch {
             // 벡터 차원이 다른 행이 섞이는 등 DB 쪽 오류도 검색을 막지 않는다
             log.warn("의미 검색을 건너뜁니다: {}", e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    /** 임베딩이 가까운 두 글. distance는 코사인 거리(0에 가까울수록 비슷) */
+    public record Pair(long a, long b, double distance) {}
+
+    /**
+     * 주제 브랜치(072)용: 주어진 글끼리 임베딩이 가까운 쌍. 글마다 가까운 perPost개까지 보고, 의미 검색 기준 거리에
+     * distanceFactor를 곱한 거리보다 가까운 쌍만 돌려준다(검색보다 좁게 묶는다). 같은 쌍이 두 번 나올 수 있다.
+     * 의미 검색을 쓸 수 없으면(pgvector 없음, 공급자 미설정) 빈 목록이고, 그때 주제 브랜치는 태그만으로 묶인다.
+     */
+    public List<Pair> similarPairs(Collection<Long> postIds, double distanceFactor, int perPost) {
+        if (!enabled() || postIds.size() < 2) return List.of();
+        double max = client.maxDistance() * distanceFactor;
+        try {
+            return jdbc.query(con -> {
+                var ps = con.prepareStatement("""
+                        SELECT a.post_id, n.post_id, n.distance FROM post_embedding a
+                        CROSS JOIN LATERAL (
+                            SELECT b.post_id, a.embedding <=> b.embedding AS distance FROM post_embedding b
+                            WHERE b.model = a.model AND b.post_id = ANY (?) AND b.post_id <> a.post_id
+                            ORDER BY a.embedding <=> b.embedding LIMIT ?
+                        ) n
+                        WHERE a.model = ? AND a.post_id = ANY (?) AND n.distance <= ?""");
+                var ids = con.createArrayOf("bigint", postIds.toArray());
+                ps.setArray(1, ids);
+                ps.setInt(2, perPost);
+                ps.setString(3, client.model());
+                ps.setArray(4, ids);
+                ps.setDouble(5, max);
+                return ps;
+            }, (rs, i) -> new Pair(rs.getLong(1), rs.getLong(2), rs.getDouble(3)));
+        } catch (RuntimeException e) {
+            log.warn("주제 묶음에 임베딩을 쓰지 못해 태그만 씁니다: {}", e.getMessage());
+            return List.of();
         }
     }
 

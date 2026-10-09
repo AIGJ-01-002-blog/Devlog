@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.46.0 | 2026-10-09 | 新デザイン第1段階: ホームのブランチグラフ(シリーズ・似たトピックの自動グループ)、ブランチ絞り込み、新フォントと配色、読書位置バー | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.46.0) |
 | v1.45.0 | 2026-10-09 | AI投稿提案の通知、日記の時刻選択と自動公開、Mermaid図、トピック別の開発日誌下書き | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.45.0) |
 | v1.44.0 | 2026-10-09 | 管理者ダッシュボードに流入元（検索・SNS・直接）とよく見られた画面 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.44.0) |
 | v1.43.0 | 2026-10-09 | 一覧の無限スクロール：最後までスクロールすると次の記事を自動で読み込み、失敗時は［再試行］ | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.43.0) |

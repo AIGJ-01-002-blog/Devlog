@@ -8,7 +8,7 @@ const KEEP_MS = 30 * 60 * 1000;
  * 카드 목록 + 무한 스크롤(spec 069). 이어 붙일 때 이미 있는 글은 건너뛴다(docs/10 §4-3).
  * 상세에서 뒤로 오면 카드·커서·스크롤 위치를 30분 동안 복원한다(L-6).
  */
-export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, onFirstPage }) {
+export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, onFirstPage, renderItems }) {
     const restored = useRef(readSaved(storageKey));
     const [items, setItems] = useState(restored.current?.items ?? initial?.items ?? []);
     const [cursor, setCursor] = useState(restored.current ? restored.current.nextCursor : initial?.nextCursor ?? null);
@@ -72,7 +72,7 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
     }, [storageKey]);
     if (loaded && items.length === 0 && !error)
         return _jsx("div", { className: "empty", children: empty });
-    return (_jsxs("section", { children: [notice && _jsx("p", { className: "feed-notice", role: "status", children: notice }), _jsx("div", { className: "card-grid", children: items.map((c) => _jsx(PostCard, { card: c, showAuthor: showAuthor }, c.id)) }), _jsx(InfiniteLoader, { hasMore: cursor != null, loading: loading, failed: error, onMore: () => void load(cursor), failedText: "\uAE00\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694" }), !loaded && loading && _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" })] }));
+    return (_jsxs("section", { children: [notice && _jsx("p", { className: "feed-notice", role: "status", children: notice }), renderItems ? renderItems(items, cursor != null) : (_jsx("div", { className: "card-grid", children: items.map((c) => _jsx(PostCard, { card: c, showAuthor: showAuthor }, c.id)) })), _jsx(InfiniteLoader, { hasMore: cursor != null, loading: loading, failed: error, onMore: () => void load(cursor), failedText: "\uAE00\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694" }), !loaded && loading && _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" })] }));
 }
 function readSaved(key) {
     try {

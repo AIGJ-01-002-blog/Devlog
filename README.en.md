@@ -369,6 +369,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.46.0 | 2026-10-09 | Redesign stage 1: home branch graph (series and auto-grouped similar topics), branch filter, new fonts and colors, reading progress bar | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.46.0) |
 | v1.45.0 | 2026-10-09 | AI post proposal notifications, choosable diary time and auto-publish, Mermaid diagrams, devlog drafts split by topic | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.45.0) |
 | v1.44.0 | 2026-10-09 | Admin dashboard: traffic sources (search, social, direct) and most-viewed pages | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.44.0) |
 | v1.43.0 | 2026-10-09 | Infinite scroll on lists: the next posts load as you reach the end, with a retry button on failure | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.43.0) |

@@ -49,6 +49,21 @@ export interface Card {
   snippetHtml?: string | null
   /** 검색 결과에서 검색어가 그대로 없고 뜻이 가까워 찾은 글 (하이브리드 검색, 054) */
   similar?: boolean
+  /** 홈 브랜치 그래프(072)에서 이 글이 이어지는 브랜치. 홈 목록에만 온다 */
+  branch?: Branch
+}
+
+/** 글이 이어지는 브랜치 (072): 시리즈(작성자가 묶음) 또는 주제(비슷한 글끼리 자동으로 묶음) */
+export interface Branch {
+  kind: 'SERIES' | 'TOPIC'
+  /** 홈 거르기에 쓰는 이름: 시리즈 s12, 주제 t34 */
+  key: string
+  name: string
+  /** 브랜치 안 몇 번째 글 (1부터, 공개 글 기준) */
+  index: number
+  total: number
+  /** 브랜치 전체를 보는 주소 */
+  url: string
 }
 
 export interface FeedPage {

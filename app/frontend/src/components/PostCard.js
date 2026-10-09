@@ -26,14 +26,14 @@ export function PostCard({ card, showAuthor = true }) {
                             // 하이브리드 검색(054)에서 의미로만 찾은 글. 검색어 강조가 없는 이유를 알려 준다
                             _jsxs(_Fragment, { children: [_jsx("span", { className: "badge badge-similar", title: "\uAC80\uC0C9\uC5B4\uAC00 \uADF8\uB300\uB85C \uB4E4\uC5B4 \uC788\uC9C0 \uC54A\uC9C0\uB9CC \uB0B4\uC6A9\uC774 \uBE44\uC2B7\uD574 \uCC3E\uC740 \uAE00\uC774\uC5D0\uC694", children: "\uBE44\uC2B7\uD55C \uAE00" }), ' · '] })), card.visibility === 'FRIENDS' && (_jsxs(_Fragment, { children: [_jsxs("span", { className: "badge", title: "\uCE5C\uAD6C\uC5D0\uAC8C\uB9CC \uBCF4\uC774\uB294 \uAE00", children: [VISIBILITY_ICON.FRIENDS, " ", VISIBILITY_LABEL.FRIENDS] }), ' · '] })), _jsx("time", { dateTime: card.firstPublicAt ?? card.publishedAt, title: fullDate(card.firstPublicAt ?? card.publishedAt), children: relativeDate(card.firstPublicAt ?? card.publishedAt) })] })] }), showAuthor && (_jsxs("footer", { className: "card-footer", children: [_jsxs(Link, { to: `/@${card.author.handle}`, className: "card-author", children: [_jsx(Avatar, { src: card.author.profileImageUrl, name: card.author.nickname, seed: card.author.handle, size: 24 }), _jsxs("span", { children: ["by ", _jsx("b", { children: card.author.nickname })] })] }), _jsx(CardStats, { card: card })] }))] }));
 }
-function CardTags({ tags }) {
+export function CardTags({ tags }) {
     if (tags.length === 0)
         return null;
     const rest = tags.slice(CARD_TAG_LIMIT);
     return (_jsxs("ul", { className: "card-tags", "aria-label": "\uD0DC\uADF8", children: [tags.slice(0, CARD_TAG_LIMIT).map((t) => (_jsx("li", { children: _jsxs(Link, { to: tagPath(t), className: "card-tag", "data-tip": `#${t} 태그 글 보기`, children: ["#", t] }) }, t))), rest.length > 0 && (_jsx("li", { className: "card-tag-more", tabIndex: 0, "aria-label": `태그 ${rest.length}개 더: ${rest.join(', ')}`, "data-tip": rest.map((t) => `#${t}`).join(' '), children: "\u2026" }))] }));
 }
 /** 조회·댓글·좋아요. 99를 넘으면 99+로 줄이고, 정확한 수는 툴팁으로 보인다 */
-function CardStats({ card }) {
+export function CardStats({ card }) {
     const views = card.viewCount ?? 0;
     const items = [
         { key: 'view', icon: 'eye', label: '조회', n: views, unit: '회' },

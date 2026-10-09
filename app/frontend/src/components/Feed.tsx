@@ -17,8 +17,10 @@ interface Saved {
  * 카드 목록 + 무한 스크롤(spec 069). 이어 붙일 때 이미 있는 글은 건너뛴다(docs/10 §4-3).
  * 상세에서 뒤로 오면 카드·커서·스크롤 위치를 30분 동안 복원한다(L-6).
  */
-export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, onFirstPage }: {
+export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, onFirstPage, renderItems }: {
   endpoint: string
+  /** 카드 격자 대신 다른 모양으로 그린다 (072 홈 브랜치 그래프). hasMore는 다음 쪽이 남았는지 */
+  renderItems?: (items: Card[], hasMore: boolean) => React.ReactNode
   /** 첫 쪽을 서버에서 새로 받았을 때 (태그 페이지의 글 수 같은 머리 정보) */
   onFirstPage?: (page: FeedPage) => void
   storageKey: string
@@ -88,9 +90,11 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
   return (
     <section>
       {notice && <p className="feed-notice" role="status">{notice}</p>}
-      <div className="card-grid">
-        {items.map((c) => <PostCard key={c.id} card={c} showAuthor={showAuthor} />)}
-      </div>
+      {renderItems ? renderItems(items, cursor != null) : (
+        <div className="card-grid">
+          {items.map((c) => <PostCard key={c.id} card={c} showAuthor={showAuthor} />)}
+        </div>
+      )}
       <InfiniteLoader hasMore={cursor != null} loading={loading} failed={error} onMore={() => void load(cursor)}
         failedText="글을 불러오지 못했어요" />
       {!loaded && loading && <p className="muted center">불러오는 중…</p>}

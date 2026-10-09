@@ -87,6 +87,39 @@ public class SeriesQuery {
         return byPost;
     }
 
+    /**
+     * 홈 브랜치 그래프의 시리즈 브랜치 (072). 공개 글만 세므로 누구에게나 같은 응답이다.
+     * 시리즈에 없거나 공개 목록에 없는 글은 빠진다.
+     */
+    public Map<Long, PostCard.Branch> branchesOf(Collection<Long> postIds) {
+        Map<Long, PostCard.Branch> byPost = new HashMap<>();
+        if (postIds.isEmpty()) return byPost;
+        jdbc.query(con -> {
+            var ps = con.prepareStatement("""
+                    WITH wanted AS (SELECT DISTINCT sp.series_id FROM series_post sp WHERE sp.post_id = ANY (?)),
+                    listed AS (
+                        SELECT sp.series_id, sp.post_id,
+                               row_number() OVER (PARTITION BY sp.series_id ORDER BY sp.position) AS idx,
+                               count(*) OVER (PARTITION BY sp.series_id) AS total
+                        FROM series_post sp JOIN wanted w ON w.series_id = sp.series_id
+                        JOIN post p ON p.id = sp.post_id JOIN member m ON m.id = p.author_id
+                        WHERE\s""" + PostAccessPolicy.PUBLIC_LIST_CONDITION + """
+                    )
+                    SELECT l.post_id, l.idx, l.total, s.id, s.name, s.slug, m.handle
+                    FROM listed l JOIN series s ON s.id = l.series_id JOIN member m ON m.id = s.member_id
+                    WHERE l.post_id = ANY (?)""");
+            var arr = con.createArrayOf("bigint", postIds.toArray());
+            ps.setArray(1, arr);
+            ps.setArray(2, arr);
+            return ps;
+        }, rs -> {
+            long seriesId = rs.getLong(4);
+            byPost.put(rs.getLong(1), new PostCard.Branch(PostCard.Branch.SERIES, "s" + seriesId, rs.getString(5), rs.getInt(2),
+                    rs.getInt(3), "/@" + rs.getString(7) + "/series/" + rs.getString(6)));
+        });
+        return byPost;
+    }
+
     /** 블로그의 시리즈 탭. 최근 수정 순. 남에게는 읽을 수 있는 글이 없는 시리즈를 숨긴다 (US2-3). */
     public Optional<Listing> list(String handle, Long viewerId) {
         return scope(handle, viewerId).map(s -> new Listing(jdbc.query("""

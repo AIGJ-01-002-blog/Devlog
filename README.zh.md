@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.46.0 | 2026-10-09 | 新设计第一阶段:首页分支图(系列与相似主题自动归组)、按分支筛选、新字体与配色、阅读进度条 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.46.0) |
 | v1.45.0 | 2026-10-09 | AI 文章提议通知、可选日记时间与自动发布、Mermaid 图表、按主题拆分开发日志草稿 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.45.0) |
 | v1.44.0 | 2026-10-09 | 管理后台新增流量来源（搜索、社交、直接访问）和最常浏览的页面 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.44.0) |
 | v1.43.0 | 2026-10-09 | 列表无限滚动：滚到底部自动加载下一页，失败时显示［重试］ | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.43.0) |

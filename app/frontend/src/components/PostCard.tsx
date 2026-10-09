@@ -63,7 +63,7 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
   )
 }
 
-function CardTags({ tags }: { tags: string[] }) {
+export function CardTags({ tags }: { tags: string[] }) {
   if (tags.length === 0) return null
   const rest = tags.slice(CARD_TAG_LIMIT)
   return (
@@ -80,7 +80,7 @@ function CardTags({ tags }: { tags: string[] }) {
 }
 
 /** 조회·댓글·좋아요. 99를 넘으면 99+로 줄이고, 정확한 수는 툴팁으로 보인다 */
-function CardStats({ card }: { card: Card }) {
+export function CardStats({ card }: { card: Card }) {
   const views = card.viewCount ?? 0
   const items = [
     { key: 'view', icon: 'eye', label: '조회', n: views, unit: '회' },

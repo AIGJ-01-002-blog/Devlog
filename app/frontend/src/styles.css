@@ -4,22 +4,22 @@
  * 다크 값은 [data-theme="dark"]와 미디어 쿼리 두 곳에 같게 둔다(theme.test.ts가 같은지 확인).
  */
 :root, [data-theme="light"] {
-  --color-bg: #ffffff;
+  --color-bg: #f4f6f9;
   --color-surface: #ffffff;
-  --color-text: #18181b;
-  --color-text-muted: #5c5c66;
-  --color-border: #e4e4e7;
-  --color-brand: #4f46e5;
-  --color-brand-fill: #4f46e5;
+  --color-text: #161a22;
+  --color-text-muted: #586070;
+  --color-border: #dde2ea;
+  --color-brand: #3f3bd1;
+  --color-brand-fill: #3f3bd1;
   --color-danger: #c92a2a;
-  --thumb-empty: #f4f4f5;
+  --thumb-empty: #e3e7ee;
   --color-code-bg: #f7f7f9;
   --color-focus: #2563eb;
   /* 개인 토큰 (docs/45 §3 밖, 이름만 이 서비스에서 씀) */
-  --color-surface-2: #f4f4f5;
-  --color-text-2: #3f3f46;
+  --color-surface-2: #eef0f4;
+  --color-text-2: #3e4553;
   --color-input-border: #8a8a93;
-  --color-brand-fill-hover: #4338ca;
+  --color-brand-fill-hover: #2b27a8;
   --color-danger-fill: #c92a2a;
   --color-on-fill: #ffffff;
   --color-github: #24292f;
@@ -49,29 +49,37 @@
   --color-cover-text: #ffffff;
   --color-cover-shade: rgba(9, 9, 11, 0.18);
   --color-cover-chip: rgba(9, 9, 11, 0.5);
-  --color-header-bg: rgba(255, 255, 255, 0.78);
+  --color-header-bg: rgba(255, 255, 255, 0.88);
+  /* 브랜치 그래프 (072): main 줄, 시리즈(실선), 주제(점선) */
+  --branch-main: #9aa1ae;
+  --branch-series: #3f3bd1;
+  --branch-series-line: #a9a7f0;
+  --branch-topic: #0e7c86;
+  --color-tag-bg: #e9e9fb;
   color-scheme: light;
   --radius: 8px;
   --radius-lg: 14px;
-  --font: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+  /* 본문은 IBM Plex Sans KR, 제목은 함렛 (072). 글꼴 파일은 같은 서버에서 준다(CSP font-src self) */
+  --font: "IBM Plex Sans KR", "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+  --font-display: "Hahmlet", "Noto Serif KR", "Apple SD Gothic Neo", serif;
   --mono: "JetBrains Mono", "Fira Code", "Fira Mono", "SFMono-Regular", Menlo, Consolas, monospace;
   --shadow: 0 1px 2px var(--shadow-color);
   --shadow-lg: 0 12px 32px -8px var(--shadow-color);
 }
 :root[data-theme="dark"] {
-  --color-bg: #121212;
-  --color-surface: #1a1a1f;
-  --color-text: #ececf1;
-  --color-text-muted: #a1a1aa;
-  --color-border: #2e2e36;
-  --color-brand: #a5b4fc;
+  --color-bg: #14161b;
+  --color-surface: #1b1e25;
+  --color-text: #e7e9ee;
+  --color-text-muted: #9aa1ae;
+  --color-border: #2b2f38;
+  --color-brand: #a7adff;
   --color-brand-fill: #4f46e5;
   --color-danger: #ff6b6b;
-  --thumb-empty: #24242b;
-  --color-code-bg: #16161b;
+  --thumb-empty: #242833;
+  --color-code-bg: #171a20;
   --color-focus: #93c5fd;
-  --color-surface-2: #24242b;
-  --color-text-2: #d4d4d8;
+  --color-surface-2: #242833;
+  --color-text-2: #d3d6dd;
   --color-input-border: #71717a;
   --color-brand-fill-hover: #4338ca;
   --color-danger-fill: #c92a2a;
@@ -103,24 +111,29 @@
   --color-cover-text: #ffffff;
   --color-cover-shade: rgba(0, 0, 0, 0.28);
   --color-cover-chip: rgba(0, 0, 0, 0.5);
-  --color-header-bg: rgba(18, 18, 18, 0.72);
+  --color-header-bg: rgba(27, 30, 37, 0.88);
+  --branch-main: #5c6370;
+  --branch-series: #a7adff;
+  --branch-series-line: #5b57c9;
+  --branch-topic: #5fd0d9;
+  --color-tag-bg: #262a45;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-bg: #121212;
-    --color-surface: #1a1a1f;
-    --color-text: #ececf1;
-    --color-text-muted: #a1a1aa;
-    --color-border: #2e2e36;
-    --color-brand: #a5b4fc;
+    --color-bg: #14161b;
+    --color-surface: #1b1e25;
+    --color-text: #e7e9ee;
+    --color-text-muted: #9aa1ae;
+    --color-border: #2b2f38;
+    --color-brand: #a7adff;
     --color-brand-fill: #4f46e5;
     --color-danger: #ff6b6b;
-    --thumb-empty: #24242b;
-    --color-code-bg: #16161b;
+    --thumb-empty: #242833;
+    --color-code-bg: #171a20;
     --color-focus: #93c5fd;
-    --color-surface-2: #24242b;
-    --color-text-2: #d4d4d8;
+    --color-surface-2: #242833;
+    --color-text-2: #d3d6dd;
     --color-input-border: #71717a;
     --color-brand-fill-hover: #4338ca;
     --color-danger-fill: #c92a2a;
@@ -152,7 +165,12 @@
     --color-cover-text: #ffffff;
     --color-cover-shade: rgba(0, 0, 0, 0.28);
     --color-cover-chip: rgba(0, 0, 0, 0.5);
-    --color-header-bg: rgba(18, 18, 18, 0.72);
+    --color-header-bg: rgba(27, 30, 37, 0.88);
+    --branch-main: #5c6370;
+    --branch-series: #a7adff;
+    --branch-series-line: #5b57c9;
+    --branch-topic: #5fd0d9;
+    --color-tag-bg: #262a45;
     color-scheme: dark;
   }
 }
@@ -1493,3 +1511,128 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
 }
 /* 알림 창은 열 때 창 자체가 초점을 받는다. 창 전체에 고리를 그리지 않는다 (068) */
 .notification-panel:focus { outline: none; }
+
+/* 072 새 디자인: 제목은 함렛 */
+.page-title, .post-title, .home-hero-title, .blog-name, .markdown :is(h1, h2, h3, h4), .card-title, .bl-title, .aside-title {
+  font-family: var(--font-display);
+}
+
+/* 072 홈: 왼쪽 브랜치 그래프 목록 + 넓은 화면 옆 칸 */
+.container.home-layout { max-width: 1200px; display: grid; grid-template-columns: minmax(0, 1fr) 272px; gap: 40px; align-items: start; }
+.home-main { min-width: 0; }
+.home-head .page-title { margin: 32px 0 4px; }
+.home-head p { margin: 0; }
+.home-head + .tabs.home-tabs { margin-top: 16px; }
+@media (max-width: 1023px) {
+  .container.home-layout { display: block; }
+  .home-aside { display: none; }
+}
+.home-aside { position: sticky; top: 80px; margin-top: 40px; display: grid; gap: 16px; }
+.aside-box { padding: 16px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+.aside-title { margin: 0 0 10px; font-size: 1rem; }
+.aside-box .card-tags { flex-wrap: wrap; margin: 0; }
+.aside-box p { margin: 0 0 12px; }
+.aside-topics { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.aside-topics a { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 6px; color: var(--color-text); }
+.aside-topics a:hover { background: var(--color-surface-2); }
+.aside-topics a > span:first-of-type { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aside-topics .bl-mark { color: var(--branch-topic); flex-shrink: 0; }
+.aside-links { display: flex; gap: 8px; padding: 0 4px; font-size: 0.875rem; color: var(--color-text-muted); }
+.aside-links a { color: var(--color-text-muted); }
+.aside-links a:hover { color: var(--color-text); }
+
+/* 브랜치 버튼 */
+.branch-chips { display: flex; gap: 6px; overflow-x: auto; margin: -8px 0 16px; padding-bottom: 4px; scrollbar-width: none; }
+.branch-chips::-webkit-scrollbar { display: none; }
+.branch-chip {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 5px 12px; min-height: 32px;
+  border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface);
+  color: var(--color-text-2); font-size: 0.875rem; white-space: nowrap; max-width: 220px;
+}
+.branch-chip:hover { color: var(--color-text); border-color: var(--color-text-muted); }
+.branch-chip[aria-current="page"] { background: var(--color-text); border-color: var(--color-text); color: var(--color-bg); }
+.branch-chip-series .bl-mark { color: var(--branch-series); }
+.branch-chip-topic .bl-mark { color: var(--branch-topic); }
+.branch-chip[aria-current="page"] .bl-mark { color: inherit; }
+
+/* 브랜치 그래프. 한 칸 = 글 한 줄. 줄은 --lane 번째 칸 가운데에 2px로 그린다 */
+.branch-list {
+  --lane-gap: 20px; --lane-pad: 10px; --dot-y: 26px;
+  list-style: none; margin: 0; padding: 0;
+  border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-surface); overflow: hidden;
+}
+@media (max-width: 767px) {
+  .branch-list { --lane-gap: 13px; --lane-pad: 8px; --dot-y: 22px; border-radius: 12px; }
+}
+.bl-row, .bl-day { display: flex; position: relative; }
+.bl-row + .bl-row { border-top: 1px solid var(--color-border); }
+.bl-graph {
+  position: relative; flex-shrink: 0;
+  width: calc(var(--lane-pad) * 2 + var(--lanes) * var(--lane-gap));
+}
+.bl-line, .bl-fork, .bl-dot { position: absolute; left: calc(var(--lane-pad) + var(--lane) * var(--lane-gap)); }
+.bl-line { width: 2px; margin-left: -1px; background: var(--branch-main); }
+.bl-line.bl-top { top: 0; height: var(--dot-y); }
+.bl-line.bl-bottom { top: var(--dot-y); bottom: 0; }
+.bl-line.bl-full { top: 0; bottom: 0; }
+.bl-line.bl-series { background: var(--branch-series-line); }
+.bl-line.bl-topic { background: none; border-left: 2px dashed var(--branch-topic); width: 0; opacity: 0.8; }
+/* 브랜치 첫 글: 점에서 아래로 내려가 main으로 휘어 들어간다 */
+.bl-fork {
+  top: var(--dot-y); bottom: 0; left: var(--lane-pad); margin-left: -1px;
+  width: calc(var(--lane) * var(--lane-gap));
+  border-right: 2px solid var(--branch-series-line); border-bottom: 2px solid var(--branch-series-line);
+  border-bottom-right-radius: 10px;
+}
+.bl-fork.bl-topic { border-right: 2px dashed var(--branch-topic); border-bottom: 2px dashed var(--branch-topic); opacity: 0.8; }
+.bl-dot {
+  top: var(--dot-y); width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
+  background: var(--color-surface); border: 2px solid var(--branch-main); z-index: 1;
+}
+.bl-dot-series { border-color: var(--branch-series); background: var(--branch-series); }
+.bl-dot-topic { border-color: var(--branch-topic); }
+.bl-day { min-height: 30px; border-top: 1px solid var(--color-border); background: var(--color-surface-2); }
+.bl-row:first-child, .bl-day:first-child { border-top: 0; }
+.bl-day + .bl-row { border-top: 0; }
+.bl-day-label { align-self: center; font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); letter-spacing: 0.02em; }
+.branch-list-plain .bl-day-label { padding-left: 16px; }
+
+.bl-body { flex: 1; min-width: 0; display: flex; gap: 16px; padding: 16px 16px 14px 4px; }
+.branch-list-plain .bl-body { padding-left: 16px; }
+.bl-text { flex: 1; min-width: 0; }
+.bl-branch {
+  display: inline-flex; align-items: center; gap: 5px; max-width: 100%; margin-bottom: 4px;
+  font-size: 0.8125rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bl-branch-series { color: var(--branch-series); }
+.bl-branch-topic { color: var(--branch-topic); }
+.bl-branch:hover { text-decoration: underline; }
+.bl-mark { flex-shrink: 0; }
+.bl-title { margin: 0 0 6px; font-size: 1.1875rem; font-weight: 700; line-height: 1.4; letter-spacing: -0.02em; word-break: keep-all; overflow-wrap: anywhere; text-wrap: pretty; }
+.bl-title a { color: var(--color-text); }
+.bl-title a:hover { color: var(--color-brand); }
+.bl-excerpt {
+  margin: 0 0 10px; color: var(--color-text-2); font-size: 0.9375rem; line-height: 1.6;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bl-text .card-tags { margin: 0 0 10px; }
+.bl-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.8125rem; color: var(--color-text-muted); }
+.bl-author { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-2); min-width: 0; }
+.bl-author span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 12em; }
+.bl-meta .card-stats { margin-left: auto; gap: 10px; }
+.bl-thumb { flex-shrink: 0; width: 132px; height: 88px; border-radius: 8px; overflow: hidden; background: var(--thumb-empty); align-self: center; }
+.bl-thumb img { width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 767px) {
+  .bl-body { padding: 12px 12px 12px 2px; gap: 10px; }
+  .bl-title { font-size: 1.0625rem; }
+  .bl-excerpt { -webkit-line-clamp: 1; font-size: 0.875rem; margin-bottom: 8px; }
+  .bl-thumb { width: 64px; height: 64px; align-self: flex-start; margin-top: 4px; }
+  .bl-meta .card-stats { margin-left: 0; width: 100%; }
+}
+
+/* 글 읽은 위치 막대 (072). 움직임 없이 너비만 바뀐다 */
+.read-progress { position: fixed; left: 0; right: 0; top: 64px; height: 3px; z-index: 40; pointer-events: none; }
+.read-progress span { display: block; height: 100%; background: var(--color-brand); transform-origin: 0 50%; }
+/* 목록 줄은 폭이 좁아 태그를 줄여 쓰지 않고 다음 줄로 넘긴다(3개까지라 길어지지 않는다) */
+.bl-text .card-tags { flex-wrap: wrap; }
+.bl-text .card-tags li { flex-shrink: 0; max-width: 100%; }

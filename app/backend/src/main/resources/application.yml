@@ -178,6 +178,15 @@ blog:
       provider: ${SEARCH_EMBED_PROVIDER:auto}
       base-url: ${EMBED_BASE_URL:}
       local-model: ${EMBED_MODEL:bge-m3}
+  # 주제 브랜치 (spec 072): 시리즈에 없는 공개 글을 태그·임베딩으로 묶는 간격과 기준
+  topic:
+    enabled: ${TOPIC_ENABLED:true}
+    index-interval: 10m
+    max-posts: 2000
+    max-size: 12
+    min-tag-similarity: 0.5
+    distance-factor: 0.6
+    neighbors: 5
   # 시리즈 (spec 024 FR-003): 회원당 시리즈 수, 시리즈당 글 수
   series:
     max-per-member: 100
