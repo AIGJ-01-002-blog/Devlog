@@ -12,6 +12,8 @@ export const seriesApi = {
     rename: (id, name) => api(`/api/me/series/${id}`, { method: 'PATCH', body: { name } }),
     remove: (id) => api(`/api/me/series/${id}`, { method: 'DELETE' }),
     reorder: (id, postIds) => api(`/api/me/series/${id}/posts`, { method: 'PUT', body: { postIds } }),
+    /** 새 글 알림 받기·그만 받기 (072) */
+    subscribe: (id, on) => api(`/api/series/${id}/subscription`, { method: on ? 'PUT' : 'DELETE' }),
 };
 export const seriesPath = (handle, slug) => `/@${handle}/series/${encodeURIComponent(slug)}`;
 /** 서버와 같은 규칙의 이름 검사 (FR-001): 앞뒤 공백을 빼고 1~50자, 글자나 숫자가 하나는 있어야 주소를 만든다. */

@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PostCard } from '../components/PostCard'
 import { ApiError } from '../lib/api'
+import { loginPath, useAuth } from '../lib/auth'
+import { readPosts, seriesProgress } from '../lib/branch'
 import { move } from '../lib/files'
 import { fullDate, relativeDate } from '../lib/format'
 import { Link, navigate } from '../lib/router'
@@ -16,6 +18,8 @@ export function SeriesPage({ handle, slug }: { handle: string; slug: string }) {
   const [renaming, setRenaming] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const read = useMemo(() => readPosts(), [handle, slug])
+  const { me } = useAuth()
 
   useEffect(() => {
     let alive = true
@@ -65,6 +69,12 @@ export function SeriesPage({ handle, slug }: { handle: string; slug: string }) {
     })
   }
 
+  const subscribe = (on: boolean) => run(async () => {
+    await seriesApi.subscribe(series.id, on)
+    setSeries({ ...series, subscribed: on })
+  })
+  const progress = seriesProgress(series.posts, read)
+
   return (
     <main className="container narrow series-page">
       <p className="muted small"><Link to={`/@${handle}/series`}>@{handle}의 시리즈</Link></p>
@@ -82,6 +92,32 @@ export function SeriesPage({ handle, slug }: { handle: string; slug: string }) {
       <p className="muted small">
         글 {series.posts.length}개 · <time dateTime={series.updatedAt} title={fullDate(series.updatedAt)}>{relativeDate(series.updatedAt)} 수정</time>
       </p>
+      {!series.mine && series.posts.length > 0 && !editing && (
+        <section className="series-progress" aria-label="이어 읽기">
+          <div className="series-progress-row">
+            <span>{series.posts.length}편 중 <b>{progress.done}편</b> 읽음</span>
+            <span className="muted small">이 기기에서 연 글 기준</span>
+          </div>
+          <div className="series-progress-bar" role="progressbar" aria-label="읽은 편 수" aria-valuemin={0}
+               aria-valuemax={series.posts.length} aria-valuenow={progress.done}>
+            <span style={{ width: `${(progress.done / series.posts.length) * 100}%` }} />
+          </div>
+          <div className="row series-progress-actions">
+            {progress.next
+              ? <Link to={progress.next.url} className="btn btn-primary" data-tip={progress.next.title}>
+                  {progress.done === 0 ? '1편부터 읽기' : `${series.posts.indexOf(progress.next) + 1}편 이어 읽기`}
+                </Link>
+              : <span className="muted small">모두 읽었어요</span>}
+            {me?.authenticated
+              ? <button type="button" className="btn btn-outline" disabled={busy}
+                        aria-pressed={!!series.subscribed} onClick={() => void subscribe(!series.subscribed)}
+                        data-tip={series.subscribed ? '이 시리즈 새 글 알림을 그만 받아요' : '이 시리즈에 새 글이 올라오면 알려 드려요'}>
+                  {series.subscribed ? '새 글 알림 받는 중' : '새 글 알림 받기'}
+                </button>
+              : <Link to={loginPath(seriesPath(handle, slug))} className="btn btn-outline" data-tip="로그인하면 새 글 알림을 받을 수 있어요">새 글 알림 받기</Link>}
+          </div>
+        </section>
+      )}
       {series.mine && !editing && renaming == null && (
         <div className="row series-owner">
           <button type="button" className="btn btn-text" onClick={() => setEditing(series.posts)} disabled={series.posts.length === 0}>순서 편집</button>
@@ -115,8 +151,9 @@ export function SeriesPage({ handle, slug }: { handle: string; slug: string }) {
       ) : (
         <ol className="series-posts">
           {series.posts.map((p, i) => (
-            <li key={p.id}>
-              <span className="series-no" aria-hidden="true">{i + 1}.</span>
+            <li key={p.id} className={read.has(p.id) ? 'is-read' : undefined}>
+              <span className="series-no" aria-hidden="true">{read.has(p.id) ? '✓' : `${i + 1}.`}</span>
+              {read.has(p.id) && <span className="sr-only">{i + 1}편, 읽음</span>}
               <PostCard card={p} showAuthor={false} />
             </li>
           ))}

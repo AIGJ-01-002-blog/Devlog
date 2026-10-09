@@ -19,6 +19,8 @@ export interface SeriesDetail {
   updatedAt: string
   mine: boolean
   posts: Card[]
+  /** 로그인한 남이 구독했는지 (072). 비회원·주인은 없다 */
+  subscribed?: boolean
 }
 
 export interface SeriesItem {
@@ -60,6 +62,8 @@ export const seriesApi = {
   rename: (id: number, name: string) => api<MySeries>(`/api/me/series/${id}`, { method: 'PATCH', body: { name } }),
   remove: (id: number) => api<void>(`/api/me/series/${id}`, { method: 'DELETE' }),
   reorder: (id: number, postIds: number[]) => api<void>(`/api/me/series/${id}/posts`, { method: 'PUT', body: { postIds } }),
+  /** 새 글 알림 받기·그만 받기 (072) */
+  subscribe: (id: number, on: boolean) => api<void>(`/api/series/${id}/subscription`, { method: on ? 'PUT' : 'DELETE' }),
 }
 
 export const seriesPath = (handle: string, slug: string) => `/@${handle}/series/${encodeURIComponent(slug)}`

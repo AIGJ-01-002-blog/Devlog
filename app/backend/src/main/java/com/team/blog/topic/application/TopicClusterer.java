@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -111,19 +112,32 @@ public final class TopicClusterer {
             if (!parent.containsKey(d.id()) && !size.containsKey(d.id())) continue;
             groups.computeIfAbsent(find(parent, d.id()), k -> new ArrayList<>()).add(d.id());
         }
-        List<Topic> topics = new ArrayList<>();
+        // 큰 브랜치부터 이름을 정하고, 앞에서 쓴 이름은 피한다(모두가 쓰는 태그로 이름이 겹치지 않게)
+        List<Map.Entry<Long, List<Long>>> ordered = new ArrayList<>();
         groups.forEach((root, members) -> {
-            if (members.size() < 2) return;
-            members.sort(Long::compare);
-            EnumSet<Method> m = used.getOrDefault(root, EnumSet.of(Method.TAG));
-            String method = m.size() > 1 ? "MIXED" : m.iterator().next().name();
-            topics.add(new Topic(members.get(0), name(members, byId), method, List.copyOf(members)));
+            if (members.size() >= 2) ordered.add(Map.entry(root, members));
         });
+        ordered.sort(Comparator.comparingInt((Map.Entry<Long, List<Long>> e) -> -e.getValue().size()).thenComparing(Map.Entry::getKey));
+        Set<String> taken = new HashSet<>();
+        List<Topic> topics = new ArrayList<>();
+        for (Map.Entry<Long, List<Long>> e : ordered) {
+            List<Long> members = e.getValue();
+            members.sort(Long::compare);
+            EnumSet<Method> m = used.getOrDefault(e.getKey(), EnumSet.of(Method.TAG));
+            String method = m.size() > 1 ? "MIXED" : m.iterator().next().name();
+            String name = name(members, byId, taken);
+            taken.add(name);
+            topics.add(new Topic(members.get(0), name, method, List.copyOf(members)));
+        }
+        topics.sort(Comparator.comparingLong(Topic::key));
         return topics;
     }
 
-    /** 가장 많이 쓰인 태그(같으면 가나다순 앞). 두 글 이상이 쓴 태그가 없으면 가장 오래된 글 제목 앞부분 */
-    static String name(List<Long> members, Map<Long, Doc> byId) {
+    /**
+     * 두 글 이상이 쓴 태그 중 가장 많이 쓰인 것(같으면 가나다순 앞). 다른 브랜치가 이미 쓴 이름은 건너뛴다.
+     * 쓸 태그가 없으면 가장 오래된 글 제목 앞부분이다.
+     */
+    static String name(List<Long> members, Map<Long, Doc> byId, Set<String> taken) {
         Map<String, Integer> count = new TreeMap<>();
         for (long id : members) {
             for (String t : Set.copyOf(byId.get(id).tags())) count.merge(t, 1, Integer::sum);
@@ -131,7 +145,7 @@ public final class TopicClusterer {
         String top = null;
         int topCount = 1;
         for (Map.Entry<String, Integer> e : count.entrySet()) {
-            if (e.getValue() > topCount) {
+            if (e.getValue() > topCount && !taken.contains(e.getKey())) {
                 top = e.getKey();
                 topCount = e.getValue();
             }
@@ -140,6 +154,10 @@ public final class TopicClusterer {
         String title = byId.get(members.get(0)).title().strip();
         if (title.codePointCount(0, title.length()) <= NAME_MAX) return title.isEmpty() ? "비슷한 글" : title;
         return title.substring(0, title.offsetByCodePoints(0, NAME_MAX)).strip() + "…";
+    }
+
+    static String name(List<Long> members, Map<Long, Doc> byId) {
+        return name(members, byId, Set.of());
     }
 
     private static long find(Map<Long, Long> parent, long x) {

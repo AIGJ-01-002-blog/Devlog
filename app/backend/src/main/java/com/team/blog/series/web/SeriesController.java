@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.series.application.SeriesQuery;
 import com.team.blog.series.application.SeriesService;
+import com.team.blog.series.application.SeriesSubscriptions;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.error.NotFoundException;
 import com.team.blog.shared.security.CurrentMember;
@@ -26,10 +27,12 @@ import com.team.blog.shared.security.MemberPrincipal;
 public class SeriesController {
     private final SeriesQuery query;
     private final SeriesService service;
+    private final SeriesSubscriptions subscriptions;
 
-    public SeriesController(SeriesQuery query, SeriesService service) {
+    public SeriesController(SeriesQuery query, SeriesService service, SeriesSubscriptions subscriptions) {
         this.query = query;
         this.service = service;
+        this.subscriptions = subscriptions;
     }
 
     public record NameRequest(String name) {}
@@ -60,6 +63,19 @@ public class SeriesController {
         return query.forPost(id, Viewer.of(me))
                 .map(n -> ResponseEntity.ok().cacheControl(privateOrNoStore(!n.publiclyVisible())).body(n))
                 .orElseGet(() -> ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build());
+    }
+
+    /** 새 글 알림 받기 (072) */
+    @PutMapping("/api/series/{seriesId}/subscription")
+    public ResponseEntity<Void> subscribe(@CurrentMember MemberPrincipal me, @PathVariable String seriesId) {
+        subscriptions.subscribe(me.id(), parseId(seriesId));
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/api/series/{seriesId}/subscription")
+    public ResponseEntity<Void> unsubscribe(@CurrentMember MemberPrincipal me, @PathVariable String seriesId) {
+        subscriptions.unsubscribe(me.id(), parseId(seriesId));
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/api/posts/{postId}/series")
