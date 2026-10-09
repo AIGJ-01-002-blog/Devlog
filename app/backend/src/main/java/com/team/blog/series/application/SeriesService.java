@@ -143,6 +143,27 @@ public class SeriesService {
         });
     }
 
+    /**
+     * 글을 시리즈의 position번째(1부터)에 넣는다 (073, MCP add_to_series). 넣기는 assign, 자리 옮기기는 reorder를 그대로 쓴다.
+     * 순서는 독자에게 보이는 발행 글끼리 매긴다. 임시글은 assign대로 맨 뒤에 들어가고 발행한 뒤 보인다.
+     * @return 글이 놓인 번호(1부터). 임시글이라 순서를 매기지 않았으면 null
+     */
+    public Integer placeAt(long memberId, long postId, long seriesId, Integer position) {
+        assign(memberId, postId, seriesId);
+        List<Long> live = Columns.longs(jdbc, """
+                SELECT sp.post_id FROM series_post sp JOIN post p ON p.id = sp.post_id
+                WHERE sp.series_id = ? AND\s""" + SeriesQuery.OWNER_CONDITION + " ORDER BY sp.position", seriesId);
+        int at = live.indexOf(postId);
+        if (at < 0) return null;
+        if (position == null) return at + 1;
+        List<Long> order = new java.util.ArrayList<>(live);
+        order.remove(postId);
+        at = Math.max(0, Math.min(position - 1, order.size()));
+        order.add(at, postId);
+        reorder(memberId, seriesId, order);
+        return at + 1;
+    }
+
     private void lockSeries(long memberId, long seriesId) {
         if (Columns.longs(jdbc, "SELECT id FROM series WHERE id = ? AND member_id = ? FOR UPDATE", seriesId, memberId).isEmpty()) {
             throw new NotFoundException();
