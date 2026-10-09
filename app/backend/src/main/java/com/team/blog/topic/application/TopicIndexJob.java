@@ -63,7 +63,8 @@ public class TopicIndexJob {
     public List<Topic> runOnce() {
         List<Doc> docs = jdbc.query("SELECT p.id, p.title, " + TagSql.NAMES_COLUMN
                 + " FROM post p JOIN member m ON m.id = p.author_id WHERE " + PostAccessPolicy.PUBLIC_LIST_CONDITION
-                + " AND " + SeriesSql.NOT_IN_SERIES + " ORDER BY p.first_public_at DESC, p.id DESC LIMIT ?",
+                + " AND " + SeriesSql.NOT_IN_SERIES + " AND NOT EXISTS (SELECT 1 FROM post_topic_optout o WHERE o.post_id = p.id)"
+                + " ORDER BY p.first_public_at DESC, p.id DESC LIMIT ?",
                 (rs, i) -> new Doc(rs.getLong("id"), rs.getString("title"), tags(rs.getArray("tags"))), props.maxPosts());
         List<Edge> edges = new ArrayList<>(TopicClusterer.tagEdges(docs, props.minTagSimilarity()));
         List<Long> ids = docs.stream().map(Doc::id).toList();

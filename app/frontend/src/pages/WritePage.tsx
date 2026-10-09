@@ -7,6 +7,7 @@ import { AiTagSuggest } from '../components/AiTagSuggest'
 import { AttachmentEditor } from '../components/AttachmentEditor'
 import { PrepublishCheck } from '../components/PrepublishCheck'
 import { RevisionHistory } from '../components/RevisionHistory'
+import { BranchSuggest } from '../components/BranchSuggest'
 import { SeriesPicker } from '../components/SeriesPicker'
 import { TagInput } from '../components/TagInput'
 import { ThumbnailPicker } from '../components/ThumbnailPicker'
@@ -441,6 +442,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           <TagInput value={tags} onChange={(t) => { setTags(t); setErrors((m) => withoutTagErrors(m)) }} errors={tagErrors(errors)} />
           <AiTagSuggest postId={view.id} title={title} content={content} tags={tags}
                         onAdd={(t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)) }} />
+          <BranchSuggest postId={view.id} tags={tags} />
           <label className="field">
             <span>짧은 소개 ({summaryLength(summary)}/{SUMMARY_MAX})</span>
             <textarea value={summary} rows={3} aria-invalid={errors.summary ? true : undefined}

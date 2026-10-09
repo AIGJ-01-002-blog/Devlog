@@ -187,6 +187,9 @@ blog:
     min-tag-similarity: 0.5
     distance-factor: 0.6
     neighbors: 5
+    # 2단계: 발행 창 브랜치 추천 기준(이 글 태그 희소도 중 겹치는 비율), 글 화면 비슷한 글 수
+    suggest-min-score: 0.4
+    similar-limit: 4
   # 시리즈 (spec 024 FR-003): 회원당 시리즈 수, 시리즈당 글 수
   series:
     max-per-member: 100

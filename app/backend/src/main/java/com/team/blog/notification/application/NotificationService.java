@@ -19,6 +19,7 @@ import com.team.blog.post.access.PostAccessPolicy;
 import com.team.blog.post.access.ReadablePost;
 import com.team.blog.post.access.Viewer;
 import com.team.blog.post.domain.PostStatus;
+import com.team.blog.series.application.SeriesSql;
 
 /**
  * 알림 만들기·지우기 (015, docs/25 §4, docs/20 §4). 사건은 커밋 뒤에 오므로 여기서 최신 상태를 다시 확인하고,
@@ -147,7 +148,7 @@ public class NotificationService {
     }
 
     /**
-     * 팔로우한 사람의 새 글 (FR-004·FR-006). 처음 전체 공개될 때 한 번 오는 사건이라 중복이 없다. 처리 시점에 이미 공개 목록 조건을
+     * 팔로우한 사람의 새 글 (FR-004·FR-006), 구독한 시리즈의 새 글 (072). 팔로우와 구독을 함께 하는 사람에게는 하나만 간다. 처음 전체 공개될 때 한 번 오는 사건이라 중복이 없다. 처리 시점에 이미 공개 목록 조건을
      * 벗어났으면 만들지 않는다. 팔로워 전원에게 문장 하나로 만든다(끈 사람·탈퇴 신청한 사람 제외). 행동자 = 글 작성자라 따로 적지 않는다.
      */
     public int newPost(long postId, long authorId, Instant at) {
@@ -158,9 +159,12 @@ public class NotificationService {
             Timestamp ts = Timestamp.from(at);
             return publish(jdbc.query("""
                     WITH receivers AS (
-                        SELECT f.follower_id FROM follow f JOIN member r ON r.id = f.follower_id
-                        WHERE f.followee_id = ? AND r.status <> 'WITHDRAWN' AND r.deleted_at IS NULL
-                          AND NOT EXISTS (SELECT 1 FROM notification_mute nm WHERE nm.member_id = f.follower_id AND nm.type = 'NEW_POST')
+                        SELECT r.id AS follower_id FROM member r
+                        WHERE r.id IN (SELECT f.follower_id FROM follow f WHERE f.followee_id = ?
+                                       UNION\s""" + SeriesSql.SUBSCRIBERS_OF_POST + """
+                                      )
+                          AND r.id <> ? AND r.status <> 'WITHDRAWN' AND r.deleted_at IS NULL
+                          AND NOT EXISTS (SELECT 1 FROM notification_mute nm WHERE nm.member_id = r.id AND nm.type = 'NEW_POST')
                     ), made AS (
                         INSERT INTO notification (receiver_id, type, created_at, updated_at)
                         SELECT follower_id, 'NEW_POST', ?, ? FROM receivers RETURNING id, receiver_id
@@ -168,7 +172,7 @@ public class NotificationService {
                         INSERT INTO notification_post (notification_id, type, post_id) SELECT id, 'NEW_POST', ? FROM made RETURNING notification_id
                     )
                     SELECT made.id, made.receiver_id FROM made JOIN linked ON linked.notification_id = made.id
-                    """, CREATED_ROW, authorId, ts, ts, postId), NotificationType.NEW_POST);
+                    """, CREATED_ROW, authorId, postId, authorId, ts, ts, postId), NotificationType.NEW_POST);
         }), 0);
     }
 

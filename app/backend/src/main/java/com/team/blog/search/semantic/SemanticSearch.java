@@ -148,6 +148,24 @@ public class SemanticSearch {
         }
     }
 
+    /**
+     * 글 화면 "내용이 비슷한 다른 글"(072): 이 글과 임베딩이 가까운 글 번호, 가까운 순. 의미 검색 기준 거리 안의 글만이다.
+     * 공개 여부는 보지 않으니 부르는 쪽이 공개 목록 조건으로 다시 거른다. 쓸 수 없으면 빈 목록.
+     */
+    public List<Long> neighbors(long postId, int limit) {
+        if (!enabled()) return List.of();
+        try {
+            return jdbc.query("""
+                    SELECT b.post_id FROM post_embedding a JOIN post_embedding b ON b.model = a.model AND b.post_id <> a.post_id
+                    WHERE a.post_id = ? AND a.model = ? AND (a.embedding <=> b.embedding) <= ?
+                    ORDER BY a.embedding <=> b.embedding LIMIT ?""",
+                    (rs, i) -> rs.getLong(1), postId, client.model(), client.maxDistance(), limit);
+        } catch (RuntimeException e) {
+            log.warn("비슷한 글에 임베딩을 쓰지 못해 태그만 씁니다: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
     private Optional<String> queryVector(String query) {
         String key = QUERY_CACHE + client.model() + ":" + hash(query);
         try {

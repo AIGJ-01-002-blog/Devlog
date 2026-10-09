@@ -1101,12 +1101,6 @@ a.attachment-name:hover { color: var(--color-brand); }
 
 /* 시리즈 (024) */
 .series-picker { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-.series-box { margin: 24px 0; padding: 16px 20px; border-radius: 8px; background: var(--color-surface-2); }
-.series-box h2 { margin: 0 0 8px; font-size: 1.1rem; }
-.series-list { margin: 8px 0; padding-left: 1.4em; line-height: 1.9; }
-.series-foot { justify-content: space-between; }
-.series-arrows { display: inline-flex; gap: 6px; }
-.series-arrows [aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
 .series-posts, .series-edit { list-style: none; padding: 0; }
 .series-posts > li { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px; }
 .series-posts > li > .card { flex: 1; }
@@ -1636,3 +1630,54 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
 /* 목록 줄은 폭이 좁아 태그를 줄여 쓰지 않고 다음 줄로 넘긴다(3개까지라 길어지지 않는다) */
 .bl-text .card-tags { flex-wrap: wrap; }
 .bl-text .card-tags li { flex-shrink: 0; max-width: 100%; }
+
+/* 072 2단계: 글 화면 브랜치 이름표·상자, 비슷한 글 */
+.post-branch { display: inline-flex; margin-bottom: 10px; font-size: 0.875rem; }
+.branch-box { margin: 40px 0 0; padding: 18px 20px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-surface); }
+.branch-box-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.branch-box-head .bl-branch { margin: 0; font-size: 0.9375rem; }
+.branch-box-list { --c: var(--branch-series); list-style: none; margin: 0; padding: 0; position: relative; }
+.branch-box-topic .branch-box-list { --c: var(--branch-topic); }
+.branch-box-list li { position: relative; display: flex; align-items: center; gap: 8px; min-height: 36px; padding-left: 28px; }
+/* 점을 잇는 세로줄. 시리즈는 실선, 주제는 점선 */
+.branch-box-list li::before {
+  content: ""; position: absolute; left: 8px; top: 0; bottom: 0; border-left: 2px solid var(--c); opacity: 0.55;
+}
+.branch-box-topic .branch-box-list li::before { border-left-style: dashed; }
+.branch-box-list li:first-child::before { top: 50%; }
+.branch-box-dot {
+  position: absolute; left: 4px; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%;
+  background: var(--color-surface); border: 2px solid var(--c); z-index: 1;
+}
+.branch-box-list li.is-here .branch-box-dot { background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent); }
+.branch-box-list li a { color: var(--color-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.branch-box-list li a:hover { color: var(--color-brand); }
+.branch-box-list li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.branch-box-read { flex-shrink: 0; color: var(--branch-topic); font-size: 0.8125rem; font-weight: 700; }
+/* 맨 아래: main에서 갈라진 곳. main 줄로 휘어 들어간다 */
+.branch-box-list li.branch-box-fork { color: var(--color-text-muted); font-size: 0.8125rem; min-height: 30px; }
+.branch-box-list li.branch-box-fork::before {
+  left: -6px; top: 0; bottom: 50%; width: 14px; border-left: 0; border-right: 2px solid var(--c); border-bottom: 2px solid var(--c);
+  border-bottom-right-radius: 8px;
+}
+.branch-box-topic .branch-box-list li.branch-box-fork::before { border-right-style: dashed; border-bottom-style: dashed; }
+.branch-box-list li.branch-box-fork .branch-box-dot { left: -11px; border-color: var(--branch-main); }
+.branch-box-foot { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; }
+.similar-posts { margin-top: 32px; }
+
+/* 시리즈 이어 읽기 */
+.series-progress { margin: 16px 0 24px; padding: 16px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+.series-progress-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.series-progress-bar { height: 6px; margin: 10px 0 14px; border-radius: 999px; background: var(--color-surface-2); overflow: hidden; }
+.series-progress-bar span { display: block; height: 100%; background: var(--branch-series); border-radius: inherit; }
+.series-progress-actions { gap: 8px; flex-wrap: wrap; }
+.series-posts > li.is-read .series-no { color: var(--branch-topic); }
+
+/* 발행 창 브랜치 추천 */
+.branch-suggest { margin: 12px 0; padding: 12px 14px; border: 1px dashed var(--color-border); border-radius: 10px; background: var(--color-surface-2); }
+.branch-suggest p { margin: 0 0 8px; }
+.branch-suggest-title { font-weight: 600; font-size: 0.875rem; }
+.branch-suggest .bl-branch { margin: 0; vertical-align: middle; }
+.branch-suggest-ok { color: var(--branch-topic); }
+.branch-suggest-actions { gap: 6px; flex-wrap: wrap; }
+.branch-suggest-pick select { max-width: 100%; margin-bottom: 8px; }

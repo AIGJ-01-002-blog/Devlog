@@ -8,12 +8,15 @@ import { AttachmentList } from '../components/AttachmentList'
 import { LikeButton } from '../components/LikeButton'
 import { AdjacentPosts } from '../components/AdjacentPosts'
 import { SocialLinkList } from '../components/SocialLinkList'
-import { SeriesBox } from '../components/SeriesBox'
+import { BranchBox } from '../components/BranchBox'
+import { BranchMark } from '../components/BranchList'
+import { SimilarPosts } from '../components/SimilarPosts'
 import { ReadProgress } from '../components/ReadProgress'
 import { ShareButton } from '../components/ShareButton'
 import { Toc } from '../components/Toc'
 import { readingMinutes } from '../lib/toc'
 import { api, ApiError, takeInitialData } from '../lib/api'
+import { markRead, usePostBranch } from '../lib/branch'
 import { clock, compactNumber, fullDate, monthDay, relativeDate } from '../lib/format'
 import { enhanceGifs } from '../lib/gifPlayer'
 import { renderDiagramsWithin } from '../lib/diagram'
@@ -41,6 +44,9 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
   const bodyRef = useRef<HTMLDivElement>(null)
   const { me } = useAuth()
   useViewBeacon(bodyRef, post?.id, !!post && !post.mine && post.status === 'PUBLISHED')
+  const branch = usePostBranch(Number(id)) ?? null
+  // 시리즈 이어 읽기(072): 이 기기에서 연 글을 기억한다. 서버에는 남기지 않는다
+  useEffect(() => { if (post?.status === 'PUBLISHED') markRead(post.id) }, [post?.id, post?.status])
 
   useEffect(() => {
     if (post && String(post.id) === id) return
@@ -136,6 +142,13 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
         {notice && (
           <div className={notice.ok ? 'banner banner-ok' : 'banner banner-warn'} role={notice.ok ? 'status' : 'alert'}>{notice.text}</div>
         )}
+        {branch && (
+          <Link to={branch.url} className={`bl-branch bl-branch-${branch.kind.toLowerCase()} post-branch`}
+                data-tip={branch.kind === 'SERIES' ? '시리즈 글 모두 보기' : '홈에서 이 브랜치 글만 보기'}>
+            <BranchMark kind={branch.kind} />{branch.name} {branch.kind === 'SERIES' ? '시리즈' : '브랜치'}
+            {branch.index != null && `, ${branch.index}편`}
+          </Link>
+        )}
         <h1 className="post-title">{post.title}</h1>
         <div className="post-meta">
           <span className="post-byline">
@@ -143,6 +156,9 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
             {date && <time dateTime={date} title={fullDate(date)}> · {relativeDate(date)}</time>}
             {post.editedAt && <span className="muted"> · 수정됨 {monthDay(post.editedAt)}</span>}
             {minutes != null && <span className="muted"> · {minutes}분 읽기</span>}
+            {post.status === 'PUBLISHED' && (
+              <span className="muted post-byline-stats"> · 조회 {compactNumber(post.viewCount)} · 댓글 {compactNumber(post.commentCount)} · 좋아요 {compactNumber(post.likeCount)}</span>
+            )}
           </span>
           {post.mine && (
             <span className="post-owner-actions">
@@ -167,10 +183,11 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
             {post.tags.map((t) => <li key={t}><Link to={tagPath(t)} className="tag-link">#{t}</Link></li>)}
           </ul>
         )}
-        <SeriesBox key={`series-${post.id}`} postId={post.id} />
         <Toc bodyRef={bodyRef} html={post.contentHtml} />
         <div className="post-body markdown" ref={bodyRef} dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
         <AttachmentList key={post.id} postId={post.id} />
+        {branch && <BranchBox nav={branch} postId={post.id} />}
+        {post.status === 'PUBLISHED' && <SimilarPosts key={`similar-${post.id}`} postId={post.id} />}
         <div className="post-stats muted">
           <LikeButton postId={post.id} mine={post.mine} initial={{ liked: post.liked, likeCount: post.likeCount }}
             onChange={(l) => setPost((p) => p && { ...p, liked: l.liked, likeCount: l.likeCount })} />

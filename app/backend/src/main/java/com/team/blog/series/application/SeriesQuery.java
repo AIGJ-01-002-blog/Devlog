@@ -3,7 +3,9 @@ package com.team.blog.series.application;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +25,7 @@ import com.team.blog.post.query.PostCard;
 import com.team.blog.post.query.PostCardQuery;
 import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.markdown.ImageUrls;
+import com.team.blog.tag.application.TagSql;
 
 /**
  * 시리즈 읽기 (024 US2). 보이는 글은 블로그 목록과 같은 조건이다 (FR-004): 남은 공개 글, 친구는 친구 공개 글까지,
@@ -38,13 +41,16 @@ public class SeriesQuery {
     private final MemberProfileQuery members;
     private final PostAccessPolicy policy;
     private final ImageUrls imageUrls;
+    private final SeriesSubscriptions subscriptions;
 
-    public SeriesQuery(JdbcTemplate jdbc, PostCardQuery cards, MemberProfileQuery members, PostAccessPolicy policy, ImageUrls imageUrls) {
+    public SeriesQuery(JdbcTemplate jdbc, PostCardQuery cards, MemberProfileQuery members, PostAccessPolicy policy, ImageUrls imageUrls,
+                       SeriesSubscriptions subscriptions) {
         this.jdbc = jdbc;
         this.cards = cards;
         this.members = members;
         this.policy = policy;
         this.imageUrls = imageUrls;
+        this.subscriptions = subscriptions;
     }
 
     public record Summary(long id, String name, String slug, int postCount, String thumbnailUrl, Instant updatedAt) {}
@@ -52,8 +58,13 @@ public class SeriesQuery {
     /** @param personal 친구·주인이라 남과 다른 응답 */
     public record Listing(List<Summary> items, boolean personal) {}
 
-    /** @param personal 친구·주인이라 남과 다른 응답. 어디에도 저장하지 않는다 (docs/06 R-5) */
+    /**
+     * @param subscribed 로그인한 남이 이 시리즈를 구독했는지(072). 비회원·주인은 null
+     * @param personal 친구·주인·회원이라 남과 다른 응답. 어디에도 저장하지 않는다 (docs/06 R-5)
+     */
     public record Detail(long id, String name, String slug, Instant updatedAt, boolean mine, List<PostCard> posts,
+                         @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+                         Boolean subscribed,
                          @com.fasterxml.jackson.annotation.JsonIgnore boolean personal) {}
 
     public record Item(long id, String title, String url) {}
@@ -120,6 +131,25 @@ public class SeriesQuery {
         return byPost;
     }
 
+    /** @param tags 시리즈 글에 쓰인 태그(겹치면 한 번) */
+    public record TagProfile(long id, String name, List<String> tags) {}
+
+    /** 발행 창 브랜치 추천(072): 내 시리즈마다 글에 쓴 태그. 휴지통 글은 빼고, 글이 없는 시리즈는 빠진다 */
+    public List<TagProfile> tagProfiles(long memberId) {
+        Map<Long, TagProfile> byId = new LinkedHashMap<>();
+        jdbc.query("SELECT s.id, s.name, " + TagSql.NAMES_COLUMN + """
+                 FROM series s JOIN series_post sp ON sp.series_id = s.id JOIN post p ON p.id = sp.post_id
+                WHERE s.member_id = ? AND p.deleted_at IS NULL ORDER BY s.updated_at DESC, s.id DESC""", rs -> {
+            long id = rs.getLong(1);
+            TagProfile t = byId.get(id);
+            if (t == null) byId.put(id, t = new TagProfile(id, rs.getString(2), new ArrayList<>()));
+            for (Object tag : (Object[]) rs.getArray(3).getArray()) {
+                if (!t.tags().contains((String) tag)) t.tags().add((String) tag);
+            }
+        }, memberId);
+        return List.copyOf(byId.values());
+    }
+
     /** 블로그의 시리즈 탭. 최근 수정 순. 남에게는 읽을 수 있는 글이 없는 시리즈를 숨긴다 (US2-3). */
     public Optional<Listing> list(String handle, Long viewerId) {
         return scope(handle, viewerId).map(s -> new Listing(jdbc.query("""
@@ -150,8 +180,9 @@ public class SeriesQuery {
                     List<Long> ids = Columns.longs(jdbc, "SELECT post_id FROM series_post WHERE series_id = ? ORDER BY position", id);
                     List<PostCard> posts = cards.cards(ids, s.condition());
                     if (posts.isEmpty() && !s.mine()) return Optional.empty();
+                    Boolean subscribed = viewerId == null || s.mine() ? null : subscriptions.subscribed(viewerId, id);
                     return Optional.of(new Detail(id, (String) row[1], (String) row[2], ((Timestamp) row[3]).toInstant(), s.mine(),
-                            posts, s.mine() || s.friend()));
+                            posts, subscribed, viewerId != null));
                 }));
     }
 

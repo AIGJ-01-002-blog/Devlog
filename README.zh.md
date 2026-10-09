@@ -154,7 +154,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>多个 Pod]
     I -->|/blog-images| M[(MinIO / S3<br/>图片 · 附件)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V24)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V25)]
     A --> R[(Redis<br/>会话 · 限流 · 浏览数 · 缓存)]
     A --> M
     A -.可选.-> G[Google Gemini]
@@ -246,7 +246,7 @@ sequenceDiagram
 
 | 路径 | 说明 |
 | --- | --- |
-| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V24）、测试 |
+| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V25）、测试 |
 | [app/frontend](app/frontend) | 前端：React 19 SPA、TypeScript、Vite。界面、自动保存（IndexedDB）、深色模式 |
 | [deploy](deploy) | 部署：Dockerfile、Kubernetes 清单（base、selfhosted、nhn、local），部署、回滚、密钥检查脚本 |
 | [.github](.github) | CI/CD：后端与界面测试、镜像构建与部署、版本发布、Discord 与 Telegram 通知 |
@@ -323,7 +323,7 @@ npm run dev        # http://localhost:5173
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub、Google 登录，会话，CSRF，按路径的权限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | 所有领域 | 保存会员、文章、评论等领域数据 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | 会话、限流、浏览数、缓存 | 多个 Pod 共享同一会话，并发请求也由一个 Redis 脚本判定 |
-| Flyway | Boot 4.1 | 数据库 | 用 V1~V24 迁移管理模式，启动时自动应用 |
+| Flyway | Boot 4.1 | 数据库 | 用 V1~V25 迁移管理模式，启动时自动应用 |
 | commonmark-java (+ GFM 扩展) | 0.30.0 | 正文渲染 | Markdown → HTML。表格、删除线、任务清单、自动链接、标题锚点 |
 | OWASP Java HTML Sanitizer | 20260924.2 | 正文净化 | 按白名单净化渲染后的 HTML，防止 XSS |
 | AWS SDK for Java (S3) | 2.55.12 | media | 把图片和附件上传到 MinIO、S3 |
@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.47.0 | 2026-10-09 | 新设计第二阶段:文章页分支框与相似文章、系列继续阅读与新文章提醒、发布时推荐分支 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.47.0) |
 | v1.46.0 | 2026-10-09 | 新设计第一阶段:首页分支图(系列与相似主题自动归组)、按分支筛选、新字体与配色、阅读进度条 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.46.0) |
 | v1.45.0 | 2026-10-09 | AI 文章提议通知、可选日记时间与自动发布、Mermaid 图表、按主题拆分开发日志草稿 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.45.0) |
 | v1.44.0 | 2026-10-09 | 管理后台新增流量来源（搜索、社交、直接访问）和最常浏览的页面 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.44.0) |

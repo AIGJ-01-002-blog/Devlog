@@ -72,4 +72,16 @@ class TopicClustererTest {
         List<Topic> second = TopicClusterer.cluster(docs, TopicClusterer.tagEdges(docs, 0.5), 2);
         assertThat(first).isEqualTo(second);
     }
+
+    @Test
+    void 브랜치_이름이_겹치면_큰_브랜치가_먼저_갖고_작은_브랜치는_다음_태그를_쓴다() {
+        List<Doc> docs = List.of(doc(1, "devlog", "redis"), doc(2, "devlog", "redis"), doc(3, "devlog", "redis"),
+                doc(4, "devlog", "css"), doc(5, "devlog", "css"));
+        List<Edge> edges = List.of(new Edge(1, 2, 0.9, Method.EMBEDDING), new Edge(2, 3, 0.9, Method.EMBEDDING),
+                new Edge(4, 5, 0.9, Method.EMBEDDING));
+        List<Topic> topics = TopicClusterer.cluster(docs, edges, 12);
+        assertThat(topics).extracting(Topic::key).containsExactly(1L, 4L);
+        assertThat(topics.get(0).name()).isEqualTo("devlog");
+        assertThat(topics.get(1).name()).isEqualTo("css");
+    }
 }

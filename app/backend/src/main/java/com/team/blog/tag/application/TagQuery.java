@@ -3,6 +3,7 @@ package com.team.blog.tag.application;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +70,28 @@ public class TagQuery {
             byPost.computeIfAbsent(rs.getLong(1), k -> new ArrayList<>()).add(rs.getString(2));
         });
         return byPost;
+    }
+
+    /** 태그마다 쓴 공개 글 수 (발행 창 브랜치 추천의 희소도, 072). 공개 글에 쓰이지 않은 태그는 빠진다 */
+    public Map<String, Long> publicUsage(Collection<String> names) {
+        Map<String, Long> out = new HashMap<>();
+        if (names.isEmpty()) return out;
+        jdbc.query(con -> {
+            var ps = con.prepareStatement("SELECT t.name, count(*) FROM tag t JOIN post_tag pt ON pt.tag_id = t.id" + PUBLIC_POSTS
+                    + " AND t.name = ANY (?) GROUP BY t.name");
+            ps.setArray(1, con.createArrayOf("varchar", names.toArray()));
+            return ps;
+        }, rs -> {
+            out.put(rs.getString(1), rs.getLong(2));
+        });
+        return out;
+    }
+
+    /** 공개 글 전체 수 */
+    public long publicPostTotal() {
+        Long n = jdbc.queryForObject("SELECT count(*) FROM post p JOIN member m ON m.id = p.author_id WHERE "
+                + PostAccessPolicy.PUBLIC_LIST_CONDITION, Long.class);
+        return n == null ? 0 : n;
     }
 
     /** 태그 페이지 상단의 공개 글 수. 없는 태그는 0이다. */
