@@ -1711,7 +1711,10 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
 .project-summary { margin: 12px 0; color: var(--color-text-2); }
 .project-tech { flex-wrap: wrap; margin: 0 0 12px; }
 .project-text h4 { margin: 14px 0 4px; font-size: 0.875rem; color: var(--color-text-muted); }
-.project-text p { margin: 0; white-space: pre-line; }
+.project-text p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+/* 글 제목·긴 URL이 칸을 밀어 카드 밖으로 넘치지 않게 (v1.49.1, 390px에서 카드가 545px로 늘던 문제) */
+.project-card > * { min-width: 0; }
+.project-title, .project-summary { overflow-wrap: anywhere; }
 .project-branch { margin: 0; align-self: start; }
 .project-editor { margin: 12px 0 20px; padding: 12px 16px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
 .project-editor summary { cursor: pointer; font-weight: 600; }
@@ -1722,7 +1725,7 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
   .portfolio-hero { grid-template-columns: auto minmax(0, 1fr); padding: 20px; gap: 16px; }
   .portfolio-hero .avatar { width: 64px; height: 64px; }
   .portfolio-stats { grid-column: 1 / -1; justify-content: space-around; }
-  .project-card { grid-template-columns: 1fr; padding: 18px; }
+  .project-card { grid-template-columns: minmax(0, 1fr); padding: 18px; }
   .blog-tabs .blog-tab-portfolio { margin-left: 0; }
 }
 
