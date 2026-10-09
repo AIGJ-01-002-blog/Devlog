@@ -20,10 +20,15 @@ export function AiProposals() {
     aiProposalsApi.list().then(setItems).catch(() => setLoadFailed(true))
   }
   useEffect(load, [])
+  // 알림의 링크(#ai-proposals)로 오면 목록을 불러온 뒤 이 항목으로 내린다. 처음 이동 때는 아직 그려지지 않았다
+  const hasItems = items.length > 0
+  useEffect(() => {
+    if (hasItems && location.hash === '#ai-proposals') document.getElementById('ai-proposals')?.scrollIntoView()
+  }, [hasItems])
 
   if (loadFailed) {
     return (
-      <section className="ai-proposals" aria-label="AI가 제안한 글">
+      <section id="ai-proposals" className="ai-proposals" aria-label="AI가 제안한 글">
         <p className="error" role="status">
           AI가 제안한 글을 불러오지 못했어요. <button type="button" className="btn btn-text" title="제안 목록을 다시 불러와요" onClick={load}>다시 시도</button>
         </p>
@@ -52,7 +57,7 @@ export function AiProposals() {
   }
 
   return (
-    <section className="ai-proposals" aria-labelledby="ai-proposals-title">
+    <section id="ai-proposals" className="ai-proposals" aria-labelledby="ai-proposals-title">
       <h2 id="ai-proposals-title">AI가 제안한 글 <span className="muted">{items.length}</span></h2>
       <p className="muted small">연결한 AI가 한 주제를 마쳤을 때 글로 남기면 좋겠다고 제안한 것들이에요. AI에게 "제안한 글 써 줘"라고 해도 돼요.</p>
       <ul>

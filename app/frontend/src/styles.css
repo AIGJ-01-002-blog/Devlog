@@ -435,6 +435,13 @@ select { width: auto; }
 .markdown blockquote p:last-child { margin: 0; }
 .markdown code { font-family: var(--mono); font-size: 0.85em; padding: 0.15em 0.4em; border-radius: 6px; background: var(--color-surface-2); border: 1px solid var(--color-border); }
 .markdown pre { padding: 18px 20px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-code-bg); overflow-x: auto; line-height: 1.6; }
+/* Mermaid 다이어그램 (spec 071): 넓은 그림은 가로로 밀어 보고, 좁은 화면에서도 본문 밖으로 넘치지 않는다 */
+.markdown figure.diagram { margin: 1.5em 0; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); overflow-x: auto; text-align: center; }
+.markdown figure.diagram svg { max-width: 100%; height: auto; }
+.markdown .diagram-error { margin-top: -0.5em; }
+.markdown .diagram-source { margin-top: 8px; text-align: left; }
+.markdown .diagram-source summary { cursor: pointer; color: var(--color-text-muted); font-size: 0.875rem; padding: 6px 0; }
+.markdown .diagram-source pre { margin: 8px 0 0; }
 .markdown pre code { padding: 0; background: none; border: 0; font-size: 0.875rem; }
 /* 서버가 적은 가로·세로로 자리를 먼저 잡는다. 폭이 줄면 비율대로 줄고, 높이 제한에 걸리면 찌그러지지 않고 안에 맞춘다 */
 .markdown img { display: block; margin: 1.5em auto; max-height: 80vh; height: auto; object-fit: contain; border-radius: var(--radius); }
@@ -894,6 +901,9 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .ai-publish h3 { margin: 0 0 8px; font-size: 1rem; }
 .ai-publish label { font-weight: 600; }
 .ai-publish p { margin: 6px 0 0; }
+/* 일기 쓰는 시각 (071): 체크 상자 아래 줄에, 글자와 고르기 칸을 한 줄로 */
+.ai-publish .ai-diary-hour { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-weight: 500; }
+.ai-diary-hour select { width: auto; min-height: 40px; }
 /* AI가 제안한 글 (061) */
 .ai-proposals { margin: 16px 0; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
 .ai-proposals h2 { margin: 0 0 4px; font-size: 1rem; }

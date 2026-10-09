@@ -19,7 +19,7 @@ import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
 
 /**
- * 설정의 "자정에 일기 쓰기"와 내 글 관리의 AI 글 제안 (061). 로그인 세션 + CSRF로만 부른다.
+ * 설정의 "AI 일기 쓰기"(시각 고르기 071)와 내 글 관리의 AI 글 제안 (061). 로그인 세션 + CSRF로만 부른다.
  * AI가 스스로 일기를 켜거나 제안을 정하지 못하게 MCP 도구로는 열어 두지 않는다.
  */
 @RestController
@@ -30,20 +30,25 @@ public class AiJournalController {
         this.journal = journal;
     }
 
-    /** @param enabled true면 연결한 AI가 메모를 남기고 매일 자정에 일기 임시글로 묶인다 */
-    public record AiDiarySetting(Boolean enabled) {}
+    /**
+     * @param enabled true면 연결한 AI가 메모를 남기고 매일 hour시(KST)에 일기로 묶인다
+     * @param hour    0~23. 보낼 때 빼면 지금 시각을 그대로 둔다
+     */
+    public record AiDiarySetting(Boolean enabled, Integer hour) {}
 
     public record ProposalView(long id, String title, String scope, List<String> tags, Instant createdAt) {}
 
     @GetMapping("/api/me/ai-diary")
     public ResponseEntity<AiDiarySetting> diary(@CurrentMember MemberPrincipal me) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(new AiDiarySetting(journal.diaryEnabled(me.id())));
+        AiJournal.DiarySetting d = journal.diary(me.id());
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(new AiDiarySetting(d.enabled(), d.hour()));
     }
 
     @PutMapping("/api/me/ai-diary")
     public AiDiarySetting setDiary(@CurrentMember MemberPrincipal me, @RequestBody AiDiarySetting body) {
         if (body == null || body.enabled() == null) throw ApiException.badRequest("INVALID_REQUEST", "켤지 끌지(enabled)를 보내 주세요.");
-        return new AiDiarySetting(journal.setDiaryEnabled(me.id(), body.enabled()));
+        AiJournal.DiarySetting d = journal.setDiary(me.id(), body.enabled(), body.hour());
+        return new AiDiarySetting(d.enabled(), d.hour());
     }
 
     /** 아직 정하지 않은 제안만. 최근 순 */

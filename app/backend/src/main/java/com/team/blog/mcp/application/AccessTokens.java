@@ -55,7 +55,7 @@ public class AccessTokens {
      * 토큰으로 들어온 요청의 주인. status는 member.status(ACTIVE·SUSPENDED·WITHDRAWN).
      * aiPublishAllowed는 회원이 웹 설정에서 켠 "AI가 발행·삭제하도록 허용"(053). 요청마다 DB에서 새로 읽는다.
      * admin은 관리자 회원(054 문의 관리 도구). 역할도 요청마다 새로 읽는다. tokenName은 토큰 이름이나 OAuth 앱 이름(버그 신고에 남긴다).
-     * aiDiaryEnabled는 회원이 켠 "자정에 일기 쓰기"(061). 켜져 있을 때만 add_note가 보인다.
+     * aiDiaryEnabled는 회원이 켠 "AI 일기 쓰기"(061). 켜져 있을 때만 add_note가 보인다.
      */
     public record Caller(long memberId, String handle, Scope scope, String status, boolean emailVerified, boolean aiPublishAllowed,
                          boolean admin, String tokenName, boolean aiDiaryEnabled) {

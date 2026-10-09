@@ -15,6 +15,7 @@ import { readingMinutes } from '../lib/toc'
 import { api, ApiError, takeInitialData } from '../lib/api'
 import { clock, compactNumber, fullDate, monthDay, relativeDate } from '../lib/format'
 import { enhanceGifs } from '../lib/gifPlayer'
+import { renderDiagramsWithin } from '../lib/diagram'
 import { highlightWithin } from '../lib/highlight'
 import { useAuth } from '../lib/auth'
 import { setFlash } from '../lib/flash'
@@ -54,6 +55,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
   useEffect(() => {
     if (post) {
       document.title = `${post.title} - ${post.author.nickname}`
+      void renderDiagramsWithin(bodyRef.current)
       void highlightWithin(bodyRef.current)
       enhanceGifs(bodyRef.current)
       const body = bodyRef.current

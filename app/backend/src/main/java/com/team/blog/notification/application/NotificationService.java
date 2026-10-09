@@ -226,6 +226,23 @@ public class NotificationService {
         });
     }
 
+    /**
+     * AI 글 제안 (071): 연결한 AI가 새 제안을 남기면 그 회원에게. 같은 제목의 제안을 고쳐 쓴 것은 새 제안이 아니라 다시 알리지 않는다.
+     * 받는 사람이 끈 종류이거나 탈퇴 신청했으면 만들지 않는다. 제안을 지우면(탈퇴 정리) 알림도 FK로 함께 지워진다.
+     */
+    public void aiProposed(long proposalId, long memberId, Instant at) {
+        tx.executeWithoutResult(s -> {
+            Boolean ok = jdbc.queryForObject("""
+                    SELECT EXISTS (SELECT 1 FROM member m JOIN ai_post_proposal p ON p.member_id = m.id AND p.id = ? AND p.status = 'OPEN'
+                                   WHERE m.id = ? AND m.status <> 'WITHDRAWN' AND m.deleted_at IS NULL
+                                     AND NOT EXISTS (SELECT 1 FROM notification_mute nm WHERE nm.member_id = m.id AND nm.type = 'AI_PROPOSAL'))
+                    """, Boolean.class, proposalId, memberId);
+            if (!Boolean.TRUE.equals(ok)) return;
+            long id = insert(memberId, NotificationType.AI_PROPOSAL, Timestamp.from(at));
+            jdbc.update("INSERT INTO notification_ai_proposal (notification_id, type, proposal_id) VALUES (?, 'AI_PROPOSAL', ?)", id, proposalId);
+        });
+    }
+
     private boolean following(long followerId, long followeeId) {
         return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM follow WHERE follower_id = ? AND followee_id = ?)",
                 Boolean.class, followerId, followeeId));

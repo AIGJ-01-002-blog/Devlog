@@ -15,6 +15,7 @@ import { api, ApiError } from '../lib/api';
 import { Autosaver } from '../lib/autosave';
 import { useAuth } from '../lib/auth';
 import { clock, fullDate } from '../lib/format';
+import { renderDiagramsWithin } from '../lib/diagram';
 import { highlightWithin } from '../lib/highlight';
 import { localDrafts } from '../lib/localDrafts';
 import { ALT_SOFT_LIMIT, bodyImages, formatBytes, forPreview, pendingIds, restorePendingInPreview, setAlt } from '../lib/postImages';
@@ -223,7 +224,10 @@ function Editor({ view, local, memberId }) {
         }, 500);
         return () => clearTimeout(t);
     }, [content]);
-    useEffect(() => { void highlightWithin(previewRef.current); }, [preview, tab]);
+    useEffect(() => {
+        void renderDiagramsWithin(previewRef.current);
+        void highlightWithin(previewRef.current);
+    }, [preview, tab]);
     const current = () => ({ title, contentMd: content });
     const saveNow = useCallback(async (base) => {
         const s = saver.current;

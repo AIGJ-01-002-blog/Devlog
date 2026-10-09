@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, ApiError } from '../lib/api'
 import { enhanceGifs } from '../lib/gifPlayer'
+import { renderDiagramsWithin } from '../lib/diagram'
 import { highlightWithin } from '../lib/highlight'
 import { setLeaveGuard } from '../lib/router'
 
@@ -38,6 +39,7 @@ export function BlogAbout({ handle }: { handle: string }) {
 
   useEffect(() => {
     if (draft == null && about?.html) {
+      void renderDiagramsWithin(bodyRef.current)
       void highlightWithin(bodyRef.current)
       enhanceGifs(bodyRef.current)
     }

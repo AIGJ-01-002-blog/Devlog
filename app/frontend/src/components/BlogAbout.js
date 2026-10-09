@@ -2,6 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { enhanceGifs } from '../lib/gifPlayer';
+import { renderDiagramsWithin } from '../lib/diagram';
 import { highlightWithin } from '../lib/highlight';
 import { setLeaveGuard } from '../lib/router';
 /** 서버와 같은 길이 제한 (spec 042 FR-002) */
@@ -28,6 +29,7 @@ export function BlogAbout({ handle }) {
     }, [handle]);
     useEffect(() => {
         if (draft == null && about?.html) {
+            void renderDiagramsWithin(bodyRef.current);
             void highlightWithin(bodyRef.current);
             enhanceGifs(bodyRef.current);
         }

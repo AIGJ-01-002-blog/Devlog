@@ -5,7 +5,9 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +25,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.team.blog.notification.application.NotificationService;
 import com.team.blog.post.application.PostCommandService;
+import com.team.blog.post.application.PostEditorQuery;
+import com.team.blog.post.application.PublishCommand;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.error.NotFoundException;
@@ -31,14 +36,17 @@ import com.team.blog.shared.jdbc.Columns;
 import com.team.blog.shared.time.Times;
 
 /**
- * AI 글 제안과 자정 일기 (061).
+ * AI 글 제안과 AI 일기 (061·071).
  * <p>
  * 글 제안: 서버는 AI의 대화를 읽지 못하므로 "한 주제가 끝났다"는 판단은 연결한 AI가 한다. AI는 propose_post로 제목·쓸 범위·태그를 남기고,
  * 사용자는 대화에서 바로 쓰라고 하거나 devlog 내 글 관리에서 [임시글로 만들기]·[넘기기]를 누른다.
  * <p>
- * 자정 일기: 회원이 설정에서 "자정에 일기 쓰기"를 켜면 AI가 작업 단위마다 add_note로 한두 문장 메모를 남긴다. 매일 00:00(KST)에
- * 전날까지의 메모를 날짜별 일기 임시글 하나로 묶고 메모는 지운다. 메모가 없는 날은 아무것도 만들지 않는다. 일기는 서버 AI를 거치지 않고
- * 주제별 소제목과 시각이 붙은 목록으로 묶는다(동의·비용이 필요 없고 결과가 늘 같다). 발행은 사용자가 한다.
+ * 새 제안이 생기면 회원에게 알림을 보낸다(071).
+ * <p>
+ * AI 일기: 회원이 설정에서 "AI 일기 쓰기"를 켜면 AI가 작업 단위마다 add_note로 한두 문장 메모를 남긴다. 매일 회원이 고른 시각(KST, 기본 0시)에
+ * 그때까지의 메모를 날짜별 일기 하나로 묶고 메모는 지운다. 메모가 없는 날은 아무것도 만들지 않는다. 일기는 서버 AI를 거치지 않고
+ * 주제별 소제목과 시각이 붙은 목록으로 묶는다(동의·비용이 필요 없고 결과가 늘 같다). 늘 임시글로 만들고, "AI가 발행·삭제하도록 허용"을
+ * 켠 회원이면 글에 정해진 공개 범위로 바로 발행한다(071).
  */
 @Service
 public class AiJournal {
@@ -46,7 +54,7 @@ public class AiJournal {
     static final ZoneId KST = ZoneId.of("Asia/Seoul");
     static final int MAX_OPEN_PROPOSALS = 20;
     /** 하루 메모 상한. 1,000자 메모가 다 차도 일기 본문이 글 길이 상한(10만 자) 안에 들어가게 잡았다 */
-    static final int NOTES_PER_DAY = 60;
+    public static final int NOTES_PER_DAY = 60;
     static final int TITLE_MAX = 100;
     static final int SCOPE_MAX = 2000;
     static final int NOTE_MAX = 1000;
@@ -59,41 +67,69 @@ public class AiJournal {
 
     public record Proposal(long id, String title, String scope, List<String> tags, Status status, Long postId, Instant createdAt) {}
 
-    /** @param todayCount 오늘(KST) 남긴 메모 수 (이번 메모 포함) */
+    /** @param todayCount 이번 일기 구간(고른 시각부터 24시간)에 남긴 메모 수 (이번 메모 포함) */
     public record NoteSaved(long id, int todayCount) {}
+
+    /** @param hour 일기를 묶는 시각 (KST 0~23시) */
+    public record DiarySetting(boolean enabled, int hour) {}
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
     private final PostCommandService commands;
+    private final PostEditorQuery editor;
     private final AiDraftHints hints;
+    private final NotificationService notifications;
     private final Clock clock;
     private final int maxTags;
 
-    public AiJournal(JdbcTemplate jdbc, TransactionTemplate tx, PostCommandService commands, AiDraftHints hints, Clock clock,
-                     BlogProperties props) {
+    public AiJournal(JdbcTemplate jdbc, TransactionTemplate tx, PostCommandService commands, PostEditorQuery editor, AiDraftHints hints,
+                     NotificationService notifications, Clock clock, BlogProperties props) {
         this.jdbc = jdbc;
         this.tx = tx;
         this.commands = commands;
+        this.editor = editor;
         this.hints = hints;
+        this.notifications = notifications;
         this.clock = clock;
         this.maxTags = props.post().maxTags();
     }
 
-    // ── 자정에 일기 쓰기 설정 ──────────────────────────────
+    // ── AI 일기 설정 ──────────────────────────────
+
+    public DiarySetting diary(long memberId) {
+        List<DiarySetting> rows = jdbc.query("SELECT ai_diary_enabled, ai_diary_hour FROM member WHERE id = ?",
+                (rs, i) -> new DiarySetting(rs.getBoolean(1), rs.getInt(2)), memberId);
+        if (rows.isEmpty()) throw new NotFoundException();
+        return rows.getFirst();
+    }
 
     public boolean diaryEnabled(long memberId) {
-        List<Boolean> rows = jdbc.queryForList("SELECT ai_diary_enabled FROM member WHERE id = ?", Boolean.class, memberId);
-        if (rows.isEmpty()) throw new NotFoundException();
-        return Boolean.TRUE.equals(rows.getFirst());
+        return diary(memberId).enabled();
     }
 
     /** 끄면 아직 묶지 않은 메모도 지운다. 일기를 원하지 않는 사람의 작업 메모를 남겨 두지 않는다. */
     public boolean setDiaryEnabled(long memberId, boolean on) {
+        return setDiary(memberId, on, null).enabled();
+    }
+
+    /** @param hour null이면 시각은 그대로 둔다 */
+    public DiarySetting setDiary(long memberId, boolean on, Integer hour) {
+        if (hour != null && (hour < 0 || hour > 23)) throw ApiException.badRequest("AI_DIARY_HOUR", "일기 시각(hour)은 0~23 사이로 골라 주세요.");
         tx.executeWithoutResult(s -> {
-            if (jdbc.update("UPDATE member SET ai_diary_enabled = ? WHERE id = ?", on, memberId) == 0) throw new NotFoundException();
+            int changed = hour == null
+                    ? jdbc.update("UPDATE member SET ai_diary_enabled = ? WHERE id = ?", on, memberId)
+                    : jdbc.update("UPDATE member SET ai_diary_enabled = ?, ai_diary_hour = ? WHERE id = ?", on, hour, memberId);
+            if (changed == 0) throw new NotFoundException();
             if (!on) jdbc.update("DELETE FROM ai_note WHERE member_id = ?", memberId);
         });
-        return on;
+        return diary(memberId);
+    }
+
+    /** "자정" 또는 "오후 10시"처럼 사람에게 보여 줄 시각 */
+    public static String hourLabel(int hour) {
+        if (hour == 0) return "자정";
+        if (hour == 12) return "정오";
+        return (hour < 12 ? "오전 " + hour : "오후 " + (hour - 12)) + "시";
     }
 
     // ── 글 제안 ──────────────────────────────
@@ -105,15 +141,16 @@ public class AiJournal {
         if (title.isEmpty() || title.length() > TITLE_MAX) throw ApiException.badRequest("PROPOSAL_TITLE", "제목(title)은 1~" + TITLE_MAX + "자로 적어 주세요.");
         if (scope.isEmpty() || scope.length() > SCOPE_MAX) throw ApiException.badRequest("PROPOSAL_SCOPE", "쓸 범위(scope)는 1~" + SCOPE_MAX + "자로 적어 주세요.");
         String tagText = String.join(",", tags);
-        return tx.execute(s -> {
+        Instant now = Times.now(clock);
+        long[] made = tx.execute(s -> {
             // 같은 회원의 제안은 한 줄씩 차례로 (상한 검사와 같은 제목 찾기가 겹치지 않게)
             jdbc.queryForList("SELECT id FROM member WHERE id = ? FOR UPDATE", Long.class, memberId);
             List<Long> same = Columns.longs(jdbc, "SELECT id FROM ai_post_proposal WHERE member_id = ? AND status = 'OPEN' AND title = ?",
                     memberId, title);
             if (!same.isEmpty()) {
                 jdbc.update("UPDATE ai_post_proposal SET scope = ?, tags = ?, created_at = ? WHERE id = ?",
-                        scope, tagText, Timestamp.from(Times.now(clock)), same.getFirst());
-                return same.getFirst();
+                        scope, tagText, Timestamp.from(now), same.getFirst());
+                return new long[] {same.getFirst(), 0};
             }
             Integer open = jdbc.queryForObject("SELECT count(*) FROM ai_post_proposal WHERE member_id = ? AND status = 'OPEN'",
                     Integer.class, memberId);
@@ -121,10 +158,20 @@ public class AiJournal {
                 throw ApiException.conflict("PROPOSAL_LIMIT", "아직 정하지 않은 제안이 " + MAX_OPEN_PROPOSALS
                         + "개라 더 남길 수 없어요. 사용자에게 devlog 내 글 관리에서 지난 제안을 정리해 달라고 알려 주세요.");
             }
-            return jdbc.queryForObject("""
+            Long id = jdbc.queryForObject("""
                     INSERT INTO ai_post_proposal (member_id, title, scope, tags, created_at) VALUES (?, ?, ?, ?, ?) RETURNING id
-                    """, Long.class, memberId, title, scope, tagText, Timestamp.from(Times.now(clock)));
+                    """, Long.class, memberId, title, scope, tagText, Timestamp.from(now));
+            return new long[] {id, 1};
         });
+        // 새 제안만 알린다. 커밋 뒤라 알림이 실패해도 제안은 남는다
+        if (made[1] == 1) {
+            try {
+                notifications.aiProposed(made[0], memberId, now);
+            } catch (RuntimeException e) {
+                log.warn("AI 글 제안 {} 알림을 만들지 못했습니다: {}", made[0], e.getMessage());
+            }
+        }
+        return made[0];
     }
 
     /** 정하지 않은 제안과 최근 30일 안에 임시글로 만든 제안. 최근 순 */
@@ -202,7 +249,7 @@ public class AiJournal {
         return "## 쓸 범위\n\n" + p.scope() + "\n";
     }
 
-    // ── 하루 메모와 자정 일기 ──────────────────────────────
+    // ── 하루 메모와 AI 일기 ──────────────────────────────
 
     public NoteSaved addNote(long memberId, String rawTopic, String rawContent, List<String> tags) {
         String content = rawContent == null ? "" : rawContent.strip();
@@ -210,12 +257,13 @@ public class AiJournal {
         if (content.isEmpty() || content.length() > NOTE_MAX) throw ApiException.badRequest("NOTE_CONTENT", "메모(content)는 1~" + NOTE_MAX + "자로 적어 주세요.");
         if (topic.length() > TOPIC_MAX) throw ApiException.badRequest("NOTE_TOPIC", "주제(topic)는 " + TOPIC_MAX + "자까지 적어 주세요.");
         Instant now = Times.now(clock);
-        Timestamp today = Timestamp.from(LocalDate.ofInstant(now, KST).atStartOfDay(KST).toInstant());
         return tx.execute(s -> {
-            if (!Boolean.TRUE.equals(jdbc.queryForObject("SELECT ai_diary_enabled FROM member WHERE id = ? FOR UPDATE", Boolean.class, memberId))) {
-                throw ApiException.conflict("AI_DIARY_OFF", AI_DIARY_OFF);
-            }
-            Integer count = jdbc.queryForObject("SELECT count(*) FROM ai_note WHERE member_id = ? AND created_at >= ?", Integer.class, memberId, today);
+            DiarySetting setting = jdbc.queryForObject("SELECT ai_diary_enabled, ai_diary_hour FROM member WHERE id = ? FOR UPDATE",
+                    (rs, i) -> new DiarySetting(rs.getBoolean(1), rs.getInt(2)), memberId);
+            if (setting == null || !setting.enabled()) throw ApiException.conflict("AI_DIARY_OFF", AI_DIARY_OFF);
+            // 하루 한도는 일기 하나가 묶는 24시간(고른 시각 기준)에 센다. 달력 날짜로 세면 일기 하나에 두 날치가 들어갈 수 있다
+            Timestamp since = Timestamp.from(diaryWindowStart(now, setting.hour()));
+            Integer count = jdbc.queryForObject("SELECT count(*) FROM ai_note WHERE member_id = ? AND created_at >= ?", Integer.class, memberId, since);
             int n = count == null ? 0 : count;
             if (n >= NOTES_PER_DAY) {
                 throw ApiException.conflict("NOTE_LIMIT", "메모는 하루 " + NOTES_PER_DAY + "개까지 남길 수 있어요. 오늘은 여기까지 모아 둘게요.");
@@ -226,38 +274,70 @@ public class AiJournal {
         });
     }
 
-    static final String AI_DIARY_OFF = "자정에 일기 쓰기가 꺼져 있어요. 사용자가 devlog 설정 › AI 연결에서 '자정에 일기 쓰기'를 켜야 메모를 남길 수 있어요.";
+    static final String AI_DIARY_OFF = "AI 일기 쓰기가 꺼져 있어요. 사용자가 devlog 설정 › AI 연결에서 'AI 일기 쓰기'를 켜야 메모를 남길 수 있어요.";
 
     /**
-     * 자정 작업 본체. 오늘(KST) 0시 전에 남긴 메모를 회원·날짜별 일기 임시글로 묶는다. 쉬는 동안 놓친 날도 날짜마다 따로 만든다.
-     * 메모는 꺼내면서 지우므로(DELETE … RETURNING) 두 번 돌아도 일기는 한 번만 생긴다. 회원 한 명이 실패해도 나머지는 계속한다.
+     * 매시 정각 작업 본체. 지금 시(KST)를 일기 시각으로 고른 회원마다, 이 시각 전에 남긴 메모를 날짜별 일기로 묶는다.
+     * 쉬는 동안 놓친 날도 날짜마다 따로 만든다. 메모는 꺼내면서 지우므로(DELETE … RETURNING) 두 번 돌아도 일기는 한 번만 생긴다.
+     * 회원 한 명이 실패해도 나머지는 계속한다. 일기를 만든 뒤 "AI가 발행·삭제하도록 허용"을 켠 회원이면 바로 발행한다.
      * @return 만든 일기 수
      */
     public int compileDiaries() {
-        Instant now = Times.now(clock);
-        Instant today = LocalDate.ofInstant(now, KST).atStartOfDay(KST).toInstant();
+        return compileDiariesAt(Times.now(clock));
+    }
+
+    /** compileDiaries를 정해 둔 시각으로 (테스트용) */
+    public int compileDiariesAt(Instant now) {
+        LocalDateTime local = LocalDateTime.ofInstant(now, KST).truncatedTo(ChronoUnit.HOURS);
+        Instant cutoff = local.atZone(KST).toInstant();
+        int hour = local.getHour();
         List<Long> members = Columns.longs(jdbc, """
                 SELECT DISTINCT n.member_id FROM ai_note n JOIN member m ON m.id = n.member_id
-                WHERE n.created_at < ? AND m.ai_diary_enabled AND m.status = 'ACTIVE' AND m.deleted_at IS NULL
-                """, Timestamp.from(today));
+                WHERE n.created_at < ? AND m.ai_diary_enabled AND m.ai_diary_hour = ? AND m.status = 'ACTIVE' AND m.deleted_at IS NULL
+                """, Timestamp.from(cutoff), hour);
         int made = 0;
         for (long memberId : members) {
+            List<Long> posts;
             try {
-                Integer n = tx.execute(s -> compile(memberId, today, now));
-                made += n == null ? 0 : n;
+                posts = tx.execute(s -> compile(memberId, cutoff, hour, now));
             } catch (RuntimeException e) {
-                log.warn("회원 {}의 자정 일기를 만들지 못했습니다. 메모는 남겨 두고 다음 자정에 다시 묶습니다: {}", memberId, e.getMessage());
+                log.warn("회원 {}의 AI 일기를 만들지 못했습니다. 메모는 남겨 두고 내일 같은 시각에 다시 묶습니다: {}", memberId, e.getMessage());
+                continue;
             }
+            if (posts == null) continue;
+            made += posts.size();
+            for (long postId : posts) autoPublish(memberId, postId);
         }
         // 묶지 못한 채 오래된 메모(정지된 계정 등)는 지운다
         jdbc.update("DELETE FROM ai_note WHERE created_at < ?", Timestamp.from(now.minus(NOTE_KEEP)));
-        if (made > 0) log.info("자정 일기 {}개를 임시글로 만들었습니다", made);
+        if (made > 0) log.info("AI 일기 {}개를 만들었습니다 ({}시)", made, hour);
         return made;
+    }
+
+    /**
+     * "AI가 발행·삭제하도록 허용"을 켠 회원의 일기는 웹 발행과 같은 규칙으로 발행한다(071). 공개 범위는 글에 정해진 값이다.
+     * 이메일 인증 전이거나 발행이 거절되면(검증 실패 등) 임시글로 둔다.
+     */
+    private void autoPublish(long memberId, long postId) {
+        List<String> handle = jdbc.queryForList("""
+                SELECT m.handle FROM member m WHERE m.id = ? AND m.ai_publish_allowed AND m.status = 'ACTIVE' AND m.deleted_at IS NULL
+                  AND EXISTS (SELECT 1 FROM auth_identity a WHERE a.member_id = m.id AND a.email_verified_at IS NOT NULL)
+                """, String.class, memberId);
+        if (handle.isEmpty()) return;
+        try {
+            PostEditorQuery.EditorView view = editor.open(memberId, handle.getFirst(), postId);
+            List<String> tags = hints.find(postId).map(AiDraftHints.Hint::tags).orElse(List.of());
+            commands.publish(new PublishCommand(postId, memberId, view.title(), view.contentMd(), view.summary(), view.visibility(), tags,
+                    view.version(), view.thumbnailUrl(), view.thumbnailHidden()), handle.getFirst(), null);
+        } catch (RuntimeException e) {
+            log.warn("회원 {}의 AI 일기(글 {})를 발행하지 못해 임시글로 둡니다: {}", memberId, postId, e.getMessage());
+        }
     }
 
     record Note(String topic, String content, List<String> tags, Instant at) {}
 
-    private int compile(long memberId, Instant before, Instant now) {
+    /** @return 만든 일기 글 번호 (날짜 순) */
+    private List<Long> compile(long memberId, Instant before, int hour, Instant now) {
         List<Note> notes = jdbc.query("DELETE FROM ai_note WHERE member_id = ? AND created_at < ? RETURNING topic, content, tags, created_at",
                 (rs, i) -> new Note(rs.getString("topic"), rs.getString("content"), split(rs.getString("tags")),
                         rs.getTimestamp("created_at").toInstant()), memberId, Timestamp.from(before));
@@ -265,8 +345,9 @@ public class AiJournal {
         Instant oldest = now.minus(NOTE_KEEP);
         for (Note n : notes) {
             if (n.at().isBefore(oldest)) continue;
-            byDay.computeIfAbsent(LocalDate.ofInstant(n.at(), KST), d -> new ArrayList<>()).add(n);
+            byDay.computeIfAbsent(diaryDay(n.at(), hour), d -> new ArrayList<>()).add(n);
         }
+        List<Long> out = new ArrayList<>();
         for (Map.Entry<LocalDate, List<Note>> day : byDay.entrySet()) {
             List<Note> list = day.getValue();
             list.sort((a, b) -> a.at().compareTo(b.at()));
@@ -274,8 +355,29 @@ public class AiJournal {
             Set<String> tags = new LinkedHashSet<>();
             for (Note n : list) for (String t : n.tags()) if (tags.size() < maxTags) tags.add(t);
             if (!tags.isEmpty()) hints.suggestTags(postId, List.copyOf(tags));
+            out.add(postId);
         }
-        return byDay.size();
+        return out;
+    }
+
+    /**
+     * 메모가 들어갈 일기의 날짜. 일기 하나는 "고른 시각부터 다음 날 같은 시각 전까지" 24시간을 묶고, 그 24시간의 한가운데가 속한 날짜를 제목에 쓴다.
+     * 0시(자정)면 그날 0~24시가 그날 일기이고, 22시면 전날 22시~오늘 22시가 오늘 일기, 6시면 어제 6시~오늘 6시(새벽 작업 포함)가 어제 일기다.
+     */
+    static LocalDate diaryDay(Instant at, int hour) {
+        return diaryWindowEnd(at, hour).minusHours(12).toLocalDate();
+    }
+
+    /** at이 들어가는 일기 구간의 끝: at 뒤에 처음 오는 hour시 정각 (KST) */
+    static LocalDateTime diaryWindowEnd(Instant at, int hour) {
+        LocalDateTime t = LocalDateTime.ofInstant(at, KST);
+        LocalDateTime end = t.toLocalDate().atTime(hour, 0);
+        return end.isAfter(t) ? end : end.plusDays(1);
+    }
+
+    /** at이 들어가는 일기 구간의 시작 (끝에서 24시간 전) */
+    public static Instant diaryWindowStart(Instant at, int hour) {
+        return diaryWindowEnd(at, hour).minusDays(1).atZone(KST).toInstant();
     }
 
     static String diaryTitle(LocalDate day) {
@@ -303,6 +405,10 @@ public class AiJournal {
     /** 탈퇴 정리 (020) */
     public void deleteAll(long memberId) {
         jdbc.update("DELETE FROM ai_note WHERE member_id = ?", memberId);
+        jdbc.update("""
+                DELETE FROM notification WHERE id IN (SELECT nap.notification_id FROM notification_ai_proposal nap
+                                                      JOIN ai_post_proposal p ON p.id = nap.proposal_id WHERE p.member_id = ?)
+                """, memberId);
         jdbc.update("DELETE FROM ai_post_proposal WHERE member_id = ?", memberId);
     }
 

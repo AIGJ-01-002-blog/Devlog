@@ -2,7 +2,8 @@
 export async function highlightWithin(root) {
     if (!root)
         return;
-    const blocks = root.querySelectorAll('pre code');
+    // Mermaid 블록은 diagram.ts가 그림으로 바꾼다
+    const blocks = root.querySelectorAll('pre code:not(.language-mermaid)');
     if (blocks.length === 0)
         return;
     try {

@@ -12,6 +12,7 @@ const secret = 'dvl_' + 'x'.repeat(43);
 describe('AiConnectSection', () => {
     let allowed;
     let diary;
+    let diaryHour;
     let root;
     let host;
     beforeEach(() => {
@@ -23,6 +24,7 @@ describe('AiConnectSection', () => {
         root = createRoot(host);
         allowed = false;
         diary = false;
+        diaryHour = 0;
         vi.stubGlobal('fetch', vi.fn(async (url, init) => {
             if (url.endsWith('/api/me/ai-publish')) {
                 if (init?.method === 'PUT')
@@ -30,9 +32,13 @@ describe('AiConnectSection', () => {
                 return new Response(JSON.stringify({ allowed }), { status: 200, headers: { 'Content-Type': 'application/json' } });
             }
             if (url.endsWith('/api/me/ai-diary')) {
-                if (init?.method === 'PUT')
-                    diary = JSON.parse(String(init.body)).enabled;
-                return new Response(JSON.stringify({ enabled: diary }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+                if (init?.method === 'PUT') {
+                    const b = JSON.parse(String(init.body));
+                    diary = b.enabled;
+                    if (b.hour !== undefined)
+                        diaryHour = b.hour;
+                }
+                return new Response(JSON.stringify({ enabled: diary, hour: diaryHour }), { status: 200, headers: { 'Content-Type': 'application/json' } });
             }
             if (init?.method === 'POST') {
                 return new Response(JSON.stringify({ token: { ...listed, id: 2, name: 'Claude Code', prefix: secret.slice(0, 8), scope: 'WRITE' }, secret }), { status: 201, headers: { 'Content-Type': 'application/json' } });
@@ -89,15 +95,15 @@ describe('AiConnectSection', () => {
         expect(JSON.parse(String(puts()[1][1].body))).toEqual({ allowed: false });
         expect(box().checked).toBe(false);
     });
-    // spec 061: 자정에 일기 쓰기는 기본 꺼짐이고, 끌 때는 남은 메모가 지워지니 한 번 더 묻는다
-    it('자정에 일기 쓰기는 켤 때 바로 켜고, 끌 때 확인을 받는다', async () => {
+    // spec 061·071: AI 일기 쓰기는 기본 꺼짐이고, 끌 때는 남은 메모가 지워지니 한 번 더 묻는다
+    it('AI 일기 쓰기는 켤 때 바로 켜고, 끌 때 확인을 받는다', async () => {
         const ask = vi.fn(() => false);
         vi.stubGlobal('confirm', ask);
         await act(async () => { root.render(_jsx(AiConnectSection, {})); });
         const box = () => host.querySelector('.ai-diary input[type="checkbox"]');
         const puts = () => fetch.mock.calls
             .filter(([url, init]) => init?.method === 'PUT' && String(url).endsWith('/api/me/ai-diary'));
-        expect(host.textContent).toContain('자정에 일기 쓰기');
+        expect(host.textContent).toContain('AI 일기 쓰기');
         expect(box().closest('label').title).toContain('자정에');
         expect(box().checked).toBe(false);
         await act(async () => { box().click(); });
@@ -113,5 +119,23 @@ describe('AiConnectSection', () => {
         await act(async () => { box().click(); });
         expect(JSON.parse(String(puts()[1][1].body))).toEqual({ enabled: false });
         expect(box().checked).toBe(false);
+    });
+    // spec 071: 일기 시각은 켠 뒤에 고르고, 고르면 그 시각으로 저장한다
+    it('일기 쓰는 시각을 고르면 저장하고 안내 문구도 그 시각으로 바뀐다', async () => {
+        await act(async () => { root.render(_jsx(AiConnectSection, {})); });
+        const select = () => host.querySelector('.ai-diary select');
+        expect(select().disabled).toBe(true);
+        expect(select().options).toHaveLength(24);
+        expect(select().options[22].textContent).toBe('오후 10시');
+        await act(async () => { host.querySelector('.ai-diary input[type="checkbox"]').click(); });
+        expect(select().disabled).toBe(false);
+        await act(async () => {
+            select().value = '22';
+            select().dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        const puts = fetch.mock.calls
+            .filter(([url, init]) => init?.method === 'PUT' && String(url).endsWith('/api/me/ai-diary'));
+        expect(JSON.parse(String(puts[1][1].body))).toEqual({ enabled: true, hour: 22 });
+        expect(host.querySelector('.ai-diary').textContent).toContain('매일 오후 10시(한국 시간)');
     });
 });

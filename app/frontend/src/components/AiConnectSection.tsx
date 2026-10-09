@@ -3,7 +3,7 @@ import { ApiError } from '../lib/api'
 import { fullDate, relativeDate } from '../lib/format'
 import { Link } from '../lib/router'
 import {
-  aiDiaryApi, aiPublishApi, claudeCodeCommand, TOKEN_EXPIRY_DAYS, TOKEN_NAME_MAX, tokensApi, type AccessToken, type IssuedToken, type TokenScope,
+  aiDiaryApi, aiPublishApi, diaryHourLabel, type AiDiarySetting, claudeCodeCommand, TOKEN_EXPIRY_DAYS, TOKEN_NAME_MAX, tokensApi, type AccessToken, type IssuedToken, type TokenScope,
 } from '../lib/mcp'
 import { CopyCode } from './CopyCode'
 
@@ -166,11 +166,11 @@ function AiPublishToggle() {
 }
 
 /**
- * "자정에 일기 쓰기" (061). 기본은 꺼짐. 켜면 연결한 AI에 add_note가 열리고, 매일 00:00(KST)에 그날 메모가 일기 임시글로 묶인다.
- * 발행은 하지 않는다. 끄면 아직 묶지 않은 메모도 지운다.
+ * "AI 일기 쓰기" (061·071). 기본은 꺼짐. 켜면 연결한 AI에 add_note가 열리고, 매일 고른 시각(KST, 기본 자정)에 메모가 일기로 묶인다.
+ * 늘 임시글로 만들고, AI 발행을 허용했으면 바로 발행한다. 끄면 아직 묶지 않은 메모도 지운다.
  */
 function AiDiaryToggle() {
-  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [setting, setSetting] = useState<AiDiarySetting | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -178,16 +178,15 @@ function AiDiaryToggle() {
 
   const load = () => {
     setLoadFailed(false)
-    aiDiaryApi.get().then((s) => setEnabled(s.enabled)).catch(() => setLoadFailed(true))
+    aiDiaryApi.get().then(setSetting).catch(() => setLoadFailed(true))
   }
   useEffect(load, [])
 
-  const change = async (on: boolean) => {
-    if (!on && !confirm('자정에 일기 쓰기를 끌까요?\n오늘 AI가 남긴 메모도 함께 지워져요. 이미 만든 일기 임시글은 그대로 남아요.')) return
+  const save = async (on: boolean, hour?: number) => {
     setBusy(true)
     setError(null)
     try {
-      setEnabled((await aiDiaryApi.set(on)).enabled)
+      setSetting(await aiDiaryApi.set(on, hour))
     } catch {
       setError('설정을 바꾸지 못했어요. 다시 시도해 주세요.')
     } finally {
@@ -195,23 +194,37 @@ function AiDiaryToggle() {
     }
   }
 
+  const change = (on: boolean) => {
+    if (!on && !confirm('AI 일기 쓰기를 끌까요?\n아직 일기로 묶지 않은 AI 메모도 함께 지워져요. 이미 만든 일기는 그대로 남아요.')) return
+    void save(on)
+  }
+
+  const enabled = setting?.enabled === true
+  const when = diaryHourLabel(setting?.hour ?? 0)
   return (
     <div className="ai-publish ai-diary">
-      <h3>자정 일기</h3>
-      <label title="AI를 쓴 날마다 자정에 그날 작업 메모를 일기 임시글로 모아요">
-        <input type="checkbox" checked={enabled === true} disabled={busy || enabled === null} onChange={(e) => change(e.target.checked)} />
-        {' '}자정에 일기 쓰기
+      <h3>AI 일기</h3>
+      <label title={`AI를 쓴 날마다 ${when}에 작업 메모를 일기로 모아요`}>
+        <input type="checkbox" checked={enabled} disabled={busy || setting === null} onChange={(e) => change(e.target.checked)} />
+        {' '}AI 일기 쓰기
+      </label>
+      <label className="ai-diary-hour">
+        일기 쓰는 시각{' '}
+        <select value={setting?.hour ?? 0} disabled={busy || !enabled} title="매일 이 시각(한국 시간)에 그때까지의 메모를 일기로 묶어요"
+          onChange={(e) => void save(true, Number(e.target.value))}>
+          {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{diaryHourLabel(h)}</option>)}
+        </select>
       </label>
       <p className="muted small">
-        켜면 연결한 AI가 작업을 마칠 때마다 한두 문장 메모를 남기고, 매일 자정(한국 시간)에 그날 메모가 주제별로 묶인 <b>일기 임시글</b>이 돼요.
-        AI를 쓰지 않은 날은 만들지 않고, 발행은 내가 해요.
+        켜면 연결한 AI가 작업을 마칠 때마다 한두 문장 메모를 남기고, 매일 {when}(한국 시간)에 그때까지의 메모가 주제별로 묶인 <b>일기</b>가 돼요.
+        AI를 쓰지 않은 날은 만들지 않아요. 일기는 임시글로 만들고, 위에서 <b>AI 발행을 허용</b>했으면 글에 정해진 공개 범위로 바로 발행해요.
       </p>
       <p className="muted small ai-publish-reconnect">
         켠 뒤에는 AI 앱에서 devlog 연결을 다시 시작해야 메모 도구가 보여요. 끄면 아직 묶지 않은 메모도 지워요.
       </p>
       {loadFailed && (
         <p className="error" role="status">
-          설정을 불러오지 못했어요. <button type="button" className="btn btn-text" title="자정 일기 설정을 다시 불러와요" onClick={load}>다시 시도</button>
+          설정을 불러오지 못했어요. <button type="button" className="btn btn-text" title="AI 일기 설정을 다시 불러와요" onClick={load}>다시 시도</button>
         </p>
       )}
       <div role="status">{error && <p className="error">{error}</p>}</div>

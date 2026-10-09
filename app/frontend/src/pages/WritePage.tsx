@@ -14,6 +14,7 @@ import { api, ApiError } from '../lib/api'
 import { Autosaver, type Content, type SaveState } from '../lib/autosave'
 import { useAuth } from '../lib/auth'
 import { clock, fullDate } from '../lib/format'
+import { renderDiagramsWithin } from '../lib/diagram'
 import { highlightWithin } from '../lib/highlight'
 import { localDrafts, type LocalBackup, type LocalDraft } from '../lib/localDrafts'
 import { ALT_SOFT_LIMIT, bodyImages, formatBytes, forPreview, pendingIds, restorePendingInPreview, setAlt } from '../lib/postImages'
@@ -228,7 +229,10 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     return () => clearTimeout(t)
   }, [content])
 
-  useEffect(() => { void highlightWithin(previewRef.current) }, [preview, tab])
+  useEffect(() => {
+    void renderDiagramsWithin(previewRef.current)
+    void highlightWithin(previewRef.current)
+  }, [preview, tab])
 
   const current = (): Content => ({ title, contentMd: content })
 
