@@ -20,6 +20,7 @@ deploy/
 │   └── secret.env.example       비밀값 형식. secret.env로 복사해 채운다 (커밋 금지)
 ├── k8s/overlays/local/          로컬 검증용: selfhosted와 같은 부품, 개발 로그인 켬
 ├── k8s/addons/cloudflare-tunnel/ 도메인 연결용 cloudflared 2개 (토큰이 있을 때만 deploy.yml이 적용)
+├── k8s/addons/kubernetes-dashboard/ 운영 대시보드(Kubernetes Dashboard v2.7.0) + 읽기 전용 로그인 계정 (학교 서버에 deploy.yml이 적용)
 ├── scripts/gen-secret-env.sh    secret.env를 임의 비밀번호로 만들어 줌
 ├── scripts/server-setup.sh      새 Ubuntu 서버(Oracle 무료 VM)에 k3s·ingress-nginx 설치 + 배포용 접속 파일
 ├── scripts/rollout.sh           배포 + 헬스 체크 실패 시 자동 롤백
@@ -223,6 +224,18 @@ Oracle 무료 VM이 "Out of capacity"로 만들어지지 않아 학교가 준 �
 5. Actions → 배포 → Run workflow. 앱을 배포한 뒤 토큰으로 Secret `cloudflared-token`을 만들고 cloudflared 2개를 띄운다.
 
 cloudflared는 2개가 각각 Cloudflare에 연결하므로 하나가 재시작돼도 주소는 끊기지 않는다(PDB `minAvailable: 1`). 확인: `kubectl -n blog get pods -l app.kubernetes.io/name=cloudflared`, Cloudflare 터널 상태가 HEALTHY.
+
+## 운영 대시보드 (k8s.devlog.life)
+
+배포·파드·로그·자원 사용량을 브라우저에서 본다. 공식 Kubernetes Dashboard(v2.7.0)를 `kubernetes-dashboard` 네임스페이스에 두고, 학교 서버 배포 때 deploy.yml이 함께 적용한다. 바깥 주소는 Cloudflare Tunnel로 열되 **Cloudflare Access 이메일 인증**과 **읽기 전용 토큰** 두 겹으로 막는다. 토큰 계정 `devlog-viewer`는 쿠버네티스 기본 역할 `view`라 상태와 로그만 보고, Secret은 못 보며 아무것도 바꿀 수 없다.
+
+Access를 먼저 만들고 주소를 연결한다(순서를 바꾸면 잠깐이라도 막지 않은 채로 열린다).
+
+1. Cloudflare 대시보드 → Zero Trust → Access → Applications → Add an application → Self-hosted. 도메인 `k8s.devlog.life`, 정책 Allow, Include → Emails에 볼 사람 이메일만 넣는다.
+2. Zero Trust → Networks → Tunnels → `devlog` → Public Hostname(Published application routes) 추가: `k8s.devlog.life` → Service `HTTPS`, `kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local:443`. Additional application settings → TLS → **No TLS Verify** 켬(대시보드가 스스로 만든 인증서를 쓴다).
+3. 로그인 토큰 만들기(필요할 때마다, 저장소·채팅에 남기지 않는다). 학교 서버에 SSH로 들어가:
+   `docker exec k3d-devlog-server-0 kubectl -n kubernetes-dashboard create token devlog-viewer --duration=24h`
+4. https://k8s.devlog.life → Cloudflare 이메일 인증 → 대시보드에서 Token을 고르고 3의 토큰을 붙여 넣는다. 네임스페이스를 `blog`로 바꾸면 블로그 파드가 보인다.
 
 ## 로컬에서 검증
 

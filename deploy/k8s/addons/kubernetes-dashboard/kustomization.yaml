@@ -1,0 +1,19 @@
+# 운영 대시보드(Kubernetes Dashboard v2.7.0, 공식 recommended.yaml 그대로)와 읽기 전용 로그인 계정. deploy.yml이 학교 서버에 적용한다.
+# 바깥 주소는 Cloudflare Tunnel의 별도 호스트이고 Cloudflare Access(이메일 인증)로 막는다. deploy/README.md "운영 대시보드" 참고.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - dashboard-v2.7.0.yaml
+  - viewer.yaml
+# 공식 yaml에는 자원 한도가 없어 여러 학생이 같이 쓰는 서버에서 메모리를 무한정 쓸 수 있다. 원본은 두고 여기서 더한다
+patches:
+  - target: {kind: Deployment, name: kubernetes-dashboard}
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/resources
+        value: {requests: {cpu: 50m, memory: 100Mi}, limits: {memory: 300Mi}}
+  - target: {kind: Deployment, name: dashboard-metrics-scraper}
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/resources
+        value: {requests: {cpu: 10m, memory: 32Mi}, limits: {memory: 128Mi}}
