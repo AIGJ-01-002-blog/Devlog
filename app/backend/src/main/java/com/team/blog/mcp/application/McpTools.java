@@ -45,6 +45,7 @@ import com.team.blog.tag.application.TagQuery;
  * report_bug(054)는 어느 토큰으로나 devlog 도구의 버그를 신고한다. 관리자 토큰에는 문의 관리 도구(list·get·update_inquiry)가 더 보인다.
  * 둘 다 웹의 발행·삭제와 같은 서비스(PostCommandService.publish, PostTrashService.trash)를 그대로 부른다.
  * 발행한 글 고치기·다시 발행, 사진 올리기, 내 글 전체 검색은 060에서, 글 제안(propose_post)과 일기 메모(add_note)는 061에서 더했다.
+ * 전공자용 글감 추천(suggest_topics, 읽기)은 075에서 더했다.
  * 시리즈 만들기·글 넣기·포트폴리오 프로젝트 칸 쓰기는 073에서 더했다(웹의 시리즈 화면과 같은 SeriesService·SeriesProjects를 부른다). 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
  */
 @Service
@@ -181,6 +182,16 @@ public class McpTools {
                     "사용자가 아직 정하지 않은 글 제안과 최근 임시글로 만든 제안을 본다. 사용자가 '제안한 글 써 줘'라고 하면 여기서 고른다. "
                             + "이미 임시글로 만든 제안은 그 글을 get_post로 읽고 update_draft로 채운다.", false, """
                     {"type":"object","properties":{}}"""),
+            new Tool("suggest_topics", "전공자용 글감 추천",
+                    "사용자의 일기 메모·AI 일기·정하지 않은 글 제안·최근 임시글을 읽어, 비전공자는 모르지만 전공자는 따져야 하는 관점"
+                            + "(동시성·장애·보안·성능·접근성·운영·인프라·AI 하네스·설계)이 보이는 글감을 고르고, 이미 발행한 글과 겹치는지 함께 돌려준다. "
+                            + "사용자가 '블로그에 쓸 거리 있어?', '글감 뽑아 줘'라고 할 때 부른다. 글감마다 근거 자료(IP·메일·비밀값은 가림)와 물어볼 것이 붙는다. "
+                            + "아무것도 저장하지 않는다: 사용자가 고르면 propose_post로 제목·범위를 남긴다. 글을 쓸 때는 실제 코드·설정 조각과 파일 경로를 넣고 비밀값은 ****로 가린다.",
+                    false, """
+                    {"type":"object","properties":{
+                      "days":{"type":"integer","minimum":1,"maximum":90,"default":14,"description":"며칠 전 자료까지 볼지 (글 제안은 기간과 상관없이 모두)"},
+                      "focus":{"type":"string","description":"이 낱말이 들어간 주제만 (예: 배포, Redis). 비우면 전체"},
+                      "limit":{"type":"integer","minimum":1,"maximum":10,"default":5,"description":"돌려줄 글감 수"}}}"""),
             new Tool("add_note", "일기 메모 남기기",
                     "사용자가 'AI 일기 쓰기'를 켜 두었을 때, 의미 있는 작업 단위(기능 완성, 버그 원인 발견, 결정, 막힌 점)를 마칠 때마다 "
                             + "한두 문장 메모를 남긴다. 매일 사용자가 고른 시각(한국 시간, 기본 자정)에 메모가 주제별로 묶여 일기가 된다. 메모가 없는 날은 일기를 만들지 않는다. "
@@ -272,6 +283,7 @@ public class McpTools {
     private final RateLimiter rateLimiter;
     private final SeriesService series;
     private final SeriesProjects projects;
+    private final TopicSuggester topics;
     private final JdbcTemplate jdbc;
     private final Clock clock;
     private final String baseUrl;
@@ -279,7 +291,7 @@ public class McpTools {
 
     public McpTools(PostCommandService commands, PostEditorQuery editor, MyPostsQuery myPosts, SearchQuery search,
                     PostDetailQuery details, TagQuery tags, AiDraftHints hints, PostTrashService trash, InquiryService inquiries,
-                    McpImages images, AiJournal journal, SeriesService series, SeriesProjects projects, RateLimiter rateLimiter,
+                    McpImages images, AiJournal journal, SeriesService series, SeriesProjects projects, TopicSuggester topics, RateLimiter rateLimiter,
                     JdbcTemplate jdbc, Clock clock, BlogProperties props) {
         this.commands = commands;
         this.editor = editor;
@@ -294,6 +306,7 @@ public class McpTools {
         this.journal = journal;
         this.series = series;
         this.projects = projects;
+        this.topics = topics;
         this.rateLimiter = rateLimiter;
         this.jdbc = jdbc;
         this.clock = clock;
@@ -350,6 +363,7 @@ public class McpTools {
                 case "set_series_project" -> setSeriesProject(caller, a);
                 case "propose_post" -> proposePost(caller, a);
                 case "list_post_proposals" -> listProposals(caller);
+                case "suggest_topics" -> suggestTopics(caller, a);
                 case "add_note" -> addNote(caller, a);
                 case "upload_image" -> uploadImage(caller, a);
                 case "create_image_upload_link" -> createUploadLink(caller, a);
@@ -682,6 +696,16 @@ public class McpTools {
                     .append("  범위: ").append(p.scope().replace("\n", "\n  ")).append('\n');
         }
         return Result.ok(out.toString().stripTrailing());
+    }
+
+    /** 전공자용 글감 추천 (075). 읽기만 하고 저장은 propose_post에 맡긴다 */
+    private Result suggestTopics(AccessTokens.Caller caller, JsonNode a) {
+        for (String f : List.of("days", "limit")) {
+            if (a.has(f) && !a.path(f).canConvertToInt()) return Result.fail(f + "는 정수예요.");
+        }
+        int days = a.path("days").asInt(TopicSuggester.DEFAULT_DAYS);
+        int limit = a.path("limit").asInt(TopicSuggester.DEFAULT_LIMIT);
+        return Result.ok(topics.suggest(caller.memberId(), days, text(a, "focus"), limit));
     }
 
     /** 일기 메모 (061). 회원이 고른 시각에 묶인다 (071) */

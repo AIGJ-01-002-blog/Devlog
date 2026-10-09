@@ -49,6 +49,7 @@ public class McpController {
             확인받아 확정한 뒤에 써 주세요. 사용자가 맡지 않은 일을 사용자가 했다고 쓰지 마세요. \
             포트폴리오 글은 사용자가 고른 프로젝트 시리즈에 넣어 주세요(list_series로 찾고, 없으면 이름을 확인받아 create_series로 만든 뒤 add_to_series). \
             그 시리즈를 포트폴리오 화면에 보이려면 set_series_project로 기간·한 줄 설명·쓴 기술·우리 팀이 한 일·제 역할을 적어요(AI 발행을 허용한 사용자만). \
+            사용자가 블로그에 쓸 거리나 글감을 물으면 suggest_topics로 메모·일기·제안·임시글에서 전공자용 글감을 고르고, 고른 글감은 propose_post로 남겨 주세요. \
             본문에 스크린샷이나 그림이 필요하면 upload_image나 create_image_upload_link로 올린 뒤 돌려받은 Markdown을 본문에 넣어 주세요. \
             구조도·흐름도·순서도는 그림 파일 대신 ```mermaid 코드 블록으로 넣어 주세요. devlog 글 화면이 그림으로 그려요. \
             devlog 도구가 잘못 동작하면 무엇이 잘못됐는지 사용자에게 설명하고, 동의를 받은 뒤 report_bug로 운영자에게 신고해 주세요.""";
