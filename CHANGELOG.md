@@ -6,6 +6,15 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.51.2] - 2026-10-09
+
+학교 서버 클러스터의 운영 현황을 브라우저에서 보는 대시보드를 넣었다 (배포 구성).
+
+### 추가
+- 공식 Kubernetes Dashboard v2.7.0(`deploy/k8s/addons/kubernetes-dashboard`)을 학교 서버 배포 때 함께 적용한다. 대시보드가 실패해도 블로그 배포 결과에는 영향이 없다
+- 로그인 계정 `devlog-viewer`는 기본 역할 `view`(읽기 전용, Secret 못 봄). 토큰은 학교 서버에서 그때그때 만들고 저장소·로그에 두지 않는다
+- 바깥 주소 `k8s.devlog.life`는 Cloudflare Access 이메일 인증을 먼저 걸고 Tunnel에 연결한다(deploy/README.md "운영 대시보드")
+
 ## [1.51.1] - 2026-10-09
 
 ### 고침

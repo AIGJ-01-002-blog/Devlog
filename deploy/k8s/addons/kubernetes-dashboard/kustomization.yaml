@@ -1,0 +1,7 @@
+# 운영 대시보드(Kubernetes Dashboard v2.7.0, 공식 recommended.yaml 그대로)와 읽기 전용 로그인 계정. deploy.yml이 학교 서버에 적용한다.
+# 바깥 주소는 Cloudflare Tunnel의 별도 호스트이고 Cloudflare Access(이메일 인증)로 막는다. deploy/README.md "운영 대시보드" 참고.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - dashboard-v2.7.0.yaml
+  - viewer.yaml

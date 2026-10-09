@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.51.2 | 2026-10-09 | 运维仪表盘（Kubernetes Dashboard，只读登录）（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.51.2) |
 | v1.51.1 | 2026-10-09 | 修复 `suggest_topics` 因“已部署”“颜色 token”等词误判视角的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.1) |
 | v1.51.0 | 2026-10-09 | MCP `suggest_topics`：从笔记、AI 日记、提案和草稿中推荐面向开发者的选题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.0) |
 | v1.50.2 | 2026-10-09 | 首页分支按钮选中一个后其他按钮不再消失，长名称在按钮内省略显示 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.2) |
