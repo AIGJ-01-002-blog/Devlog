@@ -72,7 +72,7 @@ function BranchRow({ row, graph }: { row: GraphRow; graph: boolean }) {
         <div className="bl-text">
           {b && (
             <Link to={b.url} className={`bl-branch bl-branch-${b.kind.toLowerCase()}`}
-                  data-tip={b.kind === 'SERIES' ? '이 시리즈 글 모두 보기' : '이 브랜치 글만 보기'}>
+                  data-tip={b.kind === 'SERIES' ? '이 시리즈 글 모두 보기' : '태그·내용이 비슷해 자동으로 묶인 글만 보기'}>
               <BranchMark kind={b.kind} />{branchLabel(b)}
             </Link>
           )}

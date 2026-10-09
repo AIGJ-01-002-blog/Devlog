@@ -369,6 +369,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.48.2 | 2026-10-09 | Topic branches are named after a distinctive tag instead of one nearly every post uses; branch tooltips say they are grouped automatically | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.48.2) |
 | v1.48.1 | 2026-10-09 | Select box arrows now sit inside the box | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.48.1) |
 | v1.48.0 | 2026-10-09 | Redesign stage 3: portfolio mode (graph logo, projects from series shown in the portfolio, team work and my role) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.48.0) |
 | v1.47.0 | 2026-10-09 | Redesign stage 2: branch box and similar posts on the post page, series continue-reading and new-post alerts, branch suggestion when publishing | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.47.0) |

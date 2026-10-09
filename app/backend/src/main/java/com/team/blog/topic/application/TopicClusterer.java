@@ -20,6 +20,8 @@ public final class TopicClusterer {
     /** 태그 후보 쌍을 만들 때 이보다 많은 글에 쓰인 태그는 건너뛴다(희소도가 낮아 어차피 묶는 힘이 약하다) */
     static final int MAX_TAG_FANOUT = 60;
     static final int NAME_MAX = 30;
+    /** 이름으로 쓸 태그의 최소 희소도. ln 2 = 전체 글의 절반 이하가 쓰는 태그 */
+    static final double NAME_MIN_IDF = Math.log(2);
 
     private TopicClusterer() {}
 
@@ -118,6 +120,7 @@ public final class TopicClusterer {
             if (members.size() >= 2) ordered.add(Map.entry(root, members));
         });
         ordered.sort(Comparator.comparingInt((Map.Entry<Long, List<Long>> e) -> -e.getValue().size()).thenComparing(Map.Entry::getKey));
+        Map<String, Double> idf = idf(docs);
         Set<String> taken = new HashSet<>();
         List<Topic> topics = new ArrayList<>();
         for (Map.Entry<Long, List<Long>> e : ordered) {
@@ -125,7 +128,7 @@ public final class TopicClusterer {
             members.sort(Long::compare);
             EnumSet<Method> m = used.getOrDefault(e.getKey(), EnumSet.of(Method.TAG));
             String method = m.size() > 1 ? "MIXED" : m.iterator().next().name();
-            String name = name(members, byId, taken);
+            String name = name(members, byId, idf, taken);
             taken.add(name);
             topics.add(new Topic(members.get(0), name, method, List.copyOf(members)));
         }
@@ -134,20 +137,23 @@ public final class TopicClusterer {
     }
 
     /**
-     * 두 글 이상이 쓴 태그 중 가장 많이 쓰인 것(같으면 가나다순 앞). 다른 브랜치가 이미 쓴 이름은 건너뛴다.
+     * 두 글 이상이 쓴 태그 중 (쓴 글 수 × 희소도)가 가장 큰 것(같으면 가나다순 앞). 전체 글의 절반 넘게 쓰는 태그(devlog처럼
+     * 거의 모든 글에 붙는 것)는 브랜치를 설명하지 못해 이름으로 쓰지 않는다. 다른 브랜치가 이미 쓴 이름도 건너뛴다.
      * 쓸 태그가 없으면 가장 오래된 글 제목 앞부분이다.
      */
-    static String name(List<Long> members, Map<Long, Doc> byId, Set<String> taken) {
+    static String name(List<Long> members, Map<Long, Doc> byId, Map<String, Double> idf, Set<String> taken) {
         Map<String, Integer> count = new TreeMap<>();
         for (long id : members) {
             for (String t : Set.copyOf(byId.get(id).tags())) count.merge(t, 1, Integer::sum);
         }
         String top = null;
-        int topCount = 1;
+        double topScore = 0;
         for (Map.Entry<String, Integer> e : count.entrySet()) {
-            if (e.getValue() > topCount && !taken.contains(e.getKey())) {
+            double w = idf.getOrDefault(e.getKey(), 0.0);
+            double score = e.getValue() * w;
+            if (e.getValue() >= 2 && w >= NAME_MIN_IDF && score > topScore && !taken.contains(e.getKey())) {
                 top = e.getKey();
-                topCount = e.getValue();
+                topScore = score;
             }
         }
         if (top != null) return top;
@@ -156,8 +162,15 @@ public final class TopicClusterer {
         return title.substring(0, title.offsetByCodePoints(0, NAME_MAX)).strip() + "…";
     }
 
-    static String name(List<Long> members, Map<Long, Doc> byId) {
-        return name(members, byId, Set.of());
+    /** 태그 희소도 ln(전체 글 수 ÷ 그 태그를 쓴 글 수) */
+    static Map<String, Double> idf(List<Doc> docs) {
+        Map<String, Integer> df = new HashMap<>();
+        for (Doc d : docs) {
+            for (String t : Set.copyOf(d.tags())) df.merge(t, 1, Integer::sum);
+        }
+        Map<String, Double> out = new HashMap<>();
+        df.forEach((t, c) -> out.put(t, Math.log((double) docs.size() / c)));
+        return out;
     }
 
     private static long find(Map<Long, Long> parent, long x) {

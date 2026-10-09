@@ -86,7 +86,7 @@ function BranchChips({ items, active }: { items: Card[]; active: string | null }
       {chips.map((b) => (
         <Link key={b.key} to={`/?branch=${b.key}`} className={`branch-chip branch-chip-${b.kind.toLowerCase()}`}
               aria-current={active === b.key ? 'page' : undefined}
-              data-tip={`${b.kind === 'SERIES' ? '시리즈' : '주제 브랜치'} ${b.name}의 글 ${b.total}편만 봐요`}>
+              data-tip={branchTip(b)}>
           <BranchMark kind={b.kind} />{b.name}
         </Link>
       ))}
@@ -95,6 +95,13 @@ function BranchChips({ items, active }: { items: Card[]; active: string | null }
 }
 
 const BRANCH_CHIPS = 5
+
+/** 브랜치 버튼 설명. 주제 브랜치는 글쓴이가 만든 시리즈가 아니라 자동으로 묶인 것임을 알린다 */
+function branchTip(b: Branch): string {
+  return b.kind === 'SERIES'
+    ? `시리즈: 글쓴이가 엮은 ${b.name} ${b.total}편만 봐요`
+    : `주제 브랜치: 태그·내용이 비슷해 자동으로 묶인 글 ${b.total}편만 봐요`
+}
 
 interface PopularTopic { key: string; name: string; postCount: number; url: string }
 interface PopularTag { name: string; postCount: number }
@@ -116,7 +123,7 @@ function HomeAside() {
           <ul className="aside-topics">
             {topics.map((t) => (
               <li key={t.key}>
-                <Link to={t.url} data-tip={`비슷한 글 ${t.postCount}편이 이어진 브랜치`}>
+                <Link to={t.url} data-tip={`주제 브랜치: 태그·내용이 비슷해 자동으로 묶인 글 ${t.postCount}편이에요`}>
                   <BranchMark kind="TOPIC" /><span>{t.name}</span><span className="muted small">{t.postCount}편</span>
                 </Link>
               </li>
