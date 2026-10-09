@@ -25,8 +25,8 @@ export function roleLabel(role: string | null | undefined): string {
 
 export interface MemberSummary { total: number; active: number; suspended: number; withdrawing: number; managers: number; admins: number }
 export interface PostSummary { published: number; publicPosts: number; privatePosts: number; drafts: number; trash: number; hidden: number }
-/** visitors는 기간 동안 온 사람 수(여러 날 와도 한 명), visits는 들어온 횟수 (064), activeMembers는 기간 동안 활동한 회원 수 (066) */
-export interface Sums { signups: number; posts: number; comments: number; likes: number; views: number; reports: number; visitors: number; visits: number; activeMembers: number }
+/** visitors는 기간 동안 온 사람 수(여러 날 와도 한 명), visits는 들어온 횟수 (064), activeMembers는 기간 동안 활동한 회원 수 (066), searchVisits는 검색으로 온 방문 수 (070) */
+export interface Sums { signups: number; posts: number; comments: number; likes: number; views: number; reports: number; visitors: number; visits: number; activeMembers: number; searchVisits: number }
 export interface Day extends Sums { date: string }
 
 export interface PostLine {
@@ -55,6 +55,10 @@ export interface Dashboard {
   daily: Day[]
   topPosts: PostLine[]
   topAuthors: { handle: string; nickname: string | null; posts: number }[]
+  /** 유입 경로별 새 방문 수, 많은 순 (070). host는 source가 other일 때 그 사이트(빈 값이면 나머지 사이트를 모은 줄) */
+  sources: { source: string; host: string; visits: number }[]
+  /** 많이 본 화면 (070). title은 공개 글 화면일 때만 */
+  topPages: { path: string; views: number; title: string | null }[]
 }
 
 export interface MemberRow {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from './api';
-import { sendVisit, VIEW_DWELL_MS, watchView } from './views';
+import { sendPage, VIEW_DWELL_MS, watchView } from './views';
 vi.mock('./api', () => ({ api: vi.fn(() => Promise.resolve(undefined)) }));
 let callback;
 const disconnect = vi.fn();
@@ -65,11 +65,15 @@ describe('watchView', () => {
         expect(send).not.toHaveBeenCalled();
     });
 });
-describe('sendVisit', () => {
-    it('사이트 방문은 화면을 처음 열 때 한 번만 보낸다 (spec 064)', () => {
-        sendVisit();
-        sendVisit();
-        expect(api).toHaveBeenCalledTimes(1);
-        expect(api).toHaveBeenCalledWith('/api/visits', { method: 'POST', keepalive: true });
+describe('sendPage', () => {
+    it('처음 화면은 방문으로 이전 주소와 함께, 그 뒤 옮긴 화면은 화면 순위로만 보낸다 (spec 064·070)', () => {
+        vi.mocked(api).mockClear();
+        Object.defineProperty(document, 'referrer', { value: 'https://search.naver.com/search.naver?query=x', configurable: true });
+        sendPage('/');
+        sendPage('/');
+        sendPage('/tags');
+        expect(api).toHaveBeenCalledTimes(2);
+        expect(api).toHaveBeenNthCalledWith(1, '/api/visits', { method: 'POST', keepalive: true, body: { first: true, path: '/', referrer: 'https://search.naver.com/search.naver?query=x' } });
+        expect(api).toHaveBeenNthCalledWith(2, '/api/visits', { method: 'POST', keepalive: true, body: { first: false, path: '/tags' } });
     });
 });

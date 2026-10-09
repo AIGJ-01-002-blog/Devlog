@@ -3,6 +3,7 @@ import { AdminNav } from '../components/AdminNav'
 import { BarChart, type BarPoint } from '../components/BarChart'
 import { change, consoleApi, count, PERIODS, type Dashboard, type Period, type Sums } from '../lib/admin'
 import { Link, navigate, useLocation } from '../lib/router'
+import { decode, GROUP_LABEL, pageLabel, sourceGroup, sourceLabel, type SourceGroup } from '../lib/visitSources'
 
 type Metric = keyof Sums
 
@@ -10,6 +11,7 @@ type Metric = keyof Sums
 const METRICS: { key: Metric; label: string; unit: string; tip?: string; chart?: string }[] = [
   { key: 'visitors', label: '방문자', unit: '명', tip: '기간 동안 사이트에 온 사람 수예요. 여러 날 와도 한 명으로 세요', chart: '방문자 (날마다 센 사람 수)' },
   { key: 'visits', label: '방문', unit: '회', tip: '사이트에 들어온 횟수예요. 30분 넘게 쉬었다 다시 오면 한 번 더 세요' },
+  { key: 'searchVisits', label: '검색 유입', unit: '회', tip: '구글·네이버·다음·빙 검색 결과를 눌러 들어온 방문 수예요', chart: '검색 유입 (구글·네이버·다음·빙)' },
   { key: 'activeMembers', label: '활동한 회원', unit: '명', tip: '기간 동안 로그인한 채로 블로그를 쓴 회원 수예요. 여러 날 와도 한 명으로 세요', chart: '활동한 회원 (날마다 센 회원 수)' },
   { key: 'views', label: '조회수', unit: '회' },
   { key: 'posts', label: '새 글', unit: '편' },
@@ -24,6 +26,38 @@ function points(d: Dashboard, key: Metric): BarPoint[] {
     const [, m, dd] = day.date.split('-').map(Number)
     return { label: `${m}.${dd}`, fullLabel: `${m}월 ${dd}일`, value: day[key] }
   })
+}
+
+const GROUPS: SourceGroup[] = ['search', 'sns', 'direct', 'other']
+
+const percent = (n: number, total: number) => (total > 0 ? Math.round((n / total) * 100) : 0)
+
+/** 유입 경로 (070): 묶음별 비율 한 줄, 그 아래 경로별 막대 */
+function Sources({ data }: { data: Dashboard }) {
+  const total = data.sources.reduce((s, x) => s + x.visits, 0)
+  if (total === 0) return <p className="muted small">이 기간에 기록된 방문이 없어요. 유입 경로는 v1.44.0부터 쌓여요.</p>
+  const byGroup = (g: SourceGroup) => data.sources.filter((x) => sourceGroup(x.source) === g).reduce((s, x) => s + x.visits, 0)
+  return (
+    <>
+      <p className="source-groups">
+        {GROUPS.map((g) => (
+          <span key={g} className={`source-group src-${g}`}>{GROUP_LABEL[g]} <strong>{percent(byGroup(g), total)}%</strong></span>
+        ))}
+      </p>
+      <ul className="source-list">
+        {data.sources.map((x) => {
+          const p = percent(x.visits, total)
+          return (
+            <li key={`${x.source}/${x.host}`} data-tip={`${GROUP_LABEL[sourceGroup(x.source)]} · 새 방문 ${count(x.visits)}회 (${p}%)`}>
+              <span className="source-name">{sourceLabel(x.source, x.host)}</span>
+              <span className="source-count">{count(x.visits)}회 · {p}%</span>
+              <span className="source-bar" aria-hidden="true"><span className={`src-${sourceGroup(x.source)}`} style={{ width: `${Math.max(p, 1)}%` }} /></span>
+            </li>
+          )
+        })}
+      </ul>
+    </>
+  )
 }
 
 /** 관리자 대시보드 (062): 처리할 일, 기간 합계(이전 기간 대비), 날짜별 추이, 많이 본 글·많이 쓴 회원, 전체 현황. */
@@ -110,7 +144,28 @@ export function AdminDashboardPage() {
                   : '방문 기록은 v1.38.0부터 쌓여요.'}
               </p>
             )}
+            {metric === 'searchVisits' && <p className="muted small">유입 경로 기록은 v1.44.0부터 쌓여요.</p>}
           </section>
+
+          <div className="admin-columns">
+            <section className="admin-card">
+              <h2 data-tip="새 방문(처음 왔거나 30분 넘게 쉬었다 온 것)마다 어디를 거쳐 들어왔는지 세요">어디서 왔나요</h2>
+              <Sources data={data} />
+            </section>
+            <section className="admin-card">
+              <h2 data-tip="블로그 안에서 화면을 옮길 때마다 세요. 관리자·글쓰기 화면은 빼요">많이 본 화면</h2>
+              {data.topPages.length === 0 ? <p className="muted small">이 기간에 기록된 화면이 없어요. 화면 기록은 v1.44.0부터 쌓여요.</p> : (
+                <ol className="rank-list">
+                  {data.topPages.map((p) => (
+                    <li key={p.path}>
+                      <a href={p.path} className="rank-title">{pageLabel(p.path, p.title)}</a>
+                      <span className="muted small page-path">{decode(p.path)} · {count(p.views)}회</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          </div>
 
           <div className="admin-columns">
             <section className="admin-card">

@@ -68,6 +68,7 @@
 | [062-admin-console](./062-admin-console/spec.md) | 관리자 페이지: 대시보드 통계, 글·회원 관리, 매니저 권한 | 2026-10-08 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 42, 43 |
 | [064-site-visitors](./064-site-visitors/spec.md) | 관리자 대시보드에 사이트 방문자 수(하루 순방문자·방문 수) | 2026-10-08 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 42, 43 |
 | [066-active-members-daily](./066-active-members-daily/spec.md) | 관리자 대시보드에 날짜별 활동한 회원 그래프 | 2026-10-09 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 42, 43 |
+| [070-visit-sources-pages](./070-visit-sources-pages/spec.md) | 관리자 대시보드에 유입 경로(검색·SNS·직접)와 많이 본 화면 | 2026-10-09 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 42, 43 |
 
 ## 여러 spec에 걸치는 문서
 

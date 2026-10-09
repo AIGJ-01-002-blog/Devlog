@@ -50,16 +50,29 @@ export function sendView(postId: number): void {
   api(`/api/posts/${postId}/views`, { method: 'POST', keepalive: true }).catch(() => {})
 }
 
-let visitSent = false
+let lastPath: string | null = null
+
+/** 다른 사이트에서 왔을 때만 이전 주소를 보낸다. 같은 사이트 주소는 서버가 직접 들어온 것으로 본다 */
+function externalReferrer(doc: Document = document): string | undefined {
+  const ref = doc.referrer
+  if (!ref) return undefined
+  try {
+    return new URL(ref).origin === location.origin ? undefined : ref
+  } catch {
+    return undefined
+  }
+}
 
 /**
- * 사이트 방문 (spec 064). 화면을 처음 열 때 한 번만 보낸다. 같은 날 같은 사람은 서버가 한 명으로 모으고,
- * 30분 넘게 쉬었다 다시 열면 방문 수만 늘린다. 실패해도 다시 보내지 않는다.
+ * 화면을 열 때마다 보낸다 (spec 064·070). 처음 한 번은 방문(first)으로, 이전 주소와 함께 보내 유입 경로를 센다.
+ * 그 뒤 블로그 안에서 화면을 옮기면 많이 본 화면 순위에만 센다. 같은 화면을 잇달아 보내지 않고, 실패해도 다시 보내지 않는다.
  */
-export function sendVisit(): void {
-  if (visitSent) return
-  visitSent = true
-  api('/api/visits', { method: 'POST', keepalive: true }).catch(() => {})
+export function sendPage(path: string): void {
+  if (path === lastPath) return
+  const first = lastPath === null
+  lastPath = path
+  const body = first ? { first, path, referrer: externalReferrer() } : { first, path }
+  api('/api/visits', { method: 'POST', body, keepalive: true }).catch(() => {})
 }
 
 /** 남의 발행 글을 열었을 때만 센다. 작성자 본인은 서버도 세지 않지만 요청부터 보내지 않는다. */

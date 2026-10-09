@@ -20,7 +20,8 @@ import com.team.blog.shared.web.RateLimiter;
 
 /**
  * 사이트 방문 기록 (spec 064). 화면을 처음 열 때마다 한 번 온다. 같은 사람은 하루 한 행으로 모으고(순방문자),
- * 30분 넘게 쉬었다가 다시 오면 방문 수만 하나 늘린다. 방문자 구분은 조회수(013)와 같다:
+ * 30분 넘게 쉬었다가 다시 오면 방문 수만 하나 늘린다. 방문자 구분은 조회수(013)와 같다.
+ * 어디서 왔는지(유입 경로)와 어느 화면을 열었는지도 하루 단위 수로 모은다(spec 070).
  * 로봇·미리 불러오기는 세지 않는다. 관리자·매니저 방문은 센다(1.42.1, 블로그 주인 결정). 실패해도 화면에는 알리지 않는다.
  */
 @Service
@@ -30,6 +31,9 @@ public class VisitRecorder {
     private static final int PER_MINUTE = 20;
     /** 방문자 값(쿠키)을 바꿔 가며 보내도 막히도록 IP에도 건다. 회사·학교처럼 IP를 나눠 쓰는 곳을 생각해 넉넉히 */
     private static final int PER_MINUTE_PER_IP = 120;
+    /** 화면 옮기기는 방문보다 잦다 (070) */
+    private static final int PAGES_PER_MINUTE = 60;
+    private static final int PAGES_PER_MINUTE_PER_IP = 300;
 
     public enum Outcome { COUNTED, EXCLUDED, SKIPPED }
 
@@ -51,28 +55,80 @@ public class VisitRecorder {
         this.clock = clock;
     }
 
+    /**
+     * 화면이 보낸 값 (spec 070). first는 화면을 처음 열 때 한 번(방문으로 센다), 그 뒤 화면을 옮길 때마다는 false(화면 순위에만 센다).
+     * @param referrer 처음 열 때만, 다른 사이트에서 왔을 때만 온다
+     */
+    public record Page(String path, String referrer, boolean first, String ownHost) {
+        /** 예전 화면처럼 아무 값 없이 보낸 방문 */
+        public static final Page UNKNOWN = new Page(null, null, true, null);
+    }
+
     public Outcome record(ViewRecorder.Visit visit) {
+        return record(visit, Page.UNKNOWN);
+    }
+
+    public Outcome record(ViewRecorder.Visit visit, Page page) {
         if (visit.prefetch() || views.isBot(visit.userAgent())) return Outcome.EXCLUDED;
         // 처음 쿠키를 받는 비회원은 그 쿠키로 센다. 다음 방문이 같은 사람으로 이어진다
         String visitor = visit.memberId() == null && visit.issuedVisitorId() != null
                 ? ViewRecorder.sha256("v:" + visit.issuedVisitorId()) : views.visitorKey(visit);
         if (visitor == null) return Outcome.SKIPPED;
-        if (visit.ip() != null && !rateLimiter.tryAcquire("visit-ip:" + ViewRecorder.sha256(visit.ip()), PER_MINUTE_PER_IP,
-                Duration.ofMinutes(1))) return Outcome.EXCLUDED;
-        if (!rateLimiter.tryAcquire("visit:" + visitor, PER_MINUTE, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
+        String ipKey = visit.ip() == null ? null : ViewRecorder.sha256(visit.ip());
         Instant now = Times.now(clock);
+        LocalDate today = LocalDate.ofInstant(now, Counts.KST);
+        String path = VisitSources.page(page.path());
+
+        if (!page.first()) {
+            if (path == null) return Outcome.SKIPPED;
+            if (ipKey != null && !rateLimiter.tryAcquire("page-ip:" + ipKey, PAGES_PER_MINUTE_PER_IP, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
+            if (!rateLimiter.tryAcquire("page:" + visitor, PAGES_PER_MINUTE, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
+            return countPage(today, path) ? Outcome.COUNTED : Outcome.SKIPPED;
+        }
+
+        if (ipKey != null && !rateLimiter.tryAcquire("visit-ip:" + ipKey, PER_MINUTE_PER_IP, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
+        if (!rateLimiter.tryAcquire("visit:" + visitor, PER_MINUTE, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
         try {
-            jdbc.update("""
+            // 새 방문(처음이거나 30분 넘게 쉬었다 온 것)일 때만 유입 경로를 센다. old는 이 문장이 바꾸기 전 값이다
+            boolean newVisit = Boolean.TRUE.equals(jdbc.queryForObject("""
+                    WITH old AS (SELECT visits FROM site_visit WHERE day = ? AND visitor = ?)
                     INSERT INTO site_visit (day, visitor, member, visits, first_at, last_at) VALUES (?, ?, ?, 1, ?, ?)
                     ON CONFLICT (day, visitor) DO UPDATE SET
                         visits = site_visit.visits + CASE WHEN site_visit.last_at < EXCLUDED.last_at - ?::interval THEN 1 ELSE 0 END,
                         last_at = GREATEST(site_visit.last_at, EXCLUDED.last_at)
-                    """, LocalDate.ofInstant(now, Counts.KST), visitor, visit.memberId() != null, Timestamp.from(now),
-                    Timestamp.from(now), sessionGap.toSeconds() + " seconds");
-            return Outcome.COUNTED;
+                    RETURNING site_visit.visits > coalesce((SELECT visits FROM old), 0)
+                    """, Boolean.class, today, visitor, today, visitor, visit.memberId() != null, Timestamp.from(now),
+                    Timestamp.from(now), sessionGap.toSeconds() + " seconds"));
+            if (newVisit) countSource(today, VisitSources.classify(page.referrer(), visit.userAgent(), page.ownHost()));
         } catch (RuntimeException e) {
             log.warn("방문 기록을 건너뜁니다: {}", e.getClass().getSimpleName());
             return Outcome.SKIPPED;
+        }
+        if (path != null) countPage(today, path);
+        return Outcome.COUNTED;
+    }
+
+    private void countSource(LocalDate day, VisitSources.Source s) {
+        try {
+            jdbc.update("""
+                    INSERT INTO visit_source_day (day, source, host, visits) VALUES (?, ?, ?, 1)
+                    ON CONFLICT (day, source, host) DO UPDATE SET visits = visit_source_day.visits + 1
+                    """, day, s.source(), s.host());
+        } catch (RuntimeException e) {
+            log.warn("유입 경로를 건너뜁니다: {}", e.getClass().getSimpleName());
+        }
+    }
+
+    private boolean countPage(LocalDate day, String path) {
+        try {
+            jdbc.update("""
+                    INSERT INTO page_view_day (day, path, views) VALUES (?, ?, 1)
+                    ON CONFLICT (day, path) DO UPDATE SET views = page_view_day.views + 1
+                    """, day, path);
+            return true;
+        } catch (RuntimeException e) {
+            log.warn("화면 기록을 건너뜁니다: {}", e.getClass().getSimpleName());
+            return false;
         }
     }
 
@@ -84,6 +140,8 @@ public class VisitRecorder {
     /** @return 지운 행 수 */
     public int purge() {
         LocalDate cutoff = LocalDate.ofInstant(Times.now(clock).minus(RETENTION), Counts.KST);
-        return jdbc.update("DELETE FROM site_visit WHERE day < ?", cutoff);
+        return jdbc.update("DELETE FROM site_visit WHERE day < ?", cutoff)
+                + jdbc.update("DELETE FROM visit_source_day WHERE day < ?", cutoff)
+                + jdbc.update("DELETE FROM page_view_day WHERE day < ?", cutoff);
     }
 }

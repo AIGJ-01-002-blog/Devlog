@@ -27,7 +27,7 @@ import { TagsPage } from './pages/TagsPage';
 import { withdrawnRedirect } from './lib/withdraw';
 import { lazyPage } from './lib/lazyPage';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
-import { sendVisit } from './lib/views';
+import { sendPage } from './lib/views';
 // 글 읽기(홈·글·블로그·태그·검색·피드)는 첫 묶음에 두고, 쓰기·설정·가입·관리자 화면은 처음 열 때 받는다.
 // 독자가 받는 첫 JS를 줄이려는 것이다 (spec 028).
 const AdminMemberPage = lazyPage(() => import('./pages/AdminMemberPage'), 'AdminMemberPage');
@@ -59,7 +59,7 @@ const RssGuidePage = lazyPage(() => import('./pages/RssGuidePage'), 'RssGuidePag
 const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage');
 export function App() {
     const { path } = useLocation();
-    useEffect(() => { sendVisit(); }, []);
+    useEffect(() => { sendPage(path); }, [path]);
     return (_jsxs(_Fragment, { children: [_jsx(SkipLink, {}), _jsx(PageAnnouncer, {}), !path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx("div", { id: MAIN_ID, tabIndex: -1, children: _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: _jsx(PageErrorBoundary, { path: path, children: _jsx(Suspense, { fallback: _jsx(Loading, {}), children: route(path) }) }) }) }) }), !path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && _jsx(MobileNav, { path: path }), _jsx(TooltipLayer, {})] }));
 }
 function route(path) {

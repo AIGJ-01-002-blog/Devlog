@@ -12,6 +12,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.team.blog.shared.error.NotFoundException;
@@ -52,13 +53,22 @@ public class ViewController {
         return noContent(request, issued);
     }
 
-    /** 사이트 방문 (spec 064). 화면을 처음 열 때 한 번 보낸다. 셌든 안 셌든 같은 204다. */
+    /**
+     * 사이트 방문 (spec 064). 화면을 처음 열 때 한 번(first), 그 뒤 화면을 옮길 때마다 보낸다(070, 많이 본 화면).
+     * 값 없이 오면 예전 화면의 첫 방문으로 본다. 셌든 안 셌든 같은 204다.
+     */
     @PostMapping("/api/visits")
-    public ResponseEntity<Void> visit(@CurrentMember(required = false) MemberPrincipal me, HttpServletRequest request) {
+    public ResponseEntity<Void> visit(@RequestBody(required = false) VisitBody body,
+                                      @CurrentMember(required = false) MemberPrincipal me, HttpServletRequest request) {
         String issued = issueVisitor(me, request);
-        visits.record(toVisit(me, request, issued));
+        VisitRecorder.Page page = body == null ? VisitRecorder.Page.UNKNOWN
+                : new VisitRecorder.Page(body.path(), body.referrer(), body.first() == null || body.first(), request.getServerName());
+        visits.record(toVisit(me, request, issued), page);
         return noContent(request, issued);
     }
+
+    /** @param first 화면을 처음 열었을 때 true(없으면 true) */
+    public record VisitBody(String path, String referrer, Boolean first) {}
 
     /** 첫 방문 비회원에게 무작위 방문자 값을 준다: 1년, 스크립트로 못 읽음, 보안 연결에서만 (FR-005) */
     private static String issueVisitor(MemberPrincipal me, HttpServletRequest request) {

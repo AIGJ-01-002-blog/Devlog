@@ -32,6 +32,7 @@ import com.team.blog.view.application.ViewStats;
 public class AdminStats {
     public static final Set<Integer> PERIODS = Set.of(7, 30, 90);
     static final int TOP = 5;
+    static final int TOP_PAGES = 10;
 
     private final MemberStats members;
     private final PostStats posts;
@@ -59,11 +60,15 @@ public class AdminStats {
 
     /** 기간 합계. activeMembers는 기간 동안 하루라도 활동한 회원 수(066) */
     /** visitors는 기간 동안 온 사람 수(여러 날 와도 한 명), visits는 들어온 횟수 합 (064) */
+    /** searchVisits는 검색(구글·네이버·다음·빙)으로 온 방문 수 (070) */
     public record Sums(long signups, long posts, long comments, long likes, long views, long reports, long visitors, long visits,
-                       long activeMembers) {}
+                       long activeMembers, long searchVisits) {}
 
     public record Day(LocalDate date, long signups, long posts, long comments, long likes, long views, long reports, long visitors,
-                      long visits, long activeMembers) {}
+                      long visits, long activeMembers, long searchVisits) {}
+
+    /** 많이 본 화면 (070). title은 글 화면이고 공개 글일 때만 */
+    public record PageLine(String path, long views, String title) {}
 
     /** 오늘·어제 순방문자와, 기간 방문자 중 회원 수 (064) */
     public record VisitorSummary(long today, long yesterday, long members) {}
@@ -75,7 +80,8 @@ public class AdminStats {
     public record AuthorLine(String handle, String nickname, long posts) {}
 
     public record Dashboard(int days, LocalDate from, LocalDate to, Totals totals, Sums current, Sums previous, long activeMembers,
-                            VisitorSummary visitors, List<Day> daily, List<PostLine> topPosts, List<AuthorLine> topAuthors) {}
+                            VisitorSummary visitors, List<Day> daily, List<PostLine> topPosts, List<AuthorLine> topAuthors,
+                            List<ViewStats.SourceLine> sources, List<PageLine> topPages) {}
 
     public Dashboard dashboard(int days) {
         int n = PERIODS.contains(days) ? days : 30;
@@ -94,19 +100,20 @@ public class AdminStats {
         Map<LocalDate, Long> visitorsByDay = views.visitorsByDay(since);
         Map<LocalDate, Long> visitsByDay = views.visitsByDay(since);
         Map<LocalDate, Long> activeByDay = members.activeByDay(since);
+        Map<LocalDate, Long> searchByDay = views.searchVisitsByDay(since);
 
         List<Day> daily = new ArrayList<>(n);
         for (LocalDate d = from; !d.isAfter(today); d = d.plusDays(1)) {
             daily.add(new Day(d, get(signups, d), get(published, d), get(commented, d), get(liked, d), get(viewed, d), get(reported, d),
-                    get(visitorsByDay, d), get(visitsByDay, d), get(activeByDay, d)));
+                    get(visitorsByDay, d), get(visitsByDay, d), get(activeByDay, d), get(searchByDay, d)));
         }
         ViewStats.Visitors inPeriod = views.visitors(from, today);
         ViewStats.Visitors before = views.visitors(prevFrom, from.minusDays(1));
         LocalDate prevTo = from.minusDays(1);
         Sums current = sum(from, today, inPeriod, members.activeBetween(from, today),
-                signups, published, commented, liked, viewed, reported);
+                signups, published, commented, liked, viewed, reported, searchByDay);
         Sums previous = sum(prevFrom, prevTo, before, members.activeBetween(prevFrom, prevTo),
-                signups, published, commented, liked, viewed, reported);
+                signups, published, commented, liked, viewed, reported, searchByDay);
         VisitorSummary visitors = new VisitorSummary(get(visitorsByDay, today), get(visitorsByDay, today.minusDays(1)), inPeriod.members());
 
         Instant periodStart = from.atStartOfDay(Counts.KST).toInstant();
@@ -114,7 +121,25 @@ public class AdminStats {
         Totals totals = new Totals(members.summary(), postSummary, comments.total(), likes.total(), views.total(),
                 reports.pendingCount(), inquiries.openCount());
         return new Dashboard(n, from, today, totals, current, previous, members.activeSince(periodStart), visitors, daily,
-                topPosts(periodStart), topAuthors(periodStart));
+                topPosts(periodStart), topAuthors(periodStart), views.sources(from, today, TOP), topPages(from, today));
+    }
+
+    private static final java.util.regex.Pattern POST_PAGE = java.util.regex.Pattern.compile("^/@[^/]+/posts/([0-9]{1,18})$");
+
+    /** 많이 본 화면. 글 화면에는 공개 글 제목을 붙인다(비공개·숨김·지운 글은 주소만) */
+    private List<PageLine> topPages(LocalDate from, LocalDate to) {
+        List<ViewStats.PageLine> top = views.topPages(from, to, TOP_PAGES);
+        List<Long> ids = new ArrayList<>();
+        for (ViewStats.PageLine p : top) {
+            java.util.regex.Matcher m = POST_PAGE.matcher(p.path());
+            if (m.matches()) ids.add(Long.parseLong(m.group(1)));
+        }
+        Map<Long, PostStats.Row> rows = ids.isEmpty() ? Map.of() : posts.byIds(ids);
+        return top.stream().map(p -> {
+            java.util.regex.Matcher m = POST_PAGE.matcher(p.path());
+            PostStats.Row r = m.matches() ? rows.get(Long.parseLong(m.group(1))) : null;
+            return new PageLine(p.path(), p.views(), r == null || r.hidden() ? null : r.title());
+        }).toList();
     }
 
     /** 기간 안에 많이 본 공개 글. 비공개·숨김·휴지통 글은 뺀다 */
@@ -228,6 +253,6 @@ public class AdminStats {
                 if (!e.getKey().isBefore(from) && !e.getKey().isAfter(to)) t[i] += e.getValue();
             }
         }
-        return new Sums(t[0], t[1], t[2], t[3], t[4], t[5], v.visitors(), v.visits(), active);
+        return new Sums(t[0], t[1], t[2], t[3], t[4], t[5], v.visitors(), v.visits(), active, t[6]);
     }
 }
