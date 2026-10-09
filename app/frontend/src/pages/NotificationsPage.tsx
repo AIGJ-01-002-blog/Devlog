@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
+import { InfiniteLoader } from '../components/InfiniteLoader'
 import { NotificationEntry } from '../components/NotificationEntry'
 import { notificationsApi, notifyChanged, type NotificationItem } from '../lib/notifications'
 import { Link } from '../lib/router'
 
-/** 모든 알림 (015 US3): 20개씩 [더 보기], 하나씩 [×] 삭제, [모두 읽음]. 보관 기간은 90일. */
+/** 모든 알림 (015 US3): 20개씩 무한 스크롤(spec 069), 하나씩 [×] 삭제, [모두 읽음]. 보관 기간은 90일. */
 export function NotificationsPage() {
   const [items, setItems] = useState<NotificationItem[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
@@ -77,16 +78,10 @@ export function NotificationsPage() {
           {items.map((n) => <NotificationEntry key={n.id} item={n} onRead={markRead} onRemove={remove} />)}
         </ul>
       )}
-      {!loading && !error && items.length === 0 && <p className="muted center">새 알림이 없어요</p>}
-      {loading && <p className="muted center">불러오는 중…</p>}
-      {error && (
-        <p className="error center" role="alert">
-          알림을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => more(cursor)}>다시 시도</button>
-        </p>
-      )}
-      {!loading && !error && !done && (
-        <div className="center"><button type="button" className="btn btn-outline" onClick={() => more(cursor)}>더 보기</button></div>
-      )}
+      {!loading && !error && done && items.length === 0 && <p className="muted center">새 알림이 없어요</p>}
+      {loading && items.length === 0 && <p className="muted center">불러오는 중…</p>}
+      <InfiniteLoader hasMore={cursor != null} loading={loading && items.length > 0} failed={error}
+        onMore={() => void more(cursor)} failedText="알림을 불러오지 못했어요" />
       <p className="muted small center">알림은 90일 동안 보관해요.</p>
     </main>
   )

@@ -383,7 +383,9 @@ select { width: auto; }
 }
 .card-tag:hover { background: color-mix(in srgb, var(--color-brand) 16%, var(--color-surface)); }
 .card-tag-more { background: var(--color-surface-2); color: var(--color-text-muted); cursor: default; }
-.more { display: flex; justify-content: center; padding: 16px 0 48px; }
+.more { display: flex; justify-content: center; padding: 16px 0 48px; min-height: 40px; }
+.more > p { margin: 0; }
+.load-more-error { padding: 24px 0 48px; }
 .feed-error { padding: 32px 0; text-align: center; }
 
 .avatar { border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--color-surface-2); display: inline-block; }

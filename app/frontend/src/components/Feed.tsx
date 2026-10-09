@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { api, ApiError } from '../lib/api'
 import type { Card, FeedPage } from '../lib/types'
+import { InfiniteLoader } from './InfiniteLoader'
 import { PostCard } from './PostCard'
 
 const KEEP_MS = 30 * 60 * 1000
@@ -13,7 +14,7 @@ interface Saved {
 }
 
 /**
- * 카드 목록 + [더 보기]. 이어 붙일 때 이미 있는 글은 건너뛴다(docs/10 §4-3).
+ * 카드 목록 + 무한 스크롤(spec 069). 이어 붙일 때 이미 있는 글은 건너뛴다(docs/10 §4-3).
  * 상세에서 뒤로 오면 카드·커서·스크롤 위치를 30분 동안 복원한다(L-6).
  */
 export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, onFirstPage }: {
@@ -89,16 +90,8 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
       <div className="card-grid">
         {items.map((c) => <PostCard key={c.id} card={c} showAuthor={showAuthor} />)}
       </div>
-      {error && (
-        <p className="feed-error" role="alert">글을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => load(cursor)}>다시 시도</button></p>
-      )}
-      {!error && cursor && (
-        <div className="more">
-          <button type="button" className="btn btn-outline" disabled={loading} onClick={() => load(cursor)}>
-            {loading ? '불러오는 중…' : '더 보기'}
-          </button>
-        </div>
-      )}
+      <InfiniteLoader hasMore={cursor != null} loading={loading} failed={error} onMore={() => void load(cursor)}
+        failedText="글을 불러오지 못했어요" />
       {!loaded && loading && <p className="muted center">불러오는 중…</p>}
     </section>
   )

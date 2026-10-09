@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Avatar } from '../components/Avatar'
+import { InfiniteLoader } from '../components/InfiniteLoader'
 import { FollowButton } from '../components/FollowButton'
 import { ApiError, api, takeInitialData } from '../lib/api'
 import { appendPeople, emptyFollowText, followApi, type FollowDirection, type FollowPage, type FollowPerson } from '../lib/follow'
@@ -7,7 +8,7 @@ import { Link } from '../lib/router'
 import type { BlogProfile } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 
-/** 팔로워·팔로잉 목록 (016 US3): 최근에 팔로우한 순 20개씩 [더 보기], 보는 사람 기준 팔로우 버튼. 비회원도 본다. */
+/** 팔로워·팔로잉 목록 (016 US3): 최근에 팔로우한 순 20개씩 무한 스크롤(spec 069), 보는 사람 기준 팔로우 버튼. 비회원도 본다. */
 export function FollowsPage({ handle, direction }: { handle: string; direction: FollowDirection }) {
   const [initial] = useState(() => {
     const d = takeInitialData<{ profile: BlogProfile; follows: FollowPage }>('follows')
@@ -84,13 +85,9 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
           ))}
         </ul>
       )}
-      {loading && <p className="muted center">불러오는 중…</p>}
-      {error && (
-        <p className="error center" role="alert">목록을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => more(cursor)}>다시 시도</button></p>
-      )}
-      {!loading && !error && cursor && (
-        <div className="center"><button type="button" className="btn btn-outline" onClick={() => more(cursor)}>더 보기</button></div>
-      )}
+      {loading && people.length === 0 && <p className="muted center">불러오는 중…</p>}
+      <InfiniteLoader hasMore={cursor != null} loading={loading && people.length > 0} failed={error}
+        onMore={() => void more(cursor)} />
     </main>
   )
 }
