@@ -9,6 +9,7 @@ import { LikeButton } from '../components/LikeButton'
 import { AdjacentPosts } from '../components/AdjacentPosts'
 import { SocialLinkList } from '../components/SocialLinkList'
 import { SeriesBox } from '../components/SeriesBox'
+import { ReadProgress } from '../components/ReadProgress'
 import { ShareButton } from '../components/ShareButton'
 import { Toc } from '../components/Toc'
 import { readingMinutes } from '../lib/toc'
@@ -112,6 +113,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
   const date = post.firstPublicAt ?? post.publishedAt
   return (
     <main className="container narrow">
+      <ReadProgress target={bodyRef} />
       <article className="post">
         {post.owner?.hidden && (
           <div className="banner banner-warn">

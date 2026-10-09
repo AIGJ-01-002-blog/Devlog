@@ -69,6 +69,7 @@
 | [064-site-visitors](./064-site-visitors/spec.md) | 관리자 대시보드에 사이트 방문자 수(하루 순방문자·방문 수) | 2026-10-08 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 42, 43 |
 | [066-active-members-daily](./066-active-members-daily/spec.md) | 관리자 대시보드에 날짜별 활동한 회원 그래프 | 2026-10-09 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 42, 43 |
 | [070-visit-sources-pages](./070-visit-sources-pages/spec.md) | 관리자 대시보드에 유입 경로(검색·SNS·직접)와 많이 본 화면 | 2026-10-09 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 42, 43 |
+| [072-branch-redesign](./072-branch-redesign/spec.md) | 새 디자인: 홈 브랜치 그래프(시리즈·비슷한 주제), 이어 읽기, 포트폴리오 모드 | 2026-10-09 추가 (블로그 주인 요청) | 이후 단계 (Tier C) | 10, 52 |
 
 ## 여러 spec에 걸치는 문서
 

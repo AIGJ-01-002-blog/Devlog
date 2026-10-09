@@ -1,46 +1,148 @@
 import { useEffect, useState } from 'react'
+import { BranchList, BranchMark } from '../components/BranchList'
 import { Feed } from '../components/Feed'
-import { takeInitialData } from '../lib/api'
+import { api, takeInitialData } from '../lib/api'
 import { loginPath, useAuth } from '../lib/auth'
 import { Link, useLocation } from '../lib/router'
 import { TRENDING_ENDPOINT, TRENDING_HINT } from '../lib/trending'
-import type { FeedPage } from '../lib/types'
+import { tagPath } from '../lib/tags'
+import type { Branch, Card, FeedPage } from '../lib/types'
 
-/** 홈 (003, 017): [최신] [트렌딩] 탭. 기본은 최신, 트렌딩은 `/?tab=trending`. 순위 숫자는 보이지 않는다. */
+/**
+ * 홈 (003, 017, 072): [최신] [트렌딩] 탭. 기본은 최신, 트렌딩은 `/?tab=trending`. 순위 숫자는 보이지 않는다.
+ * 최신은 브랜치 그래프 목록이고 `/?branch=s12`처럼 한 브랜치 글만 걸러 볼 수 있다. 넓은 화면에는 옆 칸이 있다.
+ */
 export function HomePage() {
   const { search } = useLocation()
   const trending = search.get('tab') === 'trending'
+  const branch = trending ? null : search.get('branch')
   const [boot] = useState(() => takeInitialData<{ feed?: FeedPage; trending?: FeedPage }>('home'))
   const { me, loading } = useAuth()
   useEffect(() => { document.title = trending ? '트렌딩 - devlog' : 'devlog' }, [trending])
   return (
-    <main className="container">
-      <h1 className="sr-only">{trending ? '트렌딩' : '최신 글'}</h1>
-      {!loading && !me?.authenticated && <HomeHero />}
-      <nav className="tabs home-tabs" aria-label="글 목록">
-        <Link to="/" aria-current={trending ? undefined : 'page'}>최신</Link>
-        <Link to="/?tab=trending" aria-current={trending ? 'page' : undefined}>트렌딩</Link>
-      </nav>
-      {trending ? (
-        <>
-          <p className="muted small trending-hint">{TRENDING_HINT}</p>
-          <Feed key="trending" endpoint={TRENDING_ENDPOINT} storageKey="feed:trending" initial={boot?.trending ?? null} empty={
+    <main className="container home-layout">
+      <div className="home-main">
+        {!loading && !me?.authenticated && <HomeHero />}
+        <div className="home-head">
+          <h1 className="page-title">{trending ? '트렌딩' : '개발 기록'}</h1>
+          <p className="muted small">{trending ? TRENDING_HINT : '새 글은 main에 쌓이고, 이어지는 글은 시리즈·주제 브랜치로 갈라져요.'}</p>
+        </div>
+        <nav className="tabs home-tabs" aria-label="글 목록">
+          <Link to="/" aria-current={trending ? undefined : 'page'}>최신</Link>
+          <Link to="/?tab=trending" aria-current={trending ? 'page' : undefined}>트렌딩</Link>
+        </nav>
+        {trending ? (
+          <Feed key="trending" endpoint={TRENDING_ENDPOINT} storageKey="feed:trending" initial={boot?.trending ?? null}
+            renderItems={(items, hasMore) => <BranchList items={items} hasMore={hasMore} graph={false} />} empty={
             <>
               <p>아직 트렌딩 글이 없어요</p>
               <Link to="/" className="btn btn-primary">최신 글 보기</Link>
             </>
           } />
-        </>
-      ) : (
-        <Feed key="latest" endpoint="/api/posts" storageKey="feed:home" initial={boot?.feed ?? null} empty={
-          <>
-            <p>아직 올라온 글이 없어요. 첫 글의 주인공이 되어 보세요.</p>
-            {me?.authenticated ? <Link to="/write" className="btn btn-primary">글쓰기</Link>
-              : <Link to={loginPath('/write')} className="btn btn-primary">로그인</Link>}
-          </>
-        } />
-      )}
+        ) : (
+          // 서버가 처음 넣어 준 목록은 거르지 않은 목록이라, 브랜치로 거를 때는 쓰지 않는다
+          <Feed key={branch ?? 'latest'} endpoint={branch ? `/api/posts?branch=${encodeURIComponent(branch)}` : '/api/posts'}
+            storageKey={branch ? `feed:home:${branch}` : 'feed:home'} initial={branch ? null : boot?.feed ?? null}
+            renderItems={(items, hasMore) => (
+              <>
+                <BranchChips items={items} active={branch} />
+                <BranchList items={items} hasMore={hasMore} />
+              </>
+            )}
+            empty={branch ? (
+              <>
+                <p>이 브랜치에 보이는 글이 없어요</p>
+                <Link to="/" className="btn btn-primary">모든 글 보기</Link>
+              </>
+            ) : (
+              <>
+                <p>아직 올라온 글이 없어요. 첫 글의 주인공이 되어 보세요.</p>
+                {me?.authenticated ? <Link to="/write" className="btn btn-primary">글쓰기</Link>
+                  : <Link to={loginPath('/write')} className="btn btn-primary">로그인</Link>}
+              </>
+            )} />
+        )}
+      </div>
+      <HomeAside />
     </main>
+  )
+}
+
+/** 최신 목록 위 브랜치 버튼 (072). 지금 보이는 글의 브랜치를 위에서부터 5개까지 */
+function BranchChips({ items, active }: { items: Card[]; active: string | null }) {
+  const seen = new Map<string, Branch>()
+  for (const c of items) {
+    if (c.branch && c.branch.total > 1 && !seen.has(c.branch.key)) seen.set(c.branch.key, c.branch)
+  }
+  let chips = [...seen.values()].slice(0, BRANCH_CHIPS)
+  if (active && !chips.some((b) => b.key === active)) {
+    const cur = seen.get(active)
+    if (cur) chips = [cur, ...chips.slice(0, BRANCH_CHIPS - 1)]
+  }
+  if (chips.length === 0 && !active) return null
+  return (
+    <nav className="branch-chips" aria-label="브랜치로 걸러 보기">
+      <Link to="/" className="branch-chip" aria-current={active ? undefined : 'page'} data-tip="모든 글을 시간순으로 봐요">모든 글</Link>
+      {chips.map((b) => (
+        <Link key={b.key} to={`/?branch=${b.key}`} className={`branch-chip branch-chip-${b.kind.toLowerCase()}`}
+              aria-current={active === b.key ? 'page' : undefined}
+              data-tip={`${b.kind === 'SERIES' ? '시리즈' : '주제 브랜치'} ${b.name}의 글 ${b.total}편만 봐요`}>
+          <BranchMark kind={b.kind} />{b.name}
+        </Link>
+      ))}
+    </nav>
+  )
+}
+
+const BRANCH_CHIPS = 5
+
+interface PopularTopic { key: string; name: string; postCount: number; url: string }
+interface PopularTag { name: string; postCount: number }
+
+/** 홈 옆 칸 (072): 이어지는 주제, 많이 쓰는 태그, AI 연결, 릴리스 노트·문의. 좁은 화면에서는 숨긴다(무한 스크롤 끝에 닿지 않는다) */
+function HomeAside() {
+  const [topics, setTopics] = useState<PopularTopic[]>([])
+  const [tags, setTags] = useState<PopularTag[]>([])
+  useEffect(() => {
+    // 곁들이 정보라 실패하면 그 칸만 비운다
+    api<PopularTopic[]>('/api/topics/popular').then(setTopics, () => setTopics([]))
+    api<PopularTag[]>('/api/tags?limit=8').then(setTags, () => setTags([]))
+  }, [])
+  return (
+    <aside className="home-aside" aria-label="둘러보기">
+      {topics.length > 0 && (
+        <section className="aside-box">
+          <h2 className="aside-title">이어지는 주제</h2>
+          <ul className="aside-topics">
+            {topics.map((t) => (
+              <li key={t.key}>
+                <Link to={t.url} data-tip={`비슷한 글 ${t.postCount}편이 이어진 브랜치`}>
+                  <BranchMark kind="TOPIC" /><span>{t.name}</span><span className="muted small">{t.postCount}편</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {tags.length > 0 && (
+        <section className="aside-box">
+          <h2 className="aside-title">많이 쓰는 태그</h2>
+          <ul className="card-tags">
+            {tags.map((t) => <li key={t.name}><Link to={tagPath(t.name)} className="card-tag" data-tip={`글 ${t.postCount}편`}>#{t.name}</Link></li>)}
+          </ul>
+        </section>
+      )}
+      <section className="aside-box aside-ai">
+        <h2 className="aside-title">AI가 쓰는 개발 일지</h2>
+        <p className="muted small">Claude·Cursor에 devlog를 연결하면 오늘 한 작업을 임시글로 정리해 줘요.</p>
+        <Link to="/mcp" className="btn btn-outline btn-small">AI에 연결하기</Link>
+      </section>
+      <nav className="aside-links" aria-label="도움말">
+        <Link to="/releases">릴리스 노트</Link>
+        <span aria-hidden="true">·</span>
+        <Link to="/support">문의·신고</Link>
+      </nav>
+    </aside>
   )
 }
 

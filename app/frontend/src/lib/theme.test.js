@@ -49,7 +49,7 @@ describe('styles.css 토큰', () => {
             expect(light).toContain(name + ':');
             expect(dark).toContain(name + ':');
         }
-        expect(dark).toContain('--color-bg: #121212;');
+        expect(dark).toContain('--color-bg: #14161b;');
     });
     it('흐린 글자도 배경·보조 배경 위에서 4.5:1 이상이다 (WCAG AA)', () => {
         const value = (lines, name) => lines.find((l) => l.startsWith(name + ':')).split(':')[1].trim().replace(';', '');

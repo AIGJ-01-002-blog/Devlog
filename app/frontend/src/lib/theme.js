@@ -37,7 +37,7 @@ export function applyTheme(t, root = document.documentElement, storage = safeSto
     // 휴대폰 주소창 색(theme-color)도 맞춘다 (068). "시스템"이면 index.html 원래 값(라이트·다크 미디어별)으로 되돌린다
     root.ownerDocument.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
         const light = !m.getAttribute('media')?.includes('dark');
-        m.setAttribute('content', t === 'dark' || (t === 'system' && !light) ? '#121212' : '#ffffff');
+        m.setAttribute('content', t === 'dark' || (t === 'system' && !light) ? '#1b1e25' : '#ffffff');
     });
     void root.offsetWidth;
     requestAnimationFrame(() => root.classList.remove('theme-switching'));

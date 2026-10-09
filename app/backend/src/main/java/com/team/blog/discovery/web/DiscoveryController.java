@@ -31,8 +31,9 @@ public class DiscoveryController {
     }
 
     @GetMapping("/api/posts")
-    public ResponseEntity<PostCardPage> home(@RequestParam(required = false) String cursor) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(feed.home(cursor));
+    public ResponseEntity<PostCardPage> home(@RequestParam(required = false) String cursor,
+                                             @RequestParam(required = false) String branch) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(feed.home(cursor, branch));
     }
 
     @GetMapping("/api/members/{handle}")

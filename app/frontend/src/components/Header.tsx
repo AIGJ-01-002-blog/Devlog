@@ -7,10 +7,15 @@ import { NavIcon, type IconName } from './NavIcons'
 import { NotificationBell } from './NotificationBell'
 import { ThemeToggle } from './ThemeToggle'
 
-interface NavItem { to: string; label: string; tip: string; icon: IconName; on: (p: string) => boolean; memberOnly?: boolean }
+interface NavItem {
+  to: string; label: string; tip: string; icon: IconName; on: (p: string) => boolean; memberOnly?: boolean
+  /** 회원에게는 머리말 대신 내 메뉴에 둔다 (072: 머리말은 피드·좋아한 글·태그만) */
+  inMenu?: boolean
+}
 
 /**
- * 머리말 메뉴 (063). 순서는 "피드 · 좋아한 글 · 태그 · 문의·신고 · 릴리스 노트 · 🔔"(민서님 요청).
+ * 머리말 메뉴 (063, 072). 회원은 "피드 · 좋아한 글 · 태그 · 🔔"이고 문의·신고·릴리스 노트는 내 메뉴에 있다(072 시안).
+ * 비회원은 내 메뉴가 없어 문의·신고·릴리스 노트를 머리말에 아이콘으로 둔다.
  * 넓은 화면은 아이콘과 이름을, 중간 화면(641~1180px)은 아이콘만 보이고 툴팁으로 이름을 알린다.
  * 휴대폰(640px 이하)은 아래 탭과 내 메뉴가 같은 곳으로 데려간다.
  */
@@ -21,8 +26,8 @@ export function headerItems(path: string): NavItem[] {
     { to: '/tags', label: '태그', tip: '태그별로 글 모아 보기', icon: 'tag', on: (p) => p === '/tags' || p.startsWith('/tags/') },
     // 지금 화면 주소를 함께 넘겨 버그가 난 곳을 남긴다 (054)
     { to: path.startsWith('/support') ? '/support' : `/support?from=${encodeURIComponent(path)}`, label: '문의·신고',
-      tip: '궁금한 점·버그·제안을 운영자에게 보내요', icon: 'support', on: (p) => p === '/support' },
-    { to: '/releases', label: '릴리스 노트', tip: '버전마다 바뀐 점을 봐요', icon: 'releases', on: (p) => p === '/releases' },
+      tip: '궁금한 점·버그·제안을 운영자에게 보내요', icon: 'support', on: (p) => p === '/support', inMenu: true },
+    { to: '/releases', label: '릴리스 노트', tip: '버전마다 바뀐 점을 봐요', icon: 'releases', on: (p) => p === '/releases', inMenu: true },
   ]
 }
 
@@ -84,8 +89,11 @@ export function Header() {
   }
 
   const member = me?.member
-  const items = headerItems(path).filter((it) => member || !it.memberOnly)
-  // 휴대폰에서는 머리말 메뉴가 숨으니 아래 탭에 없는 것(좋아한 글·문의·신고·릴리스 노트)을 내 메뉴 아래에 둔다
+  const all = headerItems(path).filter((it) => member || !it.memberOnly)
+  const items = all.filter((it) => !member || !it.inMenu)
+  // 회원의 문의·신고·릴리스 노트는 늘 내 메뉴에 있다
+  const menuExtra = all.filter((it) => member && it.inMenu)
+  // 휴대폰에서는 머리말 메뉴가 숨으니 아래 탭에 없는 좋아한 글도 내 메뉴 아래에 둔다
   const mobileExtra = items.filter((it) => it.icon !== 'feed' && it.icon !== 'tag')
   return (
     <header className="site-header">
@@ -134,10 +142,14 @@ export function Header() {
                     <Link to="/settings" role="menuitem"><NavIcon name="settings" />내 설정</Link>
                     <Link to={`/@${member.handle}`} role="menuitem"><NavIcon name="blog" />내 블로그</Link>
                     <Link to="/manage/posts" role="menuitem"><NavIcon name="posts" />내 글 관리</Link>
-                    <div className="menu-mobile-only" role="none">
-                      <div className="menu-sep" role="separator" />
-                      {mobileExtra.map((it) => <Link key={it.icon} to={it.to} role="menuitem"><NavIcon name={it.icon} />{it.label}</Link>)}
-                    </div>
+                    {mobileExtra.length > 0 && (
+                      <div className="menu-mobile-only" role="none">
+                        <div className="menu-sep" role="separator" />
+                        {mobileExtra.map((it) => <Link key={it.icon} to={it.to} role="menuitem"><NavIcon name={it.icon} />{it.label}</Link>)}
+                      </div>
+                    )}
+                    <div className="menu-sep" role="separator" />
+                    {menuExtra.map((it) => <Link key={it.icon} to={it.to} role="menuitem"><NavIcon name={it.icon} />{it.label}</Link>)}
                     {isStaff(member.role) && (
                       <>
                         <div className="menu-sep" role="separator" />

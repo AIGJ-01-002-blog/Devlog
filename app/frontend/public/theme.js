@@ -7,7 +7,7 @@
       d.setAttribute('data-theme', t)
       // 휴대폰 주소창 색도 고른 테마 배경에 맞춘다 (068). 두 meta(라이트·다크)를 같은 색으로
       var metas = d.querySelectorAll('meta[name="theme-color"]')
-      for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', t === 'dark' ? '#121212' : '#ffffff')
+      for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', t === 'dark' ? '#1b1e25' : '#ffffff')
     }
   } catch (e) { /* 저장소를 못 쓰면 기기 설정 */ }
   d.classList.add('js')

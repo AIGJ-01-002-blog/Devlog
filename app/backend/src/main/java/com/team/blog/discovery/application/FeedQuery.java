@@ -2,6 +2,7 @@ package com.team.blog.discovery.application;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -14,12 +15,17 @@ import com.team.blog.friend.application.FriendQuery;
 import com.team.blog.friend.application.FriendService;
 import com.team.blog.like.application.LikeQuery;
 import com.team.blog.post.access.PostAccessPolicy;
+import com.team.blog.post.query.PostCard;
 import com.team.blog.post.query.PostCardPage;
 import com.team.blog.post.query.PostCardQuery;
 import com.team.blog.post.query.PostFilter;
 import com.team.blog.post.query.PostListSpec;
 import com.team.blog.shared.error.NotFoundException;
+import com.team.blog.series.application.SeriesQuery;
+import com.team.blog.series.application.SeriesSql;
 import com.team.blog.tag.application.TagSql;
+import com.team.blog.topic.application.TopicQuery;
+import com.team.blog.topic.application.TopicSql;
 
 /**
  * 홈(전체 글)·개인 블로그·태그·팔로잉·좋아한 글 목록과 블로그 머리 (docs/10 §4·§5·§7). 여기는 조립만 한다:
@@ -35,9 +41,12 @@ public class FeedQuery {
     private final FollowQuery follows;
     private final LikeQuery likes;
     private final SocialLinks socialLinks;
+    private final SeriesQuery series;
+    private final TopicQuery topics;
 
     public FeedQuery(PostCardQuery posts, MemberProfileQuery memberProfiles, FriendService friends,
-                     FriendQuery friendQuery, FollowQuery follows, LikeQuery likes, SocialLinks socialLinks) {
+                     FriendQuery friendQuery, FollowQuery follows, LikeQuery likes, SocialLinks socialLinks,
+                     SeriesQuery series, TopicQuery topics) {
         this.posts = posts;
         this.memberProfiles = memberProfiles;
         this.friends = friends;
@@ -45,6 +54,8 @@ public class FeedQuery {
         this.follows = follows;
         this.likes = likes;
         this.socialLinks = socialLinks;
+        this.series = series;
+        this.topics = topics;
     }
 
     /**
@@ -59,7 +70,31 @@ public class FeedQuery {
                               long followerCount, long followingCount, boolean following, SocialLinks.Links socialLinks) {}
 
     public PostCardPage home(String cursor) {
-        return posts.page(PostListSpec.everyone("home"), cursor);
+        return withBranches(posts.page(PostListSpec.everyone("home"), cursor));
+    }
+
+    /**
+     * 홈 브랜치 거르기 (072): 시리즈 s12 또는 주제 t34의 공개 글만. 형식이 틀리면 404.
+     * 커서 이름에 브랜치를 넣어 다른 목록의 커서를 쓸 수 없다.
+     */
+    public PostCardPage home(String cursor, String branch) {
+        if (branch == null || branch.isEmpty()) return home(cursor);
+        if (!branch.matches("[st][1-9][0-9]{0,17}")) throw new NotFoundException();
+        long id = Long.parseLong(branch.substring(1));
+        PostFilter filter = branch.charAt(0) == 's' ? SeriesSql.inSeries(id) : TopicSql.inTopic(id);
+        return withBranches(posts.page(PostListSpec.everyone("home:" + branch, filter), cursor));
+    }
+
+    /** 카드마다 이어지는 브랜치를 붙인다. 시리즈가 먼저이고, 시리즈에 없는 글만 주제 브랜치를 갖는다 */
+    private PostCardPage withBranches(PostCardPage page) {
+        List<Long> ids = page.items().stream().map(PostCard::id).toList();
+        Map<Long, PostCard.Branch> bySeries = series.branchesOf(ids);
+        Map<Long, PostCard.Branch> byTopic = topics.branchesOf(ids);
+        List<PostCard> items = page.items().stream().map(c -> {
+            PostCard.Branch b = bySeries.getOrDefault(c.id(), byTopic.get(c.id()));
+            return b == null ? c : c.withBranch(b);
+        }).toList();
+        return new PostCardPage(items, page.nextCursor(), page.friendsView());
     }
 
     public PostCardPage blog(String handle, String cursor) {
