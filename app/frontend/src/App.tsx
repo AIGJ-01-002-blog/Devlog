@@ -12,6 +12,7 @@ import { isStaff } from './lib/admin'
 import { match, navigate, useLocation } from './lib/router'
 import { BlogPage } from './pages/BlogPage'
 import { SeriesPage } from './pages/SeriesPage'
+import { PortfolioPage } from './pages/PortfolioPage'
 import { LikedPage } from './pages/LikedPage'
 import { FeedPage } from './pages/FeedPage'
 import { FollowsPage } from './pages/FollowsPage'
@@ -85,6 +86,7 @@ function route(path: string): ReactNode {
   if ((p = match('/@:handle/following', path))) return <FollowsPage key={`${p.handle}/g`} handle={p.handle} direction="following" />
   if ((p = match('/@:handle/series/:slug', path))) return <SeriesPage key={`${p.handle}/s/${p.slug}`} handle={p.handle} slug={p.slug} />
   if ((p = match('/@:handle/series', path))) return <BlogPage key={p.handle} handle={p.handle} tab="series" />
+  if ((p = match('/@:handle/portfolio', path))) return <PortfolioPage key={`${p.handle}/portfolio`} handle={p.handle} />
   if ((p = match('/@:handle/rss', path))) return <RssGuidePage key={`${p.handle}/rss`} handle={p.handle.toLowerCase()} />
   if (path === '/rss') return <RssGuidePage handle={null} />
   if ((p = match('/@:handle/about', path))) return <BlogPage key={p.handle} handle={p.handle} tab="about" />

@@ -61,6 +61,7 @@ export function BranchSuggest({ postId, tags }: { postId: number; tags: string[]
     return (
       <div className="branch-suggest" role="status">
         <Label s={current} /> <span className="muted small">시리즈로 이어져요.</span>
+        {result.portfolio && <p className="small branch-suggest-ok">이 시리즈는 포트폴리오 프로젝트라 이 글도 포트폴리오에 보여요.</p>}
       </div>
     )
   }

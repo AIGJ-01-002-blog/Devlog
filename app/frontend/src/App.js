@@ -13,6 +13,7 @@ import { isStaff } from './lib/admin';
 import { match, navigate, useLocation } from './lib/router';
 import { BlogPage } from './pages/BlogPage';
 import { SeriesPage } from './pages/SeriesPage';
+import { PortfolioPage } from './pages/PortfolioPage';
 import { LikedPage } from './pages/LikedPage';
 import { FeedPage } from './pages/FeedPage';
 import { FollowsPage } from './pages/FollowsPage';
@@ -76,6 +77,8 @@ function route(path) {
         return _jsx(SeriesPage, { handle: p.handle, slug: p.slug }, `${p.handle}/s/${p.slug}`);
     if ((p = match('/@:handle/series', path)))
         return _jsx(BlogPage, { handle: p.handle, tab: "series" }, p.handle);
+    if ((p = match('/@:handle/portfolio', path)))
+        return _jsx(PortfolioPage, { handle: p.handle }, `${p.handle}/portfolio`);
     if ((p = match('/@:handle/rss', path)))
         return _jsx(RssGuidePage, { handle: p.handle.toLowerCase() }, `${p.handle}/rss`);
     if (path === '/rss')

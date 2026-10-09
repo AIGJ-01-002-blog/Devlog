@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.team.blog.post.access.Viewer;
 import com.team.blog.series.application.SeriesQuery;
+import com.team.blog.series.application.SeriesProjects;
 import com.team.blog.series.application.SeriesService;
 import com.team.blog.series.application.SeriesSubscriptions;
 import com.team.blog.shared.error.ApiException;
@@ -28,11 +29,13 @@ public class SeriesController {
     private final SeriesQuery query;
     private final SeriesService service;
     private final SeriesSubscriptions subscriptions;
+    private final SeriesProjects projects;
 
-    public SeriesController(SeriesQuery query, SeriesService service, SeriesSubscriptions subscriptions) {
+    public SeriesController(SeriesQuery query, SeriesService service, SeriesSubscriptions subscriptions, SeriesProjects projects) {
         this.query = query;
         this.service = service;
         this.subscriptions = subscriptions;
+        this.projects = projects;
     }
 
     public record NameRequest(String name) {}
@@ -63,6 +66,18 @@ public class SeriesController {
         return query.forPost(id, Viewer.of(me))
                 .map(n -> ResponseEntity.ok().cacheControl(privateOrNoStore(!n.publiclyVisible())).body(n))
                 .orElseGet(() -> ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build());
+    }
+
+    /** 포트폴리오 프로젝트 칸 (072 3단계). 주인만 */
+    @GetMapping("/api/me/series/{seriesId}/project")
+    public ResponseEntity<SeriesProjects.Fields> project(@CurrentMember MemberPrincipal me, @PathVariable String seriesId) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(projects.get(me.id(), parseId(seriesId)));
+    }
+
+    @PutMapping("/api/me/series/{seriesId}/project")
+    public SeriesProjects.Fields saveProject(@CurrentMember MemberPrincipal me, @PathVariable String seriesId,
+                                             @RequestBody SeriesProjects.Fields body) {
+        return projects.save(me.id(), parseId(seriesId), body);
     }
 
     /** 새 글 알림 받기 (072) */

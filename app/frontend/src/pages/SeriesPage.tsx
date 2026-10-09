@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PostCard } from '../components/PostCard'
+import { ProjectEditor } from '../components/ProjectEditor'
 import { ApiError } from '../lib/api'
 import { loginPath, useAuth } from '../lib/auth'
 import { readPosts, seriesProgress } from '../lib/branch'
@@ -125,6 +126,7 @@ export function SeriesPage({ handle, slug }: { handle: string; slug: string }) {
           <button type="button" className="btn btn-text danger" onClick={remove} disabled={busy}>시리즈 삭제</button>
         </div>
       )}
+      {series.mine && !editing && renaming == null && <ProjectEditor seriesId={series.id} handle={handle} />}
       {error && <p className="error" role="alert">{error}</p>}
       {editing ? (
         <>

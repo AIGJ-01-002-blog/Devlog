@@ -10,6 +10,7 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import com.team.blog.post.access.Viewer;
+import com.team.blog.series.application.SeriesProjects;
 import com.team.blog.series.application.SeriesQuery;
 import com.team.blog.tag.application.TagNormalizer;
 import com.team.blog.tag.application.TagQuery;
@@ -24,8 +25,10 @@ public class BranchSuggester {
     private final TopicQuery topics;
     private final TagQuery tags;
     private final TopicProperties props;
+    private final SeriesProjects projects;
 
-    public BranchSuggester(SeriesQuery series, TopicQuery topics, TagQuery tags, TopicProperties props) {
+    public BranchSuggester(SeriesQuery series, TopicQuery topics, TagQuery tags, TopicProperties props, SeriesProjects projects) {
+        this.projects = projects;
         this.series = series;
         this.topics = topics;
         this.tags = tags;
@@ -38,8 +41,13 @@ public class BranchSuggester {
     /**
      * @param current 이미 들어 있는 브랜치(시리즈 또는 지난 계산의 주제)
      * @param optedOut 작성자가 [묶지 않기]를 골랐다
+     * @param portfolio 지금 시리즈가 포트폴리오 프로젝트라 이 글도 포트폴리오에 보인다 (3단계)
      */
-    public record Result(Suggestion current, Suggestion series, Suggestion topic, boolean optedOut) {}
+    public record Result(Suggestion current, Suggestion series, Suggestion topic, boolean optedOut, boolean portfolio) {
+        Result(Suggestion current, Suggestion series, Suggestion topic, boolean optedOut) {
+            this(current, series, topic, optedOut, false);
+        }
+    }
 
     public Result suggest(long memberId, long postId, Collection<String> rawTags) {
         Set<String> mine = new LinkedHashSet<>();
@@ -50,7 +58,7 @@ public class BranchSuggester {
         if (inSeries.isPresent()) {
             var n = inSeries.get();
             return new Result(new Suggestion("SERIES", "s" + n.id(), n.id(), n.name(), "/@" + n.handle() + "/series/" + n.slug(), List.of()),
-                    null, null, optedOut);
+                    null, null, optedOut, projects.postInProject(postId).orElse(false));
         }
         Suggestion current = topics.forPost(postId)
                 .map(n -> new Suggestion("TOPIC", n.key(), null, n.name(), n.url(), List.of())).orElse(null);

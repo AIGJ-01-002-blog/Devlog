@@ -29,6 +29,7 @@ import com.team.blog.post.domain.PostStatus;
 import com.team.blog.search.application.SearchQuery;
 import com.team.blog.search.web.SearchController;
 import com.team.blog.release.ReleaseNotes;
+import com.team.blog.portfolio.application.PortfolioQuery;
 import com.team.blog.series.application.SeriesQuery;
 import com.team.blog.account.application.MemberAbout;
 import com.team.blog.shared.config.BlogProperties;
@@ -65,10 +66,13 @@ public class PageController {
     private final SeriesQuery series;
     private final MemberAbout about;
     private final ReleaseNotes releaseNotes;
+    private final PortfolioQuery portfolios;
 
     public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
                           TagController tagApi, CommentQuery comments, SearchQuery search, FollowQuery follows,
-                          TrendingService trending, SeriesQuery series, MemberAbout about, ReleaseNotes releaseNotes) {
+                          TrendingService trending, SeriesQuery series, MemberAbout about, ReleaseNotes releaseNotes,
+                          PortfolioQuery portfolios) {
+        this.portfolios = portfolios;
         this.releaseNotes = releaseNotes;
         this.about = about;
         this.series = series;
@@ -278,6 +282,27 @@ public class PageController {
                 absolute("/@" + handle + "/about"), "profile",
                 p.profileImageUrl() != null ? p.profileImageUrl() : absolute(site.defaultOgImage()), null, a.updatedAt(), a.html() != null);
         return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "about")), CacheControl.noCache().cachePrivate());
+    }
+
+    /** 포트폴리오 (072 3단계). 공개 정보만 담겨 누구에게나 같고, 프로젝트 이름과 설명을 담아 수집한다. */
+    @GetMapping("/@{handle}/portfolio")
+    public ResponseEntity<String> portfolio(@PathVariable String handle) {
+        if (!HANDLE_CHARS.matcher(handle).matches()) return notFound();
+        if (!handle.equals(handle.toLowerCase())) return redirect(HttpStatus.MOVED_PERMANENTLY, "/@" + handle.toLowerCase() + "/portfolio");
+        var found = portfolios.of(handle);
+        if (found.isEmpty()) return notFound();
+        PortfolioQuery.Portfolio p = found.get();
+        String title = p.nickname() + "의 개발 기록";
+        StringBuilder body = new StringBuilder("<main><h1>").append(SpaShell.esc(title)).append("</h1>");
+        if (p.bio() != null) body.append("<p>").append(SpaShell.esc(p.bio())).append("</p>");
+        body.append("<ul>");
+        p.projects().forEach(x -> body.append("<li><a href=\"").append(SpaShell.esc(x.url())).append("\">").append(SpaShell.esc(x.name()))
+                .append("</a>").append(x.summary() == null ? "" : " " + SpaShell.esc(x.summary())).append("</li>"));
+        body.append("</ul></main>");
+        HeadMeta meta = new HeadMeta(title + " - " + site.name(), p.bio() != null ? p.bio() : p.nickname() + "의 포트폴리오",
+                absolute("/@" + handle + "/portfolio"), "profile",
+                p.profileImageUrl() != null ? p.profileImageUrl() : absolute(site.defaultOgImage()), null, null, !p.projects().isEmpty());
+        return html(HttpStatus.OK, shell.render(meta, body.toString(), Map.of("page", "portfolio")), CacheControl.noCache());
     }
 
     /** 시리즈 페이지 (024 US2-2). 글 목록을 순서대로 담아 수집한다. */
