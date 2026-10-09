@@ -5,3 +5,15 @@ kind: Kustomization
 resources:
   - dashboard-v2.7.0.yaml
   - viewer.yaml
+# 공식 yaml에는 자원 한도가 없어 여러 학생이 같이 쓰는 서버에서 메모리를 무한정 쓸 수 있다. 원본은 두고 여기서 더한다
+patches:
+  - target: {kind: Deployment, name: kubernetes-dashboard}
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/resources
+        value: {requests: {cpu: 50m, memory: 100Mi}, limits: {memory: 300Mi}}
+  - target: {kind: Deployment, name: dashboard-metrics-scraper}
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/resources
+        value: {requests: {cpu: 10m, memory: 32Mi}, limits: {memory: 128Mi}}
