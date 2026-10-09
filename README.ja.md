@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.49.1 | 2026-10-09 | スマートフォンでポートフォリオのプロジェクトカードが画面からはみ出す問題を修正 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.49.1) |
 | v1.49.0 | 2026-10-09 | AI連携(MCP)でシリーズ作成・記事の追加・ポートフォリオのプロジェクト欄の記入 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.49.0) |
 | v1.48.2 | 2026-10-09 | トピックブランチ名にほぼ全記事が使うタグではなく、そのブランチ固有のタグを使用。ブランチのツールチップに自動でまとめたことを明記 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.48.2) |
 | v1.48.1 | 2026-10-09 | セレクトボックスの矢印をボックスの内側に配置 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.48.1) |
