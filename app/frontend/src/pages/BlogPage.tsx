@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Avatar } from '../components/Avatar'
 import { Feed } from '../components/Feed'
+import { GraphLogo } from '../components/GraphLogo'
 import { FollowButton } from '../components/FollowButton'
 import { SearchBox } from '../components/SearchBox'
 import { SocialLinkList } from '../components/SocialLinkList'
@@ -92,6 +93,9 @@ export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'pos
         <Link to={`/@${profile.handle}`} aria-current={tab === 'posts' ? 'page' : undefined}>글</Link>
         <Link to={`/@${profile.handle}/series`} aria-current={tab === 'series' ? 'page' : undefined}>시리즈</Link>
         <Link to={`/@${profile.handle}/about`} aria-current={tab === 'about' ? 'page' : undefined}>소개</Link>
+        <Link to={`/@${profile.handle}/portfolio`} className="blog-tab-portfolio" data-tip="프로젝트 위주로 정리한 포트폴리오 화면">
+          <GraphLogo size={16} /> 포트폴리오로 보기
+        </Link>
       </nav>
       {tab === 'about' ? <BlogAbout handle={profile.handle} /> : tab === 'series' ? <BlogSeries handle={profile.handle} mine={profile.mine} /> : <>
       <SearchBox initial={q} placeholder={`${profile.nickname}님의 글 검색`} onSearch={searchIn} />

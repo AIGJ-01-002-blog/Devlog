@@ -44,6 +44,8 @@ export interface SuggestResult {
   series: Suggestion | null
   topic: Suggestion | null
   optedOut: boolean
+  /** 지금 시리즈가 포트폴리오 프로젝트라 이 글도 포트폴리오에 보인다 (3단계) */
+  portfolio?: boolean
 }
 
 export const topicApi = {
