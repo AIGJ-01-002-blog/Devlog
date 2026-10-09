@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.50.2 | 2026-10-09 | 首页分支按钮选中一个后其他按钮不再消失，长名称在按钮内省略显示 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.2) |
 | v1.50.1 | 2026-10-09 | 修复 GitHub、Google 登录因 "redirect_uri 未关联" 而失败的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.1) |
 | v1.50.0 | 2026-10-09 | 管理后台指标分为访问、会员与文章、互动三组,并显示增减箭头和每日趋势条 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.0) |
 | v1.49.1 | 2026-10-09 | 修复手机上作品集项目卡片超出屏幕的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.49.1) |

@@ -1576,6 +1576,9 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
 }
 .branch-chip:hover { color: var(--color-text); border-color: var(--color-text-muted); }
 .branch-chip[aria-current="page"] { background: var(--color-text); border-color: var(--color-text); color: var(--color-bg); }
+/* 긴 이름은 버튼 밖으로 넘치지 않게 말줄임 (전체 이름은 툴팁) */
+.branch-chip .bl-mark { flex-shrink: 0; }
+.branch-chip-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .branch-chip-series .bl-mark { color: var(--branch-series); }
 .branch-chip-topic .bl-mark { color: var(--branch-topic); }
 .branch-chip[aria-current="page"] .bl-mark { color: inherit; }

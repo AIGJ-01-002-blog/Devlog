@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BranchList, BranchMark } from '../components/BranchList'
 import { Feed } from '../components/Feed'
 import { api, takeInitialData } from '../lib/api'
+import { branchChips } from '../lib/branch'
 import { loginPath, useAuth } from '../lib/auth'
 import { Link, useLocation } from '../lib/router'
 import { TRENDING_ENDPOINT, TRENDING_HINT } from '../lib/trending'
@@ -18,7 +19,16 @@ export function HomePage() {
   const branch = trending ? null : search.get('branch')
   const [boot] = useState(() => takeInitialData<{ feed?: FeedPage; trending?: FeedPage }>('home'))
   const { me, loading } = useAuth()
+  // 브랜치 버튼은 거르지 않은 최신 목록에서 뽑는다. 걸러 본 목록에서 뽑으면 다른 브랜치 버튼이 사라진다
+  const [latest, setLatest] = useState<Card[] | null>(() => boot?.feed?.items ?? null)
   useEffect(() => { document.title = trending ? '트렌딩 - devlog' : 'devlog' }, [trending])
+  useEffect(() => {
+    if (!branch || latest) return
+    let live = true
+    // 걸러 본 주소로 바로 들어와 최신 목록이 없을 때만 첫 쪽을 한 번 받는다. 실패하면 고른 버튼만 보인다
+    api<FeedPage>('/api/posts').then((p) => { if (live) setLatest(p.items) }, () => {})
+    return () => { live = false }
+  }, [branch, latest])
   return (
     <main className="container home-layout">
       <div className="home-main">
@@ -45,7 +55,8 @@ export function HomePage() {
             storageKey={branch ? `feed:home:${branch}` : 'feed:home'} initial={branch ? null : boot?.feed ?? null}
             renderItems={(items, hasMore) => (
               <>
-                <BranchChips items={items} active={branch} />
+                <BranchChips base={branch ? latest ?? [] : items} visible={items} active={branch}
+                  onBase={branch ? undefined : setLatest} />
                 <BranchList items={items} hasMore={hasMore} />
               </>
             )}
@@ -68,17 +79,13 @@ export function HomePage() {
   )
 }
 
-/** 최신 목록 위 브랜치 버튼 (072). 지금 보이는 글의 브랜치를 위에서부터 5개까지 */
-function BranchChips({ items, active }: { items: Card[]; active: string | null }) {
-  const seen = new Map<string, Branch>()
-  for (const c of items) {
-    if (c.branch && c.branch.total > 1 && !seen.has(c.branch.key)) seen.set(c.branch.key, c.branch)
-  }
-  let chips = [...seen.values()].slice(0, BRANCH_CHIPS)
-  if (active && !chips.some((b) => b.key === active)) {
-    const cur = seen.get(active)
-    if (cur) chips = [cur, ...chips.slice(0, BRANCH_CHIPS - 1)]
-  }
+/** 최신 목록 위 브랜치 버튼 (072). 긴 이름은 버튼 안에서 말줄임하고, 마우스를 올리면 전체 이름이 보인다 */
+function BranchChips({ base, visible, active, onBase }: {
+  base: Card[]; visible: Card[]; active: string | null; onBase?: (items: Card[]) => void
+}) {
+  // 거르지 않은 목록을 보는 동안 더 받은 쪽까지 기억해 두었다가 걸러 볼 때 같은 버튼을 보인다
+  useEffect(() => { onBase?.(base) }, [base, onBase])
+  const chips = branchChips(base, active, visible)
   if (chips.length === 0 && !active) return null
   return (
     <nav className="branch-chips" aria-label="브랜치로 걸러 보기">
@@ -87,14 +94,12 @@ function BranchChips({ items, active }: { items: Card[]; active: string | null }
         <Link key={b.key} to={`/?branch=${b.key}`} className={`branch-chip branch-chip-${b.kind.toLowerCase()}`}
               aria-current={active === b.key ? 'page' : undefined}
               data-tip={branchTip(b)}>
-          <BranchMark kind={b.kind} />{b.name}
+          <BranchMark kind={b.kind} /><span className="branch-chip-name">{b.name}</span>
         </Link>
       ))}
     </nav>
   )
 }
-
-const BRANCH_CHIPS = 5
 
 /** 브랜치 버튼 설명. 주제 브랜치는 글쓴이가 만든 시리즈가 아니라 자동으로 묶인 것임을 알린다 */
 function branchTip(b: Branch): string {

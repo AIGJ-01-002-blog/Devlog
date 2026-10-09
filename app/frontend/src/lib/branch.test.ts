@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { branchNeighbors, markRead, READ_KEEP, readPosts, seriesProgress, type BranchNav } from './branch'
+import { branchChips, branchNeighbors, markRead, READ_KEEP, readPosts, seriesProgress, type BranchNav } from './branch'
+import type { Branch, Card } from './types'
 
 describe('읽은 글 (072)', () => {
   beforeEach(() => localStorage.clear())
@@ -38,5 +39,31 @@ describe('branchNeighbors', () => {
     expect(branchNeighbors(nav).prev?.id).toBe(1)
     expect(branchNeighbors(nav).next?.id).toBe(3)
     expect(branchNeighbors({ ...nav, index: null })).toEqual({ prev: null, next: null })
+  })
+})
+
+describe('홈 브랜치 버튼 (072)', () => {
+  const s1: Branch = { kind: 'SERIES', key: 's1', name: 'devlog 설계 노트', total: 3 } as Branch
+  const s2: Branch = { kind: 'SERIES', key: 's2', name: 'devlog 만들기 — 기술 스택 이야기', total: 14 } as Branch
+  const t9: Branch = { kind: 'TOPIC', key: 't9', name: 'pgvector', total: 2 } as Branch
+  const card = (branch: Branch | null) => ({ branch }) as Card
+  const latest = [card(s2), card(null), card(s1), card(s2)]
+
+  it('거르지 않은 목록의 브랜치를 위에서부터 한 번씩', () => {
+    expect(branchChips(latest, null).map((b) => b.key)).toEqual(['s2', 's1'])
+  })
+
+  it('한 브랜치로 걸러 봐도 다른 브랜치 버튼이 그대로 남는다', () => {
+    expect(branchChips(latest, 's1', [card(s1)]).map((b) => b.key)).toEqual(['s2', 's1'])
+    expect(branchChips(latest, 's2', [card(s2)]).map((b) => b.key)).toEqual(['s2', 's1'])
+  })
+
+  it('고른 브랜치가 묶음에 없으면 보이는 글에서 찾아 맨 앞에', () => {
+    expect(branchChips(latest, 't9', [card(t9)]).map((b) => b.key)).toEqual(['t9', 's2', 's1'])
+    expect(branchChips(latest, 't9', [card(t9)], 2).map((b) => b.key)).toEqual(['t9', 's2'])
+  })
+
+  it('글이 한 편뿐인 브랜치는 버튼을 만들지 않는다', () => {
+    expect(branchChips([card({ ...t9, total: 1 })], null)).toEqual([])
   })
 })
