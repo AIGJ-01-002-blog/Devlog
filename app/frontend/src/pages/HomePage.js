@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { BranchList, BranchMark } from '../components/BranchList';
 import { Feed } from '../components/Feed';
 import { api, takeInitialData } from '../lib/api';
+import { branchChips } from '../lib/branch';
 import { loginPath, useAuth } from '../lib/auth';
 import { Link, useLocation } from '../lib/router';
 import { TRENDING_ENDPOINT, TRENDING_HINT } from '../lib/trending';
@@ -17,30 +18,32 @@ export function HomePage() {
     const branch = trending ? null : search.get('branch');
     const [boot] = useState(() => takeInitialData('home'));
     const { me, loading } = useAuth();
+    // 브랜치 버튼은 거르지 않은 최신 목록에서 뽑는다. 걸러 본 목록에서 뽑으면 다른 브랜치 버튼이 사라진다
+    const [latest, setLatest] = useState(() => boot?.feed?.items ?? null);
     useEffect(() => { document.title = trending ? '트렌딩 - devlog' : 'devlog'; }, [trending]);
+    useEffect(() => {
+        if (!branch || latest)
+            return;
+        let live = true;
+        // 걸러 본 주소로 바로 들어와 최신 목록이 없을 때만 첫 쪽을 한 번 받는다. 실패하면 고른 버튼만 보인다
+        api('/api/posts').then((p) => { if (live)
+            setLatest(p.items); }, () => { });
+        return () => { live = false; };
+    }, [branch, latest]);
     return (_jsxs("main", { className: "container home-layout", children: [_jsxs("div", { className: "home-main", children: [!loading && !me?.authenticated && _jsx(HomeHero, {}), _jsxs("div", { className: "home-head", children: [_jsx("h1", { className: "page-title", children: trending ? '트렌딩' : '개발 기록' }), _jsx("p", { className: "muted small", children: trending ? TRENDING_HINT : '새 글은 main에 쌓이고, 이어지는 글은 시리즈·주제 브랜치로 갈라져요.' })] }), _jsxs("nav", { className: "tabs home-tabs", "aria-label": "\uAE00 \uBAA9\uB85D", children: [_jsx(Link, { to: "/", "aria-current": trending ? undefined : 'page', children: "\uCD5C\uC2E0" }), _jsx(Link, { to: "/?tab=trending", "aria-current": trending ? 'page' : undefined, children: "\uD2B8\uB80C\uB529" })] }), trending ? (_jsx(Feed, { endpoint: TRENDING_ENDPOINT, storageKey: "feed:trending", initial: boot?.trending ?? null, renderItems: (items, hasMore) => _jsx(BranchList, { items: items, hasMore: hasMore, graph: false }), empty: _jsxs(_Fragment, { children: [_jsx("p", { children: "\uC544\uC9C1 \uD2B8\uB80C\uB529 \uAE00\uC774 \uC5C6\uC5B4\uC694" }), _jsx(Link, { to: "/", className: "btn btn-primary", children: "\uCD5C\uC2E0 \uAE00 \uBCF4\uAE30" })] }) }, "trending")) : (
                     // 서버가 처음 넣어 준 목록은 거르지 않은 목록이라, 브랜치로 거를 때는 쓰지 않는다
-                    _jsx(Feed, { endpoint: branch ? `/api/posts?branch=${encodeURIComponent(branch)}` : '/api/posts', storageKey: branch ? `feed:home:${branch}` : 'feed:home', initial: branch ? null : boot?.feed ?? null, renderItems: (items, hasMore) => (_jsxs(_Fragment, { children: [_jsx(BranchChips, { items: items, active: branch }), _jsx(BranchList, { items: items, hasMore: hasMore })] })), empty: branch ? (_jsxs(_Fragment, { children: [_jsx("p", { children: "\uC774 \uBE0C\uB79C\uCE58\uC5D0 \uBCF4\uC774\uB294 \uAE00\uC774 \uC5C6\uC5B4\uC694" }), _jsx(Link, { to: "/", className: "btn btn-primary", children: "\uBAA8\uB4E0 \uAE00 \uBCF4\uAE30" })] })) : (_jsxs(_Fragment, { children: [_jsx("p", { children: "\uC544\uC9C1 \uC62C\uB77C\uC628 \uAE00\uC774 \uC5C6\uC5B4\uC694. \uCCAB \uAE00\uC758 \uC8FC\uC778\uACF5\uC774 \uB418\uC5B4 \uBCF4\uC138\uC694." }), me?.authenticated ? _jsx(Link, { to: "/write", className: "btn btn-primary", children: "\uAE00\uC4F0\uAE30" })
+                    _jsx(Feed, { endpoint: branch ? `/api/posts?branch=${encodeURIComponent(branch)}` : '/api/posts', storageKey: branch ? `feed:home:${branch}` : 'feed:home', initial: branch ? null : boot?.feed ?? null, renderItems: (items, hasMore) => (_jsxs(_Fragment, { children: [_jsx(BranchChips, { base: branch ? latest ?? [] : items, visible: items, active: branch, onBase: branch ? undefined : setLatest }), _jsx(BranchList, { items: items, hasMore: hasMore })] })), empty: branch ? (_jsxs(_Fragment, { children: [_jsx("p", { children: "\uC774 \uBE0C\uB79C\uCE58\uC5D0 \uBCF4\uC774\uB294 \uAE00\uC774 \uC5C6\uC5B4\uC694" }), _jsx(Link, { to: "/", className: "btn btn-primary", children: "\uBAA8\uB4E0 \uAE00 \uBCF4\uAE30" })] })) : (_jsxs(_Fragment, { children: [_jsx("p", { children: "\uC544\uC9C1 \uC62C\uB77C\uC628 \uAE00\uC774 \uC5C6\uC5B4\uC694. \uCCAB \uAE00\uC758 \uC8FC\uC778\uACF5\uC774 \uB418\uC5B4 \uBCF4\uC138\uC694." }), me?.authenticated ? _jsx(Link, { to: "/write", className: "btn btn-primary", children: "\uAE00\uC4F0\uAE30" })
                                     : _jsx(Link, { to: loginPath('/write'), className: "btn btn-primary", children: "\uB85C\uADF8\uC778" })] })) }, branch ?? 'latest'))] }), _jsx(HomeAside, {})] }));
 }
-/** 최신 목록 위 브랜치 버튼 (072). 지금 보이는 글의 브랜치를 위에서부터 5개까지 */
-function BranchChips({ items, active }) {
-    const seen = new Map();
-    for (const c of items) {
-        if (c.branch && c.branch.total > 1 && !seen.has(c.branch.key))
-            seen.set(c.branch.key, c.branch);
-    }
-    let chips = [...seen.values()].slice(0, BRANCH_CHIPS);
-    if (active && !chips.some((b) => b.key === active)) {
-        const cur = seen.get(active);
-        if (cur)
-            chips = [cur, ...chips.slice(0, BRANCH_CHIPS - 1)];
-    }
+/** 최신 목록 위 브랜치 버튼 (072). 긴 이름은 버튼 안에서 말줄임하고, 마우스를 올리면 전체 이름이 보인다 */
+function BranchChips({ base, visible, active, onBase }) {
+    // 거르지 않은 목록을 보는 동안 더 받은 쪽까지 기억해 두었다가 걸러 볼 때 같은 버튼을 보인다
+    useEffect(() => { onBase?.(base); }, [base, onBase]);
+    const chips = branchChips(base, active, visible);
     if (chips.length === 0 && !active)
         return null;
-    return (_jsxs("nav", { className: "branch-chips", "aria-label": "\uBE0C\uB79C\uCE58\uB85C \uAC78\uB7EC \uBCF4\uAE30", children: [_jsx(Link, { to: "/", className: "branch-chip", "aria-current": active ? undefined : 'page', "data-tip": "\uBAA8\uB4E0 \uAE00\uC744 \uC2DC\uAC04\uC21C\uC73C\uB85C \uBD10\uC694", children: "\uBAA8\uB4E0 \uAE00" }), chips.map((b) => (_jsxs(Link, { to: `/?branch=${b.key}`, className: `branch-chip branch-chip-${b.kind.toLowerCase()}`, "aria-current": active === b.key ? 'page' : undefined, "data-tip": branchTip(b), children: [_jsx(BranchMark, { kind: b.kind }), b.name] }, b.key)))] }));
+    return (_jsxs("nav", { className: "branch-chips", "aria-label": "\uBE0C\uB79C\uCE58\uB85C \uAC78\uB7EC \uBCF4\uAE30", children: [_jsx(Link, { to: "/", className: "branch-chip", "aria-current": active ? undefined : 'page', "data-tip": "\uBAA8\uB4E0 \uAE00\uC744 \uC2DC\uAC04\uC21C\uC73C\uB85C \uBD10\uC694", children: "\uBAA8\uB4E0 \uAE00" }), chips.map((b) => (_jsxs(Link, { to: `/?branch=${b.key}`, className: `branch-chip branch-chip-${b.kind.toLowerCase()}`, "aria-current": active === b.key ? 'page' : undefined, "data-tip": branchTip(b), children: [_jsx(BranchMark, { kind: b.kind }), _jsx("span", { className: "branch-chip-name", children: b.name })] }, b.key)))] }));
 }
-const BRANCH_CHIPS = 5;
 /** 브랜치 버튼 설명. 주제 브랜치는 글쓴이가 만든 시리즈가 아니라 자동으로 묶인 것임을 알린다 */
 function branchTip(b) {
     return b.kind === 'SERIES'

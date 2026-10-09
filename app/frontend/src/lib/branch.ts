@@ -110,3 +110,19 @@ export function seriesProgress<T extends { id: number }>(posts: T[], read: Set<n
   const done = posts.filter((p) => read.has(p.id)).length
   return { done, next: posts.find((p) => !read.has(p.id)) ?? null }
 }
+
+/**
+ * 홈 최신 목록 위 브랜치 버튼 (072). 거르지 않은 목록(base)에 나온 브랜치를 위에서부터 max개.
+ * 한 브랜치로 걸러 봐도 같은 버튼 묶음을 그대로 두어 다른 브랜치로 바로 옮겨 갈 수 있게 한다.
+ * 고른 브랜치가 묶음에 없으면(목록 아래쪽 브랜치) 보이는 글(visible)에서 찾아 맨 앞에 둔다.
+ */
+export function branchChips(base: Card[], active: string | null, visible: Card[] = [], max = 5): Branch[] {
+  const seen = new Map<string, Branch>()
+  for (const c of base) {
+    if (c.branch && c.branch.total > 1 && !seen.has(c.branch.key)) seen.set(c.branch.key, c.branch)
+  }
+  const chips = [...seen.values()].slice(0, max)
+  if (!active || chips.some((b) => b.key === active)) return chips
+  const cur = seen.get(active) ?? visible.find((c) => c.branch?.key === active)?.branch
+  return cur ? [cur, ...chips.slice(0, max - 1)] : chips
+}
