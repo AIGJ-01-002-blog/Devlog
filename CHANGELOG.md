@@ -6,6 +6,11 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.50.1] - 2026-10-09
+
+### 고침
+- GitHub·Google 로그인: 로그인 버튼을 누르면 GitHub이 "The redirect_uri is not associated with this application"이라며 막던 문제. 앱이 Cloudflare 터널·인그레스 뒤의 안쪽 요청(http)을 보고 콜백 주소를 `http://devlog.life/...`로 만들고 있었다. 이제 콜백 주소를 사이트 주소(`SITE_BASE_URL`, `https://devlog.life`)로 만든다
+
 ## [1.50.0] - 2026-10-09
 
 관리자 대시보드 지표 칸을 보기 쉽게 다시 그렸다 (spec 074).

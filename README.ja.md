@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.50.1 | 2026-10-09 | GitHub・Googleログインが「redirect_uriが登録されていない」と止まる問題を修正 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.1) |
 | v1.50.0 | 2026-10-09 | 管理者ダッシュボードの指標を訪問・会員と記事・反応にグループ化し、増減表示と日別推移バーを追加 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.0) |
 | v1.49.1 | 2026-10-09 | スマートフォンでポートフォリオのプロジェクトカードが画面からはみ出す問題を修正 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.49.1) |
 | v1.49.0 | 2026-10-09 | AI連携(MCP)でシリーズ作成・記事の追加・ポートフォリオのプロジェクト欄の記入 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.49.0) |

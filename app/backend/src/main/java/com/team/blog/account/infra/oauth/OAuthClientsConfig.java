@@ -31,8 +31,15 @@ public class OAuthClientsConfig {
                     .clientId(googleId)
                     .clientSecret(env.getProperty("GOOGLE_CLIENT_SECRET", ""))
                     .scope("openid", "profile", "email")
+                    .redirectUri(siteBaseUrl(env) + "/login/oauth2/code/{registrationId}")
                     .build());
         }
         return new InMemoryClientRegistrationRepository(all);
+    }
+
+    /** 콜백 주소의 앞부분. 프록시 뒤의 안쪽 요청(http)이 아니라 사이트 주소(SITE_BASE_URL, https)를 쓴다. */
+    private static String siteBaseUrl(Environment env) {
+        String base = env.getProperty("blog.site.base-url", "http://localhost:8080");
+        return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
     }
 }
