@@ -54,7 +54,7 @@ class TopicClustererTest {
     @Test
     void 태그가_없으면_가장_오래된_글_제목으로_이름을_짓고_근거가_섞이면_MIXED() {
         List<Doc> docs = List.of(new Doc(7, "아주 긴 제목이 들어간 글입니다 브랜치 이름은 앞부분만 씁니다", List.of()),
-                new Doc(8, "다른 글", List.of("x")), new Doc(9, "세 번째", List.of("x")));
+                new Doc(8, "다른 글", List.of("x")), new Doc(9, "세 번째", List.of("x")), doc(10, "y"), doc(11, "z"));
         List<Edge> edges = List.of(new Edge(7, 8, 0.8, Method.EMBEDDING), new Edge(8, 9, 0.7, Method.TAG));
         Topic t = TopicClusterer.cluster(docs, edges, 12).get(0);
         assertThat(t.method()).isEqualTo("MIXED");
@@ -74,14 +74,16 @@ class TopicClustererTest {
     }
 
     @Test
-    void 브랜치_이름이_겹치면_큰_브랜치가_먼저_갖고_작은_브랜치는_다음_태그를_쓴다() {
-        List<Doc> docs = List.of(doc(1, "devlog", "redis"), doc(2, "devlog", "redis"), doc(3, "devlog", "redis"),
-                doc(4, "devlog", "css"), doc(5, "devlog", "css"));
+    void 거의_모든_글이_쓰는_태그는_이름이_되지_않고_겹치는_이름은_큰_브랜치가_먼저_갖는다() {
+        List<Doc> docs = new ArrayList<>();
+        for (long i = 1; i <= 5; i++) docs.add(doc(i, "devlog", "포트폴리오", "redis"));
+        for (long i = 6; i <= 10; i++) docs.add(doc(i, "devlog", "포트폴리오", "t" + i));
         List<Edge> edges = List.of(new Edge(1, 2, 0.9, Method.EMBEDDING), new Edge(2, 3, 0.9, Method.EMBEDDING),
                 new Edge(4, 5, 0.9, Method.EMBEDDING));
         List<Topic> topics = TopicClusterer.cluster(docs, edges, 12);
         assertThat(topics).extracting(Topic::key).containsExactly(1L, 4L);
-        assertThat(topics.get(0).name()).isEqualTo("devlog");
-        assertThat(topics.get(1).name()).isEqualTo("css");
+        // devlog·포트폴리오는 모든 글에 붙어 있어 건너뛰고, redis는 큰 브랜치가 가져간다
+        assertThat(topics.get(0).name()).isEqualTo("redis");
+        assertThat(topics.get(1).name()).isEqualTo("글 4");
     }
 }

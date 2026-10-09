@@ -16,7 +16,7 @@ export function BranchBox({ nav, postId }: { nav: BranchNav; postId: number }) {
     <nav className={`branch-box branch-box-${kind}`} aria-label={nav.kind === 'SERIES' ? '시리즈' : '이어지는 주제'}>
       <header className="branch-box-head">
         <Link to={nav.url} className={`bl-branch bl-branch-${kind}`}
-              data-tip={nav.kind === 'SERIES' ? '시리즈 글 모두 보기' : '홈에서 이 브랜치 글만 보기'}>
+              data-tip={nav.kind === 'SERIES' ? '시리즈 글 모두 보기' : '홈에서 자동으로 묶인 비슷한 글만 보기'}>
           <BranchMark kind={nav.kind} />{nav.name} {nav.kind === 'SERIES' ? '시리즈' : '브랜치'}
         </Link>
         <span className="muted small">{nav.index != null ? `${nav.posts.length}편 중 ${nav.index}편` : `글 ${nav.posts.length}편`}</span>

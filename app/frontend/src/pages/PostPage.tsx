@@ -144,7 +144,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
         )}
         {branch && (
           <Link to={branch.url} className={`bl-branch bl-branch-${branch.kind.toLowerCase()} post-branch`}
-                data-tip={branch.kind === 'SERIES' ? '시리즈 글 모두 보기' : '홈에서 이 브랜치 글만 보기'}>
+                data-tip={branch.kind === 'SERIES' ? '시리즈 글 모두 보기' : '홈에서 자동으로 묶인 비슷한 글만 보기'}>
             <BranchMark kind={branch.kind} />{branch.name} {branch.kind === 'SERIES' ? '시리즈' : '브랜치'}
             {branch.index != null && `, ${branch.index}편`}
           </Link>
