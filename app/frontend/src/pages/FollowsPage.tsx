@@ -85,8 +85,8 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
           ))}
         </ul>
       )}
-      {loading && people.length === 0 && <p className="muted center">불러오는 중…</p>}
-      <InfiniteLoader hasMore={cursor != null} loading={loading && people.length > 0} failed={error}
+      {loading && cursor == null && <p className="muted center">불러오는 중…</p>}
+      <InfiniteLoader hasMore={cursor != null} loading={loading} failed={error}
         onMore={() => void more(cursor)} />
     </main>
   )

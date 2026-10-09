@@ -79,8 +79,8 @@ export function NotificationsPage() {
         </ul>
       )}
       {!loading && !error && done && items.length === 0 && <p className="muted center">새 알림이 없어요</p>}
-      {loading && items.length === 0 && <p className="muted center">불러오는 중…</p>}
-      <InfiniteLoader hasMore={cursor != null} loading={loading && items.length > 0} failed={error}
+      {loading && cursor == null && <p className="muted center">불러오는 중…</p>}
+      <InfiniteLoader hasMore={cursor != null} loading={loading} failed={error}
         onMore={() => void more(cursor)} failedText="알림을 불러오지 못했어요" />
       <p className="muted small center">알림은 90일 동안 보관해요.</p>
     </main>

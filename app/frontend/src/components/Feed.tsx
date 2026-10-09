@@ -57,8 +57,9 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
       if (next && e instanceof ApiError && e.status === 410) {
         setNotice(e.message || '순위가 새로 바뀌었어요.')
         window.scrollTo(0, 0)
-        setLoading(false)
-        return load(null)
+        // 첫 쪽을 다시 받을 때까지 기다린다: 먼저 끝난 것으로 보이면 무한 스크롤이 만료된 커서로 또 부른다
+        await load(null)
+        return
       }
       setError(true)
     } finally {

@@ -49,7 +49,10 @@ export function ManagePage() {
     } catch {
       if (req !== latest.current) return
       // 다른 탭의 목록이 남아 이 탭의 글처럼 보이지 않게 비운다
-      if (!next) setItems([])
+      if (!next) {
+        setItems([])
+        setCursor(null)
+      }
       setLoadError(true)
     } finally {
       if (req === latest.current) setLoading(false)
@@ -228,16 +231,17 @@ export function ManagePage() {
         ))}
         {loading && items.length === 0 && [0, 1, 2].map((i) => <li key={`s${i}`} className="manage-item manage-skeleton" aria-hidden="true" />)}
       </ul>
-      {!loading && loadError && items.length === 0 && (
+      {!loading && loadError && items.length === 0 && cursor == null && (
         <p className="error" role="alert">목록을 불러오지 못했어요 <button type="button" className="btn btn-text" title="목록을 다시 불러와요" onClick={() => load(null)}>다시 시도</button></p>
       )}
-      {!loading && !loadError && items.length === 0 && (
+      {!loading && !loadError && items.length === 0 && cursor == null && (
         <div className="empty">
           {tab === 'trash' ? <p>휴지통이 비어 있어요.</p> : tab === 'drafts' ? <p>임시글이 없어요.</p> : <p>발행한 글이 없어요.</p>}
           {tab !== 'trash' && <Link to="/write" className="btn btn-primary">새 글 쓰기</Link>}
         </div>
       )}
-      {items.length > 0 && (
+      {/* 보이는 줄을 모두 지워도 다음 쪽이 남아 있으면 이어서 부른다 */}
+      {(items.length > 0 || cursor != null) && (
         <InfiniteLoader hasMore={cursor != null} loading={loading} failed={!loading && loadError} onMore={() => void load(cursor)} />
       )}
     </main>
