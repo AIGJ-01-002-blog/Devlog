@@ -20,6 +20,11 @@ export function AiProposals() {
     aiProposalsApi.list().then(setItems).catch(() => setLoadFailed(true))
   }
   useEffect(load, [])
+  // 알림의 링크(#ai-proposals)로 오면 목록을 불러온 뒤 이 항목으로 내린다. 처음 이동 때는 아직 그려지지 않았다
+  const hasItems = items.length > 0
+  useEffect(() => {
+    if (hasItems && location.hash === '#ai-proposals') document.getElementById('ai-proposals')?.scrollIntoView()
+  }, [hasItems])
 
   if (loadFailed) {
     return (

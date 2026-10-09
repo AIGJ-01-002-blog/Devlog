@@ -20,12 +20,16 @@ describe('Mermaid 다이어그램 (spec 071)', () => {
         const el = body('<pre><code class="language-mermaid">flowchart LR\n  A --&gt; B</code></pre><pre><code class="language-java">int a;</code></pre>');
         await renderDiagramsWithin(el);
         const fig = el.querySelector('figure.diagram');
-        expect(fig.getAttribute('role')).toBe('img');
-        expect(fig.getAttribute('aria-label')).toBe('다이어그램: 흐름도');
-        expect(fig.querySelector('svg[data-test="ok"]')).not.toBeNull();
+        const image = fig.querySelector('[role="img"]');
+        expect(image.getAttribute('aria-label')).toBe('다이어그램: 흐름도');
+        expect(image.querySelector('svg[data-test="ok"]')).not.toBeNull();
+        // 그림 내용은 원문으로 읽을 수 있고, 원문은 다시 그리지 않는다
+        expect(fig.querySelector('details.diagram-source code').textContent).toBe('flowchart LR\n  A --> B');
+        await renderDiagramsWithin(el);
+        expect(render).toHaveBeenCalledTimes(1);
         expect(el.querySelector('code.language-java')).not.toBeNull();
         expect(render.mock.calls[0][1]).toBe('flowchart LR\n  A --> B');
-        expect(initialize.mock.calls[0][0]).toMatchObject({ securityLevel: 'strict', startOnLoad: false });
+        expect(initialize.mock.calls[0][0]).toMatchObject({ securityLevel: 'strict', startOnLoad: false, suppressErrorRendering: true });
     });
     it('그리지 못하면 코드를 그대로 두고 안내를 붙이며, 다시 불러도 두 번 그리지 않는다', async () => {
         const el = body('<pre><code class="language-mermaid">잘못된 그림</code></pre>');

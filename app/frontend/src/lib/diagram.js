@@ -20,7 +20,8 @@ export async function renderDiagramsWithin(root) {
     try {
         mermaid = (await import('mermaid')).default;
         // strict: 그림 안의 HTML·스크립트·클릭 동작을 막는다
-        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: dark() ? 'dark' : 'default', fontFamily: 'inherit' });
+        // suppressErrorRendering: 문법 오류 때 mermaid가 body에 오류 그림을 남기지 않게 한다(미리보기에서 쌓이지 않게)
+        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', suppressErrorRendering: true, theme: dark() ? 'dark' : 'default', fontFamily: 'inherit' });
     }
     catch {
         blocks.forEach((b) => failed(b));
@@ -35,17 +36,38 @@ export async function renderDiagramsWithin(root) {
             const { svg } = await mermaid.render(`mermaid-${++seq}`, source);
             if (!pre.isConnected)
                 continue;
-            const figure = document.createElement('figure');
-            figure.className = 'diagram';
-            figure.setAttribute('role', 'img');
-            figure.setAttribute('aria-label', label(source));
-            figure.innerHTML = svg; // securityLevel strict에서 mermaid가 DOMPurify로 정화한 SVG
-            pre.replaceWith(figure);
+            pre.replaceWith(figureFor(svg, source));
         }
         catch {
             failed(code);
         }
     }
+}
+/**
+ * 그림과 원문을 함께 둔다. 그림은 이름만 읽히므로, 화면 낭독기·복사용으로 원문 코드를 접어서 붙인다.
+ * 원문 code에는 data-diagram을 달아 다시 그리거나 구문 강조하지 않게 한다.
+ */
+function figureFor(svg, source) {
+    const figure = document.createElement('figure');
+    figure.className = 'diagram';
+    const image = document.createElement('div');
+    image.className = 'diagram-image';
+    image.setAttribute('role', 'img');
+    image.setAttribute('aria-label', label(source));
+    image.innerHTML = svg; // securityLevel strict에서 mermaid가 DOMPurify로 정화한 SVG
+    const details = document.createElement('details');
+    details.className = 'diagram-source';
+    const summary = document.createElement('summary');
+    summary.textContent = '다이어그램 코드 보기';
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    code.className = 'language-mermaid';
+    code.dataset.diagram = 'source';
+    code.textContent = source;
+    pre.appendChild(code);
+    details.append(summary, pre);
+    figure.append(image, details);
+    return figure;
 }
 function failed(code) {
     code.dataset.diagram = 'failed';
