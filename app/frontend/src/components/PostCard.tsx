@@ -24,7 +24,7 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
   return (
     <article className="card">
       <Link to={card.url} className="card-thumb" tabIndex={-1} aria-hidden="true">
-        {card.thumbnailUrl ? <img src={card.thumbnailUrl} alt={card.title} loading="lazy" /> : (
+        {card.thumbnailUrl ? <img src={card.thumbnailUrl} alt="" width={640} height={360} loading="lazy" /> : (
           // 사진이 없으면 글마다 정해진 그라데이션 위에 제목 첫 글자를 크게 올린 표지 (048)
           <span className="card-thumb-empty card-cover" data-tone={coverTone(card.id)}>
             <span className="card-cover-mark">devlog/@{card.author.handle}</span>

@@ -29,14 +29,14 @@ export function SeriesBox({ postId }: { postId: number }) {
       )}
       <div className="series-foot row">
         <button type="button" className="btn btn-text" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-          {open ? '▲ 숨기기' : '▼ 목록 보기'}
+          <span aria-hidden="true">{open ? '▲' : '▼'}</span> {open ? '숨기기' : '목록 보기'}
         </button>
         <span className="muted small">{nav.index != null ? `${nav.index}/${nav.posts.length}` : `글 ${nav.posts.length}개`}</span>
         <span className="series-arrows">
           {prev ? <Link to={prev.url} className="btn btn-outline" aria-label={`이전 글: ${prev.title}`}>‹</Link>
-            : <span className="btn btn-outline" aria-disabled="true">‹</span>}
+            : <span className="btn btn-outline" aria-disabled="true"><span aria-hidden="true">‹</span><span className="sr-only">이전 글 없음</span></span>}
           {next ? <Link to={next.url} className="btn btn-outline" aria-label={`다음 글: ${next.title}`}>›</Link>
-            : <span className="btn btn-outline" aria-disabled="true">›</span>}
+            : <span className="btn btn-outline" aria-disabled="true"><span aria-hidden="true">›</span><span className="sr-only">다음 글 없음</span></span>}
         </span>
       </div>
     </nav>

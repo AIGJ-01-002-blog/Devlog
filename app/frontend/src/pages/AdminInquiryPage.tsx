@@ -81,7 +81,8 @@ export function AdminInquiryPage({ id }: { id: string }) {
         </label>
         <label className="field">
           <span>고친 버전 <span className="muted small">(예: 1.29.0, 릴리스 노트로 이어져요)</span></span>
-          <input value={fixed} onChange={(e) => setFixed(e.target.value)} placeholder="1.29.0" inputMode="decimal" />
+          <input value={fixed} onChange={(e) => setFixed(e.target.value)} placeholder="1.29.0" inputMode="decimal"
+                 spellCheck={false} autoComplete="off" />
         </label>
         {item.fixedVersion && <p className="small"><Link to={releaseLink(item.fixedVersion)}>v{item.fixedVersion} 릴리스 노트 보기</Link></p>}
         <label className="field">

@@ -69,11 +69,15 @@ export function SeriesPage({ handle, slug }: { handle: string; slug: string }) {
     <main className="container narrow series-page">
       <p className="muted small"><Link to={`/@${handle}/series`}>@{handle}의 시리즈</Link></p>
       {renaming != null ? (
+        <>
+        {/* 이름을 고치는 동안에도 쪽 제목은 남겨 둔다(화면 읽기 프로그램의 제목 이동) */}
+        <h1 className="sr-only">{series.name}</h1>
         <form className="row series-rename" onSubmit={(e) => { e.preventDefault(); rename(renaming) }}>
           <input aria-label="시리즈 이름" value={renaming} maxLength={SERIES_NAME_MAX} autoFocus onChange={(e) => setRenaming(e.target.value)} />
           <button className="btn btn-primary" disabled={busy}>저장</button>
           <button type="button" className="btn btn-text" onClick={() => { setRenaming(null); setError(null) }}>취소</button>
         </form>
+        </>
       ) : <h1>{series.name}</h1>}
       <p className="muted small">
         글 {series.posts.length}개 · <time dateTime={series.updatedAt} title={fullDate(series.updatedAt)}>{relativeDate(series.updatedAt)} 수정</time>
@@ -144,7 +148,7 @@ export function BlogSeries({ handle, mine }: { handle: string; mine: boolean }) 
           <div className="card-body">
             <h2 className="card-title"><Link to={seriesPath(handle, s.slug)}>{s.name}</Link></h2>
             <div className="card-meta">
-              글 {s.postCount}개 · <time dateTime={s.updatedAt}>{relativeDate(s.updatedAt)} 수정</time>
+              글 {s.postCount}개 · <time dateTime={s.updatedAt} title={fullDate(s.updatedAt)}>{relativeDate(s.updatedAt)} 수정</time>
             </div>
           </div>
         </article>

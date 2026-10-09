@@ -19,7 +19,8 @@ export function AdminMemberPage({ handle }: { handle: string }) {
   const [m, setM] = useState<AuthorInfo | null>(null)
   const [stats, setStats] = useState<MemberDetail | null>(null)
   const [missing, setMissing] = useState(false)
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+  // 결과는 누른 버튼 가까이에 보인다: 권한 칸 또는 정지 칸
+  const [message, setMessage] = useState<{ ok: boolean; text: string; at: 'role' | 'suspend' } | null>(null)
   const [role, setRole] = useState<Role>('USER')
 
   useEffect(() => {
@@ -31,31 +32,35 @@ export function AdminMemberPage({ handle }: { handle: string }) {
   if (missing) return <main className="container narrow admin"><AdminNav /><p>회원을 찾을 수 없어요.</p></main>
   if (!m) return <main className="container narrow"><p className="muted center">불러오는 중…</p></main>
 
-  const fail = (e: unknown) => setMessage({ ok: false, text: e instanceof ApiError ? (e.errors[0]?.message ?? e.message) : '처리하지 못했어요.' })
+  const fail = (e: unknown, at: 'role' | 'suspend') => setMessage({ ok: false, at, text: e instanceof ApiError ? (e.errors[0]?.message ?? e.message) : '처리하지 못했어요.' })
   const act = async (work: () => Promise<AuthorInfo>, ok: string) => {
     setMessage(null)
     try {
       setM(await work())
-      setMessage({ ok: true, text: ok })
+      setMessage({ ok: true, text: ok, at: 'suspend' })
     } catch (e) {
-      fail(e)
+      fail(e, 'suspend')
     }
   }
   const saveRole = async () => {
+    if (!confirm(`${roleLabel(role)}(으)로 바꿀까요? 그 회원은 모든 기기에서 로그아웃돼요.`)) return
     setMessage(null)
     try {
       const r = await consoleApi.setRole(m.handle, role)
       setStats((s) => (s ? { ...s, member: { ...s.member, role: r.role } } : s))
       setM(await adminApi.member(m.handle))
-      setMessage({ ok: true, text: `${roleLabel(r.role)}(으)로 바꿨어요. 그 회원은 다시 로그인하면 새 권한을 받아요.` })
+      setMessage({ ok: true, text: `${roleLabel(r.role)}(으)로 바꿨어요. 그 회원은 다시 로그인하면 새 권한을 받아요.`, at: 'role' })
     } catch (e) {
-      fail(e)
+      fail(e, 'role')
     }
   }
 
   const iAmAdmin = me?.member?.role === 'ADMIN'
   const self = me?.member?.handle === m.handle
   const currentRole = stats?.member.role ?? (m.role as Role | undefined) ?? 'USER'
+  const result = (at: 'role' | 'suspend') => message?.at === at && (
+    <p className={message.ok ? 'banner banner-ok' : 'error'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>
+  )
   return (
     <main className="container narrow admin">
       <h1 className="page-title">관리자 페이지</h1>
@@ -119,6 +124,7 @@ export function AdminMemberPage({ handle }: { handle: string }) {
         ) : (
           <p className="muted small">지금 권한: {roleLabel(currentRole)}. 권한은 관리자만 바꿀 수 있어요.</p>
         )}
+        {result('role')}
       </section>
 
       {m.suspended ? (
@@ -133,7 +139,7 @@ export function AdminMemberPage({ handle }: { handle: string }) {
           <SuspendForm onSubmit={(days, reason) => act(() => adminApi.suspend(m.handle, days, reason), '정지했어요.')} />
         </section>
       )}
-      {message && <p className={message.ok ? 'banner banner-ok' : 'error'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
+      {result('suspend')}
     </main>
   )
 }

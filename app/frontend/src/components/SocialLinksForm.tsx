@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api } from '../lib/api'
 import { fieldErrors } from '../lib/fieldErrors'
 import { SOCIAL_FIELDS, type SocialKind, type SocialLinks } from '../lib/socialLinks'
@@ -12,6 +12,11 @@ export function SocialLinksForm({ initial, onSaved }: { initial: SocialLinks; on
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  // 저장에 실패하면 첫 잘못된 칸으로 초점을 옮긴다
+  useEffect(() => {
+    formRef.current?.querySelector<HTMLInputElement>('input[aria-invalid="true"]')?.focus()
+  }, [errors])
   const dirty = SOCIAL_FIELDS.some((f) => draft[f.kind] !== saved[f.kind])
 
   const save = async (e: FormEvent) => {
@@ -37,11 +42,11 @@ export function SocialLinksForm({ initial, onSaved }: { initial: SocialLinks; on
     <section className="settings-section">
       <h2>소셜 정보</h2>
       <p className="muted small">블로그 머리에 링크로 보여요. 비워 두면 보이지 않아요.</p>
-      <form className="form" onSubmit={save} noValidate>
+      <form className="form" ref={formRef} onSubmit={save} noValidate>
         {SOCIAL_FIELDS.map((f) => (
           <label className="field" key={f.kind}>
             <span>{f.label}</span>
-            <input value={draft[f.kind]} placeholder={f.placeholder} maxLength={254}
+            <input name={f.kind} value={draft[f.kind]} spellCheck={false} autoCapitalize="none" autoCorrect="off" placeholder={f.placeholder} maxLength={254}
                    type={f.kind === 'email' ? 'email' : f.kind === 'homepage' ? 'url' : 'text'}
                    autoComplete={f.kind === 'email' ? 'email' : f.kind === 'homepage' ? 'url' : 'off'}
                    aria-invalid={errors[f.kind] ? true : undefined}

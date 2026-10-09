@@ -59,7 +59,7 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
         {profile ? <Link to={`/@${handle}`}>{profile.nickname}</Link> : '…'}
         {direction === 'followers' ? '님의 팔로워' : '님이 팔로우하는 사람'}
       </h1>
-      <nav className="tabs follow-tabs">
+      <nav className="tabs follow-tabs" aria-label="팔로워·팔로잉">
         <Link to={`/@${handle}/followers`} aria-current={direction === 'followers' ? 'page' : undefined}>
           팔로워{profile && ` ${profile.followerCount}`}
         </Link>
@@ -86,7 +86,7 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
       )}
       {loading && <p className="muted center">불러오는 중…</p>}
       {error && (
-        <p className="error center">목록을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => more(cursor)}>다시 시도</button></p>
+        <p className="error center" role="alert">목록을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => more(cursor)}>다시 시도</button></p>
       )}
       {!loading && !error && cursor && (
         <div className="center"><button type="button" className="btn btn-outline" onClick={() => more(cursor)}>더 보기</button></div>

@@ -54,6 +54,13 @@ describe('AiProposals', () => {
         const buttons = () => [...host.querySelectorAll('button')];
         // 버튼마다 무엇을 하는지 툴팁이 있다
         expect(buttons().every((b) => b.title.length > 0)).toBe(true);
+        // 넘기면 되돌릴 수 없으니 먼저 묻는다. 취소하면 그대로 남는다
+        const ask = vi.fn(() => false);
+        vi.stubGlobal('confirm', ask);
+        await act(async () => { buttons().filter((b) => b.textContent === '넘기기')[1].click(); });
+        expect(ask).toHaveBeenCalledWith('이 제안을 넘길까요? AI가 다시 묻지 않아요.');
+        expect(host.querySelectorAll('.ai-proposal')).toHaveLength(2);
+        ask.mockReturnValue(true);
         await act(async () => { buttons().filter((b) => b.textContent === '넘기기')[1].click(); });
         expect(host.textContent).not.toContain('넘길 제안');
         expect(host.querySelectorAll('.ai-proposal')).toHaveLength(1);

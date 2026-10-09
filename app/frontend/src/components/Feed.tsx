@@ -90,7 +90,7 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
         {items.map((c) => <PostCard key={c.id} card={c} showAuthor={showAuthor} />)}
       </div>
       {error && (
-        <p className="feed-error">글을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => load(cursor)}>다시 시도</button></p>
+        <p className="feed-error" role="alert">글을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => load(cursor)}>다시 시도</button></p>
       )}
       {!error && cursor && (
         <div className="more">

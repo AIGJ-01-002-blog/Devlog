@@ -7,6 +7,7 @@ import { Link } from '../lib/router'
 /**
  * 글 상세 좋아요 (spec 012, docs/30 §5). 작성자에게는 개수만, 비회원·인증 전 회원에게는 버튼을 보이고 누르면 안내한다.
  * 누르는 즉시 ♡/♥와 숫자가 바뀌고, 마지막 상태만 0.3초 뒤에 보낸다.
+ * 버튼 이름은 그대로 두고 눌림 여부는 aria-pressed로만 알린다(토글 버튼 규칙).
  */
 export function LikeButton({ postId, mine, initial, onChange }: {
   postId: number
@@ -35,7 +36,7 @@ export function LikeButton({ postId, mine, initial, onChange }: {
   }, [postId])
 
   const count = compactNumber(state.likeCount)
-  if (mine) return <span className="like-count" aria-label={`좋아요 ${state.likeCount}`}>♥ {count}</span>
+  if (mine) return <span className="like-count"><span aria-hidden="true">♥ {count}</span><span className="sr-only">좋아요 {state.likeCount}개</span></span>
 
   const press = () => {
     if (!me?.authenticated) return setNotice('login')
@@ -47,7 +48,7 @@ export function LikeButton({ postId, mine, initial, onChange }: {
   return (
     <span className="like">
       <button type="button" className={`like-button${state.liked ? ' liked' : ''}`} aria-pressed={state.liked}
-              aria-label={`${state.liked ? '좋아요 취소' : '좋아요'} (${state.likeCount})`} onClick={press}>
+              aria-label={`좋아요 ${state.likeCount}개`} onClick={press}>
         <span aria-hidden="true">{state.liked ? '♥' : '♡'} {count}</span>
       </button>
       {notice === 'login' && (

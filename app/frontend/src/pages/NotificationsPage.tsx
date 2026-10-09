@@ -10,6 +10,8 @@ export function NotificationsPage() {
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  // 목록 읽기와 따로: 모두 읽음·삭제 실패는 목록을 다시 불러올 일이 아니다
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => { document.title = '알림 - devlog' }, [])
 
@@ -39,21 +41,24 @@ export function NotificationsPage() {
   const remove = async (id: number) => {
     const before = items
     setItems((l) => l.filter((n) => n.id !== id))
+    setActionError(null)
     try {
       await notificationsApi.remove(id)
       notifyChanged()
     } catch {
       setItems(before)
+      setActionError('알림을 지우지 못했어요')
     }
   }
 
   const readAll = async () => {
+    setActionError(null)
     try {
       await notificationsApi.readAll()
       setItems((l) => l.map((n) => ({ ...n, read: true })))
       notifyChanged()
     } catch {
-      setError(true)
+      setActionError('모두 읽음으로 바꾸지 못했어요')
     }
   }
 
@@ -66,6 +71,7 @@ export function NotificationsPage() {
           <Link to="/settings#notifications" className="btn btn-text">알림 설정</Link>
         </span>
       </div>
+      {actionError && <p className="error center" role="alert">{actionError}</p>}
       {items.length > 0 && (
         <ul className="notification-list page">
           {items.map((n) => <NotificationEntry key={n.id} item={n} onRead={markRead} onRemove={remove} />)}
@@ -74,7 +80,7 @@ export function NotificationsPage() {
       {!loading && !error && items.length === 0 && <p className="muted center">새 알림이 없어요</p>}
       {loading && <p className="muted center">불러오는 중…</p>}
       {error && (
-        <p className="error center">
+        <p className="error center" role="alert">
           알림을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => more(cursor)}>다시 시도</button>
         </p>
       )}

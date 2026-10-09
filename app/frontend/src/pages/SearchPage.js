@@ -37,7 +37,7 @@ function PeopleResults({ q }) {
     };
     useEffect(load, [q]);
     if (error)
-        return _jsxs("p", { className: "feed-error", children: ["\uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] });
+        return _jsxs("p", { className: "feed-error", role: "alert", children: ["\uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] });
     if (!page)
         return _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" });
     if (page.notice === 'TOO_SHORT')

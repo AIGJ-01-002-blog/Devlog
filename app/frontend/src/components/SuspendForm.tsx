@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { SUSPEND_OPTIONS, type SuspendDays } from '../lib/moderation'
 
 /** 정지 기간·사유 입력 (019 US4). 사유는 필수, 200자. */
@@ -7,13 +7,15 @@ export function SuspendFields({ days, reason, onChange }: {
   reason: string
   onChange: (days: SuspendDays, reason: string) => void
 }) {
+  // 한 화면에 정지 입력이 둘 이상 있어도 라디오 묶음이 섞이지 않게 한다
+  const group = useId()
   return (
     <div className="suspend-fields">
       <fieldset className="field">
         <legend>정지 기간</legend>
         {SUSPEND_OPTIONS.map((o) => (
           <label key={o.label}>
-            <input type="radio" name="suspend-days" checked={days === o.days} onChange={() => onChange(o.days, reason)} /> {o.label}
+            <input type="radio" name={group} checked={days === o.days} onChange={() => onChange(o.days, reason)} /> {o.label}
           </label>
         ))}
       </fieldset>

@@ -101,7 +101,7 @@ export function SettingsPage() {
 
   const current = SETTINGS_TABS.find((t) => t.id === tab)!
   let body: ReactNode = null
-  if (error) body = <p className="error center">설정을 불러오지 못했어요. 새로고침해 주세요.</p>
+  if (error) body = <p className="error center" role="alert">설정을 불러오지 못했어요. 새로고침해 주세요.</p>
   else if (!settings) body = <p className="muted center">불러오는 중…</p>
   else if (tab === 'profile') body = <>
     <ProfileSection settings={settings} onSaved={(p) => setSettings({ ...settings, ...p })} />
@@ -245,7 +245,8 @@ function ProfileSection({ settings, onSaved }: { settings: Settings; onSaved: (p
 
         <label className="field">
           <span>닉네임</span>
-          <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} disabled={nicknameLocked} aria-describedby="nickname-help" />
+          <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} disabled={nicknameLocked}
+                 autoComplete="nickname" aria-describedby="nickname-help" aria-invalid={!!errors.nickname} />
           <small id="nickname-help" className={errors.nickname ? 'error' : 'muted'}>
             {errors.nickname ?? (nicknameLocked
               ? `다음 변경 가능일: ${monthDay(settings.nicknameNextChangeableAt!)}`
@@ -352,7 +353,7 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
         <dt>약관</dt>
         <dd><a href="/terms" target="_blank" rel="noopener">이용약관</a> · <a href="/privacy" target="_blank" rel="noopener">개인정보 처리방침</a></dd>
       </dl>
-      {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
+      {message && <p className={message.ok ? 'ok' : 'error'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
     </section>
   )
 }
@@ -390,23 +391,31 @@ function PasswordSection() {
       <form className="form" onSubmit={submit}>
         <label className="field">
           <span>현재 비밀번호</span>
-          <input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" required />
-          {errors.currentPassword && <small className="error">{errors.currentPassword}</small>}
+          <input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" required
+                 aria-invalid={!!errors.currentPassword} aria-describedby={errors.currentPassword ? 'current-pw-error' : undefined} />
+          {errors.currentPassword && <small id="current-pw-error" className="error" role="alert">{errors.currentPassword}</small>}
         </label>
         <label className="field">
           <span>새 비밀번호</span>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" maxLength={64} required />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" maxLength={64} required
+                 aria-invalid={!!errors.password} aria-describedby={errors.password ? 'new-pw-error' : undefined} />
           <PasswordRules password={password} />
-          {errors.password && <small className="error">{errors.password}</small>}
+          {errors.password && <small id="new-pw-error" className="error" role="alert">{errors.password}</small>}
         </label>
         <label className="field">
           <span>새 비밀번호 확인</span>
-          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" maxLength={64} required />
-          {(errors.passwordConfirm || (confirm && confirm !== password)) && <small className="error">{errors.passwordConfirm ?? '비밀번호가 서로 달라요.'}</small>}
+          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" maxLength={64} required
+                 aria-invalid={!!errors.passwordConfirm || (!!confirm && confirm !== password)}
+                 aria-describedby={errors.passwordConfirm || (confirm && confirm !== password) ? 'confirm-pw-error' : undefined} />
+          {(errors.passwordConfirm || (confirm && confirm !== password)) && (
+            <small id="confirm-pw-error" className="error" role={errors.passwordConfirm ? 'alert' : undefined}>{errors.passwordConfirm ?? '비밀번호가 서로 달라요.'}</small>
+          )}
         </label>
         {errors.form && <p className="error" role="alert">{errors.form}</p>}
         {done && <p className="ok" role="status">비밀번호를 바꿨어요. 다른 기기에서는 로그아웃됐어요.</p>}
-        <div><button className="btn btn-primary" disabled={submitting || !current || !passwordOk(password) || password !== confirm}>비밀번호 변경</button></div>
+        <div><button className="btn btn-primary" disabled={submitting || !current || !passwordOk(password) || password !== confirm}>
+          {submitting ? '변경하는 중…' : '비밀번호 변경'}
+        </button></div>
       </form>
     </section>
   )
@@ -453,7 +462,7 @@ function NotificationsSection() {
         </ul>
       )}
       <p className="muted small">운영 알림(신고 결과·숨김)은 끌 수 없어요. 끈 알림은 그동안 쌓이지 않아요.</p>
-      {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
+      {message && <p className={message.ok ? 'ok' : 'error'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
     </section>
   )
 }
@@ -504,11 +513,14 @@ function TelegramSection() {
     setMessage({ ok: true, text: '저장했어요.' })
   }, '바꾸지 못했어요. 다시 시도해 주세요.')
 
-  const disconnect = () => run(async () => {
-    await telegramApi.unlink()
-    setStatus({ ...status, linked: false, linkedAt: null })
-    setMessage({ ok: true, text: '연결을 끊었어요.' })
-  }, '연결을 끊지 못했어요. 다시 시도해 주세요.')
+  const disconnect = () => {
+    if (!confirm('텔레그램 연결을 끊을까요? 새 알림을 텔레그램으로 받지 못하게 돼요.')) return
+    void run(async () => {
+      await telegramApi.unlink()
+      setStatus({ ...status, linked: false, linkedAt: null })
+      setMessage({ ok: true, text: '연결을 끊었어요.' })
+    }, '연결을 끊지 못했어요. 다시 시도해 주세요.')
+  }
 
   const left = link ? linkTimeLeft(link.expiresAt, now) : null
 
@@ -538,7 +550,7 @@ function TelegramSection() {
           )}
         </>
       )}
-      {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
+      {message && <p className={message.ok ? 'ok' : 'error'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
     </section>
   )
 }
@@ -563,7 +575,7 @@ function FriendsSection() {
     }
   }
 
-  if (!data) return message ? <section className="settings-section"><h2>친구</h2><p className="error">{message.text}</p></section> : null
+  if (!data) return message ? <section className="settings-section"><h2>친구</h2><p className="error" role="alert">{message.text}</p></section> : null
   const row = (p: FriendPerson, actions: ReactNode, extra?: string | null) => (
     <li key={p.handle} className="friend-row">
       <Link to={`/@${p.handle}`} className="friend-who">
@@ -614,7 +626,7 @@ function FriendsSection() {
           </ul>
         </>
       )}
-      {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
+      {message && <p className={message.ok ? 'ok' : 'error'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
     </section>
   )
 }

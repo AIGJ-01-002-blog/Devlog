@@ -13,5 +13,5 @@ export function AttachmentList({ postId }) {
     }, [postId]);
     if (files.length === 0)
         return null;
-    return (_jsxs("section", { className: "attachments", "aria-label": "\uCCA8\uBD80\uD30C\uC77C", children: [_jsxs("h2", { children: ["\uCCA8\uBD80\uD30C\uC77C ", _jsx("span", { className: "muted", children: files.length })] }), _jsx("ul", { className: "attachment-list", children: files.map((f) => (_jsxs("li", { children: [_jsxs("a", { className: "attachment-name", href: downloadUrl(postId, f.id), title: f.name, children: ["\uD83D\uDCCE ", f.name] }), _jsx("span", { className: "muted small", children: fileSize(f.sizeBytes) })] }, f.id))) })] }));
+    return (_jsxs("section", { className: "attachments", "aria-label": "\uCCA8\uBD80\uD30C\uC77C", children: [_jsxs("h2", { children: ["\uCCA8\uBD80\uD30C\uC77C ", _jsx("span", { className: "muted", children: files.length })] }), _jsx("ul", { className: "attachment-list", children: files.map((f) => (_jsxs("li", { children: [_jsxs("a", { className: "attachment-name", href: downloadUrl(postId, f.id), title: f.name, children: [_jsx("span", { "aria-hidden": "true", children: "\uD83D\uDCCE" }), " ", f.name] }), _jsx("span", { className: "muted small", children: fileSize(f.sizeBytes) })] }, f.id))) })] }));
 }

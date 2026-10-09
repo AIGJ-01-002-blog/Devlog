@@ -18,7 +18,7 @@ export function AttachmentList({ postId }: { postId: number }) {
       <ul className="attachment-list">
         {files.map((f) => (
           <li key={f.id}>
-            <a className="attachment-name" href={downloadUrl(postId, f.id)} title={f.name}>📎 {f.name}</a>
+            <a className="attachment-name" href={downloadUrl(postId, f.id)} title={f.name}><span aria-hidden="true">📎</span> {f.name}</a>
             <span className="muted small">{fileSize(f.sizeBytes)}</span>
           </li>
         ))}

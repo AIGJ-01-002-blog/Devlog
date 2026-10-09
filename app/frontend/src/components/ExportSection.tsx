@@ -36,7 +36,7 @@ export function ExportSection() {
       </p>
       <button type="button" className="btn btn-outline" onClick={() => void download()} disabled={busy || count === 0}
               data-tip="발행한 글(posts/)과 임시글(drafts/)을 Markdown zip 파일로 받아요">
-        {busy ? '만드는 중…' : '⬇ Markdown으로 내보내기'}
+        {busy ? '만드는 중…' : <><span aria-hidden="true">⬇</span> Markdown으로 내보내기</>}
       </button>
       {message && <p className={message.ok ? 'small' : 'error small'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
     </section>
