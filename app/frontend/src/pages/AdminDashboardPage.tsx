@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { AdminNav } from '../components/AdminNav'
 import { BarChart, type BarPoint } from '../components/BarChart'
 import { change, consoleApi, count, PERIODS, type Dashboard, type Period, type Sums } from '../lib/admin'
@@ -8,7 +8,8 @@ import { decode, GROUP_LABEL, pageLabel, sourceGroup, sourceLabel, type SourceGr
 type Metric = keyof Sums
 
 /** tip은 합계 칸 툴팁, chart는 그래프 제목(날짜별 값의 뜻이 합계와 다를 때만) */
-const METRICS: { key: Metric; label: string; unit: string; tip?: string; chart?: string }[] = [
+/** upIsBad는 늘면 나쁜 지표(신고): 오르면 빨강, 내리면 초록 */
+const METRICS: { key: Metric; label: string; unit: string; tip?: string; chart?: string; upIsBad?: boolean }[] = [
   { key: 'visitors', label: '방문자', unit: '명', tip: '기간 동안 사이트에 온 사람 수예요. 여러 날 와도 한 명으로 세요', chart: '방문자 (날마다 센 사람 수)' },
   { key: 'visits', label: '방문', unit: '회', tip: '사이트에 들어온 횟수예요. 30분 넘게 쉬었다 다시 오면 한 번 더 세요' },
   { key: 'searchVisits', label: '검색 유입', unit: '회', tip: '구글·네이버·다음·빙 검색 결과를 눌러 들어온 방문 수예요', chart: '검색 유입 (구글·네이버·다음·빙)' },
@@ -18,8 +19,38 @@ const METRICS: { key: Metric; label: string; unit: string; tip?: string; chart?:
   { key: 'signups', label: '가입', unit: '명' },
   { key: 'comments', label: '댓글', unit: '개' },
   { key: 'likes', label: '좋아요', unit: '개' },
-  { key: 'reports', label: '신고', unit: '건' },
+  { key: 'reports', label: '신고', unit: '건', upIsBad: true },
 ]
+
+/** 지표 칸 묶음 (073): 보는 순서대로 방문 → 회원·글 → 반응. today는 '오늘 방문자' 칸 */
+const KPI_GROUPS: { id: string; title: string; tip: string; keys: (Metric | 'today')[]; hero?: boolean }[] = [
+  { id: 'visit', title: '방문', tip: '사이트에 누가 얼마나 왔는지', keys: ['visitors', 'visits', 'today', 'searchVisits'], hero: true },
+  { id: 'member', title: '회원·글', tip: '회원이 얼마나 쓰고 들어왔는지', keys: ['activeMembers', 'signups', 'posts'] },
+  { id: 'reaction', title: '반응', tip: '글을 읽고 남긴 반응', keys: ['views', 'comments', 'likes', 'reports'] },
+]
+
+/** 날짜별 값을 작은 막대로 (마지막 날만 진하게). 읽는 값은 칸의 숫자이고 이건 흐름만 보여 준다 */
+function Spark({ values }: { values: number[] }) {
+  const max = Math.max(1, ...values)
+  const n = values.length
+  return (
+    <svg className="kpi-spark" viewBox={`0 0 ${n * 3} 24`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      {values.map((v, i) => {
+        const h = v === 0 ? 0 : Math.max(2, (v / max) * 24)
+        return <rect key={i} x={i * 3} y={24 - h} width={2} height={h} rx={0.6} className={i === n - 1 ? 'now' : undefined} />
+      })}
+    </svg>
+  )
+}
+
+/** ▲ +12% 처럼 방향을 기호로도 보여 준다(색만으로 구분하지 않게) */
+function Delta({ current, previous, upIsBad }: { current: number; previous: number; upIsBad?: boolean }) {
+  const c = change(current, previous)
+  if (!c.text) return <span className="kpi-delta flat">변화 없음</span>
+  const good = c.trend === 'flat' ? 'flat' : (c.trend === 'up') !== !!upIsBad ? 'good' : 'bad'
+  const arrow = c.trend === 'up' ? '▲' : c.trend === 'down' ? '▼' : ''
+  return <span className={`kpi-delta ${good}`}>{arrow && <span aria-hidden="true">{arrow} </span>}{c.text}</span>
+}
 
 function points(d: Dashboard, key: Metric): BarPoint[] {
   return d.daily.map((day) => {
@@ -80,14 +111,31 @@ export function AdminDashboardPage() {
   }, [days])
 
   const m = METRICS.find((x) => x.key === metric) ?? METRICS[0]
-  const tile = (data: Dashboard, x: (typeof METRICS)[number]) => {
-    const c = change(data.current[x.key], data.previous[x.key])
+  const tile = (data: Dashboard, key: Metric | 'today', hero: boolean) => {
+    if (key === 'today') {
+      return (
+        <div key="today" className={`kpi kpi-static${hero ? ' hero' : ''}`} data-tip="오늘 0시(한국 시간)부터 온 사람 수. 관리자·매니저도 세고, 로봇은 세지 않아요">
+          <span className="kpi-label">오늘 방문자</span>
+          <span className="kpi-value">{count(data.visitors.today)}<small>명</small></span>
+          <span className="kpi-foot">
+            <Delta current={data.visitors.today} previous={data.visitors.yesterday} />
+            <span className="kpi-prev">어제 {count(data.visitors.yesterday)}명</span>
+          </span>
+        </div>
+      )
+    }
+    const x = METRICS.find((mm) => mm.key === key)!
+    const selected = x.key === metric
     return (
-      <button key={x.key} type="button" className="stat-tile" aria-pressed={x.key === metric}
-              data-tip={`${x.tip ? `${x.tip}. ` : ''}눌러서 날짜별 그래프 보기`} onClick={() => setMetric(x.key)}>
-        <span className="stat-label">{x.label}</span>
-        <span className="stat-value">{count(data.current[x.key])}</span>
-        <span className={`stat-change ${c.trend}`}>{c.text || ' '}</span>
+      <button key={x.key} type="button" className={`kpi${hero ? ' hero' : ''}`} aria-pressed={selected}
+              data-tip={`${x.tip ? `${x.tip}. ` : ''}눌러서 아래에 날짜별 그래프 보기`} onClick={() => setMetric(x.key)}>
+        <span className="kpi-label">{x.label}</span>
+        <span className="kpi-value">{count(data.current[x.key])}<small>{x.unit}</small></span>
+        <span className="kpi-foot">
+          <Delta current={data.current[x.key]} previous={data.previous[x.key]} upIsBad={x.upIsBad} />
+          <span className="kpi-prev">이전 {count(data.previous[x.key])}</span>
+        </span>
+        <Spark values={data.daily.map((d) => d[x.key])} />
       </button>
     )
   }
@@ -124,16 +172,16 @@ export function AdminDashboardPage() {
             </section>
           )}
 
-          <section className="stat-grid" aria-label={`최근 ${days}일 합계`}>
-            {/* 방문자·방문 다음에 오늘 방문자를 둔다 */}
-            {METRICS.slice(0, 2).map((x) => tile(data, x))}
-            <div className="stat-tile static" data-tip="오늘 0시(한국 시간)부터 온 사람 수. 관리자·매니저도 세고, 로봇은 세지 않아요">
-              <span className="stat-label">오늘 방문자</span>
-              <span className="stat-value">{count(data.visitors.today)}</span>
-              <span className="stat-change flat">어제 {count(data.visitors.yesterday)}명</span>
-            </div>
-            {METRICS.slice(2).map((x) => tile(data, x))}
-          </section>
+          <div className="kpi-board" aria-label={`최근 ${days}일 합계`}>
+            {KPI_GROUPS.map((g) => (
+              <section key={g.id} className={`kpi-group${g.hero ? ' hero' : ''}`} aria-labelledby={`kpi-${g.id}`}>
+                <h2 id={`kpi-${g.id}`} className="kpi-group-title" data-tip={g.tip}>{g.title}</h2>
+                <div className="kpi-grid" style={{ '--kpi-cols': g.keys.length } as CSSProperties}>
+                  {g.keys.map((k) => tile(data, k, !!g.hero))}
+                </div>
+              </section>
+            ))}
+          </div>
 
           <section className="admin-card">
             <BarChart title={m.chart ?? m.label} unit={m.unit} points={points(data, metric)} />

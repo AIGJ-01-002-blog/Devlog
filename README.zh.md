@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.50.0 | 2026-10-09 | 管理后台指标分为访问、会员与文章、互动三组,并显示增减箭头和每日趋势条 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.0) |
 | v1.49.1 | 2026-10-09 | 修复手机上作品集项目卡片超出屏幕的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.49.1) |
 | v1.49.0 | 2026-10-09 | 通过 AI 连接(MCP)创建系列、向系列添加文章、填写作品集项目信息 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.49.0) |
 | v1.48.2 | 2026-10-09 | 主题分支改用该分支特有的标签命名,不再使用几乎所有文章都有的标签;分支提示说明为自动归类 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.48.2) |
