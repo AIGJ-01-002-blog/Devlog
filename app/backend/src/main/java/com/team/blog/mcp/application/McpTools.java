@@ -30,6 +30,8 @@ import com.team.blog.post.application.PublishCommand;
 import com.team.blog.post.domain.PostStatus;
 import com.team.blog.search.application.SearchQuery;
 import com.team.blog.search.application.SearchTerms;
+import com.team.blog.series.application.SeriesProjects;
+import com.team.blog.series.application.SeriesService;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.time.Times;
@@ -42,7 +44,8 @@ import com.team.blog.tag.application.TagQuery;
  * 회원이 웹 설정에서 "AI가 발행·삭제하도록 허용"을 켜면(053) publish_post·delete_post가 열린다.
  * report_bug(054)는 어느 토큰으로나 devlog 도구의 버그를 신고한다. 관리자 토큰에는 문의 관리 도구(list·get·update_inquiry)가 더 보인다.
  * 둘 다 웹의 발행·삭제와 같은 서비스(PostCommandService.publish, PostTrashService.trash)를 그대로 부른다.
- * 발행한 글 고치기·다시 발행, 사진 올리기, 내 글 전체 검색은 060에서, 글 제안(propose_post)과 일기 메모(add_note)는 061에서 더했다. 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
+ * 발행한 글 고치기·다시 발행, 사진 올리기, 내 글 전체 검색은 060에서, 글 제안(propose_post)과 일기 메모(add_note)는 061에서 더했다.
+ * 시리즈 만들기·글 넣기·포트폴리오 프로젝트 칸 쓰기는 073에서 더했다(웹의 시리즈 화면과 같은 SeriesService·SeriesProjects를 부른다). 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
  */
 @Service
 public class McpTools {
@@ -187,6 +190,37 @@ public class McpTools {
                       "topic":{"type":"string","description":"주제 (일기의 소제목이 된다, 50자까지). 같은 주제는 같은 표기로"},
                       "tags":{"type":"array","items":{"type":"string"},"description":"태그 제안"}},
                      "required":["content"]}""", Gate.DIARY, false),
+            new Tool("list_series", "내 시리즈 보기",
+                    "사용자의 시리즈 목록(번호, 이름, 글 수, 포트폴리오 프로젝트인지)과 적어 둔 프로젝트 칸(기간·한 줄 설명·쓴 기술·우리 팀이 한 일·제 역할)을 본다. "
+                            + "글을 시리즈에 넣거나 프로젝트 칸을 고치기 전에 여기서 번호와 지금 값을 확인한다.",
+                    false, """
+                    {"type":"object","properties":{}}"""),
+            new Tool("create_series", "시리즈 만들기",
+                    "사용자의 새 시리즈를 만든다(웹의 '+ 새 시리즈'와 같다). 이어지는 글을 묶을 때 쓴다. 같은 이름이 있으면 list_series로 찾아 그것을 쓴다. "
+                            + "시리즈 이름은 공개 글이 들어가면 블로그에 보이니 사용자에게 이름을 확인받고 만든다.", true, """
+                    {"type":"object","properties":{"series_name":{"type":"string","description":"시리즈 이름 (50자까지)"}},"required":["series_name"]}"""),
+            new Tool("add_to_series", "시리즈에 글 넣기",
+                    "사용자의 글을 시리즈에 넣는다. position을 주면 그 번째(1부터)에, 없으면 맨 뒤에 넣는다. 다른 시리즈에 있던 글이면 옮긴다. "
+                            + "이미 그 시리즈에 있으면 자리만 옮긴다. 순서는 발행한 글끼리 매기고, 임시글은 맨 뒤에 들어가 발행한 뒤 보인다.", true, """
+                    {"type":"object","properties":{
+                      "post_id":{"type":"integer"},
+                      "series_id":{"type":"integer","description":"list_series나 create_series에서 받은 번호"},
+                      "position":{"type":"integer","minimum":1,"description":"몇 번째 글로 둘지 (1부터). 비우면 맨 뒤"}},
+                     "required":["post_id","series_id"]}"""),
+            new Tool("set_series_project", "포트폴리오 프로젝트 쓰기",
+                    "시리즈를 포트폴리오 프로젝트로 켜거나 끄고, 기간·한 줄 설명·쓴 기술·'우리 팀이 한 일'·'제 역할'을 적는다(웹 시리즈 화면의 [포트폴리오 프로젝트]와 같다). "
+                            + "켜면 누구나 보는 포트폴리오 화면에 이 내용과 시리즈의 공개 글이 보인다. 주지 않은 칸은 그대로 두고, 빈 문자열을 주면 지운다. "
+                            + "'제 역할'에는 사용자가 실제로 맡은 일만 쓰고, 쓰기 전에 두 칸의 문장을 사용자에게 확인받는다. "
+                            + "사용자가 설정 › AI 연결에서 'AI가 발행·삭제하도록 허용'을 켰을 때만 쓸 수 있다.", true, """
+                    {"type":"object","properties":{
+                      "series_id":{"type":"integer"},
+                      "portfolio":{"type":"boolean","description":"포트폴리오에 프로젝트로 보이기"},
+                      "period":{"type":"string","description":"기간 (40자까지, 예: 2026.09 ~ 2026.10)"},
+                      "summary":{"type":"string","description":"한 줄 설명 (200자까지)"},
+                      "tech":{"type":"array","items":{"type":"string"},"description":"쓴 기술 (12개까지, 하나에 30자까지)"},
+                      "team_work":{"type":"string","description":"우리 팀이 한 일 (2,000자까지)"},
+                      "my_role":{"type":"string","description":"제 역할: 사용자가 맡은 부분만 (2,000자까지)"}},
+                     "required":["series_id"]}""", Gate.AI_PUBLISH, false),
             new Tool("list_tags", "태그 보기",
                     "사용자가 자주 쓴 태그와 devlog 인기 태그를 돌려준다. 태그를 제안할 때 이 목록의 표기를 따르면 좋다.", false, """
                     {"type":"object","properties":{}}"""),
@@ -236,6 +270,8 @@ public class McpTools {
     private final InquiryService inquiries;
     private final AiJournal journal;
     private final RateLimiter rateLimiter;
+    private final SeriesService series;
+    private final SeriesProjects projects;
     private final JdbcTemplate jdbc;
     private final Clock clock;
     private final String baseUrl;
@@ -243,7 +279,8 @@ public class McpTools {
 
     public McpTools(PostCommandService commands, PostEditorQuery editor, MyPostsQuery myPosts, SearchQuery search,
                     PostDetailQuery details, TagQuery tags, AiDraftHints hints, PostTrashService trash, InquiryService inquiries,
-                    McpImages images, AiJournal journal, RateLimiter rateLimiter, JdbcTemplate jdbc, Clock clock, BlogProperties props) {
+                    McpImages images, AiJournal journal, SeriesService series, SeriesProjects projects, RateLimiter rateLimiter,
+                    JdbcTemplate jdbc, Clock clock, BlogProperties props) {
         this.commands = commands;
         this.editor = editor;
         this.myPosts = myPosts;
@@ -255,6 +292,8 @@ public class McpTools {
         this.images = images;
         this.inquiries = inquiries;
         this.journal = journal;
+        this.series = series;
+        this.projects = projects;
         this.rateLimiter = rateLimiter;
         this.jdbc = jdbc;
         this.clock = clock;
@@ -305,6 +344,10 @@ public class McpTools {
                 case "get_post" -> getPost(caller, a);
                 case "list_my_posts" -> listMyPosts(caller, a);
                 case "list_tags" -> listTags(caller);
+                case "list_series" -> listSeries(caller);
+                case "create_series" -> createSeries(caller, a);
+                case "add_to_series" -> addToSeries(caller, a);
+                case "set_series_project" -> setSeriesProject(caller, a);
                 case "propose_post" -> proposePost(caller, a);
                 case "list_post_proposals" -> listProposals(caller);
                 case "add_note" -> addNote(caller, a);
@@ -414,6 +457,81 @@ public class McpTools {
             case ALREADY_TRASHED -> Result.ok("글 " + id + "번은 이미 휴지통에 있어요. " + DATE.format(r.purgeAt()) + "에 완전히 지워져요.");
             case DELETED_EMPTY -> Result.ok("글 " + id + "번은 제목과 본문이 비어 있는 임시글이라 바로 지웠어요.");
         };
+    }
+
+    private Result listSeries(AccessTokens.Caller caller) {
+        List<SeriesService.Mine> mine = series.mine(caller.memberId());
+        if (mine.isEmpty()) return Result.ok("아직 시리즈가 없어요. create_series로 만들 수 있어요.");
+        StringBuilder sb = new StringBuilder("시리즈 " + mine.size() + "개:\n");
+        for (SeriesService.Mine m : mine) {
+            SeriesProjects.Fields f = projects.get(caller.memberId(), m.id());
+            sb.append("- ").append(m.id()).append("번 ").append(m.name()).append(" (글 ").append(m.postCount()).append("편")
+                    .append(f.portfolio() ? ", 포트폴리오 프로젝트" : "").append(") ").append(seriesUrl(caller, m.slug())).append('\n');
+            // 프로젝트 칸을 적은 시리즈는 지금 값을 보여 준다 (set_series_project로 고치기 전에 읽는다)
+            appendField(sb, "기간", f.period());
+            appendField(sb, "한 줄 설명", f.summary());
+            if (!f.tech().isEmpty()) appendField(sb, "쓴 기술", String.join(", ", f.tech()));
+            appendField(sb, "우리 팀이 한 일", f.teamWork());
+            appendField(sb, "제 역할", f.myRole());
+        }
+        return Result.ok(sb.toString().strip());
+    }
+
+    private Result createSeries(AccessTokens.Caller caller, JsonNode a) {
+        SeriesService.Mine m = series.create(caller.memberId(), text(a, "series_name"));
+        return Result.ok("시리즈 '" + m.name() + "'을(를) 만들었어요 (시리즈 번호 " + m.id() + "). add_to_series로 글을 넣을 수 있어요.\n"
+                + "공개 글이 들어가면 여기서 보여요: " + seriesUrl(caller, m.slug()));
+    }
+
+    private Result addToSeries(AccessTokens.Caller caller, JsonNode a) {
+        long postId = postId(a);
+        if (!a.path("series_id").canConvertToLong()) return Result.fail("시리즈 번호(series_id)가 필요해요. list_series로 찾을 수 있어요.");
+        long seriesId = a.path("series_id").asLong();
+        Integer position = null;
+        if (a.has("position")) {
+            if (!a.path("position").canConvertToInt() || a.path("position").asInt() < 1) return Result.fail("position은 1 이상의 정수예요.");
+            position = a.path("position").asInt();
+        }
+        Integer at = series.placeAt(caller.memberId(), postId, seriesId, position);
+        String name = series.mine(caller.memberId()).stream().filter(m -> m.id() == seriesId).map(SeriesService.Mine::name).findFirst().orElse("");
+        if (at == null) return Result.ok("글 " + postId + "번을 시리즈 '" + name + "' 맨 뒤에 넣었어요. 아직 발행 전이라 발행하면 시리즈에 보여요.");
+        return Result.ok("글 " + postId + "번을 시리즈 '" + name + "'의 " + at + "편으로 두었어요.");
+    }
+
+    /** 웹의 [포트폴리오 프로젝트] 저장과 같다. 주지 않은 칸은 지금 값을 그대로 둔다 */
+    private Result setSeriesProject(AccessTokens.Caller caller, JsonNode a) {
+        if (!a.path("series_id").canConvertToLong()) return Result.fail("시리즈 번호(series_id)가 필요해요. list_series로 찾을 수 있어요.");
+        long seriesId = a.path("series_id").asLong();
+        SeriesProjects.Fields now = projects.get(caller.memberId(), seriesId);
+        List<String> tech = now.tech();
+        if (a.has("tech")) {
+            if (!a.path("tech").isArray()) return Result.fail("쓴 기술(tech)은 문자열 배열이어야 해요.");
+            tech = new ArrayList<>();
+            for (JsonNode n : a.path("tech")) {
+                if (!n.isString()) return Result.fail("쓴 기술(tech)에는 문자열만 넣을 수 있어요.");
+                tech.add(n.asString());
+            }
+        }
+        if (a.has("portfolio") && !a.path("portfolio").isBoolean()) return Result.fail("portfolio는 true나 false예요.");
+        SeriesProjects.Fields saved = projects.save(caller.memberId(), seriesId, new SeriesProjects.Fields(
+                a.has("portfolio") ? a.path("portfolio").asBoolean() : now.portfolio(),
+                a.has("period") ? text(a, "period") : now.period(),
+                a.has("summary") ? text(a, "summary") : now.summary(),
+                tech,
+                a.has("team_work") ? text(a, "team_work") : now.teamWork(),
+                a.has("my_role") ? text(a, "my_role") : now.myRole()));
+        String portfolioUrl = baseUrl + "/@" + caller.handle() + "/portfolio";
+        return Result.ok(saved.portfolio()
+                ? "프로젝트 정보를 저장했어요. 이 시리즈의 공개 글과 함께 포트폴리오에 보여요: " + portfolioUrl
+                : "프로젝트 정보를 저장했어요. 포트폴리오에 보이기는 꺼져 있어서 아직 포트폴리오에는 나오지 않아요.");
+    }
+
+    private static void appendField(StringBuilder sb, String label, String value) {
+        if (value != null && !value.isBlank()) sb.append("  ").append(label).append(": ").append(value.replace("\n", "\n    ")).append('\n');
+    }
+
+    private String seriesUrl(AccessTokens.Caller caller, String slug) {
+        return baseUrl + "/@" + caller.handle() + "/series/" + slug;
     }
 
     private static Visibility parseVisibility(String raw) {
