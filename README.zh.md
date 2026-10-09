@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.48.1 | 2026-10-09 | 下拉框箭头移到框内 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.48.1) |
 | v1.48.0 | 2026-10-09 | 新设计第三阶段:作品集模式(分支图标志、在作品集中显示的系列即项目、团队工作与我的角色) | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.48.0) |
 | v1.47.0 | 2026-10-09 | 新设计第二阶段:文章页分支框与相似文章、系列继续阅读与新文章提醒、发布时推荐分支 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.47.0) |
 | v1.46.0 | 2026-10-09 | 新设计第一阶段:首页分支图(系列与相似主题自动归组)、按分支筛选、新字体与配色、阅读进度条 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.46.0) |
