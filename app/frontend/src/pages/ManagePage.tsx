@@ -6,6 +6,7 @@ import { Link, navigate, useLocation } from '../lib/router'
 import { daysLeft, purgePost, PURGE_CONFIRM, restorePost, TRASH_CONFIRM, trashedMessage, trashPost } from '../lib/trash'
 import type { ManageItem, ManagePage as Page, Visibility } from '../lib/types'
 import { VISIBILITY_ICON, VISIBILITY_LABEL } from '../lib/visibility'
+import { InfiniteLoader } from '../components/InfiniteLoader'
 import { AiProposals } from '../components/AiProposals'
 import { NavIcon, type IconName } from '../components/NavIcons'
 import { coverGlyph, coverTone } from '../components/PostCard'
@@ -13,7 +14,7 @@ import { coverGlyph, coverTone } from '../components/PostCard'
 type Tab = 'drafts' | 'published' | 'trash'
 type CountKey = keyof NonNullable<Page['counts']>
 
-/** 내 글 관리 (docs/41): 임시글·발행 글·휴지통 탭, 20개씩 [더 보기], 공개 범위 즉시 변경, 변경 취소, 삭제·복구 (007). */
+/** 내 글 관리 (docs/41): 임시글·발행 글·휴지통 탭, 20개씩 무한 스크롤(spec 069), 공개 범위 즉시 변경, 변경 취소, 삭제·복구 (007). */
 export function ManagePage() {
   const { search } = useLocation()
   const { me } = useAuth()
@@ -48,7 +49,10 @@ export function ManagePage() {
     } catch {
       if (req !== latest.current) return
       // 다른 탭의 목록이 남아 이 탭의 글처럼 보이지 않게 비운다
-      if (!next) setItems([])
+      if (!next) {
+        setItems([])
+        setCursor(null)
+      }
       setLoadError(true)
     } finally {
       if (req === latest.current) setLoading(false)
@@ -227,17 +231,18 @@ export function ManagePage() {
         ))}
         {loading && items.length === 0 && [0, 1, 2].map((i) => <li key={`s${i}`} className="manage-item manage-skeleton" aria-hidden="true" />)}
       </ul>
-      {!loading && loadError && (
-        <p className="error" role="alert">목록을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={() => load(items.length ? cursor : null)}>다시 시도</button></p>
+      {!loading && loadError && items.length === 0 && cursor == null && (
+        <p className="error" role="alert">목록을 불러오지 못했어요 <button type="button" className="btn btn-text" title="목록을 다시 불러와요" onClick={() => load(null)}>다시 시도</button></p>
       )}
-      {!loading && !loadError && items.length === 0 && (
+      {!loading && !loadError && items.length === 0 && cursor == null && (
         <div className="empty">
           {tab === 'trash' ? <p>휴지통이 비어 있어요.</p> : tab === 'drafts' ? <p>임시글이 없어요.</p> : <p>발행한 글이 없어요.</p>}
           {tab !== 'trash' && <Link to="/write" className="btn btn-primary">새 글 쓰기</Link>}
         </div>
       )}
-      {cursor && !loadError && (
-        <div className="more"><button type="button" className="btn btn-outline" disabled={loading} onClick={() => load(cursor)}>더 보기</button></div>
+      {/* 보이는 줄을 모두 지워도 다음 쪽이 남아 있으면 이어서 부른다 */}
+      {(items.length > 0 || cursor != null) && (
+        <InfiniteLoader hasMore={cursor != null} loading={loading} failed={!loading && loadError} onMore={() => void load(cursor)} />
       )}
     </main>
   )
