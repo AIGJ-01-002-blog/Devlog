@@ -43,20 +43,23 @@ public class TopicSuggester {
     /** AiJournal.diaryTitle과 같은 꼴. 일기는 자료로 읽고, 겹침 비교(발행한 글)에서는 뺀다 */
     private static final String DIARY_TITLE = "^[0-9]{4}-[0-9]{2}-[0-9]{2} 개발 일기$";
 
-    /** 전공자 관점. 영문 짧은 낱말은 단어 경계로, 한글은 포함 여부로 찾는다 */
+    /**
+     * 전공자 관점. 영문 짧은 낱말은 단어 경계로, 한글은 포함 여부로 찾는다.
+     * "배포했다"처럼 작업을 알리는 말과 "색 토큰"(디자인 토큰)은 관점으로 치지 않는다 (1.51.1, 실제 메모에서 거의 모든 글감이 운영·보안으로 잡혔다).
+     */
     enum Lens {
         CONCURRENCY("동시성", "두 요청이 동시에 오면 무엇이 깨지나요? 무엇(잠금·버전·멱등 키)으로 막았나요?",
                 "동시", "경쟁 조건", "잠금", "트랜잭션", "멱등", "중복 요청", "충돌", "버전 관문", "lock", "race", "transaction", "idempot", "lua"),
         FAILURE("장애·복구", "무엇이 어떻게 실패했고, 사용자는 무엇을 봤나요? 되돌리기·재시도는 어떻게 하나요?",
                 "장애", "롤백", "재시도", "타임아웃", "복구", "flake", "재현", "503", "500 오류", "rollback", "retry", "timeout", "fallback"),
         SECURITY("보안", "누가 무엇을 볼 수 있으면 안 되나요? 검증은 어디서 하나요?",
-                "보안", "토큰", "권한", "인증", "비밀", "암호", "취약", "개인 정보", "token", "oauth", "pkce", "xss", "csrf", "secret", "jwt"),
+                "보안", "(?<!색 |디자인 )토큰", "권한", "인증", "비밀", "암호", "취약", "개인 정보", "token", "oauth", "pkce", "xss", "csrf", "secret", "jwt"),
         PERFORMANCE("성능", "무엇을 재서 얼마나 줄였나요? 숫자(전·후)가 있나요?",
                 "성능", "캐시", "인덱스", "번들", "지연", "쿼리", "느려", "최적화", "cache", "index", "bundle", "latency", "n+1", "cls"),
         ACCESSIBILITY("접근성", "키보드·화면 읽기 사용자는 이 화면을 어떻게 쓰나요?",
                 "접근성", "키보드", "화면 읽기", "스크린 리더", "초점", "aria", "a11y", "focus"),
         OPERATIONS("운영·배포", "배포·로그·알림에서 무엇을 바꿨고, 다음 사람은 무엇을 보면 되나요?",
-                "배포", "(?<!블)로그(?!인|아웃)", "로깅", "모니터링", "릴리스", "무중단", "deploy", "ci", "github actions", "logging", "sonar"),
+                "배포(?!했|해|한|됐)", "(?<!블)로그(?!인|아웃)", "로깅", "모니터링", "릴리스", "무중단", "deploy", "ci", "github actions", "logging", "sonar"),
         INFRA("인프라", "어떤 구성 요소를 왜 골랐고, 설정 파일 어디를 바꿨나요?",
                 "도커", "쿠버네티스", "터널", "클러스터", "docker", "kubernetes", "k8s", "k3d", "redis", "postgres", "nginx", "minio", "pvc", "helm"),
         HARNESS("AI 하네스", "AI 에이전트에게 무엇을 맡기고, 사람은 무엇을 정했나요? 규칙은 어디에 적었나요?",
@@ -115,6 +118,7 @@ public class TopicSuggester {
 
     public record Masked(String text, boolean changed) {}
 
+    private static final Pattern WORD = Pattern.compile("[\\p{IsHangul}]+|[A-Za-z][A-Za-z0-9+#.]*");
     private static final Pattern IPV4 = Pattern.compile("(?<![0-9.])(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?![0-9.])");
     private static final Pattern EMAIL = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
     private static final Pattern SECRET = Pattern.compile(
@@ -282,12 +286,12 @@ public class TopicSuggester {
     }
 
     private static final Set<String> STOP = Set.of("글", "것", "수", "더", "한", "및", "the", "and", "for", "with", "만들기", "이야기", "정리",
-            "설계", "기록", "개발", "devlog", "블로그");
+            "설계", "기록", "개발", "devlog", "블로그", "spec", "새");
 
     /** 낱말: 한글·영문·숫자 덩어리, 두 글자 이상, 흔한 낱말 제외 */
     public static Set<String> words(String s) {
         Set<String> out = new HashSet<>();
-        Matcher m = Pattern.compile("[\\p{IsHangul}]+|[A-Za-z][A-Za-z0-9+#.]*").matcher(s.toLowerCase(Locale.ROOT));
+        Matcher m = WORD.matcher(s.toLowerCase(Locale.ROOT));
         while (m.find()) {
             String w = m.group();
             if (w.length() >= 2 && !STOP.contains(w)) out.add(w);

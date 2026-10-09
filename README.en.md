@@ -369,6 +369,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.51.1 | 2026-10-09 | `suggest_topics` no longer tags topics as ops/security just because a note says "deployed" or "color token" | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.1) |
 | v1.51.0 | 2026-10-09 | MCP `suggest_topics`: topic ideas for engineers from your notes, AI diaries, proposals and drafts | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.0) |
 | v1.50.2 | 2026-10-09 | Home branch chips stay put when you pick one, and long names truncate inside the chip | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.2) |
 | v1.50.1 | 2026-10-09 | Fixed GitHub/Google sign-in failing with "redirect_uri is not associated with this application" | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.1) |

@@ -78,6 +78,8 @@ class McpTopicsTest extends IntegrationTest {
         note(me.memberId(), "자동 저장", "탭 두 개에서 같은 글을 고치면 버전 충돌이 나서 Redis Lua로 버전 관문을 뒀다", now.minus(Duration.ofHours(2)));
         note(me.memberId(), "자동 저장", "중복 요청은 Idempotency-Key로 막았다", now.minus(Duration.ofHours(1)));
         note(me.memberId(), "점심", "점심 메뉴를 골랐다", now.minus(Duration.ofHours(1)));
+        // 작업을 알리는 "배포했다"와 디자인 "색 토큰"은 관점이 아니다 (1.51.1)
+        note(me.memberId(), "선택 상자 화살표", "색 토큰으로 그린 꺾쇠를 상자 안쪽에 두고 v1.48.1로 배포했다", now.minus(Duration.ofHours(1)));
         note(me.memberId(), "오래된 일", "Redis 잠금 이야기", now.minus(Duration.ofDays(40)));
         draft(me, "2026-10-08 개발 일기", """
                 ## 무중단 배포
@@ -106,10 +108,10 @@ class McpTopicsTest extends IntegrationTest {
         JsonNode r = call(readOnly, "suggest_topics", Map.of());
         String out = text(r);
         assertThat(r.path("isError").asBoolean()).as(out).isFalse();
-        assertThat(out).contains("메모 3개", "AI 일기 1편", "글 제안 1개", "임시글 1편")
+        assertThat(out).contains("메모 4개", "AI 일기 1편", "글 제안 1개", "임시글 1편")
                 .contains("자동 저장", "동시성", "무중단 배포", "운영·배포", "MCP OAuth 직접 만들기", "보안")
-                .contains("관점이 안 보이는 기록 2개")  // 점심 메모, 산책 소제목
-                .doesNotContain("점심 메뉴", "공원", "남의 비밀 주제", "오래된 일")
+                .contains("관점이 안 보이는 기록 3개")  // 점심 메모, 선택 상자 메모, 산책 소제목
+                .doesNotContain("점심 메뉴", "꺾쇠", "공원", "남의 비밀 주제", "오래된 일")
                 .contains("propose_post");
         // 겹침: 임시글 "Redis 캐시 무효화"는 발행한 "Redis 캐시 이야기"와 겹친다
         assertThat(out).contains("겹치는 글: [" + redis + "] Redis 캐시 이야기");
