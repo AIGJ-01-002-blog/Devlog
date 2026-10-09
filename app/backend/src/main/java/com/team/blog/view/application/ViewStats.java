@@ -74,4 +74,48 @@ public class ViewStats {
                 FROM site_visit WHERE day BETWEEN ? AND ?
                 """, (rs, i) -> new Visitors(rs.getLong("v"), rs.getLong("m"), rs.getLong("n")), from, to);
     }
+
+    // --- 유입 경로·많이 본 화면 (070) ---
+
+    /** 날짜별 검색으로 온 방문 수 (구글·네이버·다음·빙) */
+    public Map<LocalDate, Long> searchVisitsByDay(Instant from) {
+        Map<LocalDate, Long> out = new java.util.HashMap<>();
+        jdbc.query("SELECT day AS d, sum(visits) AS n FROM visit_source_day WHERE day >= ? AND source = ANY (?) GROUP BY day",
+                rs -> { out.put(rs.getObject("d", LocalDate.class), rs.getLong("n")); }, LocalDate.ofInstant(from, Counts.KST),
+                VisitSources.SEARCH.toArray(String[]::new));
+        return out;
+    }
+
+    /** @param host source가 other일 때 그 사이트 (나머지 사이트를 모은 줄은 빈 값) */
+    public record SourceLine(String source, String host, long visits) {}
+
+    /**
+     * 기간 [from, to]의 유입 경로별 새 방문 수 (많은 순). 기타 사이트는 많은 순으로 otherHosts개까지 따로 보이고 나머지는 한 줄로 모은다.
+     */
+    public List<SourceLine> sources(LocalDate from, LocalDate to, int otherHosts) {
+        List<SourceLine> rows = jdbc.query("""
+                SELECT source, host, sum(visits) AS n FROM visit_source_day WHERE day BETWEEN ? AND ?
+                GROUP BY source, host ORDER BY n DESC, source, host
+                """, (rs, i) -> new SourceLine(rs.getString("source"), rs.getString("host"), rs.getLong("n")), from, to);
+        List<SourceLine> out = new java.util.ArrayList<>();
+        long rest = 0;
+        int others = 0;
+        for (SourceLine r : rows) {
+            if (!VisitSources.OTHER.equals(r.source()) || r.host().isEmpty()) out.add(r);
+            else if (others++ < otherHosts) out.add(r);
+            else rest += r.visits();
+        }
+        if (rest > 0) out.add(new SourceLine(VisitSources.OTHER, "", rest));
+        return out;
+    }
+
+    public record PageLine(String path, long views) {}
+
+    /** 기간 [from, to]에 많이 연 화면 (많은 순) */
+    public List<PageLine> topPages(LocalDate from, LocalDate to, int limit) {
+        return jdbc.query("""
+                SELECT path, sum(views) AS n FROM page_view_day WHERE day BETWEEN ? AND ?
+                GROUP BY path ORDER BY n DESC, path LIMIT ?
+                """, (rs, i) -> new PageLine(rs.getString("path"), rs.getLong("n")), from, to, limit);
+    }
 }

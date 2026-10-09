@@ -983,6 +983,21 @@ button.stat-tile:hover { background: var(--color-hover); }
 .rank-list li { display: flex; flex-direction: column; gap: 2px; }
 .rank-list li .badge { align-self: flex-start; }
 .rank-title { font-weight: 600; overflow-wrap: anywhere; }
+.page-path { overflow-wrap: anywhere; }
+/* 유입 경로 (070): 묶음 비율 한 줄 + 경로별 가로 막대. 묶음마다 색 하나 */
+.source-groups { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 12px; font-size: 0.8125rem; color: var(--color-text-muted); }
+.source-groups strong { color: var(--color-text); font-variant-numeric: tabular-nums; }
+.source-group::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; background: var(--source-color); }
+.source-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.source-list li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+.source-name { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.source-count { font-size: 0.8125rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.source-bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--color-hover); overflow: hidden; }
+.source-bar > span { display: block; height: 100%; border-radius: 3px; background: var(--source-color); }
+.src-search { --source-color: var(--color-brand); }
+.src-sns { --source-color: var(--color-warn-text); }
+.src-direct { --source-color: var(--color-text-muted); }
+.src-other { --source-color: var(--color-ok-text); }
 .totals { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 16px; margin: 0; }
 .totals dt { font-size: 0.8125rem; color: var(--color-text-muted); }
 .totals dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
