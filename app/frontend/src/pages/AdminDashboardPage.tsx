@@ -93,7 +93,7 @@ export function AdminDashboardPage() {
           <section className="stat-grid" aria-label={`최근 ${days}일 합계`}>
             {/* 방문자·방문 다음에 오늘 방문자를 둔다 */}
             {METRICS.slice(0, 2).map((x) => tile(data, x))}
-            <div className="stat-tile static" data-tip="오늘 0시(한국 시간)부터 온 사람 수. 운영진과 로봇은 세지 않아요">
+            <div className="stat-tile static" data-tip="오늘 0시(한국 시간)부터 온 사람 수. 관리자·매니저도 세고, 로봇은 세지 않아요">
               <span className="stat-label">오늘 방문자</span>
               <span className="stat-value">{count(data.visitors.today)}</span>
               <span className="stat-change flat">어제 {count(data.visitors.yesterday)}명</span>
