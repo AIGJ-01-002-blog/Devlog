@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.51.3 | 2026-10-10 | AI日記を人が書いたように：時刻リストの代わりにトピック別の段落、日記調メモの案内 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.3) |
 | v1.51.2 | 2026-10-09 | 運用ダッシュボード（Kubernetes Dashboard、読み取り専用ログイン）を導入（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.51.2) |
 | v1.51.1 | 2026-10-09 | `suggest_topics` が「デプロイした」「カラートークン」などの語で観点を誤判定する問題を修正 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.1) |
 | v1.51.0 | 2026-10-09 | MCP `suggest_topics`: メモ・日記・提案・下書きからエンジニア向けの記事ネタを提案 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.0) |

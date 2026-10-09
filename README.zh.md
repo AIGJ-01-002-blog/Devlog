@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.51.3 | 2026-10-10 | AI 日记更像人写的：按主题成段代替时间列表，引导用日记口吻写备忘 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.3) |
 | v1.51.2 | 2026-10-09 | 运维仪表盘（Kubernetes Dashboard，只读登录）（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.51.2) |
 | v1.51.1 | 2026-10-09 | 修复 `suggest_topics` 因“已部署”“颜色 token”等词误判视角的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.1) |
 | v1.51.0 | 2026-10-09 | MCP `suggest_topics`：从笔记、AI 日记、提案和草稿中推荐面向开发者的选题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.0) |

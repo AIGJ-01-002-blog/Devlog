@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -61,7 +60,6 @@ public class AiJournal {
     static final int TOPIC_MAX = 50;
     /** 일기로 묶지 못한 메모(정지된 계정 등)는 이만큼 지나면 지운다 */
     static final Duration NOTE_KEEP = Duration.ofDays(7);
-    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm").withZone(KST);
 
     public enum Status { OPEN, DRAFTED, DISMISSED }
 
@@ -384,7 +382,11 @@ public class AiJournal {
         return day + " 개발 일기";
     }
 
-    /** 주제가 처음 나온 차례대로 소제목을 달고, 그 아래에 시각과 메모를 단다. 주제 없는 메모는 맨 끝 "그 밖에"로 */
+    /**
+     * 주제가 처음 나온 차례대로 소제목을 달고, 그 아래에 그 주제의 메모를 시간 순으로 한 문단으로 잇는다 (071 다듬기, v1.51.3).
+     * 시각 목록("- 14:05 …")은 작업 기록처럼 딱딱해서 뺐다. 메모가 일기 문장 그대로 되도록 AI에는 1인칭 일기 말투로 쓰라고 안내한다.
+     * 주제 없는 메모는 맨 끝 "그 밖에"로, 주제 없는 메모만 있으면 소제목 없이 문단만 둔다.
+     */
     static String diaryBody(List<Note> notes) {
         Map<String, List<Note>> byTopic = new LinkedHashMap<>();
         for (Note n : notes) byTopic.computeIfAbsent(n.topic() == null ? "" : n.topic(), t -> new ArrayList<>()).add(n);
@@ -393,13 +395,25 @@ public class AiJournal {
         StringBuilder out = new StringBuilder();
         for (Map.Entry<String, List<Note>> e : byTopic.entrySet()) {
             if (!out.isEmpty()) out.append('\n');
-            out.append("## ").append(e.getKey().isEmpty() ? (byTopic.size() == 1 ? "오늘 한 일" : "그 밖에") : e.getKey()).append("\n\n");
+            if (!e.getKey().isEmpty()) out.append("## ").append(e.getKey()).append("\n\n");
+            else if (byTopic.size() > 1) out.append("## 그 밖에\n\n");
+            StringBuilder para = new StringBuilder();
             for (Note n : e.getValue()) {
-                // 여러 줄 메모는 목록 항목 안에 들여 써서 한 항목으로 둔다
-                out.append("- ").append(TIME.format(n.at())).append(' ').append(n.content().replace("\n", "\n  ")).append('\n');
+                if (!para.isEmpty()) para.append(' ');
+                para.append(sentence(n.content()));
             }
+            out.append(para).append('\n');
         }
         return out.toString();
+    }
+
+    /** 메모를 문장으로 이을 수 있게 끝에 마침표가 없으면 붙인다. 닫는 괄호·따옴표는 건너뛰고 그 앞을 본다 ("Redis (색인)" → 마침표). */
+    public static String sentence(String memo) {
+        String m = memo.strip();
+        int i = m.length() - 1;
+        while (i >= 0 && ")]\"'”’」』".indexOf(m.charAt(i)) >= 0) i--;
+        if (i < 0) return m;
+        return ".!?~…。".indexOf(m.charAt(i)) >= 0 ? m : m + ".";
     }
 
     /** 탈퇴 정리 (020) */
