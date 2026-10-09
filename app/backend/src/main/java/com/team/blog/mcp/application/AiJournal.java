@@ -54,7 +54,7 @@ public class AiJournal {
     static final ZoneId KST = ZoneId.of("Asia/Seoul");
     static final int MAX_OPEN_PROPOSALS = 20;
     /** 하루 메모 상한. 1,000자 메모가 다 차도 일기 본문이 글 길이 상한(10만 자) 안에 들어가게 잡았다 */
-    static final int NOTES_PER_DAY = 60;
+    public static final int NOTES_PER_DAY = 60;
     static final int TITLE_MAX = 100;
     static final int SCOPE_MAX = 2000;
     static final int NOTE_MAX = 1000;
@@ -67,7 +67,7 @@ public class AiJournal {
 
     public record Proposal(long id, String title, String scope, List<String> tags, Status status, Long postId, Instant createdAt) {}
 
-    /** @param todayCount 오늘(KST) 남긴 메모 수 (이번 메모 포함) */
+    /** @param todayCount 이번 일기 구간(고른 시각부터 24시간)에 남긴 메모 수 (이번 메모 포함) */
     public record NoteSaved(long id, int todayCount) {}
 
     /** @param hour 일기를 묶는 시각 (KST 0~23시) */
@@ -257,12 +257,13 @@ public class AiJournal {
         if (content.isEmpty() || content.length() > NOTE_MAX) throw ApiException.badRequest("NOTE_CONTENT", "메모(content)는 1~" + NOTE_MAX + "자로 적어 주세요.");
         if (topic.length() > TOPIC_MAX) throw ApiException.badRequest("NOTE_TOPIC", "주제(topic)는 " + TOPIC_MAX + "자까지 적어 주세요.");
         Instant now = Times.now(clock);
-        Timestamp today = Timestamp.from(LocalDate.ofInstant(now, KST).atStartOfDay(KST).toInstant());
         return tx.execute(s -> {
-            if (!Boolean.TRUE.equals(jdbc.queryForObject("SELECT ai_diary_enabled FROM member WHERE id = ? FOR UPDATE", Boolean.class, memberId))) {
-                throw ApiException.conflict("AI_DIARY_OFF", AI_DIARY_OFF);
-            }
-            Integer count = jdbc.queryForObject("SELECT count(*) FROM ai_note WHERE member_id = ? AND created_at >= ?", Integer.class, memberId, today);
+            DiarySetting setting = jdbc.queryForObject("SELECT ai_diary_enabled, ai_diary_hour FROM member WHERE id = ? FOR UPDATE",
+                    (rs, i) -> new DiarySetting(rs.getBoolean(1), rs.getInt(2)), memberId);
+            if (setting == null || !setting.enabled()) throw ApiException.conflict("AI_DIARY_OFF", AI_DIARY_OFF);
+            // 하루 한도는 일기 하나가 묶는 24시간(고른 시각 기준)에 센다. 달력 날짜로 세면 일기 하나에 두 날치가 들어갈 수 있다
+            Timestamp since = Timestamp.from(diaryWindowStart(now, setting.hour()));
+            Integer count = jdbc.queryForObject("SELECT count(*) FROM ai_note WHERE member_id = ? AND created_at >= ?", Integer.class, memberId, since);
             int n = count == null ? 0 : count;
             if (n >= NOTES_PER_DAY) {
                 throw ApiException.conflict("NOTE_LIMIT", "메모는 하루 " + NOTES_PER_DAY + "개까지 남길 수 있어요. 오늘은 여기까지 모아 둘게요.");
@@ -364,10 +365,19 @@ public class AiJournal {
      * 0시(자정)면 그날 0~24시가 그날 일기이고, 22시면 전날 22시~오늘 22시가 오늘 일기, 6시면 어제 6시~오늘 6시(새벽 작업 포함)가 어제 일기다.
      */
     static LocalDate diaryDay(Instant at, int hour) {
+        return diaryWindowEnd(at, hour).minusHours(12).toLocalDate();
+    }
+
+    /** at이 들어가는 일기 구간의 끝: at 뒤에 처음 오는 hour시 정각 (KST) */
+    static LocalDateTime diaryWindowEnd(Instant at, int hour) {
         LocalDateTime t = LocalDateTime.ofInstant(at, KST);
         LocalDateTime end = t.toLocalDate().atTime(hour, 0);
-        if (!end.isAfter(t)) end = end.plusDays(1);
-        return end.minusHours(12).toLocalDate();
+        return end.isAfter(t) ? end : end.plusDays(1);
+    }
+
+    /** at이 들어가는 일기 구간의 시작 (끝에서 24시간 전) */
+    public static Instant diaryWindowStart(Instant at, int hour) {
+        return diaryWindowEnd(at, hour).minusDays(1).atZone(KST).toInstant();
     }
 
     static String diaryTitle(LocalDate day) {

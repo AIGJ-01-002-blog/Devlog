@@ -311,6 +311,22 @@ class AiJournalTest extends IntegrationTest {
                 me.memberId())).isZero();
     }
 
+    @Test
+    void 메모_한도는_일기_하나가_묶는_24시간에_센다() throws Exception {
+        Session me = signup(uniqueLogin("aidlim"));
+        // 다음 정각을 일기 시각으로 고르면 지금 구간은 23시간쯤 전에 시작해 대개 달력 날짜를 넘는다
+        int hour = (java.time.LocalDateTime.now(KST).getHour() + 1) % 24;
+        me.http().perform(asJson(put("/api/me/ai-diary"), Map.of("enabled", true, "hour", hour))).andExpect(status().isOk());
+        java.time.LocalDateTime inWindow = java.time.LocalDateTime.now(KST).minusHours(22);
+        for (int i = 0; i < AiJournal.NOTES_PER_DAY; i++) note(me.memberId(), "a", "메모 " + i, "", inWindow);
+        assertThat(text(call(token(me), "add_note", Map.of("content", "하나 더")))).contains(AiJournal.NOTES_PER_DAY + "개까지");
+        // 구간 경계: 끝은 다음 hour시, 시작은 그 24시간 전
+        LocalDate day = LocalDate.of(2026, 10, 9);
+        Instant at = day.atTime(22, 59).atZone(KST).toInstant();
+        assertThat(AiJournal.diaryWindowStart(at, 22)).isEqualTo(day.atTime(22, 0).atZone(KST).toInstant());
+        assertThat(AiJournal.diaryWindowStart(at, 6)).isEqualTo(day.atTime(6, 0).atZone(KST).toInstant());
+    }
+
     void note(long memberId, String topic, String content, String tags, java.time.LocalDateTime at) {
         Instant when = at.atZone(KST).toInstant();
         jdbc.update("INSERT INTO ai_note (member_id, topic, content, tags, created_at) VALUES (?, ?, ?, ?, ?)",
