@@ -23,7 +23,7 @@ export function AiProposals() {
 
   if (loadFailed) {
     return (
-      <section className="ai-proposals" aria-label="AI가 제안한 글">
+      <section id="ai-proposals" className="ai-proposals" aria-label="AI가 제안한 글">
         <p className="error" role="status">
           AI가 제안한 글을 불러오지 못했어요. <button type="button" className="btn btn-text" title="제안 목록을 다시 불러와요" onClick={load}>다시 시도</button>
         </p>
@@ -52,7 +52,7 @@ export function AiProposals() {
   }
 
   return (
-    <section className="ai-proposals" aria-labelledby="ai-proposals-title">
+    <section id="ai-proposals" className="ai-proposals" aria-labelledby="ai-proposals-title">
       <h2 id="ai-proposals-title">AI가 제안한 글 <span className="muted">{items.length}</span></h2>
       <p className="muted small">연결한 AI가 한 주제를 마쳤을 때 글로 남기면 좋겠다고 제안한 것들이에요. AI에게 "제안한 글 써 줘"라고 해도 돼요.</p>
       <ul>

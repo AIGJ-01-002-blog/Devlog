@@ -7,6 +7,7 @@ export const MUTABLE_TYPES = [
     { type: 'LIKE', label: '좋아요' },
     { type: 'FOLLOW', label: '새 팔로워' },
     { type: 'NEW_POST', label: '팔로우한 사람의 새 글' },
+    { type: 'AI_PROPOSAL', label: 'AI의 글 제안' },
 ];
 export const POLL_MS = 30_000;
 export const notificationsApi = {
@@ -39,6 +40,9 @@ export function messageOf(n) {
         return hiddenMessage(n);
     if (n.type === 'INQUIRY_ANSWERED') {
         return { who: null, text: `남기신 문의${n.inquiry ? `「${n.inquiry.title}」` : ''}에 답변이 왔어요`, quote: null };
+    }
+    if (n.type === 'AI_PROPOSAL') {
+        return { who: null, text: `AI가 글을 제안했어요${n.proposal ? `「${n.proposal.title}」` : ''}`, quote: null };
     }
     const unreadable = n.post != null && !n.post.readable;
     const title = n.post?.title ? `「${n.post.title}」` : '';

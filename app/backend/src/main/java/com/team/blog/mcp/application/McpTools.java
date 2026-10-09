@@ -42,7 +42,7 @@ import com.team.blog.tag.application.TagQuery;
  * 회원이 웹 설정에서 "AI가 발행·삭제하도록 허용"을 켜면(053) publish_post·delete_post가 열린다.
  * report_bug(054)는 어느 토큰으로나 devlog 도구의 버그를 신고한다. 관리자 토큰에는 문의 관리 도구(list·get·update_inquiry)가 더 보인다.
  * 둘 다 웹의 발행·삭제와 같은 서비스(PostCommandService.publish, PostTrashService.trash)를 그대로 부른다.
- * 발행한 글 고치기·다시 발행, 사진 올리기, 내 글 전체 검색은 060에서, 글 제안(propose_post)과 자정 일기 메모(add_note)는 061에서 더했다. 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
+ * 발행한 글 고치기·다시 발행, 사진 올리기, 내 글 전체 검색은 060에서, 글 제안(propose_post)과 일기 메모(add_note)는 061에서 더했다. 공개 범위만 바꾸는 도구는 없다. 실패는 MCP 규칙대로 도구 결과(isError)로 돌려준다. AI가 읽고 사람에게 전할 수 있게 문장으로 쓴다.
  */
 @Service
 public class McpTools {
@@ -59,7 +59,7 @@ public class McpTools {
     /**
      * 누가 볼 수 있는 도구인가. AI_PUBLISH는 회원이 "AI가 발행·삭제하도록 허용"을 켰을 때만(053), ADMIN은 관리자 회원만(054) 목록에 보이고 부를 수 있다.
      * REPORT는 읽기 토큰으로도 부르는 신고 도구다(글을 쓰지 않으므로). 자체 요청 제한을 따른다.
-     * DIARY는 회원이 "자정에 일기 쓰기"를 켰을 때만(061) 보인다.
+     * DIARY는 회원이 "AI 일기 쓰기"를 켰을 때만(061) 보인다.
      */
     enum Gate { NONE, AI_PUBLISH, REPORT, ADMIN, DIARY }
 
@@ -98,6 +98,9 @@ public class McpTools {
             new Tool("write_devlog", "개발 일지 쓰기",
                     "오늘 사용자와 함께 한 작업(대화, 고친 코드, 커밋)을 개발 일지로 정리해 사용자의 devlog에 임시글로 올린다. "
                             + "본문은 한국어 Markdown으로, '## 오늘 한 일', '## 문제와 해결', '## 배운 점', '## 다음에 할 일' 순서를 권장한다. "
+                            + "다룬 주제(기능·버그·조사)가 여럿이면 주제마다 따로 불러 임시글을 나눠 쓰고 주제에 맞는 태그를 붙인다. 한 번에 최대 3편까지 쓰고, "
+                            + "더 많으면 중요한 3개를 쓰고 나머지는 propose_post로 남긴다. 시리즈로 묶지 않는다. "
+                            + "구조도·흐름도는 ```mermaid 코드 블록으로 넣으면 devlog 글 화면에서 그림으로 그려진다. "
                             + "비밀번호·토큰·개인 정보·회사 내부 주소는 넣지 않는다. 공개되지 않으며, 사용자가 devlog에서 읽고 직접 발행한다.",
                     true, DRAFT_SCHEMA),
             new Tool("create_draft", "임시글 만들기",
@@ -176,9 +179,9 @@ public class McpTools {
                             + "이미 임시글로 만든 제안은 그 글을 get_post로 읽고 update_draft로 채운다.", false, """
                     {"type":"object","properties":{}}"""),
             new Tool("add_note", "일기 메모 남기기",
-                    "사용자가 '자정에 일기 쓰기'를 켜 두었을 때, 의미 있는 작업 단위(기능 완성, 버그 원인 발견, 결정, 막힌 점)를 마칠 때마다 "
-                            + "한두 문장 메모를 남긴다. 매일 자정(한국 시간)에 그날 메모가 주제별로 묶여 일기 임시글이 된다. 메모가 없는 날은 일기를 만들지 않는다. "
-                            + "사소한 대화나 같은 내용 반복은 남기지 않는다. 비밀번호·토큰·개인 정보·회사 내부 주소는 넣지 않는다. 하루 60개까지.", true, """
+                    "사용자가 'AI 일기 쓰기'를 켜 두었을 때, 의미 있는 작업 단위(기능 완성, 버그 원인 발견, 결정, 막힌 점)를 마칠 때마다 "
+                            + "한두 문장 메모를 남긴다. 매일 사용자가 고른 시각(한국 시간, 기본 자정)에 메모가 주제별로 묶여 일기가 된다. 메모가 없는 날은 일기를 만들지 않는다. "
+                            + "일기는 발행될 수 있으니 사소한 대화나 같은 내용 반복은 남기지 않고, 비밀번호·토큰·개인 정보·회사 내부 주소는 넣지 않는다. 하루 60개까지.", true, """
                     {"type":"object","properties":{
                       "content":{"type":"string","description":"무엇을 했고 무엇을 알게 됐는지 한두 문장 (1,000자까지)"},
                       "topic":{"type":"string","description":"주제 (일기의 소제목이 된다, 50자까지). 같은 주제는 같은 표기로"},
@@ -563,10 +566,12 @@ public class McpTools {
         return Result.ok(out.toString().stripTrailing());
     }
 
-    /** 일기 메모 (061). 자정에 묶인다 */
+    /** 일기 메모 (061). 회원이 고른 시각에 묶인다 (071) */
     private Result addNote(AccessTokens.Caller caller, JsonNode a) {
         AiJournal.NoteSaved n = journal.addNote(caller.memberId(), text(a, "topic"), text(a, "content"), tags(a));
-        return Result.ok("메모를 남겼어요 (오늘 " + n.todayCount() + "개). 오늘 자정(한국 시간)에 일기 임시글로 묶여요.");
+        String when = AiJournal.hourLabel(journal.diary(caller.memberId()).hour());
+        return Result.ok("메모를 남겼어요 (오늘 " + n.todayCount() + "개). 다음 " + when + "(한국 시간)에 일기로 묶여요"
+                + (caller.aiPublishAllowed() ? ". AI 발행을 허용해서 일기는 바로 발행돼요." : ". 일기는 임시글로 만들어져요."));
     }
 
     /** 버그 신고 (054). 웹 문의와 같은 서비스·요청 제한(한 시간 10번, 하루 30번)을 쓴다. 신고자는 토큰 주인이다 */

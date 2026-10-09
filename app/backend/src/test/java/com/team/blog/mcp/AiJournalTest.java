@@ -32,6 +32,7 @@ import com.team.blog.support.IntegrationTest;
 
 /**
  * spec 061: AI 글 제안(propose_post)과 자정 일기(add_note + 매일 00:00 묶기).
+ * spec 071: 제안 알림, 일기 시각 고르기, AI 발행을 허용한 회원의 일기 자동 발행.
  */
 class AiJournalTest extends IntegrationTest {
     static final ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -142,7 +143,7 @@ class AiJournalTest extends IntegrationTest {
         assertThat(toolNames(t)).doesNotContain("add_note");
         JsonNode off = call(t, "add_note", Map.of("content", "x"));
         assertThat(off.path("isError").asBoolean()).isTrue();
-        assertThat(text(off)).contains("자정에 일기 쓰기");
+        assertThat(text(off)).contains("AI 일기 쓰기");
 
         setDiary(me, true);
         assertThat(toolNames(t)).contains("add_note");
@@ -151,7 +152,7 @@ class AiJournalTest extends IntegrationTest {
 
         JsonNode ok = call(t, "add_note", Map.of("topic", "검색", "content", "하이브리드 검색 가중치를 0.7로 정했다", "tags", List.of("search")));
         assertThat(ok.path("isError").asBoolean()).as(text(ok)).isFalse();
-        assertThat(text(ok)).contains("오늘 1개");
+        assertThat(text(ok)).contains("오늘 1개").contains("다음 자정").contains("임시글");
 
         // 오늘 남긴 메모는 오늘 자정까지 기다린다. 어제·그제 메모는 날짜마다 일기 하나
         LocalDate today = LocalDate.now(KST);
@@ -160,7 +161,7 @@ class AiJournalTest extends IntegrationTest {
         note(me.memberId(), "배포", "롤백 스크립트를 고쳤다\n둘째 줄", "k8s,search", today.minusDays(1).atTime(15, 30));
         note(me.memberId(), "배포", "카나리 비율을 정했다", "", today.minusDays(2).atTime(23, 59));
 
-        assertThat(journal.compileDiaries()).isGreaterThanOrEqualTo(2);
+        assertThat(journal.compileDiariesAt(midnight())).isGreaterThanOrEqualTo(2);
         List<Map<String, Object>> posts = jdbc.queryForList("SELECT id, title, content_md, status FROM post WHERE author_id = ? ORDER BY id",
                 me.memberId());
         assertThat(posts).hasSize(2);
@@ -185,7 +186,7 @@ class AiJournalTest extends IntegrationTest {
         assertThat(jdbc.queryForObject("SELECT tags FROM post_ai_hint WHERE post_id = ?", String.class, y.get("id"))).isEqualTo("search,k8s");
         // 묶은 메모는 지우고 오늘 메모는 남긴다. 다시 돌아도 일기를 또 만들지 않는다
         assertThat(jdbc.queryForObject("SELECT count(*) FROM ai_note WHERE member_id = ?", Integer.class, me.memberId())).isEqualTo(1);
-        journal.compileDiaries();
+        journal.compileDiariesAt(midnight());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM post WHERE author_id = ?", Integer.class, me.memberId())).isEqualTo(2);
 
         // 끄면 남은 메모도 지운다
@@ -199,7 +200,7 @@ class AiJournalTest extends IntegrationTest {
         note(off.memberId(), "x", "켜 두지 않은 회원의 메모", "", LocalDate.now(KST).minusDays(1).atTime(12, 0));
         Session quiet = signup(uniqueLogin("aidq"));
         setDiary(quiet, true);
-        journal.compileDiaries();
+        journal.compileDiariesAt(midnight());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM post WHERE author_id IN (?, ?)", Integer.class, off.memberId(), quiet.memberId())).isZero();
     }
 
@@ -211,7 +212,7 @@ class AiJournalTest extends IntegrationTest {
         ExecutorService pool = Executors.newFixedThreadPool(4);
         try {
             List<Callable<Integer>> jobs = new ArrayList<>();
-            for (int i = 0; i < 4; i++) jobs.add(journal::compileDiaries);
+            for (int i = 0; i < 4; i++) jobs.add(() -> journal.compileDiariesAt(midnight()));
             for (Future<Integer> f : pool.invokeAll(jobs)) f.get();
         } finally {
             pool.shutdown();
@@ -219,6 +220,95 @@ class AiJournalTest extends IntegrationTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM post WHERE author_id = ?", Integer.class, me.memberId())).isEqualTo(1);
         assertThat((String) jdbc.queryForObject("SELECT content_md FROM post WHERE author_id = ?", String.class, me.memberId()))
                 .contains("메모 0").contains("메모 4");
+    }
+
+    /** 오늘 0시 정각(KST) 조금 뒤. 기본 일기 시각(0시) 회원이 묶인다 */
+    static Instant midnight() {
+        return LocalDate.now(KST).atStartOfDay(KST).toInstant().plusSeconds(3);
+    }
+
+    static Instant at(LocalDate day, int hour) {
+        return day.atTime(hour, 0, 2).atZone(KST).toInstant();
+    }
+
+    @Test
+    void 일기_시각을_고르면_그_시각에_전날_그_시각부터의_메모를_묶는다() throws Exception {
+        Session me = signup(uniqueLogin("aidhr"));
+        JsonNode r = read(me.http().perform(asJson(put("/api/me/ai-diary"), Map.of("enabled", true, "hour", 22))).andExpect(status().isOk()).andReturn());
+        assertThat(r.path("hour").asInt()).isEqualTo(22);
+        me.http().perform(asJson(put("/api/me/ai-diary"), Map.of("enabled", true, "hour", 24))).andExpect(status().isBadRequest());
+        // 시각을 빼고 켜고 끄면 고른 시각은 그대로
+        setDiary(me, true);
+        assertThat(read(me.http().perform(get("/api/me/ai-diary")).andReturn()).path("hour").asInt()).isEqualTo(22);
+        String t = token(me);
+        assertThat(text(call(t, "add_note", Map.of("content", "지금 메모")))).contains("다음 오후 10시");
+
+        LocalDate today = LocalDate.now(KST).minusDays(1); // 오늘 메모(add_note)와 섞이지 않게 하루 앞을 "오늘"로 삼는다
+        note(me.memberId(), "a", "그제 밤 23시", "", today.minusDays(1).atTime(23, 0));
+        note(me.memberId(), "a", "어제 21시", "", today.atTime(21, 0));
+        note(me.memberId(), "a", "어제 22시 넘어", "", today.atTime(22, 30));
+
+        // 다른 시각에는 이 회원을 묶지 않는다
+        assertThat(journal.compileDiariesAt(at(today, 0))).isZero();
+        journal.compileDiariesAt(at(today, 22));
+        List<Map<String, Object>> posts = jdbc.queryForList("SELECT title, content_md FROM post WHERE author_id = ? ORDER BY id", me.memberId());
+        // 22시 일기: 전날 22시 ~ 오늘 22시가 오늘 일기
+        assertThat(posts).hasSize(1);
+        assertThat(posts.get(0).get("title")).isEqualTo(today + " 개발 일기");
+        assertThat((String) posts.get(0).get("content_md")).contains("그제 밤 23시").contains("어제 21시").doesNotContain("22시 넘어");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM ai_note WHERE member_id = ?", Integer.class, me.memberId())).isEqualTo(2);
+    }
+
+    @Test
+    void 새벽_시각을_고르면_새벽_작업은_전날_일기에_들어간다() throws Exception {
+        Session me = signup(uniqueLogin("aidhr6"));
+        me.http().perform(asJson(put("/api/me/ai-diary"), Map.of("enabled", true, "hour", 6))).andExpect(status().isOk());
+        LocalDate day = LocalDate.now(KST).minusDays(2);
+        note(me.memberId(), null, "밤샘 작업", "", day.plusDays(1).atTime(2, 0));
+        note(me.memberId(), null, "낮 작업", "", day.atTime(14, 0));
+        journal.compileDiariesAt(at(day.plusDays(1), 6));
+        assertThat(jdbc.queryForList("SELECT title FROM post WHERE author_id = ?", String.class, me.memberId()))
+                .containsExactly(day + " 개발 일기");
+    }
+
+    @Test
+    void AI_발행을_허용한_회원의_일기는_바로_발행된다() throws Exception {
+        Session me = signup(uniqueLogin("aidpub"));
+        setDiary(me, true);
+        jdbc.update("UPDATE member SET ai_publish_allowed = true WHERE id = ?", me.memberId());
+        note(me.memberId(), "배포", "카나리 배포를 마쳤다", "k8s", LocalDate.now(KST).minusDays(1).atTime(11, 0));
+        String t = token(me);
+        JsonNode init = read(rpc(t, "initialize", Map.of("protocolVersion", "2025-06-18")).andReturn()).path("result");
+        assertThat(init.path("instructions").asString()).contains("바로 발행돼요");
+        journal.compileDiariesAt(midnight());
+        Map<String, Object> p = jdbc.queryForMap("SELECT status, visibility FROM post WHERE author_id = ?", me.memberId());
+        assertThat(p.get("status")).isEqualTo("PUBLISHED");
+        assertThat(jdbc.queryForList("SELECT t.name FROM post_tag pt JOIN tag t ON t.id = pt.tag_id JOIN post x ON x.id = pt.post_id WHERE x.author_id = ?",
+                String.class, me.memberId())).containsExactly("k8s");
+    }
+
+    @Test
+    void AI가_새로_제안하면_알림이_가고_같은_제목을_고쳐_쓰면_다시_알리지_않는다() throws Exception {
+        Session me = signup(uniqueLogin("aipn"));
+        String t = token(me);
+        call(t, "propose_post", Map.of("title", "알림 받을 제안", "scope", "- 범위"));
+        call(t, "propose_post", Map.of("title", "알림 받을 제안", "scope", "- 바뀐 범위"));
+        JsonNode items = read(me.http().perform(get("/api/me/notifications")).andExpect(status().isOk()).andReturn()).path("items");
+        assertThat(items).hasSize(1);
+        JsonNode n = items.get(0);
+        assertThat(n.path("type").asString()).isEqualTo("AI_PROPOSAL");
+        assertThat(n.path("proposal").path("title").asString()).isEqualTo("알림 받을 제안");
+        assertThat(n.path("link").asString()).isEqualTo("/manage/posts?tab=drafts#ai-proposals");
+
+        // 끈 회원에게는 보내지 않는다
+        me.http().perform(asJson(put("/api/me/notification-settings"), Map.of("muted", List.of("AI_PROPOSAL")))).andExpect(status().isOk());
+        call(t, "propose_post", Map.of("title", "조용한 제안", "scope", "- 범위"));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM notification WHERE receiver_id = ? AND type = 'AI_PROPOSAL'", Integer.class,
+                me.memberId())).isEqualTo(1);
+        // 탈퇴 정리로 제안을 지우면 그 알림도 지운다
+        journal.deleteAll(me.memberId());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM notification WHERE receiver_id = ? AND type = 'AI_PROPOSAL'", Integer.class,
+                me.memberId())).isZero();
     }
 
     void note(long memberId, String topic, String content, String tags, java.time.LocalDateTime at) {

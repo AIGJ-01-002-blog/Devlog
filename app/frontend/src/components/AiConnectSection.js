@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ApiError } from '../lib/api';
 import { fullDate, relativeDate } from '../lib/format';
 import { Link } from '../lib/router';
-import { aiDiaryApi, aiPublishApi, claudeCodeCommand, TOKEN_EXPIRY_DAYS, TOKEN_NAME_MAX, tokensApi, } from '../lib/mcp';
+import { aiDiaryApi, aiPublishApi, diaryHourLabel, claudeCodeCommand, TOKEN_EXPIRY_DAYS, TOKEN_NAME_MAX, tokensApi, } from '../lib/mcp';
 import { CopyCode } from './CopyCode';
 /**
  * 설정 › AI 연결 (052): MCP용 개인 접근 토큰을 만들고 폐기한다.
@@ -87,26 +87,24 @@ function AiPublishToggle() {
     return (_jsxs("div", { className: "ai-publish", children: [_jsx("h3", { children: "AI \uBC1C\uD589\u00B7\uC0AD\uC81C" }), _jsxs("label", { children: [_jsx("input", { type: "checkbox", checked: allowed === true, disabled: busy || allowed === null, onChange: (e) => change(e.target.checked) }), ' ', "AI\uAC00 \uBC1C\uD589\u00B7\uC0AD\uC81C\uD558\uB3C4\uB85D \uD5C8\uC6A9"] }), _jsxs("p", { className: "muted small", children: [AI_PUBLISH_WARNING, " \uC9C0\uC6B4 \uAE00\uC740 \uD734\uC9C0\uD1B5\uC5D0\uC11C 30\uC77C \uC548\uC5D0 \uBCF5\uAD6C\uD560 \uC218 \uC788\uC5B4\uC694. \uAEBC \uB450\uBA74 AI\uB294 \uC784\uC2DC\uAE00\uACFC \"\uBC1C\uD589 \uB300\uAE30\"\uAE4C\uC9C0\uB9CC \uB9CC\uB4E4\uC5B4\uC694."] }), _jsx("p", { className: "muted small ai-publish-reconnect", children: "\uB044\uBA74 \uBC14\uB85C \uB9C9\uD600\uC694. \uCF20 \uB4A4\uC5D0\uB294 AI \uC571\uC5D0\uC11C devlog \uC5F0\uACB0\uC744 \uB2E4\uC2DC \uC2DC\uC791\uD574\uC57C \uBC1C\uD589\u00B7\uC0AD\uC81C \uB3C4\uAD6C\uAC00 \uBCF4\uC5EC\uC694." }), _jsx("div", { role: "status", children: error && _jsx("p", { className: "error", children: error }) })] }));
 }
 /**
- * "자정에 일기 쓰기" (061). 기본은 꺼짐. 켜면 연결한 AI에 add_note가 열리고, 매일 00:00(KST)에 그날 메모가 일기 임시글로 묶인다.
- * 발행은 하지 않는다. 끄면 아직 묶지 않은 메모도 지운다.
+ * "AI 일기 쓰기" (061·071). 기본은 꺼짐. 켜면 연결한 AI에 add_note가 열리고, 매일 고른 시각(KST, 기본 자정)에 메모가 일기로 묶인다.
+ * 늘 임시글로 만들고, AI 발행을 허용했으면 바로 발행한다. 끄면 아직 묶지 않은 메모도 지운다.
  */
 function AiDiaryToggle() {
-    const [enabled, setEnabled] = useState(null);
+    const [setting, setSetting] = useState(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const [loadFailed, setLoadFailed] = useState(false);
     const load = () => {
         setLoadFailed(false);
-        aiDiaryApi.get().then((s) => setEnabled(s.enabled)).catch(() => setLoadFailed(true));
+        aiDiaryApi.get().then(setSetting).catch(() => setLoadFailed(true));
     };
     useEffect(load, []);
-    const change = async (on) => {
-        if (!on && !confirm('자정에 일기 쓰기를 끌까요?\n오늘 AI가 남긴 메모도 함께 지워져요. 이미 만든 일기 임시글은 그대로 남아요.'))
-            return;
+    const save = async (on, hour) => {
         setBusy(true);
         setError(null);
         try {
-            setEnabled((await aiDiaryApi.set(on)).enabled);
+            setSetting(await aiDiaryApi.set(on, hour));
         }
         catch {
             setError('설정을 바꾸지 못했어요. 다시 시도해 주세요.');
@@ -115,5 +113,12 @@ function AiDiaryToggle() {
             setBusy(false);
         }
     };
-    return (_jsxs("div", { className: "ai-publish ai-diary", children: [_jsx("h3", { children: "\uC790\uC815 \uC77C\uAE30" }), _jsxs("label", { title: "AI\uB97C \uC4F4 \uB0A0\uB9C8\uB2E4 \uC790\uC815\uC5D0 \uADF8\uB0A0 \uC791\uC5C5 \uBA54\uBAA8\uB97C \uC77C\uAE30 \uC784\uC2DC\uAE00\uB85C \uBAA8\uC544\uC694", children: [_jsx("input", { type: "checkbox", checked: enabled === true, disabled: busy || enabled === null, onChange: (e) => change(e.target.checked) }), ' ', "\uC790\uC815\uC5D0 \uC77C\uAE30 \uC4F0\uAE30"] }), _jsxs("p", { className: "muted small", children: ["\uCF1C\uBA74 \uC5F0\uACB0\uD55C AI\uAC00 \uC791\uC5C5\uC744 \uB9C8\uCE60 \uB54C\uB9C8\uB2E4 \uD55C\uB450 \uBB38\uC7A5 \uBA54\uBAA8\uB97C \uB0A8\uAE30\uACE0, \uB9E4\uC77C \uC790\uC815(\uD55C\uAD6D \uC2DC\uAC04)\uC5D0 \uADF8\uB0A0 \uBA54\uBAA8\uAC00 \uC8FC\uC81C\uBCC4\uB85C \uBB36\uC778 ", _jsx("b", { children: "\uC77C\uAE30 \uC784\uC2DC\uAE00" }), "\uC774 \uB3FC\uC694. AI\uB97C \uC4F0\uC9C0 \uC54A\uC740 \uB0A0\uC740 \uB9CC\uB4E4\uC9C0 \uC54A\uACE0, \uBC1C\uD589\uC740 \uB0B4\uAC00 \uD574\uC694."] }), _jsx("p", { className: "muted small ai-publish-reconnect", children: "\uCF20 \uB4A4\uC5D0\uB294 AI \uC571\uC5D0\uC11C devlog \uC5F0\uACB0\uC744 \uB2E4\uC2DC \uC2DC\uC791\uD574\uC57C \uBA54\uBAA8 \uB3C4\uAD6C\uAC00 \uBCF4\uC5EC\uC694. \uB044\uBA74 \uC544\uC9C1 \uBB36\uC9C0 \uC54A\uC740 \uBA54\uBAA8\uB3C4 \uC9C0\uC6CC\uC694." }), loadFailed && (_jsxs("p", { className: "error", role: "status", children: ["\uC124\uC815\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. ", _jsx("button", { type: "button", className: "btn btn-text", title: "\uC790\uC815 \uC77C\uAE30 \uC124\uC815\uC744 \uB2E4\uC2DC \uBD88\uB7EC\uC640\uC694", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] })), _jsx("div", { role: "status", children: error && _jsx("p", { className: "error", children: error }) })] }));
+    const change = (on) => {
+        if (!on && !confirm('AI 일기 쓰기를 끌까요?\n아직 일기로 묶지 않은 AI 메모도 함께 지워져요. 이미 만든 일기는 그대로 남아요.'))
+            return;
+        void save(on);
+    };
+    const enabled = setting?.enabled === true;
+    const when = diaryHourLabel(setting?.hour ?? 0);
+    return (_jsxs("div", { className: "ai-publish ai-diary", children: [_jsx("h3", { children: "AI \uC77C\uAE30" }), _jsxs("label", { title: `AI를 쓴 날마다 ${when}에 작업 메모를 일기로 모아요`, children: [_jsx("input", { type: "checkbox", checked: enabled, disabled: busy || setting === null, onChange: (e) => change(e.target.checked) }), ' ', "AI \uC77C\uAE30 \uC4F0\uAE30"] }), _jsxs("label", { className: "ai-diary-hour", children: ["\uC77C\uAE30 \uC4F0\uB294 \uC2DC\uAC01", ' ', _jsx("select", { value: setting?.hour ?? 0, disabled: busy || !enabled, title: "\uB9E4\uC77C \uC774 \uC2DC\uAC01(\uD55C\uAD6D \uC2DC\uAC04)\uC5D0 \uADF8\uB54C\uAE4C\uC9C0\uC758 \uBA54\uBAA8\uB97C \uC77C\uAE30\uB85C \uBB36\uC5B4\uC694", onChange: (e) => void save(true, Number(e.target.value)), children: Array.from({ length: 24 }, (_, h) => _jsx("option", { value: h, children: diaryHourLabel(h) }, h)) })] }), _jsxs("p", { className: "muted small", children: ["\uCF1C\uBA74 \uC5F0\uACB0\uD55C AI\uAC00 \uC791\uC5C5\uC744 \uB9C8\uCE60 \uB54C\uB9C8\uB2E4 \uD55C\uB450 \uBB38\uC7A5 \uBA54\uBAA8\uB97C \uB0A8\uAE30\uACE0, \uB9E4\uC77C ", when, "(\uD55C\uAD6D \uC2DC\uAC04)\uC5D0 \uADF8\uB54C\uAE4C\uC9C0\uC758 \uBA54\uBAA8\uAC00 \uC8FC\uC81C\uBCC4\uB85C \uBB36\uC778 ", _jsx("b", { children: "\uC77C\uAE30" }), "\uAC00 \uB3FC\uC694. AI\uB97C \uC4F0\uC9C0 \uC54A\uC740 \uB0A0\uC740 \uB9CC\uB4E4\uC9C0 \uC54A\uC544\uC694. \uC77C\uAE30\uB294 \uC784\uC2DC\uAE00\uB85C \uB9CC\uB4E4\uACE0, \uC704\uC5D0\uC11C ", _jsx("b", { children: "AI \uBC1C\uD589\uC744 \uD5C8\uC6A9" }), "\uD588\uC73C\uBA74 \uAE00\uC5D0 \uC815\uD574\uC9C4 \uACF5\uAC1C \uBC94\uC704\uB85C \uBC14\uB85C \uBC1C\uD589\uD574\uC694."] }), _jsx("p", { className: "muted small ai-publish-reconnect", children: "\uCF20 \uB4A4\uC5D0\uB294 AI \uC571\uC5D0\uC11C devlog \uC5F0\uACB0\uC744 \uB2E4\uC2DC \uC2DC\uC791\uD574\uC57C \uBA54\uBAA8 \uB3C4\uAD6C\uAC00 \uBCF4\uC5EC\uC694. \uB044\uBA74 \uC544\uC9C1 \uBB36\uC9C0 \uC54A\uC740 \uBA54\uBAA8\uB3C4 \uC9C0\uC6CC\uC694." }), loadFailed && (_jsxs("p", { className: "error", role: "status", children: ["\uC124\uC815\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694. ", _jsx("button", { type: "button", className: "btn btn-text", title: "AI \uC77C\uAE30 \uC124\uC815\uC744 \uB2E4\uC2DC \uBD88\uB7EC\uC640\uC694", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] })), _jsx("div", { role: "status", children: error && _jsx("p", { className: "error", children: error }) })] }));
 }

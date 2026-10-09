@@ -3,8 +3,8 @@ import { reasonLabel } from './moderation'
 
 // 인앱 알림 (spec 015, docs/25). 문구와 이동 위치는 docs/25 §2 표. 서버가 볼 수 없는 글의 제목·링크를 빼서 보낸다.
 
-export type NotificationType = 'COMMENT' | 'REPLY' | 'LIKE' | 'FOLLOW' | 'NEW_POST' | 'REPORT_RESOLVED' | 'CONTENT_HIDDEN' | 'INQUIRY_ANSWERED'
-export type MutableType = 'COMMENT' | 'REPLY' | 'LIKE' | 'FOLLOW' | 'NEW_POST'
+export type NotificationType = 'COMMENT' | 'REPLY' | 'LIKE' | 'FOLLOW' | 'NEW_POST' | 'REPORT_RESOLVED' | 'CONTENT_HIDDEN' | 'INQUIRY_ANSWERED' | 'AI_PROPOSAL'
+export type MutableType = 'COMMENT' | 'REPLY' | 'LIKE' | 'FOLLOW' | 'NEW_POST' | 'AI_PROPOSAL'
 
 export interface NotificationItem {
   id: number
@@ -24,6 +24,8 @@ export interface NotificationItem {
   hidden?: { targetType: 'POST' | 'COMMENT'; reason: string | null; stillHidden: boolean } | null
   /** 답변이 온 내 문의 (INQUIRY_ANSWERED, spec 054) */
   inquiry?: { id: number; title: string; status: string } | null
+  /** AI가 남긴 글 제안 (AI_PROPOSAL, spec 071) */
+  proposal?: { id: number; title: string; status: string } | null
 }
 
 export interface NotificationPage {
@@ -38,6 +40,7 @@ export const MUTABLE_TYPES: { type: MutableType; label: string }[] = [
   { type: 'LIKE', label: '좋아요' },
   { type: 'FOLLOW', label: '새 팔로워' },
   { type: 'NEW_POST', label: '팔로우한 사람의 새 글' },
+  { type: 'AI_PROPOSAL', label: 'AI의 글 제안' },
 ]
 
 export const POLL_MS = 30_000
@@ -81,6 +84,9 @@ export function messageOf(n: NotificationItem): Message {
   if (n.type === 'CONTENT_HIDDEN') return hiddenMessage(n)
   if (n.type === 'INQUIRY_ANSWERED') {
     return { who: null, text: `남기신 문의${n.inquiry ? `「${n.inquiry.title}」` : ''}에 답변이 왔어요`, quote: null }
+  }
+  if (n.type === 'AI_PROPOSAL') {
+    return { who: null, text: `AI가 글을 제안했어요${n.proposal ? `「${n.proposal.title}」` : ''}`, quote: null }
   }
   const unreadable = n.post != null && !n.post.readable
   const title = n.post?.title ? `「${n.post.title}」` : ''
