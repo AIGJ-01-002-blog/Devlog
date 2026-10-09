@@ -369,6 +369,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.50.1 | 2026-10-09 | Fixed GitHub/Google sign-in failing with "redirect_uri is not associated with this application" | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.1) |
 | v1.50.0 | 2026-10-09 | Admin dashboard metrics grouped into visits, members & posts, and engagement, with change arrows and daily trend bars | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.0) |
 | v1.49.1 | 2026-10-09 | Portfolio project cards no longer overflow the screen on phones | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.49.1) |
 | v1.49.0 | 2026-10-09 | MCP tools to create series, add posts to a series and fill portfolio project fields | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.49.0) |
