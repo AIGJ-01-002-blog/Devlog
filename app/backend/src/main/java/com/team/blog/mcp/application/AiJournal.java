@@ -407,12 +407,13 @@ public class AiJournal {
         return out.toString();
     }
 
-    /** 메모를 문장으로 이을 수 있게 끝에 마침표가 없으면 붙인다 */
-    static String sentence(String memo) {
+    /** 메모를 문장으로 이을 수 있게 끝에 마침표가 없으면 붙인다. 닫는 괄호·따옴표는 건너뛰고 그 앞을 본다 ("Redis (색인)" → 마침표). */
+    public static String sentence(String memo) {
         String m = memo.strip();
-        if (m.isEmpty()) return m;
-        char last = m.charAt(m.length() - 1);
-        return ".!?~)\"'”’…".indexOf(last) >= 0 ? m : m + ".";
+        int i = m.length() - 1;
+        while (i >= 0 && ")]\"'”’」』".indexOf(m.charAt(i)) >= 0) i--;
+        if (i < 0) return m;
+        return ".!?~…。".indexOf(m.charAt(i)) >= 0 ? m : m + ".";
     }
 
     /** 탈퇴 정리 (020) */

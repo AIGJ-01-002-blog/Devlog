@@ -73,6 +73,15 @@ class AiJournalTest extends IntegrationTest {
     }
 
     @Test
+    void sentenceAddsPeriodPastClosingBrackets() {
+        assertThat(AiJournal.sentence("Redis로 바꿨어요 (색인)")).isEqualTo("Redis로 바꿨어요 (색인).");
+        assertThat(AiJournal.sentence("\"됐다!\"")).isEqualTo("\"됐다!\"");
+        assertThat(AiJournal.sentence("(빨라졌어요.)")).isEqualTo("(빨라졌어요.)");
+        assertThat(AiJournal.sentence("고쳤어요")).isEqualTo("고쳤어요.");
+        assertThat(AiJournal.sentence("  ")).isEqualTo("");
+    }
+
+    @Test
     void AI가_제안한_글은_내_글_관리에서_임시글로_만들거나_넘긴다() throws Exception {
         Session me = signup(uniqueLogin("aiprop"));
         String t = token(me);
