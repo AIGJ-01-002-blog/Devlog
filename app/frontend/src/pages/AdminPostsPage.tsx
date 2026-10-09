@@ -70,7 +70,7 @@ export function AdminPostsPage() {
       </form>
       <nav className="tabs" aria-label="글 거르기">
         {POST_FILTERS.map((f) => (
-          <button key={f.code} type="button" aria-selected={f.code === filter} onClick={() => go({ filter: f.code })}>{f.label}</button>
+          <button key={f.code} type="button" aria-pressed={f.code === filter} onClick={() => go({ filter: f.code })}>{f.label}</button>
         ))}
       </nav>
       {author && (

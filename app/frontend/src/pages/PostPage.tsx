@@ -34,7 +34,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
   })
   const [post, setPost] = useState<PostDetail | null>(boot?.post ?? null)
   const [missing, setMissing] = useState(false)
-  const [notice, setNotice] = useState<string | null>(null)
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null)
   const [minutes, setMinutes] = useState<number | null>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const { me } = useAuth()
@@ -79,17 +79,21 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
       const r = await api<{ visibility: Visibility; firstPublicAt: string | null }>(`/api/posts/${post.id}/visibility`,
         { method: 'PATCH', body: { visibility: to } })
       setPost({ ...post, visibility: r.visibility, firstPublicAt: r.firstPublicAt })
-      setNotice(VISIBILITY_CHANGED[to])
+      setNotice({ ok: true, text: VISIBILITY_CHANGED[to] })
     } catch (e) {
-      setNotice(e instanceof ApiError ? e.message : '바꾸지 못했어요.')
+      setNotice({ ok: false, text: e instanceof ApiError ? e.message : '바꾸지 못했어요.' })
     }
   }
 
   const discard = async () => {
     if (!confirm('수정 중인 내용을 버리고 발행본으로 돌아갈까요?')) return
-    await api(`/api/posts/${post.id}/draft`, { method: 'DELETE' })
-    setPost({ ...post, owner: post.owner ? { ...post.owner, editing: false, editingSavedAt: null } : null })
-    setNotice('변경을 취소했어요.')
+    try {
+      await api(`/api/posts/${post.id}/draft`, { method: 'DELETE' })
+      setPost({ ...post, owner: post.owner ? { ...post.owner, editing: false, editingSavedAt: null } : null })
+      setNotice({ ok: true, text: '변경을 취소했어요.' })
+    } catch (e) {
+      setNotice({ ok: false, text: e instanceof ApiError ? e.message : '변경을 취소하지 못했어요. 잠시 뒤 다시 시도해 주세요.' })
+    }
   }
 
   const remove = async () => {
@@ -99,7 +103,7 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
       setFlash(trashedMessage(r))
       navigate('/manage/posts?tab=trash', { replace: true })
     } catch (e) {
-      setNotice(e instanceof ApiError ? e.message : '삭제하지 못했어요. 잠시 뒤 다시 시도해 주세요.')
+      setNotice({ ok: false, text: e instanceof ApiError ? e.message : '삭제하지 못했어요. 잠시 뒤 다시 시도해 주세요.' })
     }
   }
 
@@ -121,11 +125,13 @@ export function PostPage({ handle, id }: { handle: string; id: string }) {
             </span>
           </div>
         )}
-        {post.mine && post.visibility === 'PRIVATE' && <div className="banner">🔒 나만 볼 수 있는 글이에요.</div>}
+        {post.mine && post.visibility === 'PRIVATE' && <div className="banner"><span aria-hidden="true">🔒</span> 나만 볼 수 있는 글이에요.</div>}
         {post.visibility === 'FRIENDS' && (
-          <div className="banner">👥 {post.mine ? '나와 친구만 볼 수 있는 글이에요.' : '친구에게만 공개된 글이에요.'}</div>
+          <div className="banner"><span aria-hidden="true">👥</span> {post.mine ? '나와 친구만 볼 수 있는 글이에요.' : '친구에게만 공개된 글이에요.'}</div>
         )}
-        {notice && <div className="banner banner-ok" role="status">{notice}</div>}
+        {notice && (
+          <div className={notice.ok ? 'banner banner-ok' : 'banner banner-warn'} role={notice.ok ? 'status' : 'alert'}>{notice.text}</div>
+        )}
         <h1 className="post-title">{post.title}</h1>
         <div className="post-meta">
           <span className="post-byline">

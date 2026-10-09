@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
+import { fullDate } from '../lib/format'
 import { releasesApi, versionFromHash, type Release } from '../lib/releases'
 import { Link } from '../lib/router'
 
 const FIRST = 10
+// 머리말 날짜는 2026-10-08처럼 날짜만 온다. 그 지역의 자정으로 읽어야 하루 밀리지 않는다
+const releaseDate = (d: string) => (/^\d{4}-\d{2}-\d{2}$/.test(d) ? fullDate(`${d}T00:00:00`) : d)
 
 /**
  * 릴리스 노트 (054). 버전마다 무엇을 더하고 고쳤는지. 문의의 "v1.29.0에서 고쳤어요"가 #v1.29.0으로 이 화면의 그 버전을 연다.
@@ -42,9 +45,9 @@ export function ReleasesPage() {
       {data?.releases.slice(0, shown).map((r) => (
         <article key={r.version} id={`v${r.version}`} className={`release${r.version === target ? ' release-target' : ''}`}>
           <h2 className="release-head">
-            <a href={`#v${r.version}`} title="이 버전 주소 복사용 링크">v{r.version}</a>
+            <a href={`#v${r.version}`} title="이 버전으로 바로 가는 링크">v{r.version}</a>
             {r.version === data.current && <span className="badge badge-brand" title="지금 돌고 있는 버전">지금</span>}
-            {r.date && <time className="muted small" dateTime={r.date}>{r.date}</time>}
+            {r.date && <time className="muted small" dateTime={r.date}>{releaseDate(r.date)}</time>}
           </h2>
           <div className="markdown release-body" dangerouslySetInnerHTML={{ __html: r.html }} />
         </article>

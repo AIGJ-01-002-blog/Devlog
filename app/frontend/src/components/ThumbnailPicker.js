@@ -32,7 +32,7 @@ export function ThumbnailPicker({ value, content, error, onChange, onBusy }) {
         }
     };
     return (_jsxs("fieldset", { className: "field thumbnail-picker", children: [_jsx("legend", { children: "\uC378\uB124\uC77C" }), _jsx("div", { className: "thumbnail-preview", children: preview
-                    ? _jsx("img", { src: preview, alt: "" })
+                    ? _jsx("img", { src: preview, alt: "", width: 640, height: 360 })
                     : _jsx("span", { className: "muted small", children: value.kind === 'none' ? '썸네일 없음' : '본문에 사진이 없어요' }) }), _jsx("p", { className: "muted small", "aria-live": "polite", children: uploading ? '사진을 올리는 중…'
                     : value.kind === 'image' ? '직접 고른 사진이 목록과 공유 미리보기에 보여요.'
                         : value.kind === 'none' ? '목록에 사진 없이 보여요.'

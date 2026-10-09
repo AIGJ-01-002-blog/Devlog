@@ -41,7 +41,7 @@ export function ThumbnailPicker({ value, content, error, onChange, onBusy }: {
       <legend>썸네일</legend>
       <div className="thumbnail-preview">
         {preview
-          ? <img src={preview} alt="" />
+          ? <img src={preview} alt="" width={640} height={360} />
           : <span className="muted small">{value.kind === 'none' ? '썸네일 없음' : '본문에 사진이 없어요'}</span>}
       </div>
       <p className="muted small" aria-live="polite">

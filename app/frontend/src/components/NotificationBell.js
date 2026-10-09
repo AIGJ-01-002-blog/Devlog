@@ -11,7 +11,10 @@ export function NotificationBell() {
     const [count, setCount] = useState(0);
     const [open, setOpen] = useState(false);
     const [list, setList] = useState({ kind: 'loading' });
+    const [readAllFailed, setReadAllFailed] = useState(false);
     const ref = useRef(null);
+    const bellRef = useRef(null);
+    const panelRef = useRef(null);
     const refreshCount = useCallback(() => {
         notificationsApi.unreadCount().then(setCount).catch(() => { });
     }, []);
@@ -49,13 +52,17 @@ export function NotificationBell() {
         if (!open)
             return;
         load();
+        setReadAllFailed(false);
+        panelRef.current?.focus();
         const close = (e) => {
             if (!ref.current?.contains(e.target))
                 setOpen(false);
         };
         const esc = (e) => {
-            if (e.key === 'Escape')
-                setOpen(false);
+            if (e.key !== 'Escape')
+                return;
+            setOpen(false);
+            bellRef.current?.focus();
         };
         document.addEventListener('mousedown', close);
         document.addEventListener('keydown', esc);
@@ -70,17 +77,23 @@ export function NotificationBell() {
         setOpen(false);
     };
     const readAll = async () => {
+        setReadAllFailed(false);
         try {
             await notificationsApi.readAll();
             setList((l) => (l.kind === 'ok' ? { kind: 'ok', items: l.items.map((n) => ({ ...n, read: true })) } : l));
             notifyChanged();
         }
         catch {
-            // 다음 세기에서 맞춰진다
+            // 배지는 다음 세기에서 맞춰진다
+            setReadAllFailed(true);
         }
     };
     const badge = badgeText(count);
-    return (_jsxs("div", { className: "menu notification-bell", ref: ref, children: [_jsxs("button", { type: "button", className: "btn btn-text bell-button", "aria-haspopup": "dialog", "aria-expanded": open, "aria-label": badgeLabel(count), onClick: () => setOpen((o) => !o), children: [_jsxs("svg", { width: "20", height: "20", viewBox: "0 0 24 24", "aria-hidden": "true", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [_jsx("path", { d: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" }), _jsx("path", { d: "M10.3 21a1.94 1.94 0 0 0 3.4 0" })] }), badge && _jsx("span", { className: "bell-badge", "aria-hidden": "true", children: badge })] }), open && (_jsxs("div", { className: "menu-list notification-panel", role: "dialog", "aria-label": "\uC54C\uB9BC", children: [_jsxs("div", { className: "notification-panel-head", children: [_jsx("b", { children: "\uC54C\uB9BC" }), _jsx("button", { type: "button", className: "btn btn-text small", onClick: readAll, disabled: list.kind !== 'ok' || list.items.every((n) => n.read), children: "\uBAA8\uB450 \uC77D\uC74C" })] }), list.kind === 'loading' && _jsx("p", { className: "muted center small notification-state", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" }), list.kind === 'error' && (_jsxs("p", { className: "error center small notification-state", children: ["\uC54C\uB9BC\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text small", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] })), list.kind === 'ok' && (list.items.length === 0
+    return (_jsxs("div", { className: "menu notification-bell", ref: ref, onBlur: (e) => {
+            // 초점이 종·패널 밖의 다른 요소로 옮겨 가면 닫는다
+            if (open && e.relatedTarget && !e.currentTarget.contains(e.relatedTarget))
+                setOpen(false);
+        }, children: [_jsxs("button", { type: "button", ref: bellRef, className: "btn btn-text bell-button", "aria-haspopup": "dialog", "aria-expanded": open, "aria-label": badgeLabel(count), onClick: () => setOpen((o) => !o), children: [_jsxs("svg", { width: "20", height: "20", viewBox: "0 0 24 24", "aria-hidden": "true", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [_jsx("path", { d: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" }), _jsx("path", { d: "M10.3 21a1.94 1.94 0 0 0 3.4 0" })] }), badge && _jsx("span", { className: "bell-badge", "aria-hidden": "true", children: badge })] }), open && (_jsxs("div", { className: "menu-list notification-panel", role: "dialog", "aria-label": "\uC54C\uB9BC", ref: panelRef, tabIndex: -1, children: [_jsxs("div", { className: "notification-panel-head", children: [_jsx("b", { children: "\uC54C\uB9BC" }), _jsx("button", { type: "button", className: "btn btn-text small", onClick: readAll, disabled: list.kind !== 'ok' || list.items.every((n) => n.read), children: "\uBAA8\uB450 \uC77D\uC74C" })] }), readAllFailed && _jsx("p", { className: "error center small notification-state", role: "alert", children: "\uBAA8\uB450 \uC77D\uC74C\uC73C\uB85C \uBC14\uAFB8\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694." }), list.kind === 'loading' && _jsx("p", { className: "muted center small notification-state", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" }), list.kind === 'error' && (_jsxs("p", { className: "error center small notification-state", children: ["\uC54C\uB9BC\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text small", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] })), list.kind === 'ok' && (list.items.length === 0
                         ? _jsx("p", { className: "muted center small notification-state", children: "\uC0C8 \uC54C\uB9BC\uC774 \uC5C6\uC5B4\uC694" })
                         : _jsx("ul", { className: "notification-list", children: list.items.map((n) => _jsx(NotificationEntry, { item: n, onRead: markRead }, n.id)) })), _jsx(Link, { to: "/notifications", className: "notification-all", onClick: () => setOpen(false), children: "\uBAA8\uB4E0 \uC54C\uB9BC \uBCF4\uAE30" })] }))] }));
 }

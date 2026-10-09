@@ -15,7 +15,10 @@ export function NotificationBell() {
   const [count, setCount] = useState(0)
   const [open, setOpen] = useState(false)
   const [list, setList] = useState<ListState>({ kind: 'loading' })
+  const [readAllFailed, setReadAllFailed] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const bellRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   const refreshCount = useCallback(() => {
     notificationsApi.unreadCount().then(setCount).catch(() => {})
@@ -54,11 +57,15 @@ export function NotificationBell() {
   useEffect(() => {
     if (!open) return
     load()
+    setReadAllFailed(false)
+    panelRef.current?.focus()
     const close = (e: MouseEvent) => {
       if (!ref.current?.contains(e.target as Node)) setOpen(false)
     }
     const esc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key !== 'Escape') return
+      setOpen(false)
+      bellRef.current?.focus()
     }
     document.addEventListener('mousedown', close)
     document.addEventListener('keydown', esc)
@@ -75,19 +82,24 @@ export function NotificationBell() {
   }
 
   const readAll = async () => {
+    setReadAllFailed(false)
     try {
       await notificationsApi.readAll()
       setList((l) => (l.kind === 'ok' ? { kind: 'ok', items: l.items.map((n) => ({ ...n, read: true })) } : l))
       notifyChanged()
     } catch {
-      // 다음 세기에서 맞춰진다
+      // 배지는 다음 세기에서 맞춰진다
+      setReadAllFailed(true)
     }
   }
 
   const badge = badgeText(count)
   return (
-    <div className="menu notification-bell" ref={ref}>
-      <button type="button" className="btn btn-text bell-button" aria-haspopup="dialog" aria-expanded={open}
+    <div className="menu notification-bell" ref={ref} onBlur={(e) => {
+      // 초점이 종·패널 밖의 다른 요소로 옮겨 가면 닫는다
+      if (open && e.relatedTarget && !e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false)
+    }}>
+      <button type="button" ref={bellRef} className="btn btn-text bell-button" aria-haspopup="dialog" aria-expanded={open}
               aria-label={badgeLabel(count)} onClick={() => setOpen((o) => !o)}>
         <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2"
              strokeLinecap="round" strokeLinejoin="round">
@@ -96,12 +108,13 @@ export function NotificationBell() {
         {badge && <span className="bell-badge" aria-hidden="true">{badge}</span>}
       </button>
       {open && (
-        <div className="menu-list notification-panel" role="dialog" aria-label="알림">
+        <div className="menu-list notification-panel" role="dialog" aria-label="알림" ref={panelRef} tabIndex={-1}>
           <div className="notification-panel-head">
             <b>알림</b>
             <button type="button" className="btn btn-text small" onClick={readAll}
                     disabled={list.kind !== 'ok' || list.items.every((n) => n.read)}>모두 읽음</button>
           </div>
+          {readAllFailed && <p className="error center small notification-state" role="alert">모두 읽음으로 바꾸지 못했어요. 다시 시도해 주세요.</p>}
           {list.kind === 'loading' && <p className="muted center small notification-state">불러오는 중…</p>}
           {list.kind === 'error' && (
             <p className="error center small notification-state">

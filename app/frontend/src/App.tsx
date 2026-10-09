@@ -127,7 +127,8 @@ function route(path: string): ReactNode {
 }
 
 function Loading() {
-  return <main className="container"><p className="muted center">불러오는 중…</p></main>
+  // 페이지 자리(#main)의 유일한 <main>이다. 안에 다른 <main>을 품지 않는다
+  return <main className="container" aria-busy="true"><p className="muted center" role="status">불러오는 중…</p></main>
 }
 
 function RequireLogin({ children }: { children: ReactNode }) {

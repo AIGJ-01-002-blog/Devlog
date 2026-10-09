@@ -155,7 +155,8 @@ function route(path) {
     return _jsx(NotFoundPage, {});
 }
 function Loading() {
-    return _jsx("main", { className: "container", children: _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" }) });
+    // 페이지 자리(#main)의 유일한 <main>이다. 안에 다른 <main>을 품지 않는다
+    return _jsx("main", { className: "container", "aria-busy": "true", children: _jsx("p", { className: "muted center", role: "status", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" }) });
 }
 function RequireLogin({ children }) {
     const { me, loading } = useAuth();

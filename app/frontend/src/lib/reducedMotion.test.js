@@ -12,12 +12,12 @@ describe('움직임 줄이기', () => {
         expect(blocks[0]).toMatch(/animation-duration: 0\.01ms !important/);
         expect(blocks[0]).toMatch(/scroll-behavior: auto !important/);
     });
-    it('떠오르는 카드와 커지는 목차 항목도 멈춘다', () => {
-        const block = reducedMotionBlocks()[0];
-        for (const selector of ['.card:hover', '.card:focus-within', '.toc-inner a.active'])
-            expect(block).toContain(selector);
+    it('카드·목차는 위치·크기를 바꾸지 않아 따로 멈출 것이 없다 (068)', () => {
+        expect(css).not.toMatch(/\.card[^{]*:(hover|focus-within)[^{]*\{[^}]*transform/);
+        expect(css).not.toMatch(/\.toc-inner a\.active \{[^}]*transform/);
     });
-    it('키보드 초점도 마우스와 같이 카드를 띄운다', () => {
-        expect(css).toMatch(/\.card:hover, \.card:focus-within \{ transform: translateY\(-4px\)/);
+    it('키보드 초점도 마우스처럼 카드 테두리로 보인다', () => {
+        expect(css).toMatch(/\.card:focus-within \{ border-color: var\(--color-focus\)/);
+        expect(css).toMatch(/@media \(hover: hover\) \{\s*\.card:hover \{ border-color/);
     });
 });

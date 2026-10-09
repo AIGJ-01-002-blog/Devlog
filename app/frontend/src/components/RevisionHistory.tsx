@@ -4,6 +4,7 @@ import { revisionLabel, revisions, type Revision, type RevisionItem } from '../l
 import type { Content } from '../lib/autosave'
 import { Modal } from './Modal'
 import { changedLines, TextDiff } from './TextDiff'
+import { clock, fullDate } from '../lib/format'
 
 /**
  * 글 수정 이력 (058). Crowfoot의 "버전 기록"처럼 발행한 판을 고르고 지금 편집 중인 내용과 비교한다.
@@ -64,7 +65,7 @@ export function RevisionHistory({ postId, current, onLoad, onClose }: {
                         aria-current={selected?.no === it.no ? 'true' : undefined}
                         data-tip={`${it.no}판과 지금 내용 비교하기`} onClick={() => void pick(it.no)}>
                   <b>{revisionLabel(it, latestNo)}</b>
-                  <span className="muted small">{new Date(it.createdAt).toLocaleString('ko-KR')} · {it.length.toLocaleString('ko-KR')}자</span>
+                  <span className="muted small">{fullDate(it.createdAt)} {clock(it.createdAt)} · {it.length.toLocaleString('ko-KR')}자</span>
                   <span className="small revision-title">{it.title || '제목 없음'}</span>
                 </button>
               </li>
@@ -83,7 +84,7 @@ export function RevisionHistory({ postId, current, onLoad, onClose }: {
                   </div>
                 )}
                 <TextDiff before={selected.contentMd} after={current.contentMd}
-                          beforeLabel={`${selected.no}판 · ${new Date(selected.createdAt).toLocaleString('ko-KR')}`}
+                          beforeLabel={`${selected.no}판 · ${fullDate(selected.createdAt)} ${clock(selected.createdAt)}`}
                           afterLabel="지금 편집 중인 내용" />
               </>
             )}

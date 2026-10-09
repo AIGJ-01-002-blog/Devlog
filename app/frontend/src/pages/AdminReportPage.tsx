@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AdminNav } from '../components/AdminNav'
 import { AuthorPanel } from '../components/AuthorPanel'
 import { SuspendFields } from '../components/SuspendForm'
@@ -24,6 +24,10 @@ export function AdminReportPage({ id }: { id: string }) {
   const [suspendReason, setSuspendReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+  // 입력 확인 오류는 [처리하기] 바로 위에 보이고 그리로 초점을 옮긴다
+  const [invalid, setInvalid] = useState<string | null>(null)
+  const invalidRef = useRef<HTMLParagraphElement>(null)
+  useEffect(() => { if (invalid) invalidRef.current?.focus() }, [invalid])
 
   useEffect(() => {
     document.title = '신고 처리 - devlog'
@@ -43,6 +47,7 @@ export function AdminReportPage({ id }: { id: string }) {
   const run = async (work: () => Promise<CaseDetail>, ok: string) => {
     setBusy(true)
     setMessage(null)
+    setInvalid(null)
     try {
       setC(await work())
       setMessage({ ok: true, text: ok })
@@ -56,9 +61,9 @@ export function AdminReportPage({ id }: { id: string }) {
   }
 
   const resolve = () => {
-    if (!action) return setMessage({ ok: false, text: '처리 방법을 골라 주세요.' })
-    if (action === 'HIDE' && !hideReason) return setMessage({ ok: false, text: '숨기는 사유를 골라 주세요.' })
-    if (suspend && !suspendReason.trim()) return setMessage({ ok: false, text: '정지 사유를 적어 주세요.' })
+    if (!action) return setInvalid('처리 방법을 골라 주세요.')
+    if (action === 'HIDE' && !hideReason) return setInvalid('숨기는 사유를 골라 주세요.')
+    if (suspend && !suspendReason.trim()) return setInvalid('정지 사유를 적어 주세요.')
     void run(() => adminApi.resolve(c.caseId, action, action === 'HIDE' ? (hideReason as ReportReason) : null,
       suspend ? { days, reason: suspendReason.trim() } : null), action === 'HIDE' ? '숨겼어요.' : '문제없음으로 처리했어요.')
   }
@@ -117,6 +122,7 @@ export function AdminReportPage({ id }: { id: string }) {
             <label className="check"><input type="checkbox" checked={suspend} onChange={(e) => setSuspend(e.target.checked)} /> 작성자도 정지하기</label>
           )}
           {suspend && <SuspendFields days={days} reason={suspendReason} onChange={(d, r) => { setDays(d); setSuspendReason(r) }} />}
+          {invalid && <p ref={invalidRef} className="error" role="alert" tabIndex={-1}>{invalid}</p>}
           <button type="button" className="btn btn-primary" onClick={resolve} disabled={busy}>{busy ? '처리 중…' : '처리하기'}</button>
         </section>
       )}

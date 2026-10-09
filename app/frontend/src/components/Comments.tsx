@@ -89,7 +89,7 @@ export function Comments({ postId, initial, onCount }: {
   }
 
   if (error) {
-    return <section className="comments"><p className="feed-error">댓글을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={load}>다시 시도</button></p></section>
+    return <section className="comments"><p className="feed-error" role="alert">댓글을 불러오지 못했어요 <button type="button" className="btn btn-text" onClick={load}>다시 시도</button></p></section>
   }
   if (!page) return <section className="comments"><p className="muted">댓글을 불러오는 중…</p></section>
 
@@ -127,7 +127,7 @@ interface Ctx {
 }
 
 function MoreButton({ label, loading, failed, onClick }: { label: string; loading: boolean; failed: boolean; onClick: () => void }) {
-  if (failed) return <p className="feed-error small">불러오지 못했어요 <button type="button" className="btn btn-text" onClick={onClick}>다시 시도</button></p>
+  if (failed) return <p className="feed-error small" role="alert">불러오지 못했어요 <button type="button" className="btn btn-text" onClick={onClick}>다시 시도</button></p>
   return (
     <div className="more">
       <button type="button" className="btn btn-outline" disabled={loading} onClick={onClick}>{loading ? '불러오는 중…' : label}</button>
@@ -139,6 +139,7 @@ function MoreButton({ label, loading, failed, onClick }: { label: string; loadin
 function WriteBox({ ctx }: { ctx: Ctx }) {
   const { me } = useAuth()
   const [sent, setSent] = useState(false)
+  const [resendFailed, setResendFailed] = useState(false)
   if (!me?.authenticated) {
     return <p className="comment-guest">로그인하고 댓글을 남겨 보세요 <Link to={loginPath()} className="btn btn-text">로그인</Link></p>
   }
@@ -146,9 +147,13 @@ function WriteBox({ ctx }: { ctx: Ctx }) {
     return (
       <p className="comment-guest">이메일 인증 후 댓글을 쓸 수 있어요{' '}
         <button type="button" className="btn btn-text" disabled={sent}
-                onClick={() => api('/api/auth/email/resend', { method: 'POST' }).then(() => setSent(true)).catch(() => undefined)}>
+                onClick={() => {
+                  setResendFailed(false)
+                  api('/api/auth/email/resend', { method: 'POST' }).then(() => setSent(true)).catch(() => setResendFailed(true))
+                }}>
           {sent ? '보냈어요' : '인증 메일 다시 보내기'}
         </button>
+        {resendFailed && <small className="error" role="alert"> 메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요.</small>}
       </p>
     )
   }
@@ -311,7 +316,7 @@ function CommentItem({ c, rootId, ctx }: { c: CommentView; rootId: number | null
       )}
       {isRoot && hiddenReplies > 0 && c.repliesNextCursor && (
         repliesFailed
-          ? <p className="feed-error small">불러오지 못했어요 <button type="button" className="btn btn-text" onClick={moreReplies}>다시 시도</button></p>
+          ? <p className="feed-error small" role="alert">불러오지 못했어요 <button type="button" className="btn btn-text" onClick={moreReplies}>다시 시도</button></p>
           : <button type="button" className="btn btn-text more-replies" disabled={loadingReplies} onClick={moreReplies}>
               {loadingReplies ? '불러오는 중…' : `답글 ${hiddenReplies}개 더 보기`}
             </button>

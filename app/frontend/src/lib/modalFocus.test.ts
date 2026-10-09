@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { focusables, trapFocus as realTrapFocus } from './modalFocus'
+import { focusables, lockScroll, trapFocus as realTrapFocus } from './modalFocus'
 
 // 테스트마다 건 키 처리를 떼어, 앞 테스트의 Esc 처리가 다음 테스트에 끼어들지 않게 한다
 const releases: Array<() => void> = []
@@ -96,6 +96,33 @@ describe('trapFocus', () => {
     release()
     key('Escape')
     expect(close).not.toHaveBeenCalled()
+  })
+})
+
+describe('스크롤 잠금', () => {
+  afterEach(() => {
+    releases.splice(0).forEach((r) => r())
+    document.documentElement.style.overflow = ''
+    document.body.innerHTML = ''
+  })
+
+  it('모달이 열려 있는 동안 페이지 스크롤을 잠그고, 닫으면 이전 값으로 되돌린다', () => {
+    document.documentElement.style.overflow = 'scroll'
+    const { dialog } = setup('<input id="a">')
+    const release = trapFocus(dialog, () => {})
+    expect(document.documentElement.style.overflow).toBe('hidden')
+    release()
+    expect(document.documentElement.style.overflow).toBe('scroll')
+  })
+
+  it('겹친 모달은 마지막 것이 닫힐 때만 풀고, 같은 잠금을 두 번 풀어도 셈이 어긋나지 않는다', () => {
+    const outer = lockScroll()
+    const inner = lockScroll()
+    inner()
+    inner()
+    expect(document.documentElement.style.overflow).toBe('hidden')
+    outer()
+    expect(document.documentElement.style.overflow).toBe('')
   })
 })
 

@@ -24,7 +24,7 @@ export function NotificationEntry({ item, onRead, onRemove }: {
   return (
     <li className={`notification${item.read ? '' : ' unread'}`}>
       <button type="button" className="notification-open" onClick={open}>
-        {!item.read && <span className="notification-dot" aria-label="안 읽음">●</span>}
+        {!item.read && <span className="notification-dot"><span aria-hidden="true">●</span><span className="sr-only">안 읽음</span></span>}
         <span className="notification-body">
           <span className="notification-text">{m.who && <b>{m.who}</b>}{m.text}</span>
           {m.quote && <span className="notification-quote">“{m.quote}”</span>}

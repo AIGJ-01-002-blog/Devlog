@@ -5,6 +5,13 @@ import {
 
 interface Uploading { key: number; name: string; error?: string }
 
+function uploadStatus(list: Uploading[]): string {
+  const busy = list.filter((u) => !u.error).length
+  if (busy > 0) return `파일 ${busy}개를 올리는 중이에요`
+  const failed = list.length
+  return failed > 0 ? `파일 ${failed}개를 올리지 못했어요` : ''
+}
+
 /**
  * 편집 화면 아래 첨부 목록 (022 US1). 더하기·빼기·순서 바꾸기마다 서버에 바로 저장한다.
  * 저장은 하나씩 차례로 보내고, 실패하면 서버 목록으로 되돌린다.
@@ -81,6 +88,8 @@ export function AttachmentEditor({ postId, published }: { postId: number; publis
       <p className="muted small">pdf, zip, txt, md, csv, docx, xlsx, pptx · 파일 하나 20MB까지
         {published && ' · 발행한 글의 첨부는 바로 바뀌어요'}</p>
       {error && <p className="error small" role="alert">{error}</p>}
+      {/* 올리기 진행을 읽어 주는 자리는 늘 두고 글만 바꾼다 */}
+      <p className="sr-only" role="status">{uploadStatus(uploading)}</p>
       {(count > 0 || uploading.length > 0) && (
         <ul className="attachment-list">
           {files.map((f, i) => (
@@ -93,7 +102,7 @@ export function AttachmentEditor({ postId, published }: { postId: number; publis
                 <button type="button" className="btn btn-text" aria-label={`${f.name} 아래로`} disabled={i === count - 1}
                         onClick={() => save(move(files, i, 1))}>↓</button>
                 <button type="button" className="btn btn-text danger" aria-label={`${f.name} 빼기`}
-                        onClick={() => save(files.filter((x) => x.id !== f.id))}>✕</button>
+                        onClick={() => { if (confirm('첨부를 뺄까요?')) save(files.filter((x) => x.id !== f.id)) }}>✕</button>
               </span>
             </li>
           ))}

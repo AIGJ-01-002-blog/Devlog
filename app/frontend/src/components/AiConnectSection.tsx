@@ -77,7 +77,7 @@ export function AiConnectSection() {
       <form className="ai-connect-form" onSubmit={create}>
         <label>
           <span>이름</span>
-          <input value={name} maxLength={TOKEN_NAME_MAX} required onChange={(e) => setName(e.target.value)} placeholder="예: 회사 노트북 Claude Code" />
+          <input name="tokenName" autoComplete="off" value={name} maxLength={TOKEN_NAME_MAX} required onChange={(e) => setName(e.target.value)} placeholder="예: 회사 노트북 Claude Code" />
         </label>
         <label>
           <span>권한</span>
@@ -112,7 +112,8 @@ export function AiConnectSection() {
           ))}
         </ul>
       )}
-      {message && <p className={message.ok ? 'ok' : 'error'} role="status">{message.text}</p>}
+      {/* 알림 영역은 늘 두고 안의 글만 바꾼다 */}
+      <div role="status">{message && <p className={message.ok ? 'ok' : 'error'}>{message.text}</p>}</div>
 
       <AiPublishToggle />
       <AiDiaryToggle />
@@ -159,7 +160,7 @@ function AiPublishToggle() {
       <p className="muted small ai-publish-reconnect">
         끄면 바로 막혀요. 켠 뒤에는 AI 앱에서 devlog 연결을 다시 시작해야 발행·삭제 도구가 보여요.
       </p>
-      {error && <p className="error" role="status">{error}</p>}
+      <div role="status">{error && <p className="error">{error}</p>}</div>
     </div>
   )
 }
@@ -213,7 +214,7 @@ function AiDiaryToggle() {
           설정을 불러오지 못했어요. <button type="button" className="btn btn-text" title="자정 일기 설정을 다시 불러와요" onClick={load}>다시 시도</button>
         </p>
       )}
-      {error && <p className="error" role="status">{error}</p>}
+      <div role="status">{error && <p className="error">{error}</p>}</div>
     </div>
   )
 }

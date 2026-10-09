@@ -20,7 +20,7 @@ export function TagsPage() {
   return (
     <main className="container">
       <h1 className="page-title">태그</h1>
-      {error && <p className="feed-error">불러오지 못했어요 <button type="button" className="btn btn-text" onClick={load}>다시 시도</button></p>}
+      {error && <p className="feed-error" role="alert">불러오지 못했어요 <button type="button" className="btn btn-text" onClick={load}>다시 시도</button></p>}
       {!error && !tags && <p className="muted center">불러오는 중…</p>}
       {tags && tags.length === 0 && <div className="empty"><p>아직 태그가 없어요.</p></div>}
       {tags && tags.length > 0 && (

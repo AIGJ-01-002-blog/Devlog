@@ -67,14 +67,19 @@ export function ResetPasswordPage() {
       <form className="form" onSubmit={submit}>
         <label className="field">
           <span>새 비밀번호</span>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" maxLength={64} required />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" maxLength={64} required
+                 aria-invalid={!!errors.password} aria-describedby={errors.password ? 'reset-pw-error' : undefined} />
           <PasswordRules password={password} />
-          {errors.password && <small className="error">{errors.password}</small>}
+          {errors.password && <small id="reset-pw-error" className="error" role="alert">{errors.password}</small>}
         </label>
         <label className="field">
           <span>새 비밀번호 확인</span>
-          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" maxLength={64} required />
-          {(errors.passwordConfirm || (confirm && confirm !== password)) && <small className="error">{errors.passwordConfirm ?? '비밀번호가 서로 달라요.'}</small>}
+          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" maxLength={64} required
+                 aria-invalid={!!errors.passwordConfirm || (!!confirm && confirm !== password)}
+                 aria-describedby={errors.passwordConfirm || (confirm && confirm !== password) ? 'reset-confirm-error' : undefined} />
+          {(errors.passwordConfirm || (confirm && confirm !== password)) && (
+            <small id="reset-confirm-error" className="error" role={errors.passwordConfirm ? 'alert' : undefined}>{errors.passwordConfirm ?? '비밀번호가 서로 달라요.'}</small>
+          )}
         </label>
         {errors.form && <div className="banner banner-warn" role="alert">{errors.form}</div>}
         <button className="btn btn-primary btn-block" disabled={submitting || !passwordOk(password) || password !== confirm}>

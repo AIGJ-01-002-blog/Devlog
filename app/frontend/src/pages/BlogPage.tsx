@@ -196,7 +196,7 @@ function FriendButton({ profile, onChange }: { profile: BlogProfile; onChange: (
       )}
       {relation === 'FRIENDS' && (
         <>
-          <span className="badge">👥 친구</span>
+          <span className="badge"><span aria-hidden="true">👥</span> 친구</span>
           <button type="button" className="btn btn-text" disabled={busy} onClick={() => {
             if (confirm(`${profile.nickname}님과 친구를 끊을까요? 상대에게 알림은 가지 않아요.`)) void run(removeAs('NONE'))
           }}>친구 끊기</button>

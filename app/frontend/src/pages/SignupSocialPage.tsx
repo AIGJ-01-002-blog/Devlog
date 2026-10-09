@@ -108,8 +108,9 @@ export function SignupSocialPage() {
         {draft.emailRequired && (
           <label className="field">
             <span>이메일</span>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" maxLength={254} required />
-            <small className={errors.email ? 'error' : 'muted'}>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" maxLength={254} required
+                   spellCheck={false} autoCapitalize="none" aria-describedby="email-help" aria-invalid={!!errors.email} />
+            <small id="email-help" className={errors.email ? 'error' : 'muted'}>
               {errors.email ?? `${draft.provider === 'GITHUB' ? 'GitHub' : 'Google'} 계정에 인증된 이메일이 없어요. 받을 수 있는 이메일을 넣으면 인증 메일을 보내요.`}
             </small>
           </label>
@@ -119,9 +120,9 @@ export function SignupSocialPage() {
           <div className="input-prefix">
             <span>devlog/@{draft.prefix}</span>
             <input value={body} onChange={(e) => setBody(e.target.value.toLowerCase())} maxLength={20}
-                   autoComplete="off" spellCheck={false} aria-describedby="handle-help" required />
+                   autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} aria-describedby="handle-help" required />
           </div>
-          <small id="handle-help" className={errors.handleBody || handleCheck?.available === false ? 'error' : 'muted'}>
+          <small id="handle-help" aria-live="polite" className={errors.handleBody || handleCheck?.available === false ? 'error' : 'muted'}>
             {errors.handleBody ?? (handleCheck == null ? '영문 소문자·숫자·_ 3~20자' : handleCheck.available ? '쓸 수 있는 주소예요.'
               : `${handleCheck.message}${handleCheck.suggestion ? ` "${handleCheck.suggestion}"는 어때요?` : ''}`)}
           </small>
@@ -131,8 +132,9 @@ export function SignupSocialPage() {
         </label>
         <label className="field">
           <span>닉네임</span>
-          <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} required />
-          <small className={errors.nickname || nickCheck?.available === false ? 'error' : 'muted'}>
+          <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} required autoComplete="nickname"
+                 aria-describedby="nickname-help" aria-invalid={!!errors.nickname || nickCheck?.available === false} />
+          <small id="nickname-help" aria-live="polite" className={errors.nickname || nickCheck?.available === false ? 'error' : 'muted'}>
             {errors.nickname ?? (nickCheck == null ? '2~10자' : nickCheck.available ? '쓸 수 있는 닉네임이에요.' : nickCheck.message)}
           </small>
         </label>

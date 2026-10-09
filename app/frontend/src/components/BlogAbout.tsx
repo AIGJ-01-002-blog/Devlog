@@ -45,6 +45,15 @@ export function BlogAbout({ handle }: { handle: string }) {
   const editing = draft != null
   useEffect(() => { if (editing) editorRef.current?.focus() }, [editing])
 
+  const dirty = draft != null && draft !== (about?.contentMd ?? '')
+  // 고치던 소개가 있으면 탭을 닫거나 새로 고치기 전에 브라우저가 묻게 한다
+  useEffect(() => {
+    if (!dirty) return
+    const guard = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', guard)
+    return () => window.removeEventListener('beforeunload', guard)
+  }, [dirty])
+
   if (failed) return <p className="muted center">소개를 불러오지 못했어요.</p>
   if (!about) return <p className="muted center">불러오는 중…</p>
 
@@ -73,7 +82,11 @@ export function BlogAbout({ handle }: { handle: string }) {
                   onChange={(e) => setDraft(e.target.value)} />
         <div className="row about-actions">
           <span id="about-count" className={`muted small${length > ABOUT_MAX ? ' danger' : ''}`}>{length.toLocaleString()} / {ABOUT_MAX.toLocaleString()}자</span>
-          <button type="button" className="btn btn-text" onClick={() => { setDraft(null); setError(null) }} disabled={saving}>취소</button>
+          <button type="button" className="btn btn-text" onClick={() => {
+            if (dirty && !confirm('작성 중인 소개를 버릴까요?')) return
+            setDraft(null)
+            setError(null)
+          }} disabled={saving}>취소</button>
           <button type="button" className="btn btn-primary" onClick={save} disabled={saving || length > ABOUT_MAX}>
             {saving ? '저장 중…' : '저장'}
           </button>

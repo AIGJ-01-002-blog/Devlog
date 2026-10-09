@@ -17,7 +17,7 @@ export function coverGlyph(title) {
 export const CARD_TAG_LIMIT = 3;
 /** 홈·블로그 카드. 썸네일이 없어도 높이가 같고, 요약은 짧아도 3줄 높이다 (docs/10 §2). */
 export function PostCard({ card, showAuthor = true }) {
-    return (_jsxs("article", { className: "card", children: [_jsx(Link, { to: card.url, className: "card-thumb", tabIndex: -1, "aria-hidden": "true", children: card.thumbnailUrl ? _jsx("img", { src: card.thumbnailUrl, alt: card.title, loading: "lazy" }) : (
+    return (_jsxs("article", { className: "card", children: [_jsx(Link, { to: card.url, className: "card-thumb", tabIndex: -1, "aria-hidden": "true", children: card.thumbnailUrl ? _jsx("img", { src: card.thumbnailUrl, alt: "", width: 640, height: 360, loading: "lazy" }) : (
                 // 사진이 없으면 글마다 정해진 그라데이션 위에 제목 첫 글자를 크게 올린 표지 (048)
                 _jsxs("span", { className: "card-thumb-empty card-cover", "data-tone": coverTone(card.id), children: [_jsxs("span", { className: "card-cover-mark", children: ["devlog/@", card.author.handle] }), _jsx("span", { className: "card-cover-glyph", children: coverGlyph(card.title) })] })) }), _jsxs("div", { className: "card-body", children: [_jsx("h2", { className: "card-title", children: _jsx(Link, { to: card.url, children: card.title }) }), card.snippetHtml != null
                         // 서버가 전부 이스케이프하고 검색어에만 <mark>를 붙인 문장이다 (014 FR-019)

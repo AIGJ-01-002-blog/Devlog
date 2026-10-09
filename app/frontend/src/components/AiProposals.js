@@ -32,6 +32,8 @@ export function AiProposals() {
                 navigate(`/write/${postId}`);
                 return;
             }
+            if (!confirm('이 제안을 넘길까요? AI가 다시 묻지 않아요.'))
+                return;
             await aiProposalsApi.dismiss(p.id);
             setItems((list) => list.filter((i) => i.id !== p.id));
         }

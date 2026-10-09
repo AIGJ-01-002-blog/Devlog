@@ -163,6 +163,9 @@ html:not(.js) .theme-toggle { display: none; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+/* 고정 머리말(64px)과 휴대폰 아래 탭이 초점 받은 칸·앵커 제목을 가리지 않게 (068) */
+html { scroll-padding-top: 80px; -webkit-tap-highlight-color: transparent; }
+a, button, label, summary, select, [role="button"] { touch-action: manipulation; }
 body {
   background: var(--color-bg);
   color: var(--color-text);
@@ -200,7 +203,7 @@ img { max-width: 100%; }
 .warn { color: var(--color-warn-text); }
 .error { color: var(--color-danger); font-size: 0.875rem; }
 .empty { padding: 64px 0; text-align: center; color: var(--color-text-muted); }
-.page-title { font-size: 1.75rem; margin: 32px 0 24px; }
+.page-title { font-size: 1.75rem; margin: 32px 0 24px; overflow-wrap: anywhere; word-break: keep-all; }
 
 /* 헤더 */
 .site-header {
@@ -253,6 +256,7 @@ img { max-width: 100%; }
   transition: background-color 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:active:not(:disabled) { filter: brightness(0.95); }
 .btn-primary { background: var(--color-brand-fill); color: var(--color-on-fill); }
 .btn-primary:hover:not(:disabled) { background: var(--color-brand-fill-hover); }
 .btn-danger { background: var(--color-danger-fill); color: var(--color-on-fill); }
@@ -272,7 +276,11 @@ img { max-width: 100%; }
   background: var(--color-surface); outline: none;
 }
 select { width: auto; }
-.field input:focus, .field textarea:focus { border-color: var(--color-brand); }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--color-brand); }
+/* 입력칸은 테두리 대신 바깥 고리로 초점을 보인다. 1px 색 변화만으로는 키보드로 옮겨 다닐 때 잘 안 보인다 (068) */
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible, select:focus-visible {
+  border-color: var(--color-focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 30%, transparent);
+}
 .input-prefix { display: flex; align-items: stretch; }
 .input-prefix > span {
   display: flex; align-items: center; padding: 0 10px; border: 1px solid var(--color-input-border); border-right: 0;
@@ -309,19 +317,23 @@ select { width: auto; }
 .card {
   display: flex; flex-direction: column; background: var(--color-surface); border-radius: var(--radius-lg);
   border: 1px solid var(--color-border); box-shadow: var(--shadow); overflow: hidden;
-  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  transition: border-color 0.2s;
 }
 /* 키보드로 카드 안 링크에 들어와도 마우스를 올린 것과 똑같이 떠오른다 */
-.card:hover, .card:focus-within { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: color-mix(in srgb, var(--color-brand) 40%, var(--color-border)); }
+/* 마우스를 올리면 테두리만 진해진다. 뜨기·그림자·썸네일 확대는 뺐다: 모든 카드가 움직이면 산만하고, 휴대폰에서는 누른 뒤에도 뜬 채로 남았다 (068) */
+@media (hover: hover) {
+  .card:hover { border-color: color-mix(in srgb, var(--color-brand) 45%, var(--color-border)); }
+  .card:hover .card-title { color: var(--color-brand); }
+}
+.card:focus-within { border-color: var(--color-focus); }
 .card-thumb { display: block; aspect-ratio: 16 / 9; width: 100%; overflow: hidden; background: var(--color-surface-2); }
 .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
-.card:hover .card-thumb img, .card:focus-within .card-thumb img { transform: scale(1.04); }
 .card-thumb-empty {
   display: flex; width: 100%; height: 100%; align-items: center; justify-content: center;
   background: var(--thumb-empty);
 }
 /* 서버가 그린 첫 화면처럼 안이 비어 있으면 이름을 보인다 */
-.card-thumb-empty:empty::after { content: "devlog"; font-family: var(--mono); font-weight: 700; font-size: 1.5rem; color: var(--color-border); }
+.card-thumb-empty:empty::after { content: "devlog"; font-family: var(--mono); font-weight: 700; font-size: 1.5rem; color: var(--color-text-muted); opacity: 0.4; }
 /* 썸네일이 없는 글: 글마다 정해진 그라데이션 위에 제목 첫 글자를 크게 올린 표지 (048). 장식이라 화면 읽기 프로그램에는 숨긴다 */
 .card-cover {
   position: relative; align-items: flex-end; justify-content: flex-end; padding: 12px 22px;
@@ -381,7 +393,7 @@ select { width: auto; }
 }
 
 /* 개인 블로그 */
-.bio { margin: 4px 0 0; color: var(--color-text-2); white-space: pre-line; }
+.bio { margin: 4px 0 0; color: var(--color-text-2); white-space: pre-line; overflow-wrap: anywhere; }
 
 /* 글 상세 */
 .post { padding: 48px 0 96px; }
@@ -397,7 +409,7 @@ select { width: auto; }
   height: 34px; padding: 0 28px 0 10px; font: inherit; font-weight: 600; font-size: 0.9375rem; cursor: pointer;
   field-sizing: content; /* 고른 항목 글자만큼만 넓어진다 (지원 안 하는 브라우저는 가장 긴 항목 폭) */
 }
-.post-owner-actions .visibility-picker select:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.post-owner-actions .visibility-picker select:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; box-shadow: none; }
 .visibility-picker option { background: var(--color-surface); color: var(--color-text); }
 .visibility-chevron { position: absolute; right: 10px; pointer-events: none; }
 .post-stats { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 48px; color: var(--color-text-muted); font-size: 0.875rem; }
@@ -452,6 +464,8 @@ select { width: auto; }
 }
 .editor-toolbar .tabs-mobile button[aria-selected="true"] { color: var(--color-text); box-shadow: inset 0 -2px 0 var(--color-text); }
 .editor-write .editor-title { margin-bottom: 16px; }
+/* 테두리 없는 제목·본문 칸: 키보드로 들어오면 제목 아래 선으로 초점을 보인다 (068) */
+.editor-title:focus-visible { box-shadow: inset 0 -2px 0 var(--color-focus); }
 .editor-body {
   flex: 1; width: 100%; border: 0; outline: none; resize: none; background: none;
   font-family: var(--mono); font-size: 1rem; line-height: 1.6; padding: 0 0 48px;
@@ -472,13 +486,14 @@ select { width: auto; }
   position: fixed; inset: 0; z-index: 50; background: var(--color-overlay);
   display: flex; align-items: center; justify-content: center; padding: 16px;
 }
+.dialog, .menu-list, .notification-panel, .toc-inner, .backup-list, .revision-list, .editor-preview { overscroll-behavior: contain; }
 .dialog {
   width: 100%; max-width: 480px; max-height: calc(100dvh - 32px); overflow-y: auto;
   background: var(--color-surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: 0 8px 32px var(--shadow-color);
 }
 .dialog-wide { max-width: 1100px; }
 .dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.dialog-header h2 { margin: 0 0 8px; font-size: 1.25rem; }
+.dialog-header h2 { margin: 0 0 8px; font-size: 1.25rem; overflow-wrap: anywhere; }
 .dialog .dialog-footer { margin-top: 24px; justify-content: flex-end; }
 .vis { display: flex; gap: 8px; }
 .vis label {
@@ -720,7 +735,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .search-box input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--color-input-border); border-radius: var(--radius); background: var(--color-surface); }
 .search-box .btn { height: 40px; }
 .search-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.search-head .tabs { margin: 8px 0 16px; flex: 1; }
+.search-head .tabs { margin: 8px 0 16px; flex: 1; min-width: 0; }
 .search-notice { color: var(--color-text-muted); font-size: 14px; margin: 0 0 16px; }
 .card-snippet mark, .card-excerpt mark { background: color-mix(in srgb, var(--color-brand) 22%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }
 .people-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
@@ -803,7 +818,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 }
 .home-hero-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-brand); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand) 20%, transparent); }
 .home-hero-title { margin: 0; font-size: clamp(2rem, 4.6vw, 3.25rem); font-weight: 800; line-height: 1.15; letter-spacing: -0.04em; word-break: keep-all; }
-.home-hero-accent { color: var(--color-brand); }
+.home-hero-accent { color: inherit; }
 .home-hero-sub { margin: 16px 0 28px; max-width: 520px; font-size: 1.0625rem; line-height: 1.7; color: var(--color-text-2); word-break: keep-all; }
 .home-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn-lg { height: 44px; padding: 0 20px; font-size: 1rem; }
@@ -1052,7 +1067,7 @@ a.attachment-name:hover { color: var(--color-brand); }
 .series-posts > li > .card { flex: 1; }
 .series-no { font-weight: 700; color: var(--color-text-muted); min-width: 2em; padding-top: 8px; }
 .series-edit li { padding: 8px 0; border-bottom: 1px solid var(--color-border); }
-.series-edit .grow { flex: 1; }
+.series-edit .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 
 /* 블로그 소개 (042) */
 .blog-about { margin: 24px 0; }
@@ -1078,13 +1093,14 @@ a.attachment-name:hover { color: var(--color-brand); }
 .post-body :is(h2, h3, h4)[id] { scroll-margin-top: 96px; }
 .toc { display: none; }
 @media (min-width: 1280px) {
-  .toc { display: block; position: absolute; top: 0; bottom: 0; left: 100%; margin-left: 48px; width: 240px; }
+  /* 1280px 언저리에서는 오른쪽 여백만큼만 넓어져 화면 밖으로 나가지 않는다 (068) */
+  .toc { display: block; position: absolute; top: 0; bottom: 0; left: 100%; margin-left: 48px; width: min(240px, calc((100vw - 768px) / 2 - 72px)); }
   .toc-inner { position: sticky; top: 112px; max-height: calc(100vh - 160px); overflow-y: auto; list-style: none; margin: 0;
                padding: 4px 0 4px 12px; border-left: 2px solid var(--color-border); font-size: 0.875rem; line-height: 1.6; }
   .toc-inner li { margin: 4px 0; }
-  .toc-inner a { color: var(--color-text-muted); text-decoration: none; display: block; transition: color 0.15s, transform 0.15s; }
+  .toc-inner a { color: var(--color-text-muted); text-decoration: none; display: block; transition: color 0.15s; overflow-wrap: anywhere; }
   .toc-inner a:hover { color: var(--color-text); }
-  .toc-inner a.active { color: var(--color-text); font-weight: 600; transform: scale(1.03); transform-origin: left; }
+  .toc-inner a.active { color: var(--color-text); font-weight: 600; }
 }
 
 /* 문의·신고, 문의 관리, 릴리스 노트 (054). 좁은 화면에서는 종류 고르기가 한 줄에 하나, 처리 정보는 위아래로 */
@@ -1157,8 +1173,6 @@ a.attachment-name:hover { color: var(--color-brand); }
     transition-duration: 0.01ms !important; animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important; scroll-behavior: auto !important;
   }
-  .card:hover, .card:focus-within, .toc-inner a.active,
-  .card:hover .card-thumb img, .card:focus-within .card-thumb img { transform: none; }
   .manage-skeleton { animation: none; }
 }
 
@@ -1193,7 +1207,7 @@ a.attachment-name:hover { color: var(--color-brand); }
   .header-nav { display: none !important; }
   .mobile-nav {
     display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-    padding: 0 0 env(safe-area-inset-bottom); background: var(--color-header-bg); border-top: 1px solid var(--color-border);
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); background: var(--color-header-bg); border-top: 1px solid var(--color-border);
     -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px);
   }
   .mobile-nav a {
@@ -1203,6 +1217,7 @@ a.attachment-name:hover { color: var(--color-brand); }
   .mobile-nav a.on { color: var(--color-brand); }
   .mobile-nav a:active { background: var(--color-hover); }
   body { padding-bottom: calc(57px + env(safe-area-inset-bottom)); }
+  html { scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   /* 머리말 아이콘 버튼은 손가락으로 누르기 쉽게 40px 이상 (WCAG 2.5.8은 24px, 애플·구글 권장은 44·48px) */
   .header-actions .bell-button, .header-actions .theme-toggle, .header-actions .menu-button {
     min-width: 40px; min-height: 40px; justify-content: center; align-items: center;
@@ -1302,7 +1317,7 @@ a.attachment-name:hover { color: var(--color-brand); }
 .blog-hero-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; padding-bottom: 4px; }
 .blog-hero-actions .follow-wrap, .blog-hero-actions .friend-actions { margin: 0; }
 .btn-icon { width: 34px; padding: 0; }
-.blog-name { margin: 16px 0 0; font-size: 1.875rem; font-weight: 800; letter-spacing: -0.02em; }
+.blog-name { margin: 16px 0 0; font-size: 1.875rem; font-weight: 800; letter-spacing: -0.02em; overflow-wrap: anywhere; word-break: keep-all; }
 .blog-handle { margin: 2px 0 0; }
 .blog-hero .bio { margin-top: 12px; max-width: 64ch; }
 .blog-stats { display: flex; gap: 12px; list-style: none; margin: 20px 0 0; padding: 0; flex-wrap: wrap; }
@@ -1350,7 +1365,7 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
   padding: 16px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);
   cursor: pointer; color: var(--color-text-2); transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
-.manage-stat:hover { border-color: color-mix(in srgb, var(--color-brand) 40%, var(--color-border)); box-shadow: var(--shadow-lg); }
+@media (hover: hover) { .manage-stat:hover { border-color: color-mix(in srgb, var(--color-brand) 40%, var(--color-border)); } }
 .manage-stat[aria-selected="true"] { border-color: var(--color-brand); box-shadow: 0 0 0 1px var(--color-brand) inset; color: var(--color-text); }
 .manage-stat-icon {
   grid-row: span 2; width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
@@ -1365,7 +1380,7 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
   padding: 14px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-.manage-list .manage-item:hover { border-color: color-mix(in srgb, var(--color-brand) 30%, var(--color-border)); box-shadow: var(--shadow-lg); }
+@media (hover: hover) { .manage-list .manage-item:hover { border-color: color-mix(in srgb, var(--color-brand) 30%, var(--color-border)); } }
 .manage-item.is-hidden { background: var(--color-warn-bg); }
 .manage-cover {
   width: 56px; height: 56px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
@@ -1434,3 +1449,20 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
   .rss-url { flex-direction: column; align-items: stretch; }
   .rss-url .btn { min-height: 44px; }
 }
+
+/* 068 UX 점검(web-design-guidelines): 제목 줄바꿈 다듬기 */
+.post-title, .page-title, .home-hero-title, .blog-name, .markdown :is(h1, h2, h3, h4) { text-wrap: balance; }
+.card-title { text-wrap: pretty; }
+
+/* 068 휴대폰: 누르는 것은 40px 안팎으로, 입력칸 글자는 16px 이상(아이폰이 초점 때 화면을 확대하지 않게) */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: max(16px, 1em); }
+  .comment-actions .btn { padding-left: 10px; padding-right: 10px; min-height: 40px; }
+  .tag-remove { min-width: 32px; min-height: 32px; }
+  .segmented button, .prepublish summary, .tabs.home-tabs a, .blog-tabs a, .like-button { min-height: 40px; }
+  .tag-link, .filters .chip { min-height: 36px; }
+  .filters .chip, .tag-link, .tabs.home-tabs a, .blog-tabs a { display: inline-flex; align-items: center; }
+  .manage-actions select { height: auto; }
+}
+/* 알림 창은 열 때 창 자체가 초점을 받는다. 창 전체에 고리를 그리지 않는다 (068) */
+.notification-panel:focus { outline: none; }

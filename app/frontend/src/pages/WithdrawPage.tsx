@@ -23,7 +23,7 @@ export function WithdrawPage() {
     withdrawApi.summary().then(setS).catch(() => setLoadError(true))
   }, [])
 
-  if (loadError) return <main className="container narrow"><p className="error center">불러오지 못했어요. 새로고침해 주세요.</p></main>
+  if (loadError) return <main className="container narrow"><p className="error center" role="alert">불러오지 못했어요. 새로고침해 주세요.</p></main>
   if (!s) return <main className="container narrow"><p className="muted center">불러오는 중…</p></main>
 
   const ready = withdrawReady(s.method, checked, password, confirmText)
@@ -75,15 +75,17 @@ export function WithdrawPage() {
             <label className="field">
               <span>현재 비밀번호</span>
               <input type="password" value={password} maxLength={64} autoComplete="current-password"
-                     onChange={(e) => { setPassword(e.target.value); setError(null) }} aria-invalid={error?.field === 'password'} />
-              {error?.field === 'password' && <small className="error">{error.text}</small>}
+                     onChange={(e) => { setPassword(e.target.value); setError(null) }} aria-invalid={error?.field === 'password'}
+                     aria-describedby={error?.field === 'password' ? 'withdraw-error' : undefined} />
+              {error?.field === 'password' && <small id="withdraw-error" className="error" role="alert">{error.text}</small>}
             </label>
           ) : (
             <label className="field">
               <span>확인을 위해 "{CONFIRM_TEXT}"를 입력해 주세요</span>
               <input value={confirmText} maxLength={10} autoComplete="off" placeholder={CONFIRM_TEXT}
-                     onChange={(e) => { setConfirmText(e.target.value); setError(null) }} aria-invalid={error?.field === 'confirmText'} />
-              {error?.field === 'confirmText' && <small className="error">{error.text}</small>}
+                     onChange={(e) => { setConfirmText(e.target.value); setError(null) }} aria-invalid={error?.field === 'confirmText'}
+                     aria-describedby={error?.field === 'confirmText' ? 'withdraw-error' : undefined} />
+              {error?.field === 'confirmText' && <small id="withdraw-error" className="error" role="alert">{error.text}</small>}
             </label>
           )}
         </section>

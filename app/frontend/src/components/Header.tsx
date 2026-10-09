@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { isStaff } from '../lib/admin'
 import { loginPath, useAuth } from '../lib/auth'
 import { Link, navigate, useLocation } from '../lib/router'
@@ -31,13 +31,20 @@ export function Header() {
   const { path } = useLocation()
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!open) return
+    // 열리면 첫 항목으로 초점을 옮긴다 (WAI-ARIA menu button)
+    menuItems()[0]?.focus()
     const close = (e: MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setOpen(false)
     }
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setOpen(false)
+      buttonRef.current?.focus()
+    }
     document.addEventListener('mousedown', close)
     document.addEventListener('keydown', esc)
     return () => {
@@ -45,6 +52,36 @@ export function Header() {
       document.removeEventListener('keydown', esc)
     }
   }, [open])
+
+  const menuItems = () => [...(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])]
+    .filter((el) => {
+      // 넓은 화면에서 숨긴 휴대폰 전용 항목은 건너뛴다
+      const box = el.closest<HTMLElement>('.menu-mobile-only')
+      return !box || getComputedStyle(box).display !== 'none'
+    })
+
+  const onMenuKey = (e: ReactKeyboardEvent) => {
+    const items = menuItems()
+    if (items.length === 0) return
+    const i = items.indexOf(document.activeElement as HTMLElement)
+    let next: number
+    if (e.key === 'ArrowDown') next = i < 0 ? 0 : (i + 1) % items.length
+    else if (e.key === 'ArrowUp') next = i <= 0 ? items.length - 1 : i - 1
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = items.length - 1
+    else return
+    e.preventDefault()
+    items[next].focus()
+  }
+
+  const onLogout = async () => {
+    try {
+      await logout()
+      navigate('/')
+    } catch {
+      alert('로그아웃하지 못했어요. 잠시 뒤 다시 시도해 주세요.')
+    }
+  }
 
   const member = me?.member
   const items = headerItems(path).filter((it) => member || !it.memberOnly)
@@ -79,22 +116,25 @@ export function Header() {
               )}
               <NotificationBell />
               <Link to="/write" className="btn btn-outline header-write" aria-label="새 글 작성" data-tip="새 글 쓰기"><span className="long">새 글 작성</span><span className="short" aria-hidden="true">글쓰기</span><span className="icon" aria-hidden="true">✏️</span></Link>
-              <div className="menu" ref={menuRef}>
-                <button type="button" className="menu-button" aria-haspopup="menu" aria-expanded={open} data-tip="내 메뉴: 내 설정·내 블로그·글 관리·로그아웃"
+              <div className="menu" ref={menuRef} onBlur={(e) => {
+                // 초점이 메뉴 밖의 다른 요소로 옮겨 가면 닫는다 (빈 곳 클릭은 mousedown이 맡는다)
+                if (open && e.relatedTarget && !e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false)
+              }}>
+                <button type="button" ref={buttonRef} className="menu-button" aria-haspopup="menu" aria-expanded={open} data-tip="내 메뉴: 내 설정·내 블로그·글 관리·로그아웃"
                         onClick={() => setOpen((o) => !o)}>
                   <Avatar src={member.profileImageUrl} name={member.nickname} seed={member.handle} />
                   <span className="sr-only">내 메뉴</span>
                 </button>
                 {open && (
-                  <div className="menu-list profile-menu" role="menu" onClick={() => setOpen(false)}>
-                    <div className="menu-who">
+                  <div className="menu-list profile-menu" role="menu" aria-label="내 메뉴" onClick={() => setOpen(false)} onKeyDown={onMenuKey}>
+                    <div className="menu-who" role="none">
                       <Avatar src={member.profileImageUrl} name={member.nickname} seed={member.handle} size={40} />
                       <span><b>{member.nickname}</b><span className="muted">@{member.handle}</span></span>
                     </div>
                     <Link to="/settings" role="menuitem"><NavIcon name="settings" />내 설정</Link>
                     <Link to={`/@${member.handle}`} role="menuitem"><NavIcon name="blog" />내 블로그</Link>
                     <Link to="/manage/posts" role="menuitem"><NavIcon name="posts" />내 글 관리</Link>
-                    <div className="menu-mobile-only">
+                    <div className="menu-mobile-only" role="none">
                       <div className="menu-sep" role="separator" />
                       {mobileExtra.map((it) => <Link key={it.icon} to={it.to} role="menuitem"><NavIcon name={it.icon} />{it.label}</Link>)}
                     </div>
@@ -105,10 +145,7 @@ export function Header() {
                       </>
                     )}
                     <div className="menu-sep" role="separator" />
-                    <button type="button" role="menuitem" onClick={async () => {
-                      await logout()
-                      navigate('/')
-                    }}><NavIcon name="logout" />로그아웃</button>
+                    <button type="button" role="menuitem" onClick={() => void onLogout()}><NavIcon name="logout" />로그아웃</button>
                   </div>
                 )}
               </div>

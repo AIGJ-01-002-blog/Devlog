@@ -10,6 +10,7 @@ export function VerifyEmailPage() {
   const token = search.get('token') ?? ''
   const [state, setState] = useState<'pending' | 'done' | 'expired' | 'error'>('pending')
   const [message, setMessage] = useState<string | null>(null)
+  const [sending, setSending] = useState(false)
   const started = useRef(false)
 
   useEffect(() => {
@@ -25,11 +26,15 @@ export function VerifyEmailPage() {
   }, [token, refresh])
 
   const resend = async () => {
+    setSending(true)
+    setMessage(null)
     try {
       await api('/api/auth/email/resend', { method: 'POST' })
       setMessage('인증 메일을 다시 보냈어요.')
     } catch (e) {
       setMessage(e instanceof ApiError ? e.message : '보내지 못했어요.')
+    } finally {
+      setSending(false)
     }
   }
 
@@ -48,7 +53,7 @@ export function VerifyEmailPage() {
           <h1>링크가 만료됐어요</h1>
           <p className="muted">이미 쓴 링크이거나 24시간이 지났어요.</p>
           {me?.authenticated && !me.emailVerified
-            ? <button type="button" className="btn btn-primary btn-block" onClick={resend}>인증 메일 다시 보내기</button>
+            ? <button type="button" className="btn btn-primary btn-block" disabled={sending} onClick={resend}>{sending ? '보내는 중…' : '인증 메일 다시 보내기'}</button>
             : <Link to="/login" className="btn btn-primary btn-block">로그인하고 다시 받기</Link>}
         </>
       )}

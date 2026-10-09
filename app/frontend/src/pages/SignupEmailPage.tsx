@@ -206,7 +206,7 @@ export function SignupEmailPage() {
           <span id="signup-email-label">아이디(이메일)</span>
           <div className="input-action">
             <input id="signup-email" aria-labelledby="signup-email-label" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setEmailTaken(false); setWithdrawnAccount(false) }}
-                   maxLength={254} autoComplete="email" required aria-describedby="email-help"
+                   maxLength={254} autoComplete="email" spellCheck={false} autoCapitalize="none" required aria-describedby="email-help"
                    aria-invalid={!!errors.email || emailTaken || withdrawnAccount || emailCheck?.available === false} />
             {codeRequired && (
               <button type="button" className={verified ? 'btn btn-outline ok' : 'btn btn-outline'} onClick={sendCode}
@@ -218,11 +218,11 @@ export function SignupEmailPage() {
             )}
           </div>
           {emailHelp && (
-            <small id="email-help" className={errors.email || emailCheck?.available === false ? 'error' : verified ? 'ok' : 'muted'}>{emailHelp}</small>
+            <small id="email-help" aria-live="polite" className={errors.email || emailCheck?.available === false ? 'error' : verified ? 'ok' : 'muted'}>{emailHelp}</small>
           )}
           {codeOpen && (
             <div className="input-action">
-              <input aria-label="인증번호 6자리" value={code} inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+              <input aria-label="인증번호 6자리" value={code} inputMode="numeric" autoComplete="one-time-code" maxLength={6} spellCheck={false}
                      placeholder="인증번호 6자리" onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (code.length === 6) void confirmCode() } }} />
               <button type="button" className="btn btn-primary" onClick={confirmCode} disabled={confirming || code.length !== 6 || expireLeft === 0}
@@ -260,7 +260,7 @@ export function SignupEmailPage() {
                    onChange={(e) => { setBody(cleanHandleInput(e.target.value)); setBodyTouched(true); setAutoFilled(false) }}
                    maxLength={20} autoComplete="off" aria-describedby="handle-help" required />
           </div>
-          <small id="handle-help" className={errors.handleBody || handleCheck?.available === false ? 'error' : 'muted'}>
+          <small id="handle-help" aria-live="polite" className={errors.handleBody || handleCheck?.available === false ? 'error' : 'muted'}>
             {errors.handleBody ?? (handleCheck == null ? '영문 소문자·숫자·_ 3~20자' : handleCheck.available ? '쓸 수 있는 주소예요.'
               : `${handleCheck.message}${handleCheck.suggestion ? ` "${handleCheck.suggestion}"는 어때요?` : ''}`)}
           </small>
@@ -286,8 +286,9 @@ export function SignupEmailPage() {
         </label>
         <label className="field">
           <span>닉네임</span>
-          <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} required />
-          <small className={errors.nickname || nickCheck?.available === false ? 'error' : 'muted'}>
+          <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} required autoComplete="nickname"
+                 aria-describedby="nickname-help" aria-invalid={!!errors.nickname || nickCheck?.available === false} />
+          <small id="nickname-help" aria-live="polite" className={errors.nickname || nickCheck?.available === false ? 'error' : 'muted'}>
             {errors.nickname ?? (nickCheck == null ? '한글·영문·숫자 2~10자' : nickCheck.available ? '쓸 수 있는 닉네임이에요.' : nickCheck.message)}
           </small>
         </label>

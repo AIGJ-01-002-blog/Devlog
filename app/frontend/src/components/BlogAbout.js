@@ -34,6 +34,15 @@ export function BlogAbout({ handle }) {
     const editing = draft != null;
     useEffect(() => { if (editing)
         editorRef.current?.focus(); }, [editing]);
+    const dirty = draft != null && draft !== (about?.contentMd ?? '');
+    // 고치던 소개가 있으면 탭을 닫거나 새로 고치기 전에 브라우저가 묻게 한다
+    useEffect(() => {
+        if (!dirty)
+            return;
+        const guard = (e) => { e.preventDefault(); e.returnValue = ''; };
+        window.addEventListener('beforeunload', guard);
+        return () => window.removeEventListener('beforeunload', guard);
+    }, [dirty]);
     if (failed)
         return _jsx("p", { className: "muted center", children: "\uC18C\uAC1C\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694." });
     if (!about)
@@ -57,7 +66,12 @@ export function BlogAbout({ handle }) {
     };
     if (draft != null) {
         const length = [...draft].length;
-        return (_jsxs("section", { className: "blog-about", "aria-label": "\uC18C\uAC1C \uC218\uC815", children: [_jsx("label", { htmlFor: "about-editor", className: "sr-only", children: "\uBE14\uB85C\uADF8 \uC18C\uAC1C (\uB9C8\uD06C\uB2E4\uC6B4)" }), _jsx("textarea", { id: "about-editor", ref: editorRef, className: "about-editor", value: draft, rows: 14, "aria-describedby": "about-count", placeholder: "\uB098\uB97C \uC18C\uAC1C\uD558\uB294 \uAE00\uC744 \uB9C8\uD06C\uB2E4\uC6B4\uC73C\uB85C \uC368 \uBCF4\uC138\uC694.", onChange: (e) => setDraft(e.target.value) }), _jsxs("div", { className: "row about-actions", children: [_jsxs("span", { id: "about-count", className: `muted small${length > ABOUT_MAX ? ' danger' : ''}`, children: [length.toLocaleString(), " / ", ABOUT_MAX.toLocaleString(), "\uC790"] }), _jsx("button", { type: "button", className: "btn btn-text", onClick: () => { setDraft(null); setError(null); }, disabled: saving, children: "\uCDE8\uC18C" }), _jsx("button", { type: "button", className: "btn btn-primary", onClick: save, disabled: saving || length > ABOUT_MAX, children: saving ? '저장 중…' : '저장' })] }), error && _jsx("p", { className: "error", role: "alert", children: error })] }));
+        return (_jsxs("section", { className: "blog-about", "aria-label": "\uC18C\uAC1C \uC218\uC815", children: [_jsx("label", { htmlFor: "about-editor", className: "sr-only", children: "\uBE14\uB85C\uADF8 \uC18C\uAC1C (\uB9C8\uD06C\uB2E4\uC6B4)" }), _jsx("textarea", { id: "about-editor", ref: editorRef, className: "about-editor", value: draft, rows: 14, "aria-describedby": "about-count", placeholder: "\uB098\uB97C \uC18C\uAC1C\uD558\uB294 \uAE00\uC744 \uB9C8\uD06C\uB2E4\uC6B4\uC73C\uB85C \uC368 \uBCF4\uC138\uC694.", onChange: (e) => setDraft(e.target.value) }), _jsxs("div", { className: "row about-actions", children: [_jsxs("span", { id: "about-count", className: `muted small${length > ABOUT_MAX ? ' danger' : ''}`, children: [length.toLocaleString(), " / ", ABOUT_MAX.toLocaleString(), "\uC790"] }), _jsx("button", { type: "button", className: "btn btn-text", onClick: () => {
+                                if (dirty && !confirm('작성 중인 소개를 버릴까요?'))
+                                    return;
+                                setDraft(null);
+                                setError(null);
+                            }, disabled: saving, children: "\uCDE8\uC18C" }), _jsx("button", { type: "button", className: "btn btn-primary", onClick: save, disabled: saving || length > ABOUT_MAX, children: saving ? '저장 중…' : '저장' })] }), error && _jsx("p", { className: "error", role: "alert", children: error })] }));
     }
     return (_jsxs("section", { className: "blog-about", children: [about.html
                 ? _jsx("div", { className: "markdown", ref: bodyRef, dangerouslySetInnerHTML: { __html: about.html } })

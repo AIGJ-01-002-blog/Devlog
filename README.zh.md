@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.42.0 | 2026-10-09 | UX/UI 复查：焦点样式、手机点击区域、错误提示、确认对话框，卡片效果更克制 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.42.0) |
 | v1.41.0 | 2026-10-09 | 文章卡片显示标签、浏览数和评论数，文章页的公开设置改为文字按钮样式 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.41.0) |
 | v1.40.0 | 2026-10-09 | 管理后台仪表盘新增每日活跃会员图表 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.40.0) |
 | v1.39.0 | 2026-10-09 | 注册页面检查账号(邮箱)并用邮件验证码完成验证 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.39.0) |

@@ -73,7 +73,7 @@ function PeopleResults({ q }: { q: string }) {
     searchApi.people(q).then(setPage).catch(() => setError(true))
   }
   useEffect(load, [q])
-  if (error) return <p className="feed-error">불러오지 못했어요 <button type="button" className="btn btn-text" onClick={load}>다시 시도</button></p>
+  if (error) return <p className="feed-error" role="alert">불러오지 못했어요 <button type="button" className="btn btn-text" onClick={load}>다시 시도</button></p>
   if (!page) return <p className="muted center">불러오는 중…</p>
   if (page.notice === 'TOO_SHORT') return <p className="search-notice" role="status">{NOTICE_TEXT.TOO_SHORT}</p>
   if (page.items.length === 0) return <div className="empty"><p>'{q}'에 해당하는 사람이 없어요</p></div>

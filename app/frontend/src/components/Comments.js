@@ -86,7 +86,7 @@ export function Comments({ postId, initial, onCount }) {
             setCount(Math.max(0, count - 1));
     };
     if (error) {
-        return _jsx("section", { className: "comments", children: _jsxs("p", { className: "feed-error", children: ["\uB313\uAE00\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] }) });
+        return _jsx("section", { className: "comments", children: _jsxs("p", { className: "feed-error", role: "alert", children: ["\uB313\uAE00\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text", onClick: load, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] }) });
     }
     if (!page)
         return _jsx("section", { className: "comments", children: _jsx("p", { className: "muted", children: "\uB313\uAE00\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\u2026" }) });
@@ -96,18 +96,22 @@ export function Comments({ postId, initial, onCount }) {
 }
 function MoreButton({ label, loading, failed, onClick }) {
     if (failed)
-        return _jsxs("p", { className: "feed-error small", children: ["\uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text", onClick: onClick, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] });
+        return _jsxs("p", { className: "feed-error small", role: "alert", children: ["\uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text", onClick: onClick, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] });
     return (_jsx("div", { className: "more", children: _jsx("button", { type: "button", className: "btn btn-outline", disabled: loading, onClick: onClick, children: loading ? '불러오는 중…' : label }) }));
 }
 /** 최상위 입력칸, 또는 비회원·인증 전 회원 안내 (FR-022). */
 function WriteBox({ ctx }) {
     const { me } = useAuth();
     const [sent, setSent] = useState(false);
+    const [resendFailed, setResendFailed] = useState(false);
     if (!me?.authenticated) {
         return _jsxs("p", { className: "comment-guest", children: ["\uB85C\uADF8\uC778\uD558\uACE0 \uB313\uAE00\uC744 \uB0A8\uACA8 \uBCF4\uC138\uC694 ", _jsx(Link, { to: loginPath(), className: "btn btn-text", children: "\uB85C\uADF8\uC778" })] });
     }
     if (!me.emailVerified) {
-        return (_jsxs("p", { className: "comment-guest", children: ["\uC774\uBA54\uC77C \uC778\uC99D \uD6C4 \uB313\uAE00\uC744 \uC4F8 \uC218 \uC788\uC5B4\uC694", ' ', _jsx("button", { type: "button", className: "btn btn-text", disabled: sent, onClick: () => api('/api/auth/email/resend', { method: 'POST' }).then(() => setSent(true)).catch(() => undefined), children: sent ? '보냈어요' : '인증 메일 다시 보내기' })] }));
+        return (_jsxs("p", { className: "comment-guest", children: ["\uC774\uBA54\uC77C \uC778\uC99D \uD6C4 \uB313\uAE00\uC744 \uC4F8 \uC218 \uC788\uC5B4\uC694", ' ', _jsx("button", { type: "button", className: "btn btn-text", disabled: sent, onClick: () => {
+                        setResendFailed(false);
+                        api('/api/auth/email/resend', { method: 'POST' }).then(() => setSent(true)).catch(() => setResendFailed(true));
+                    }, children: sent ? '보냈어요' : '인증 메일 다시 보내기' }), resendFailed && _jsx("small", { className: "error", role: "alert", children: " \uBA54\uC77C\uC744 \uBCF4\uB0B4\uC9C0 \uBABB\uD588\uC5B4\uC694. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694." })] }));
     }
     if (!ctx.canWrite)
         return null;
@@ -187,6 +191,6 @@ function CommentItem({ c, rootId, ctx }) {
     const shown = c.replies?.length ?? 0;
     const hiddenReplies = (c.replyCount ?? 0) - shown;
     return (_jsxs("li", { id: `comment-${c.id}`, className: `comment${isRoot ? '' : ' reply'}${ctx.highlight === c.id ? ' highlight' : ''}`, children: [_jsxs("div", { className: "comment-head", children: [c.author ? (_jsxs(_Fragment, { children: [_jsxs(Link, { to: `/@${c.author.handle}`, className: "comment-author", children: [_jsx(Avatar, { src: c.author.profileImageUrl, name: c.author.nickname, seed: c.author.handle, size: 28 }), _jsx("b", { children: c.author.nickname }), " ", _jsxs("span", { className: "muted", children: ["@", c.author.handle] })] }), c.author.isPostAuthor && _jsx("span", { className: "badge", children: "\uC791\uC131\uC790" })] })) : (_jsxs("span", { className: "comment-author muted", children: [_jsx("span", { className: "avatar-blank", "aria-hidden": "true" }), c.state === 'WITHDRAWN_AUTHOR' ? '탈퇴한 사용자' : ''] })), c.author && (_jsxs("span", { className: "muted small", children: ["\u00B7 ", _jsx("time", { dateTime: c.createdAt, title: fullDate(c.createdAt), children: relativeDate(c.createdAt) }), c.edited && ' · 수정됨'] }))] }), c.state === 'DELETED' && _jsx("p", { className: "comment-body muted", children: "\uC0AD\uC81C\uB41C \uB313\uAE00\uC774\uC5D0\uC694" }), c.state === 'WITHDRAWN_AUTHOR' && _jsx("p", { className: "comment-body muted", children: "\uD0C8\uD1F4\uD55C \uC0AC\uC6A9\uC790\uC758 \uB313\uAE00\uC774\uC5D0\uC694" }), c.state === 'HIDDEN' && !c.mine && _jsx("p", { className: "comment-body muted", children: "\uC6B4\uC601 \uC815\uCC45\uC5D0 \uB530\uB77C \uC228\uACA8\uC9C4 \uB313\uAE00\uC774\uC5D0\uC694" }), c.state === 'HIDDEN' && c.mine && _jsx("p", { className: "small badge-warn badge", children: "\uC228\uACA8\uC84C\uC5B4\uC694 (\uB098\uB9CC \uBCF4\uC5EC\uC694)" }), c.content != null && !editing && (_jsxs(_Fragment, { children: [c.replyTo && _jsx("p", { className: "comment-reply-to", children: c.replyTo.withdrawn ? '탈퇴한 사용자에게' : `@${c.replyTo.nickname}에게` }), _jsx("p", { className: "comment-body", children: c.content })] })), editing && (_jsx(Editor, { initial: c.content ?? '', placeholder: "\uB313\uAE00 \uACE0\uCE58\uAE30", submitLabel: "\uC800\uC7A5", busyLabel: "\uC800\uC7A5 \uC911\u2026", autoFocus: true, onCancel: () => setEditing(false), onSubmit: async (text) => { ctx.updated(await commentsApi.update(c.id, text)); setEditing(false); } })), !editing && (_jsxs("div", { className: "comment-actions", children: [normal && ctx.canWrite && (_jsx("button", { type: "button", className: "btn btn-text", onClick: () => ctx.setReplyingTo(ctx.replyingTo === c.id ? null : c.id), children: "\uB2F5\uAE00" })), c.mine && normal && _jsx("button", { type: "button", className: "btn btn-text", onClick: () => setEditing(true), children: "\uC218\uC815" }), c.mine && (normal || c.state === 'HIDDEN') && (_jsx("button", { type: "button", className: "btn btn-text danger", onClick: remove, disabled: deleting, children: deleting ? '지우는 중…' : '삭제' })), !c.mine && normal && _jsx(ReportButton, { targetType: "COMMENT", targetId: c.id })] })), error && _jsx("p", { className: "error small", role: "alert", children: error }), ctx.replyingTo === c.id && (_jsx(Editor, { placeholder: "\uB2F5\uAE00\uC744 \uB0A8\uACA8 \uBCF4\uC138\uC694", submitLabel: "\uB4F1\uB85D", busyLabel: "\uB4F1\uB85D \uC911\u2026", autoFocus: true, onCancel: () => ctx.setReplyingTo(null), onSubmit: async (text) => ctx.added(await commentsApi.create(ctx.postId, text, c.id), rootId ?? c.id) })), isRoot && (c.replies?.length ?? 0) > 0 && (_jsx("ol", { className: "comment-list replies", children: c.replies.map((r) => _jsx(CommentItem, { c: r, rootId: c.id, ctx: ctx }, r.id)) })), isRoot && hiddenReplies > 0 && c.repliesNextCursor && (repliesFailed
-                ? _jsxs("p", { className: "feed-error small", children: ["\uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text", onClick: moreReplies, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] })
+                ? _jsxs("p", { className: "feed-error small", role: "alert", children: ["\uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text", onClick: moreReplies, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] })
                 : _jsx("button", { type: "button", className: "btn btn-text more-replies", disabled: loadingReplies, onClick: moreReplies, children: loadingReplies ? '불러오는 중…' : `답글 ${hiddenReplies}개 더 보기` }))] }));
 }
