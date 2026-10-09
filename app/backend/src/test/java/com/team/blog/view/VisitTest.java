@@ -16,7 +16,7 @@ import com.team.blog.support.Browser;
 import com.team.blog.support.IntegrationTest;
 import com.team.blog.view.application.VisitRecorder;
 
-/** spec 064: 사이트 방문자. 같은 날 같은 사람은 한 명, 30분 넘게 쉬면 방문 한 번 더, 운영진·로봇은 세지 않는다. */
+/** spec 064: 사이트 방문자. 같은 날 같은 사람은 한 명, 30분 넘게 쉬면 방문 한 번 더, 로봇은 세지 않고 운영진은 센다. */
 class VisitTest extends IntegrationTest {
     @Autowired VisitRecorder visits;
 
@@ -84,13 +84,15 @@ class VisitTest extends IntegrationTest {
     }
 
     @Test
-    void 운영진과_로봇과_미리_불러오기는_세지_않고_응답은_같다() throws Exception {
+    void 운영진은_세고_로봇과_미리_불러오기는_세지_않는다() throws Exception {
         Session admin = signup(uniqueLogin("vsa"));
         jdbc.update("UPDATE member SET role = 'MANAGER' WHERE id = ?", admin.memberId());
         Browser staff = relogin(admin);
         long before = rows();
 
         assertThat(visit(staff, ViewTest.CHROME).getStatus()).isEqualTo(204);
+        assertThat(rows()).isEqualTo(before + 1);
+        before = rows();
         assertThat(visit(browser().from("203.0.113.62"), "Googlebot/2.1 (+http://www.google.com/bot.html)").getStatus()).isEqualTo(204);
         assertThat(visit(browser().from("203.0.113.63"), null).getStatus()).isEqualTo(204);
         assertThat(browser().from("203.0.113.64").perform(post("/api/visits").with(csrf()).header("User-Agent", ViewTest.CHROME)

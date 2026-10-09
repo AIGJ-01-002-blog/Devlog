@@ -369,6 +369,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.42.1 | 2026-10-09 | Admin dashboard visitor counts now include admin and manager visits | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.42.1) |
 | v1.42.0 | 2026-10-09 | UX/UI review: focus rings, mobile touch targets, announced errors, confirm dialogs, calmer cards | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.42.0) |
 | v1.41.0 | 2026-10-09 | Post cards show tags, views and comments; visibility picker on a post now looks like a text button | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.41.0) |
 | v1.40.0 | 2026-10-09 | Admin dashboard charts active members per day | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.40.0) |

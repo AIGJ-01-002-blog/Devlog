@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.42.1 | 2026-10-09 | 管理者ダッシュボードの訪問者数に管理者・マネージャーの訪問も含める | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.42.1) |
 | v1.42.0 | 2026-10-09 | UX/UI 再点検：フォーカス表示・スマホのタップ領域・エラー通知・確認ダイアログ、カード効果を控えめに | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.42.0) |
 | v1.41.0 | 2026-10-09 | 記事カードにタグ・閲覧数・コメント数、記事画面の公開設定を文字ボタン風に | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.41.0) |
 | v1.40.0 | 2026-10-09 | 管理者ダッシュボードに日別のアクティブ会員グラフ | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.40.0) |

@@ -20,8 +20,8 @@ import com.team.blog.shared.web.RateLimiter;
 
 /**
  * 사이트 방문 기록 (spec 064). 화면을 처음 열 때마다 한 번 온다. 같은 사람은 하루 한 행으로 모으고(순방문자),
- * 30분 넘게 쉬었다가 다시 오면 방문 수만 하나 늘린다. 방문자 구분과 제외 규칙은 조회수(013)와 같다:
- * 운영진·로봇·미리 불러오기는 세지 않는다. 실패해도 화면에는 알리지 않는다.
+ * 30분 넘게 쉬었다가 다시 오면 방문 수만 하나 늘린다. 방문자 구분은 조회수(013)와 같다:
+ * 로봇·미리 불러오기는 세지 않는다. 관리자·매니저 방문은 센다(1.42.1, 블로그 주인 결정). 실패해도 화면에는 알리지 않는다.
  */
 @Service
 public class VisitRecorder {
@@ -52,7 +52,7 @@ public class VisitRecorder {
     }
 
     public Outcome record(ViewRecorder.Visit visit) {
-        if (visit.admin() || visit.prefetch() || views.isBot(visit.userAgent())) return Outcome.EXCLUDED;
+        if (visit.prefetch() || views.isBot(visit.userAgent())) return Outcome.EXCLUDED;
         // 처음 쿠키를 받는 비회원은 그 쿠키로 센다. 다음 방문이 같은 사람으로 이어진다
         String visitor = visit.memberId() == null && visit.issuedVisitorId() != null
                 ? ViewRecorder.sha256("v:" + visit.issuedVisitorId()) : views.visitorKey(visit);
