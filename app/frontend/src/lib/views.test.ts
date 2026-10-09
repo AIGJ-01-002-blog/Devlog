@@ -86,4 +86,13 @@ describe('sendPage', () => {
       { method: 'POST', keepalive: true, body: { first: true, path: '/', referrer: 'https://search.naver.com/search.naver?query=x' } })
     expect(api).toHaveBeenNthCalledWith(2, '/api/visits', { method: 'POST', keepalive: true, body: { first: false, path: '/tags' } })
   })
+
+  it('화면을 연 채 한국 시간 자정이 지나면 다음 화면을 다시 방문으로 보낸다', () => {
+    vi.mocked(api).mockClear()
+    vi.setSystemTime(new Date('2026-10-09T14:59:00Z')) // 23:59 KST
+    sendPage('/a')
+    vi.setSystemTime(new Date('2026-10-09T15:01:00Z')) // 다음 날 00:01 KST
+    sendPage('/b')
+    expect(vi.mocked(api).mock.calls[1][1]).toMatchObject({ body: { first: true, path: '/b' } })
+  })
 })

@@ -71,6 +71,11 @@ class SourcePageTest extends IntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON).content("{\"first\":false,\"path\":\"/\"}")).andReturn().getResponse().getStatus())
                 .isEqualTo(204);
         assertThat(page("/")).isEqualTo(home);
+
+        // 오늘 방문 없이 화면 이동만 보내면 세지 않는다 (쿠키를 바꿔 가며 화면 수 부풀리기 막기)
+        long tags = page("/tags");
+        assertThat(send(browser().from("203.0.113.76"), "{\"first\":false,\"path\":\"/tags\"}")).isEqualTo(204);
+        assertThat(page("/tags")).isEqualTo(tags);
     }
 
     @Test

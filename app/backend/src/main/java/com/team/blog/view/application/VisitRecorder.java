@@ -83,22 +83,33 @@ public class VisitRecorder {
             if (path == null) return Outcome.SKIPPED;
             if (ipKey != null && !rateLimiter.tryAcquire("page-ip:" + ipKey, PAGES_PER_MINUTE_PER_IP, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
             if (!rateLimiter.tryAcquire("page:" + visitor, PAGES_PER_MINUTE, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
+            // 오늘 방문으로 들어온 사람의 화면 이동만 센다. 쿠키를 바꿔 가며 화면 수만 부풀리는 것을 막는다
+            try {
+                if (jdbc.queryForList("SELECT 1 FROM site_visit WHERE day = ? AND visitor = ?", today, visitor).isEmpty()) return Outcome.SKIPPED;
+            } catch (RuntimeException e) {
+                log.warn("화면 기록을 건너뜁니다: {}", e.getClass().getSimpleName());
+                return Outcome.SKIPPED;
+            }
             return countPage(today, path) ? Outcome.COUNTED : Outcome.SKIPPED;
         }
 
         if (ipKey != null && !rateLimiter.tryAcquire("visit-ip:" + ipKey, PER_MINUTE_PER_IP, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
         if (!rateLimiter.tryAcquire("visit:" + visitor, PER_MINUTE, Duration.ofMinutes(1))) return Outcome.EXCLUDED;
         try {
-            // 새 방문(처음이거나 30분 넘게 쉬었다 온 것)일 때만 유입 경로를 센다. old는 이 문장이 바꾸기 전 값이다
-            boolean newVisit = Boolean.TRUE.equals(jdbc.queryForObject("""
-                    WITH old AS (SELECT visits FROM site_visit WHERE day = ? AND visitor = ?)
+            // 새 방문(처음이거나 30분 넘게 쉬었다 온 것)일 때만 유입 경로를 센다. 세 문장 모두 행 단위로 원자적이라
+            // 같은 사람의 요청이 동시에 와도 새 방문은 한 번만 잡힌다
+            Timestamp at = Timestamp.from(now);
+            boolean newVisit = jdbc.update("""
                     INSERT INTO site_visit (day, visitor, member, visits, first_at, last_at) VALUES (?, ?, ?, 1, ?, ?)
-                    ON CONFLICT (day, visitor) DO UPDATE SET
-                        visits = site_visit.visits + CASE WHEN site_visit.last_at < EXCLUDED.last_at - ?::interval THEN 1 ELSE 0 END,
-                        last_at = GREATEST(site_visit.last_at, EXCLUDED.last_at)
-                    RETURNING site_visit.visits > coalesce((SELECT visits FROM old), 0)
-                    """, Boolean.class, today, visitor, today, visitor, visit.memberId() != null, Timestamp.from(now),
-                    Timestamp.from(now), sessionGap.toSeconds() + " seconds"));
+                    ON CONFLICT (day, visitor) DO NOTHING
+                    """, today, visitor, visit.memberId() != null, at, at) == 1
+                    || jdbc.update("""
+                    UPDATE site_visit SET visits = visits + 1, last_at = ?
+                    WHERE day = ? AND visitor = ? AND last_at < ?
+                    """, at, today, visitor, Timestamp.from(now.minus(sessionGap))) == 1;
+            if (!newVisit) {
+                jdbc.update("UPDATE site_visit SET last_at = GREATEST(last_at, ?) WHERE day = ? AND visitor = ?", at, today, visitor);
+            }
             if (newVisit) countSource(today, VisitSources.classify(page.referrer(), visit.userAgent(), page.ownHost()));
         } catch (RuntimeException e) {
             log.warn("방문 기록을 건너뜁니다: {}", e.getClass().getSimpleName());
