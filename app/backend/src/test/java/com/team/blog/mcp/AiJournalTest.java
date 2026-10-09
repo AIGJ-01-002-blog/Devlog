@@ -157,6 +157,7 @@ class AiJournalTest extends IntegrationTest {
         // 오늘 남긴 메모는 오늘 자정까지 기다린다. 어제·그제 메모는 날짜마다 일기 하나
         LocalDate today = LocalDate.now(KST);
         note(me.memberId(), "검색", "형태소 분석기를 바꿨다", "search", today.minusDays(1).atTime(10, 5));
+        note(me.memberId(), "검색", "  색인을 다시 만드니 훨씬 빨라졌다!", "", today.minusDays(1).atTime(11, 0));
         note(me.memberId(), null, "리뷰 답변을 정리했다", "", today.minusDays(1).atTime(9, 0));
         note(me.memberId(), "배포", "롤백 스크립트를 고쳤다\n둘째 줄", "k8s,search", today.minusDays(1).atTime(15, 30));
         note(me.memberId(), "배포", "카나리 비율을 정했다", "", today.minusDays(2).atTime(23, 59));
@@ -172,16 +173,16 @@ class AiJournalTest extends IntegrationTest {
         assertThat((String) y.get("content_md")).isEqualTo("""
                 ## 검색
 
-                - 10:05 형태소 분석기를 바꿨다
+                형태소 분석기를 바꿨다. 색인을 다시 만드니 훨씬 빨라졌다!
 
                 ## 배포
 
-                - 15:30 롤백 스크립트를 고쳤다
-                  둘째 줄
+                롤백 스크립트를 고쳤다
+                둘째 줄.
 
                 ## 그 밖에
 
-                - 09:00 리뷰 답변을 정리했다
+                리뷰 답변을 정리했다.
                 """);
         assertThat(jdbc.queryForObject("SELECT tags FROM post_ai_hint WHERE post_id = ?", String.class, y.get("id"))).isEqualTo("search,k8s");
         // 묶은 메모는 지우고 오늘 메모는 남긴다. 다시 돌아도 일기를 또 만들지 않는다
