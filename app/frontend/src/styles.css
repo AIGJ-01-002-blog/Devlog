@@ -612,6 +612,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .social-photo .avatar { margin-top: 4px; }
 .flash { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 16px; }
 .terms h2 { font-size: 1.1rem; margin-top: 32px; }
+.terms p a { color: var(--color-brand); text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 600px) {
   .settings-list { grid-template-columns: 1fr; gap: 4px; }
   .settings-list dd { margin-bottom: 12px; }

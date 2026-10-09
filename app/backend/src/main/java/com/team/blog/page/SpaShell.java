@@ -3,10 +3,16 @@ package com.team.blog.page;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.util.HtmlUtils;
+
+import com.team.blog.config.ContentSecurityPolicy;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -14,6 +20,8 @@ import tools.jackson.databind.json.JsonMapper;
  * React 앱의 index.html에 페이지별 머리말(제목·설명·정규 주소·OG)과 첫 화면 HTML, 초기 데이터를 넣는다.
  * 인라인 스크립트는 넣지 않는다(CSP script-src 'self'): 초기 데이터는 실행되지 않는 application/json 블록이다.
  * 프런트 빌드가 없으면(백엔드만 실행·테스트) 최소 껍데기를 쓴다.
+ * 검색에 노출하는 공개 화면에는 애드센스 코드를 넣고, 화면의 모든 스크립트에 요청마다 새 nonce를 붙인다 (spec 076).
+ * 로그인·글쓰기·설정·관리처럼 noindex인 화면에는 광고를 싣지 않는다.
  */
 @Component
 public class SpaShell {
@@ -33,11 +41,20 @@ public class SpaShell {
             </html>
             """;
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private final String template;
+    private final AdSense adSense;
     private final JsonMapper json = JsonMapper.builder().build();
 
-    public SpaShell() {
-        this.template = load();
+    @org.springframework.beans.factory.annotation.Autowired
+    public SpaShell(AdSense adSense) {
+        this(adSense, load());
+    }
+
+    SpaShell(AdSense adSense, String template) {
+        this.template = template;
+        this.adSense = adSense;
     }
 
     private static String load() {
@@ -62,6 +79,14 @@ public class SpaShell {
     /** @param rssPath 이 화면의 RSS 주소 (026). 수집하는 화면에만 붙인다 */
     public String render(HeadMeta meta, String bodyHtml, Object initialData, String rssPath) {
         StringBuilder head = new StringBuilder();
+        String page = template;
+        String nonce = meta.indexable() && adSense.enabled() ? adNonce() : null;
+        if (nonce != null) {
+            // 'strict-dynamic'은 nonce가 없는 스크립트를 막으므로 앱 자신의 스크립트·모듈 미리 불러오기에도 붙인다
+            page = page.replace("<script", "<script nonce=\"" + nonce + "\"")
+                    .replace("<link rel=\"modulepreload\"", "<link rel=\"modulepreload\" nonce=\"" + nonce + "\"");
+            head.append(adSense.scriptTag(nonce));
+        }
         head.append("<title>").append(esc(meta.title())).append("</title>\n");
         if (meta.description() != null && !meta.description().isBlank()) {
             head.append("<meta name=\"description\" content=\"").append(esc(meta.description())).append("\">\n");
@@ -92,7 +117,18 @@ public class SpaShell {
                     .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026");
             head.append("<script id=\"initial-data\" type=\"application/json\">").append(data).append("</script>\n");
         }
-        return template.replace(HEAD_MARK, head.toString()).replace(BODY_MARK, bodyHtml == null ? "" : bodyHtml);
+        return page.replace(HEAD_MARK, head.toString()).replace(BODY_MARK, bodyHtml == null ? "" : bodyHtml);
+    }
+
+    /** 요청에 nonce를 남겨 CSP 헤더가 같은 값을 쓰게 한다. 요청 밖(직접 호출)이면 광고를 넣지 않는다 */
+    private static String adNonce() {
+        RequestAttributes request = RequestContextHolder.getRequestAttributes();
+        if (request == null) return null;
+        byte[] bytes = new byte[16];
+        RANDOM.nextBytes(bytes);
+        String nonce = Base64.getEncoder().encodeToString(bytes);
+        request.setAttribute(ContentSecurityPolicy.AD_NONCE_ATTRIBUTE, nonce, RequestAttributes.SCOPE_REQUEST);
+        return nonce;
     }
 
     public static String esc(String s) {
