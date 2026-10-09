@@ -1725,3 +1725,20 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
   .project-card { grid-template-columns: 1fr; padding: 18px; }
   .blog-tabs .blog-tab-portfolio { margin-left: 0; }
 }
+
+/* 선택 상자 화살표: 기기 기본 화살표는 브라우저마다 오른쪽 끝에 붙거나 테두리 밖으로 비어져 보여서(특히 다크 모드 Chrome),
+ * 기본 모양을 끄고 색 토큰으로 그린 꺾쇠를 상자 안쪽 오른쪽에 둔다. 글자가 꺾쇠에 닿지 않게 오른쪽 여백도 넓힌다.
+ * 공개 범위 고르기(.visibility-picker)는 자체 아이콘을 쓰므로 뺀다. 여러 줄 목록(multiple, size)은 화살표가 없어 뺀다. */
+select:not([multiple]):not([size]):not(.visibility-picker select) {
+  appearance: none; -webkit-appearance: none;
+  padding-right: 34px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%),
+    linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+select:not([multiple]):not([size]):not(.visibility-picker select):disabled { cursor: not-allowed; opacity: 0.6; }
+select::-ms-expand { display: none; }
