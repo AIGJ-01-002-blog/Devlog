@@ -20,6 +20,7 @@ import com.team.blog.shared.time.Times;
 /**
  * 팔로워·팔로잉 수와 목록 (016 US3). 수는 저장하지 않고 그때그때 세며, 탈퇴 신청한 회원은 수·목록에서 뺀다(FR-011·FR-013).
  * 관계는 지우지 않으므로 복구하면 그대로 돌아온다(FR-027). 목록은 쿼리 한 번에 보는 사람의 팔로우 여부까지 읽는다(FR-014).
+ * 주인이 목록을 비공개로 두면(079) 본인·관리자 말고는 빈 목록과 hidden=true만 받는다. 수는 그대로 보인다.
  */
 @Service
 public class FollowQuery {
@@ -52,7 +53,10 @@ public class FollowQuery {
     public record Person(long id, String handle, String nickname, String bioFirstLine, String profileImageUrl,
                          boolean following, boolean me) {}
 
-    public record Page(List<Person> items, String nextCursor) {}
+    /** @param hidden 주인이 목록을 비공개로 둬서 보는 사람에게 보이지 않는다 (079). 이때 items는 비어 있다 */
+    public record Page(List<Person> items, String nextCursor, boolean hidden) {
+        static final Page HIDDEN = new Page(List.of(), null, true);
+    }
 
     public Counts counts(long memberId) {
         return jdbc.queryForObject("SELECT (" + FOLLOWER_COUNT + "), (" + FOLLOWING_COUNT + ")",
@@ -64,9 +68,18 @@ public class FollowQuery {
                 "SELECT EXISTS (SELECT 1 FROM follow WHERE follower_id = ? AND followee_id = ?)", Boolean.class, viewerId, targetId));
     }
 
-    /** 최근에 팔로우한 순(같으면 회원 번호 큰 순) 20개씩 (FR-012). */
-    public Page list(String handle, Direction direction, String cursor, Long viewerId) {
-        long owner = activeMember(jdbc, handle).orElseThrow(NotFoundException::new);
+    /**
+     * 최근에 팔로우한 순(같으면 회원 번호 큰 순) 20개씩 (FR-012).
+     * @param staff 보는 사람이 관리자·매니저면 true. 비공개 목록도 본다 (079)
+     */
+    public Page list(String handle, Direction direction, String cursor, Long viewerId, boolean staff) {
+        if (handle == null) throw new NotFoundException();
+        record Owner(long id, boolean open) {}
+        Owner o = jdbc.query("SELECT m.id, m.follow_list_public FROM member m WHERE m.handle = ? AND " + ACTIVE,
+                        (rs, i) -> new Owner(rs.getLong(1), rs.getBoolean(2)), handle)
+                .stream().findFirst().orElseThrow(NotFoundException::new);
+        long owner = o.id();
+        if (!o.open() && !staff && (viewerId == null || viewerId != owner)) return Page.HIDDEN;
         boolean followers = direction == Direction.FOLLOWERS;
         String listName = (followers ? "followers:" : "following:") + owner;
         // 목록의 사람 = 팔로워 목록이면 팔로우한 쪽, 팔로잉 목록이면 받은 쪽
@@ -97,7 +110,7 @@ public class FollowQuery {
                 args.toArray());
         CursorCodec.Page<Row> page = CursorCodec.page(rows, PAGE_SIZE,
                 r -> cursors.encode(listName, Times.toEpochMicros(r.at()), r.person().id()));
-        return new Page(page.items().stream().map(Row::person).toList(), page.nextCursor());
+        return new Page(page.items().stream().map(Row::person).toList(), page.nextCursor(), false);
     }
 
     /** 탈퇴 신청하지 않은 회원의 번호. 없거나 탈퇴 신청했으면 비어 있다 (FR-006). */

@@ -12,6 +12,8 @@ export function followLabel(following, hover) {
     return hover ? '언팔로우' : '팔로잉 ✓';
 }
 export const FOLLOW_ERROR = '잠시 후 다시 시도해 주세요';
+/** 비공개로 둔 목록을 다른 사람이 열었을 때 (spec 079) */
+export const HIDDEN_FOLLOW_TEXT = '비공개 계정입니다';
 export function emptyFollowText(direction) {
     return direction === 'followers' ? '아직 팔로워가 없어요' : '아직 팔로우한 사람이 없어요';
 }
