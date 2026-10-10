@@ -113,7 +113,12 @@ public class WithdrawalPurgeJob {
             return false;
         }
         if (email.isEmpty()) return false;
-        forgetTransient(memberId, email.get());
+        // DB 정리는 이미 커밋됐다. 세션·Redis 키가 남아도 정리 결과는 그대로 성공이다
+        try {
+            forgetTransient(memberId, email.get());
+        } catch (RuntimeException e) {
+            log.warn("정리한 회원 {}의 세션·임시 키를 다 지우지 못했습니다: {}", memberId, e.getClass().getSimpleName());
+        }
         return true;
     }
 

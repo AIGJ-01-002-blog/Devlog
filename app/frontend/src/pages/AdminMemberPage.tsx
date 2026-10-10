@@ -21,7 +21,8 @@ export function AdminMemberPage({ handle }: { handle: string }) {
   const [missing, setMissing] = useState(false)
   // 결과는 누른 버튼 가까이에 보인다: 권한 칸 또는 정지 칸
   const [message, setMessage] = useState<{ ok: boolean; text: string; at: 'role' | 'suspend' | 'purge' } | null>(null)
-  const [purged, setPurged] = useState(false)
+  // 요청 중에 다시 누르면 두 번 보내지 않는다
+  const [purge, setPurge] = useState<'idle' | 'busy' | 'done'>('idle')
   const [role, setRole] = useState<Role>('USER')
 
   useEffect(() => {
@@ -56,14 +57,17 @@ export function AdminMemberPage({ handle }: { handle: string }) {
     }
   }
 
-  const purge = async () => {
+  const purgeNow = async () => {
+    if (purge !== 'idle') return
     if (!confirm(`@${m.handle} 회원을 지금 바로 정리할까요?\n글·댓글·좋아요·로그인 수단이 지워지고 되돌릴 수 없어요. 블로그 주소는 계속 예약돼요.`)) return
+    setPurge('busy')
     setMessage(null)
     try {
       await consoleApi.purgeWithdrawn(m.handle)
-      setPurged(true)
+      setPurge('done')
       setMessage({ ok: true, at: 'purge', text: '정리했어요. 같은 소셜 계정으로 오면 새로 가입해요.' })
     } catch (e) {
+      setPurge('idle')
       fail(e, 'purge')
     }
   }
@@ -145,7 +149,7 @@ export function AdminMemberPage({ handle }: { handle: string }) {
           <h2>정지 해제</h2>
           <button type="button" className="btn btn-outline" onClick={() => act(() => adminApi.lift(m.handle), '정지를 해제했어요.')}>정지 해제</button>
         </section>
-      ) : !m.admin && !self && stats?.member.status !== 'WITHDRAWN' && (
+      ) : !m.admin && !self && stats && stats.member.status !== 'WITHDRAWN' && (
         <section className="admin-section">
           <h2>정지</h2>
           <p className="muted small">정지하면 모든 기기에서 바로 로그아웃되고, 기한까지 로그인할 수 없어요. 글·댓글은 그대로 보여요.</p>
@@ -161,7 +165,7 @@ export function AdminMemberPage({ handle }: { handle: string }) {
             탈퇴 신청 후 30일이 지나면 자동으로 정리돼요. 본인이 바로 지워 달라고 했을 때만 기다리지 않고 지금 정리하세요.
             글·댓글·좋아요·로그인 수단이 지워지고 되돌릴 수 없어요.
           </p>
-          <button type="button" className="btn btn-danger" disabled={purged} onClick={purge}
+          <button type="button" className="btn btn-danger" disabled={purge !== 'idle'} onClick={purgeNow}
                   data-tip="유예 기간을 기다리지 않고 지금 정리해요. 되돌릴 수 없어요">지금 정리하기</button>
           {result('purge')}
         </section>
