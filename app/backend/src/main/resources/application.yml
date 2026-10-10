@@ -240,6 +240,9 @@ blog:
     retention: 90d
     max-per-member: 1000
     cleanup-cron: "0 30 4 * * *"
+  # 디스코드 웹훅 알림 (078): 회원이 자기 채널의 웹훅 주소를 넣는다. 서버 쪽 키는 없다
+  discord:
+    enabled: ${DISCORD_NOTIFY_ENABLED:true}
   # 텔레그램 연결 (spec 023): 봇 토큰이 비어 있거나 TELEGRAM_ENABLED=false면 꺼진다. 알림 보내기·메모로 임시글
   telegram:
     enabled: ${TELEGRAM_ENABLED:true}
