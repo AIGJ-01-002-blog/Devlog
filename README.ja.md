@@ -371,6 +371,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.61.1 | 2026-10-10 | 英語・日本語・中国語画面のスマホでの改行を整理(はみ出し・1文字だけの改行) | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.61.1) |
 | v1.61.0 | 2026-10-10 | Facebook ログイン(`fb-` アドレス、Facebook のキーを入れるとボタンが表示) | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.61.0) |
 | v1.60.0 | 2026-10-10 | 管理者が退会会員を30日待たずにすぐ整理できるように | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.60.0) |
 | v1.59.3 | 2026-10-10 | カカオで登録するとプロフィール写真が設定されない問題を修正 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.3) |

@@ -612,7 +612,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .auth-page .btn-github, .auth-page .btn-google, .auth-page .btn-kakao, .auth-page .btn-facebook { display: flex; width: 100%; justify-content: center; gap: 8px; }
 .divider { display: flex; align-items: center; gap: 12px; color: var(--color-text-muted); font-size: 0.875rem; margin: 24px 0 16px; }
 .divider::before, .divider::after { content: ""; flex: 1; border-top: 1px solid var(--color-border); }
-.auth-links { display: flex; gap: 8px; justify-content: center; margin-top: 12px; color: var(--color-text-muted); }
+.auth-links { display: flex; flex-wrap: wrap; gap: 4px 8px; justify-content: center; margin-top: 12px; color: var(--color-text-muted); }
 .pw-rules { list-style: none; padding: 0; margin: 4px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 12px; font-size: 0.8125rem; color: var(--color-text-muted); }
 .pw-rules li.ok { color: var(--color-ok-text); }
 .pw-rules li.bad { color: var(--color-text); }
@@ -841,12 +841,18 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .notification-remove { padding: 12px; }
 .notification-all { text-align: center !important; font-size: 0.875rem; }
 .notification-list.page { border-top: 1px solid var(--color-border); margin-bottom: 16px; }
-.notifications-head { display: flex; justify-content: space-between; align-items: center; }
+.notifications-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0 12px; }
+/* 긴 번역(영어 Notifications 등)의 제목이 버튼에 밀려 낱자로 끊기지 않게, 버튼 줄이 아래로 내려간다 (082) */
+.notifications-head .page-title { flex: 0 0 auto; max-width: 100%; }
 .notification-settings { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }
 
 /* 팔로우·피드 (spec 016) */
 .follow-wrap { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; }
 .author-card .follow-wrap { margin: 0 0 0 auto; }
+/* 좁은 화면·긴 번역(일본어 フォロー 등)에서 [팔로우]가 카드 밖으로 밀리지 않게 다음 줄로 (082) */
+.author-card { flex-wrap: wrap; }
+.author-card > div { flex: 1 1 120px; min-width: 0; }
+.auth-links a { white-space: nowrap; }
 .btn.following { min-width: 104px; }
 .btn-small { padding: 4px 12px; font-size: 0.875rem; }
 .blog-stats a { color: inherit; }
@@ -959,7 +965,9 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .token-who code { font-family: var(--mono); font-size: 0.8125rem; color: var(--color-text-muted); }
 .token-row .btn { margin-left: auto; }
 @media (max-width: 640px) {
-  .ai-connect-form { grid-template-columns: 1fr 1fr; }
+  /* 긴 번역(일본어 書き込み + 読み取り 등)의 고르기 칸이 칸 폭을 밀어내지 않게 (082) */
+  .ai-connect-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ai-connect-form select { width: 100%; min-width: 0; }
   .ai-connect-form label:first-child, .ai-connect-form button { grid-column: 1 / -1; }
 }
 .token-kind { font-size: 0.75rem; padding: 1px 8px; border-radius: 999px; background: var(--color-surface-2); color: var(--color-text-2); }
@@ -1842,3 +1850,8 @@ select::-ms-expand { display: none; }
 
 /* 일본어·중국어 화면은 낱말 사이에 빈칸이 없어 keep-all이면 줄이 넘친다 (081) */
 html:lang(ja) *, html:lang(zh) * { word-break: normal; line-break: strict; }
+/* 다만 글 제목·본문·요약처럼 회원이 쓴 글(대부분 한국어)은 화면 언어와 상관없이 낱말 단위로 바꾼다 (082).
+   이 칸들은 overflow-wrap: anywhere라서 띄어쓰기 없는 일본어·중국어 글도 칸 끝에서 끊겨 넘치지 않는다 */
+html:is(:lang(ja), :lang(zh)) :is(.post-title, .markdown, .markdown *, .card-title, .card-excerpt, .bl-title, .bl-excerpt, .blog-name, .bio, .comment-body) {
+  word-break: keep-all; overflow-wrap: anywhere;
+}

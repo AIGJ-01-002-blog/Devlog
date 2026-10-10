@@ -371,6 +371,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.61.1 | 2026-10-10 | Mobile line-break fixes for the English, Japanese and Chinese screens | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.61.1) |
 | v1.61.0 | 2026-10-10 | Facebook login (`fb-` handles; the button shows once Facebook keys are set) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.61.0) |
 | v1.60.0 | 2026-10-10 | Admins can purge a withdrawn member right away instead of waiting 30 days | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.60.0) |
 | v1.59.3 | 2026-10-10 | Fixed the profile photo not being copied when signing up with Kakao | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.3) |
