@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.56.0 | 2026-10-10 | フォロワー・フォロー中リストの公開/非公開設定（非公開なら「非公開アカウントです」、数はそのまま） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.56.0) |
 | v1.55.0 | 2026-10-10 | 友達リクエストの受信と承認を通知（Telegram・Discordにも、通知設定でオフ可能） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.55.0) |
 | v1.54.0 | 2026-10-10 | Discord Webhookでブログ通知を受け取る（設定 › 通知） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.54.0) |
 | v1.53.2 | 2026-10-10 | フォロー解除後に再フォローすると同じ通知がTelegramに2回届く問題を修正 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.2) |
