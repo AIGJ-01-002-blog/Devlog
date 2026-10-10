@@ -54,3 +54,11 @@ SELECT e.model,
 FROM post_embedding e JOIN post p ON p.id = e.post_id JOIN member m ON m.id = p.author_id
 GROUP BY e.model;
 SQL
+echo "== DB 확장: 이름 | 버전 (읽기 전용 조회)"
+psql_read <<'SQL' || true
+SELECT extname, extversion FROM pg_extension ORDER BY extname;
+SQL
+echo "== 부분 일치 검색 인덱스(trgm) (읽기 전용 조회)"
+psql_read <<'SQL' || true
+SELECT indexname FROM pg_indexes WHERE indexname LIKE '%\_trgm' ORDER BY indexname;
+SQL
