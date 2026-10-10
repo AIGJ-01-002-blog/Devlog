@@ -281,4 +281,45 @@ class FollowTest extends IntegrationTest {
         browser().perform(get("/@nobody-here/following")).andExpect(status().isNotFound());
         assertThat(browser().perform(get("/feed")).andExpect(status().isOk()).andReturn().getResponse().getHeader("Cache-Control")).contains("no-store");
     }
+
+    @Test
+    void 목록을_비공개로_두면_본인과_관리자만_보고_수는_그대로다() throws Exception {
+        Session owner = signup(uniqueLogin("fp")), fan = signup(uniqueLogin("fq")), other = signup(uniqueLogin("fr")),
+                admin = signup(uniqueLogin("fs"));
+        jdbc.update("UPDATE member SET role = 'ADMIN' WHERE id = ?", admin.memberId());
+        var adminHttp = relogin(admin);
+        follow(fan, owner.handle(), true);
+        follow(owner, fan.handle(), true);
+        assertThat(read(owner.http().perform(get("/api/me/settings")).andReturn()).path("followListPublic").asBoolean()).isTrue();
+
+        owner.http().perform(asJson(patch("/api/me/settings"), Map.of("followListPublic", false))).andExpect(status().isOk());
+        assertThat(read(owner.http().perform(get("/api/me/settings")).andReturn()).path("followListPublic").asBoolean()).isFalse();
+        for (String list : List.of("/followers", "/following")) {
+            String url = "/api/members/" + owner.handle() + list;
+            for (var http : List.of(browser(), other.http(), fan.http())) {
+                JsonNode hidden = read(http.perform(get(url)).andExpect(status().isOk()).andReturn());
+                assertThat(hidden.path("hidden").asBoolean()).isTrue();
+                assertThat(hidden.path("items")).isEmpty();
+            }
+            for (var http : List.of(owner.http(), adminHttp)) {
+                var res = http.perform(get(url)).andExpect(status().isOk()).andReturn();
+                assertThat(res.getResponse().getHeader("Cache-Control")).contains("no-store");
+                JsonNode open = read(res);
+                assertThat(open.path("hidden").asBoolean()).isFalse();
+                assertThat(open.path("items")).hasSize(1);
+            }
+        }
+        JsonNode counts = profile(other, owner.handle());
+        assertThat(counts.path("followerCount").asLong()).isEqualTo(1);
+        assertThat(counts.path("followingCount").asLong()).isEqualTo(1);
+        // 다른 사람의 목록에는 그대로 나온다: 비공개는 내 목록에만 건다
+        assertThat(read(browser().perform(get("/api/members/" + fan.handle() + "/followers")).andReturn()).path("items")).hasSize(1);
+
+        String html = browser().perform(get("/@" + owner.handle() + "/followers")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("비공개 계정입니다").doesNotContain(">" + fan.handle());
+
+        owner.http().perform(asJson(patch("/api/me/settings"), Map.of("followListPublic", true))).andExpect(status().isOk());
+        assertThat(read(browser().perform(get("/api/members/" + owner.handle() + "/followers")).andReturn()).path("items")).hasSize(1);
+    }
 }

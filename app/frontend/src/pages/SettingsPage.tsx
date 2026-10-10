@@ -35,6 +35,7 @@ interface Settings {
   previousLogin: { at: string | null; provider: string }
   defaultVisibility: Visibility
   lastActiveVisible: boolean
+  followListPublic: boolean
   aiAgreed: boolean
   socialLinks: SocialLinks
 }
@@ -311,6 +312,22 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
     }
   }
 
+  const [savingFollowList, setSavingFollowList] = useState(false)
+  const changeFollowList = async (open: boolean) => {
+    const before = settings
+    onChange({ ...settings, followListPublic: open })
+    setSavingFollowList(true) // 저장이 끝나기 전에 다시 바꿔 요청 순서가 뒤집히지 않게
+    try {
+      await api('/api/me/settings', { method: 'PATCH', body: { followListPublic: open } })
+      setMessage({ ok: true, text: open ? '이제 누구나 내 팔로워·팔로잉 목록을 볼 수 있어요.' : '이제 다른 사람에게는 "비공개 계정입니다"로 보여요. 수는 그대로 보여요.' })
+    } catch {
+      onChange(before)
+      setMessage({ ok: false, text: '바꾸지 못했어요. 다시 시도해 주세요.' })
+    } finally {
+      setSavingFollowList(false)
+    }
+  }
+
   const withdrawAi = async () => {
     if (!window.confirm('AI 기능 동의를 철회할까요? 다음에 AI 기능을 쓰려면 다시 동의해야 해요.')) return
     try {
@@ -344,6 +361,13 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
         <dd>
           <label><input type="checkbox" checked={settings.lastActiveVisible} onChange={(e) => changeLastActive(e.target.checked)} /> 최근 활동을 친구에게 보이기</label>
           <span className="muted small"> 끄면 나도 친구들의 최근 활동을 볼 수 없어요.</span>
+        </dd>
+        <dt>팔로워·팔로잉 목록</dt>
+        <dd>
+          <label title="끄면 나와 관리자만 목록을 보고, 다른 사람에게는 '비공개 계정입니다'로 보여요">
+            <input type="checkbox" checked={settings.followListPublic} disabled={savingFollowList} onChange={(e) => changeFollowList(e.target.checked)} /> 다른 사람에게 공개
+          </label>
+          <span className="muted small"> 끄면 다른 사람에게는 "비공개 계정입니다"로 보여요. 팔로워·팔로잉 수는 그대로 보여요.</span>
         </dd>
         {settings.aiAgreed && (
           <>

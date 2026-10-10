@@ -371,6 +371,7 @@ npm run dev        # http://localhost:5173
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
 | v1.57.0 | 2026-10-10 | Kakao 登录（`ka-` 地址，设置 Kakao 密钥后显示按钮） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.57.0) |
+| v1.56.0 | 2026-10-10 | 粉丝·关注列表公开/私密设置（私密时显示“私密账号”，数量照常显示） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.56.0) |
 | v1.55.0 | 2026-10-10 | 收到好友请求或请求被接受时发送通知（含 Telegram·Discord，可在通知设置中关闭） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.55.0) |
 | v1.54.0 | 2026-10-10 | 通过 Discord Webhook 接收博客通知（设置 › 通知） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.54.0) |
 | v1.53.2 | 2026-10-10 | 修复取消关注后再次关注时 Telegram 收到重复关注通知的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.2) |

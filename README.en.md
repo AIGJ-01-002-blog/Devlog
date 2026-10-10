@@ -371,6 +371,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
 | v1.57.0 | 2026-10-10 | Kakao login (`ka-` addresses; the button appears once Kakao keys are set) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.57.0) |
+| v1.56.0 | 2026-10-10 | Make follower/following lists public or private (others see "private account"; counts stay visible) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.56.0) |
 | v1.55.0 | 2026-10-10 | Notify on incoming friend requests and accepted requests (also Telegram/Discord, can be muted) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.55.0) |
 | v1.54.0 | 2026-10-10 | Get blog notifications in your Discord channel via webhook (Settings › Notifications) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.54.0) |
 | v1.53.2 | 2026-10-10 | Fix duplicate follow notification (Telegram) when someone unfollows and follows again | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.2) |

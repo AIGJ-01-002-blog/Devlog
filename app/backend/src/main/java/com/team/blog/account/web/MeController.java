@@ -118,14 +118,15 @@ public class MeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(profileImages.upload(me.id(), data));
     }
 
-    public record SettingsRequest(String defaultVisibility, Boolean lastActiveVisible) {}
+    public record SettingsRequest(String defaultVisibility, Boolean lastActiveVisible, Boolean followListPublic) {}
 
     /**
-     * 보낸 칸만 바꾼다: 새 글 기본 공개 범위 (005 FR-024, 이미 있는 글은 그대로), 최근 활동을 친구에게 보이기 (008 FR-012).
+     * 보낸 칸만 바꾼다: 새 글 기본 공개 범위 (005 FR-024, 이미 있는 글은 그대로), 최근 활동을 친구에게 보이기 (008 FR-012),
+     * 팔로워·팔로잉 목록 공개 (079).
      */
     @PatchMapping("/settings")
     public Map<String, Object> updateSettings(@CurrentMember MemberPrincipal me, @RequestBody SettingsRequest body) {
-        if (body.defaultVisibility() == null && body.lastActiveVisible() == null) parseVisibility(null);
+        if (body.defaultVisibility() == null && body.lastActiveVisible() == null && body.followListPublic() == null) parseVisibility(null);
         Map<String, Object> changed = new java.util.LinkedHashMap<>();
         if (body.defaultVisibility() != null) {
             Visibility v = parseVisibility(body.defaultVisibility());
@@ -135,6 +136,10 @@ public class MeController {
         if (body.lastActiveVisible() != null) {
             settings.changeLastActiveVisible(me.id(), body.lastActiveVisible());
             changed.put("lastActiveVisible", body.lastActiveVisible());
+        }
+        if (body.followListPublic() != null) {
+            settings.changeFollowListPublic(me.id(), body.followListPublic());
+            changed.put("followListPublic", body.followListPublic());
         }
         return changed;
     }

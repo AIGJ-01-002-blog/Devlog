@@ -57,6 +57,9 @@ public class Member {
     @Column(nullable = false)
     private boolean lastActiveVisible = true;
 
+    @Column(nullable = false)
+    private boolean followListPublic = true;
+
     private Instant deletedAt;
 
     protected Member() {}
@@ -100,6 +103,11 @@ public class Member {
 
     public void changeLastActiveVisible(boolean visible, Instant now) {
         this.lastActiveVisible = visible;
+        this.updatedAt = now;
+    }
+
+    public void changeFollowListPublic(boolean open, Instant now) {
+        this.followListPublic = open;
         this.updatedAt = now;
     }
 
@@ -153,5 +161,6 @@ public class Member {
     public Instant getWithdrawnAt() { return withdrawnAt; }
     public Instant getLastActiveAt() { return lastActiveAt; }
     public boolean isLastActiveVisible() { return lastActiveVisible; }
+    public boolean isFollowListPublic() { return followListPublic; }
     public Instant getDeletedAt() { return deletedAt; }
 }
