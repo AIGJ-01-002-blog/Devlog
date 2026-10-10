@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api } from '../lib/api'
 import { fieldErrors } from '../lib/fieldErrors'
 import { SOCIAL_FIELDS, type SocialKind, type SocialLinks } from '../lib/socialLinks'
+import { t } from '../lib/i18n'
 
 const toDraft = (l: SocialLinks) => Object.fromEntries(SOCIAL_FIELDS.map((f) => [f.kind, l[f.kind] ?? ''])) as Record<SocialKind, string>
 
@@ -40,8 +41,8 @@ export function SocialLinksForm({ initial, onSaved }: { initial: SocialLinks; on
 
   return (
     <section className="settings-section">
-      <h2>소셜 정보</h2>
-      <p className="muted small">블로그 머리에 링크로 보여요. 비워 두면 보이지 않아요.</p>
+      <h2>{t('소셜 정보')}</h2>
+      <p className="muted small">{t('블로그 머리에 링크로 보여요. 비워 두면 보이지 않아요.')}</p>
       <form className="form" ref={formRef} onSubmit={save} noValidate>
         {SOCIAL_FIELDS.map((f) => (
           <label className="field" key={f.kind}>
@@ -56,9 +57,9 @@ export function SocialLinksForm({ initial, onSaved }: { initial: SocialLinks; on
           </label>
         ))}
         {errors.form && <p className="error" role="alert">{errors.form}</p>}
-        {done && <p className="ok" role="status">저장했어요.</p>}
+        {done && <p className="ok" role="status">{t('저장했어요.')}</p>}
         <div>
-          <button className="btn btn-primary" disabled={busy || !dirty}>{busy ? '저장하는 중…' : '저장'}</button>
+          <button className="btn btn-primary" disabled={busy || !dirty}>{busy ? t('저장하는 중…') : t('저장')}</button>
         </div>
       </form>
     </section>

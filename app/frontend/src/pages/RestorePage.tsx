@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth'
 import { setFlash } from '../lib/flash'
 import { navigate } from '../lib/router'
 import { daysLeft, deadline, withdrawApi, type WithdrawalSummary } from '../lib/withdraw'
+import { t, tNodes } from '../lib/i18n'
 
 /**
  * 탈퇴 유예 회원의 유일한 화면 (020 US2). 로그인만으로는 복구하지 않고 [복구하기]를 눌러야 한다(FR-017).
@@ -16,8 +17,8 @@ export function RestorePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    document.title = '계정 복구 - devlog'
-    withdrawApi.summary().then(setS).catch(() => setError('불러오지 못했어요. 새로고침해 주세요.'))
+    document.title = t('계정 복구 - devlog')
+    withdrawApi.summary().then(setS).catch(() => setError(t('불러오지 못했어요. 새로고침해 주세요.')))
   }, [])
 
   const restore = async () => {
@@ -25,7 +26,7 @@ export function RestorePage() {
     setError(null)
     try {
       await withdrawApi.restore()
-      setFlash('다시 오신 걸 환영해요')
+      setFlash(t('다시 오신 걸 환영해요'))
       await refresh()
       navigate('/', { replace: true })
     } catch (e) {
@@ -35,7 +36,7 @@ export function RestorePage() {
         navigate('/', { replace: true })
         return
       }
-      setError(e instanceof ApiError ? e.message : '잠시 후 다시 시도해 주세요.')
+      setError(e instanceof ApiError ? e.message : t('잠시 후 다시 시도해 주세요.'))
       setBusy(false)
     }
   }
@@ -47,24 +48,24 @@ export function RestorePage() {
       await logout()
       navigate('/', { replace: true })
     } catch {
-      setError('로그아웃하지 못했어요. 잠시 후 다시 시도해 주세요.')
+      setError(t('로그아웃하지 못했어요. 잠시 후 다시 시도해 주세요.'))
       setBusy(false)
     }
   }
 
   return (
     <main className="container narrow auth-page restore-page center">
-      <h1>탈퇴 신청한 계정이에요</h1>
+      <h1>{t('탈퇴 신청한 계정이에요')}</h1>
       {s && (
         <>
-          <p><b>{deadline(s.restoreBy)}</b>까지 복구할 수 있어요 <span className="nowrap">({daysLeft(s.restoreBy)}일 남음)</span></p>
-          <p className="muted">복구하면 블로그·글·댓글이 모두 원래대로 돌아와요.</p>
+          <p>{tNodes('{0}까지 복구할 수 있어요 {1}', { 0: <b>{deadline(s.restoreBy)}</b>, 1: <span className="nowrap">{t('({0}일 남음)', { 0: daysLeft(s.restoreBy) })}</span> })}</p>
+          <p className="muted">{t('복구하면 블로그·글·댓글이 모두 원래대로 돌아와요.')}</p>
         </>
       )}
       {error && <p className="error" role="alert">{error}</p>}
       <div className="banner-actions restore-actions">
-        <button type="button" className="btn btn-outline" onClick={leave} disabled={busy}>로그아웃</button>
-        <button type="button" className="btn btn-primary" onClick={restore} disabled={busy || !s}>{busy ? '복구하는 중…' : '복구하기'}</button>
+        <button type="button" className="btn btn-outline" onClick={leave} disabled={busy}>{t('로그아웃')}</button>
+        <button type="button" className="btn btn-primary" onClick={restore} disabled={busy || !s}>{busy ? t('복구하는 중…') : t('복구하기')}</button>
       </div>
     </main>
   )

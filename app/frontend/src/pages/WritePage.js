@@ -28,6 +28,7 @@ import { initialThumbnail, thumbnailRequest } from '../lib/postThumbnail';
 import { aiHint } from '../lib/mcp';
 import { addTag, tagErrors } from '../lib/tags';
 import { NotFoundPage } from './NotFoundPage';
+import { t, tNodes } from '../lib/i18n';
 /** [새 글]: 임시글을 먼저 만들고 에디터 주소로 바꾼다 (docs/04 §2-5). */
 export function NewPostPage() {
     const [error, setError] = useState(null);
@@ -36,7 +37,7 @@ export function NewPostPage() {
         setError(null);
         api('/api/posts', { method: 'POST', body: {} })
             .then((p) => navigate(`/write/${p.id}`, { replace: true }))
-            .catch((e) => setError(e instanceof ApiError ? e.message : '새 글을 만들지 못했어요.'));
+            .catch((e) => setError(e instanceof ApiError ? e.message : t('새 글을 만들지 못했어요.')));
     }, []);
     useEffect(() => {
         if (started.current)
@@ -45,8 +46,8 @@ export function NewPostPage() {
         create();
     }, [create]);
     return (_jsx("main", { className: "container narrow", children: error
-            ? _jsxs("p", { className: "error center", role: "alert", children: [error, " ", _jsx("button", { type: "button", className: "btn btn-text", onClick: create, children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] })
-            : _jsx("p", { className: "muted center", children: "\uC0C8 \uAE00\uC744 \uC900\uBE44\uD558\uB294 \uC911\u2026" }) }));
+            ? _jsxs("p", { className: "error center", role: "alert", children: [error, " ", _jsx("button", { type: "button", className: "btn btn-text", onClick: create, children: t('다시 시도') })] })
+            : _jsx("p", { className: "muted center", children: t('새 글을 준비하는 중…') }) }));
 }
 export function WritePage({ id }) {
     const { me } = useAuth();
@@ -64,7 +65,7 @@ export function WritePage({ id }) {
     if (missing)
         return _jsx(NotFoundPage, {});
     if (!loaded || memberId == null)
-        return _jsx("main", { className: "container", children: _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" }) });
+        return _jsx("main", { className: "container", children: _jsx("p", { className: "muted center", children: t('불러오는 중…') }) });
     return _jsx(Editor, { view: loaded.view, local: loaded.local, memberId: memberId }, loaded.view.id);
 }
 const LOCAL_IDLE_MS = 1000;
@@ -76,7 +77,7 @@ function Editor({ view, local, memberId }) {
     const [content, setContent] = useState(restored ? local.contentMd : view.contentMd);
     const [state, setState] = useState({ kind: 'saved', at: new Date(view.savedAt) });
     const [showConflict, setShowConflict] = useState(restore === 'conflict');
-    const [notice, setNotice] = useState(restore === 'load' ? { ok: true, text: '이 기기에 저장되지 않은 변경을 불러왔어요.' } : null);
+    const [notice, setNotice] = useState(restore === 'load' ? { ok: true, text: t('이 기기에 저장되지 않은 변경을 불러왔어요.') } : null);
     const [localStored, setLocalStored] = useState(false);
     const [backups, setBackups] = useState([]);
     const [showBackups, setShowBackups] = useState(false);
@@ -199,7 +200,7 @@ function Editor({ view, local, memberId }) {
         window.addEventListener('pagehide', onPageHide);
         window.addEventListener('beforeunload', onBeforeUnload);
         window.addEventListener('online', onOnline);
-        setLeaveGuard(() => !(s.hasUnsaved || s.isConflict) || confirm('저장되지 않은 변경이 있어요. 떠날까요?'));
+        setLeaveGuard(() => !(s.hasUnsaved || s.isConflict) || confirm(t('저장되지 않은 변경이 있어요. 떠날까요?')));
         return () => {
             document.removeEventListener('visibilitychange', onHide);
             window.removeEventListener('pagehide', onPageHide);
@@ -215,15 +216,15 @@ function Editor({ view, local, memberId }) {
     }, []);
     // 미리보기: 발행과 같은 변환기(서버)로 만든다 (FR-003)
     useEffect(() => {
-        const t = setTimeout(() => {
+        const timer = setTimeout(() => {
             if (!content.trim())
                 return setPreview('');
             // 업로드 대기 사진은 이 기기 사진으로 보여 준다 (FR-016)
             api('/api/markdown/preview', { method: 'POST', body: { contentMd: forPreview(content) } })
                 .then((r) => { setPreview(restorePendingInPreview(r.html, images.localUrls.current)); setPreviewError(null); })
-                .catch((e) => setPreviewError(e instanceof ApiError ? e.message : '미리보기를 만들지 못했어요.'));
+                .catch((e) => setPreviewError(e instanceof ApiError ? e.message : t('미리보기를 만들지 못했어요.')));
         }, 500);
-        return () => clearTimeout(t);
+        return () => clearTimeout(timer);
     }, [content]);
     useEffect(() => {
         void renderDiagramsWithin(previewRef.current);
@@ -270,7 +271,7 @@ function Editor({ view, local, memberId }) {
             const map = {};
             e.errors.forEach((f) => (map[f.field] = f.message));
             setErrors(map);
-            setState({ kind: 'error', message: e.errors.length ? '입력값을 확인해 주세요.' : e.message });
+            setState({ kind: 'error', message: e.errors.length ? t('입력값을 확인해 주세요.') : e.message });
         }
         else {
             setState({ kind: 'offline' });
@@ -315,9 +316,9 @@ function Editor({ view, local, memberId }) {
         }
     };
     const conflictServer = state.kind === 'conflict' ? state.server : null;
-    return (_jsxs("main", { className: "editor", children: [_jsxs("div", { className: "editor-toolbar", children: [_jsxs("div", { className: "row", children: [_jsx("button", { type: "button", className: "btn btn-text", "data-tip": "\uC5D0\uB514\uD130 \uB2EB\uAE30. \uC4F4 \uB0B4\uC6A9\uC740 \uC790\uB3D9\uC73C\uB85C \uC800\uC7A5\uB3FC\uC694", onClick: () => history.length > 1 ? history.back() : navigate('/manage/posts'), children: "\u2190 \uB098\uAC00\uAE30" }), _jsx(SaveIndicator, { state: state, localStored: localStored, onCompare: () => setShowConflict(true) })] }), _jsxs("div", { className: "row", children: [_jsxs("div", { className: "tabs-mobile", role: "tablist", children: [_jsx("button", { type: "button", role: "tab", "aria-selected": tab === 'write', onClick: () => setTab('write'), children: "\uC4F0\uAE30" }), _jsx("button", { type: "button", role: "tab", "aria-selected": tab === 'preview', onClick: () => setTab('preview'), children: "\uBBF8\uB9AC\uBCF4\uAE30" })] }), _jsxs("button", { type: "button", className: "btn btn-text", onClick: () => fileRef.current?.click(), "data-tip": "\uC0AC\uC9C4 \uB123\uAE30: jpg\u00B7png\u00B7gif\u00B7webp, 10MB\uAE4C\uC9C0. \uC6C0\uC9C1\uC774\uB294 webp\u00B7png\uB294 \uCCAB \uC7A5\uBA74\uB9CC \uB0A8\uC544\uC694", children: [_jsx("span", { "aria-hidden": "true", children: "\uD83D\uDDBC" }), " \uC0AC\uC9C4"] }), _jsx("input", { ref: fileRef, type: "file", accept: "image/jpeg,image/png,image/gif,image/webp", multiple: true, hidden: true, onChange: (e) => { addFiles(e.target.files); e.target.value = ''; } }), _jsx("button", { type: "button", className: "btn btn-outline", "data-tip": "\uC9C0\uAE08 \uBC14\uB85C \uC800\uC7A5 (Ctrl+S). \uD3C9\uC18C\uC5D0\uB3C4 \uBA87 \uCD08\uB9C8\uB2E4 \uC790\uB3D9 \uC800\uC7A5\uB3FC\uC694", onClick: () => saveNow(), children: "\uC800\uC7A5" }), view.status === 'PUBLISHED' && (_jsxs("button", { type: "button", className: "btn btn-text", onClick: () => setShowRevisions(true), "data-tip": "\uBC1C\uD589\uD55C \uD310\uC744 \uC9C0\uAE08 \uB0B4\uC6A9\uACFC \uBE44\uAD50\uD558\uACE0, \uC774\uC804 \uD310\uC744 \uBD88\uB7EC\uC640\uC694", children: [_jsx("span", { "aria-hidden": "true", children: "\uD83D\uDD58" }), " \uC218\uC815 \uC774\uB825"] })), backups.length > 0 && (_jsxs("button", { type: "button", className: "btn btn-text", "data-tip": "\uC774 \uBE0C\uB77C\uC6B0\uC800\uC5D0 \uB530\uB85C \uB0A8\uACA8 \uB454 \uC0AC\uBCF8 \uBCF4\uAE30", onClick: () => setShowBackups(true), children: ["\uC774 \uAE30\uAE30 \uBC31\uC5C5 ", backups.length] })), _jsx("button", { type: "button", className: "btn btn-primary", "data-tip": "\uACF5\uAC1C \uBC94\uC704\u00B7\uD0DC\uADF8\u00B7\uC378\uB124\uC77C\uC744 \uC815\uD558\uACE0 \uBC1C\uD589\uD574\uC694", onClick: () => saver.current.isConflict ? setShowConflict(true) : setShowPublish(true), children: view.status === 'PUBLISHED' ? '다시 발행' : '발행' })] })] }), state.kind === 'conflict' && (_jsxs("div", { className: "banner banner-warn", role: "alert", children: [_jsx("span", { "aria-hidden": "true", children: "\u26A0" }), " \uB2E4\uB978 \uD0ED\uC774\uB098 \uAE30\uAE30\uC5D0\uC11C \uC774 \uAE00\uC774 \uC218\uC815\uB418\uC5C8\uC5B4\uC694(", clock(state.server.savedAt), "). \uC9C0\uAE08 \uB0B4\uC6A9\uC740 \uC774 \uAE30\uAE30\uC5D0\uB9CC \uC800\uC7A5\uB418\uACE0 \uC788\uC5B4\uC694.", _jsx("button", { type: "button", className: "btn btn-text", onClick: () => setShowConflict(true), children: "\uBE44\uAD50\uD558\uAE30" })] })), hint?.publishRequestedAt && (_jsxs("div", { className: "banner ai-hint-banner", role: "status", children: ["AI\uAC00 \uC774 \uAE00\uC758 \uBC1C\uD589\uC744 \uC694\uCCAD\uD588\uC5B4\uC694. \uB0B4\uC6A9\uC744 \uC77D\uC5B4 \uBCF4\uACE0 \uAD1C\uCC2E\uC73C\uBA74 \uBC1C\uD589\uD574 \uC8FC\uC138\uC694.", hint.tags.length > 0 && _jsxs("span", { className: "muted small", children: [" \uD0DC\uADF8 \uC81C\uC548 ", hint.tags.length, "\uAC1C\uB97C \uBC1C\uD589 \uCC3D\uC5D0 \uCC44\uC6CC \uB480\uC5B4\uC694."] }), _jsx("button", { type: "button", className: "btn btn-text", onClick: () => saver.current.isConflict ? setShowConflict(true) : setShowPublish(true), children: "\uBC1C\uD589 \uCC3D \uC5F4\uAE30" })] })), notice && (_jsxs("div", { className: notice.ok ? 'banner banner-ok' : 'banner banner-warn', role: notice.ok ? 'status' : 'alert', children: [notice.text, _jsx("button", { type: "button", className: "btn btn-text", "aria-label": "\uB2EB\uAE30", onClick: () => setNotice(null), children: "\u2715" })] })), images.waiting > 0 && (_jsxs("div", { className: "banner banner-warn", role: "status", children: [images.uploading > 0
-                        ? `사진 ${images.waiting}장을 올리는 중…`
-                        : _jsxs(_Fragment, { children: [_jsx("span", { "aria-hidden": "true", children: "\u26A0" }), " \uC5C5\uB85C\uB4DC \uB300\uAE30 \uC0AC\uC9C4 ", images.waiting, "\uC7A5 \u2014 \uC5F0\uACB0\uB418\uBA74 \uC790\uB3D9\uC73C\uB85C \uC62C\uB824\uC694. \uB2E4 \uC62C\uB77C\uAC00\uC57C \uBC1C\uD589\uD560 \uC218 \uC788\uC5B4\uC694."] }), images.uploading === 0 && _jsx("button", { type: "button", className: "btn btn-text", onClick: () => void images.retryAll(), children: "\uB2E4\uC2DC \uC2DC\uB3C4" })] })), images.error && (_jsxs("div", { className: "banner banner-warn", role: "alert", children: [images.error, _jsx("button", { type: "button", className: "btn btn-text", "aria-label": "\uB2EB\uAE30", onClick: images.clearError, children: "\u2715" })] })), images.usage && images.usage.usedBytes > images.usage.quotaBytes * 0.9 && (_jsxs("p", { className: "muted small editor-note", children: ["\uC0AC\uC9C4 \uC800\uC7A5 \uACF5\uAC04: \uB0A8\uC740 \uACF5\uAC04 \uC57D ", formatBytes(Math.max(0, images.usage.quotaBytes - images.usage.usedBytes))] })), view.status === 'PUBLISHED' && (_jsx("p", { className: "muted small editor-note", children: "\uBC1C\uD589\uD55C \uAE00\uC744 \uACE0\uCE58\uB294 \uC911\uC774\uC5D0\uC694. \uB2E4\uC2DC \uBC1C\uD589\uD560 \uB54C\uAE4C\uC9C0 \uB3C5\uC790\uC5D0\uAC8C\uB294 \uC774\uC804 \uBC1C\uD589\uBCF8\uC774 \uBCF4\uC5EC\uC694." })), _jsxs("div", { className: `editor-panes show-${tab}`, children: [_jsxs("section", { className: "editor-write", children: [_jsx("input", { className: "editor-title", placeholder: "\uC81C\uBAA9\uC744 \uC785\uB825\uD558\uC138\uC694", value: title, maxLength: 100, onChange: (e) => setTitle(e.target.value), "aria-label": "\uC81C\uBAA9", "aria-invalid": !!errors.title, "aria-describedby": errors.title ? 'title-error' : undefined }), errors.title && _jsx("small", { id: "title-error", className: "error", children: errors.title }), _jsx(MarkdownToolbar, { bodyRef: bodyRef, onChange: setContent }), _jsx("textarea", { ref: bodyRef, className: `editor-body${dragging ? ' dragging' : ''}`, placeholder: "Markdown\uC73C\uB85C \uB0B4\uC6A9\uC744 \uC4F0\uC138\uC694\u2026 \uC0AC\uC9C4\uC740 \uBD99\uC5EC \uB123\uAC70\uB098 \uB04C\uC5B4 \uB193\uC73C\uC138\uC694", value: content, onChange: (e) => setContent(e.target.value), "aria-label": "\uBCF8\uBB38", "aria-invalid": !!errors.contentMd, "aria-describedby": errors.contentMd ? 'content-error' : undefined, onKeyDown: (e) => {
+    return (_jsxs("main", { className: "editor", children: [_jsxs("div", { className: "editor-toolbar", children: [_jsxs("div", { className: "row", children: [_jsx("button", { type: "button", className: "btn btn-text", "data-tip": t('에디터 닫기. 쓴 내용은 자동으로 저장돼요'), onClick: () => history.length > 1 ? history.back() : navigate('/manage/posts'), children: t('← 나가기') }), _jsx(SaveIndicator, { state: state, localStored: localStored, onCompare: () => setShowConflict(true) })] }), _jsxs("div", { className: "row", children: [_jsxs("div", { className: "tabs-mobile", role: "tablist", children: [_jsx("button", { type: "button", role: "tab", "aria-selected": tab === 'write', onClick: () => setTab('write'), children: t('쓰기') }), _jsx("button", { type: "button", role: "tab", "aria-selected": tab === 'preview', onClick: () => setTab('preview'), children: t('미리보기') })] }), _jsx("button", { type: "button", className: "btn btn-text", onClick: () => fileRef.current?.click(), "data-tip": t('사진 넣기: jpg·png·gif·webp, 10MB까지. 움직이는 webp·png는 첫 장면만 남아요'), children: tNodes('{0} 사진', { 0: _jsx("span", { "aria-hidden": "true", children: "\uD83D\uDDBC" }) }) }), _jsx("input", { ref: fileRef, type: "file", accept: "image/jpeg,image/png,image/gif,image/webp", multiple: true, hidden: true, onChange: (e) => { addFiles(e.target.files); e.target.value = ''; } }), _jsx("button", { type: "button", className: "btn btn-outline", "data-tip": t('지금 바로 저장 (Ctrl+S). 평소에도 몇 초마다 자동 저장돼요'), onClick: () => saveNow(), children: t('저장') }), view.status === 'PUBLISHED' && (_jsx("button", { type: "button", className: "btn btn-text", onClick: () => setShowRevisions(true), "data-tip": t('발행한 판을 지금 내용과 비교하고, 이전 판을 불러와요'), children: tNodes('{0} 수정 이력', { 0: _jsx("span", { "aria-hidden": "true", children: "\uD83D\uDD58" }) }) })), backups.length > 0 && (_jsx("button", { type: "button", className: "btn btn-text", "data-tip": t('이 브라우저에 따로 남겨 둔 사본 보기'), onClick: () => setShowBackups(true), children: tNodes('이 기기 백업 {0}', { 0: backups.length }) })), _jsx("button", { type: "button", className: "btn btn-primary", "data-tip": t('공개 범위·태그·썸네일을 정하고 발행해요'), onClick: () => saver.current.isConflict ? setShowConflict(true) : setShowPublish(true), children: view.status === 'PUBLISHED' ? t('다시 발행') : t('발행') })] })] }), state.kind === 'conflict' && (_jsx("div", { className: "banner banner-warn", role: "alert", children: tNodes('{0} 다른 탭이나 기기에서 이 글이 수정되었어요({1}). 지금 내용은 이 기기에만 저장되고 있어요.{2}', { 0: _jsx("span", { "aria-hidden": "true", children: "\u26A0" }), 1: clock(state.server.savedAt), 2: _jsx("button", { type: "button", className: "btn btn-text", onClick: () => setShowConflict(true), children: t('비교하기') }) }) })), hint?.publishRequestedAt && (_jsxs("div", { className: "banner ai-hint-banner", role: "status", children: [t('AI가 이 글의 발행을 요청했어요. 내용을 읽어 보고 괜찮으면 발행해 주세요.'), hint.tags.length > 0 && _jsxs("span", { className: "muted small", children: ["  ", tNodes('태그 제안 {0}개를 발행 창에 채워 뒀어요.', { 0: hint.tags.length })] }), _jsx("button", { type: "button", className: "btn btn-text", onClick: () => saver.current.isConflict ? setShowConflict(true) : setShowPublish(true), children: t('발행 창 열기') })] })), notice && (_jsxs("div", { className: notice.ok ? 'banner banner-ok' : 'banner banner-warn', role: notice.ok ? 'status' : 'alert', children: [notice.text, _jsx("button", { type: "button", className: "btn btn-text", "aria-label": t('닫기'), onClick: () => setNotice(null), children: "\u2715" })] })), images.waiting > 0 && (_jsxs("div", { className: "banner banner-warn", role: "status", children: [images.uploading > 0
+                        ? t('사진 {0}장을 올리는 중…', { 0: images.waiting })
+                        : _jsx(_Fragment, { children: tNodes('{0} 업로드 대기 사진 {1}장 — 연결되면 자동으로 올려요. 다 올라가야 발행할 수 있어요.', { 0: _jsx("span", { "aria-hidden": "true", children: "\u26A0" }), 1: images.waiting }) }), images.uploading === 0 && _jsx("button", { type: "button", className: "btn btn-text", onClick: () => void images.retryAll(), children: t('다시 시도') })] })), images.error && (_jsxs("div", { className: "banner banner-warn", role: "alert", children: [images.error, _jsx("button", { type: "button", className: "btn btn-text", "aria-label": t('닫기'), onClick: images.clearError, children: "\u2715" })] })), images.usage && images.usage.usedBytes > images.usage.quotaBytes * 0.9 && (_jsx("p", { className: "muted small editor-note", children: tNodes('사진 저장 공간: 남은 공간 약 {0}', { 0: formatBytes(Math.max(0, images.usage.quotaBytes - images.usage.usedBytes)) }) })), view.status === 'PUBLISHED' && (_jsx("p", { className: "muted small editor-note", children: t('발행한 글을 고치는 중이에요. 다시 발행할 때까지 독자에게는 이전 발행본이 보여요.') })), _jsxs("div", { className: `editor-panes show-${tab}`, children: [_jsxs("section", { className: "editor-write", children: [_jsx("input", { className: "editor-title", placeholder: t('제목을 입력하세요'), value: title, maxLength: 100, onChange: (e) => setTitle(e.target.value), "aria-label": t('제목'), "aria-invalid": !!errors.title, "aria-describedby": errors.title ? 'title-error' : undefined }), errors.title && _jsx("small", { id: "title-error", className: "error", children: errors.title }), _jsx(MarkdownToolbar, { bodyRef: bodyRef, onChange: setContent }), _jsx("textarea", { ref: bodyRef, className: `editor-body${dragging ? ' dragging' : ''}`, placeholder: t('Markdown으로 내용을 쓰세요… 사진은 붙여 넣거나 끌어 놓으세요'), value: content, onChange: (e) => setContent(e.target.value), "aria-label": t('본문'), "aria-invalid": !!errors.contentMd, "aria-describedby": errors.contentMd ? 'content-error' : undefined, onKeyDown: (e) => {
                                     // Ctrl(⌘)+B·I·K는 서식
                                     if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey)
                                         return;
@@ -336,12 +337,12 @@ function Editor({ view, local, memberId }) {
                                         e.preventDefault();
                                         addFiles(e.dataTransfer.files);
                                     }
-                                } }), errors.contentMd && _jsx("small", { id: "content-error", className: "error", children: errors.contentMd }), _jsx(SeriesPicker, { postId: view.id }), _jsx(AttachmentEditor, { postId: view.id, published: view.status === 'PUBLISHED' })] }), _jsxs("section", { className: "editor-preview", "aria-label": "\uBBF8\uB9AC\uBCF4\uAE30", children: [_jsx("h1", { className: "post-title", children: title || _jsx("span", { className: "muted", children: "\uC81C\uBAA9 \uC5C6\uC74C" }) }), previewError && _jsx("p", { className: "error", role: "alert", children: previewError }), _jsx("div", { className: "post-body markdown", ref: previewRef, dangerouslySetInnerHTML: { __html: preview } })] })] }), showPublish && (_jsxs(Modal, { labelledBy: "publish-title", onClose: () => { if (!publishing)
-                    setShowPublish(false); }, children: [_jsx("h2", { id: "publish-title", children: view.status === 'PUBLISHED' ? '다시 발행' : '발행' }), _jsxs("fieldset", { className: "field", children: [_jsx("legend", { children: "\uACF5\uAC1C \uBC94\uC704" }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'PUBLIC', onChange: () => setVisibility('PUBLIC') }), " ", _jsx("span", { "aria-hidden": "true", children: "\uD83C\uDF10" }), " \uC804\uCCB4 \uACF5\uAC1C"] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'FRIENDS', onChange: () => setVisibility('FRIENDS') }), " ", _jsx("span", { "aria-hidden": "true", children: "\uD83D\uDC65" }), " \uCE5C\uAD6C\uC5D0\uAC8C\uB9CC"] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'PRIVATE', onChange: () => setVisibility('PRIVATE') }), " ", _jsx("span", { "aria-hidden": "true", children: "\uD83D\uDD12" }), " \uBE44\uACF5\uAC1C (\uB098\uB9CC \uBCF4\uAE30)"] })] }), visibility === 'FRIENDS' && _jsx(NoFriendsHint, { onPublic: () => setVisibility('PUBLIC') }), _jsx(TagInput, { value: tags, onChange: (t) => { setTags(t); setErrors((m) => withoutTagErrors(m)); }, errors: tagErrors(errors) }), _jsx(AiTagSuggest, { postId: view.id, title: title, content: content, tags: tags, onAdd: (t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)); } }), _jsx(BranchSuggest, { postId: view.id, tags: tags }), _jsxs("label", { className: "field", children: [_jsxs("span", { children: ["\uC9E7\uC740 \uC18C\uAC1C (", summaryLength(summary), "/", SUMMARY_MAX, ")"] }), _jsx("textarea", { value: summary, rows: 3, "aria-invalid": errors.summary ? true : undefined, "aria-describedby": errors.summary ? 'summary-error' : undefined, placeholder: "\uBE44\uC6CC \uB450\uBA74 \uBCF8\uBB38 \uC55E\uBD80\uBD84\uC774 \uBAA9\uB85D\uC5D0 \uBCF4\uC5EC\uC694", onChange: (e) => { setSummary(e.target.value); setErrors(({ summary: _, ...rest }) => rest); } })] }), errors.summary && _jsx("p", { id: "summary-error", className: "error small", role: "alert", children: errors.summary }), _jsx(ThumbnailPicker, { value: thumbnail, content: content, error: errors.thumbnail, onBusy: setThumbnailBusy, onChange: (c) => { setThumbnail(c); setErrors(({ thumbnail: _, ...rest }) => rest); } }), Object.keys(errors).some((k) => !isPublishField(k)) && _jsx("p", { className: "error small", children: "\uC81C\uBAA9\uC774\uB098 \uBCF8\uBB38\uB3C4 \uD655\uC778\uD574 \uC8FC\uC138\uC694." }), _jsx(PrepublishCheck, { title: title, contentMd: content, summary: summary, tags: tags, thumbnail: thumbnail }), view.status === 'PUBLISHED' && _jsx("p", { className: "muted small", children: "\uC8FC\uC18C\uC640 \uCC98\uC74C \uACF5\uAC1C\uD55C \uB0A0\uC9DC\uB294 \uADF8\uB300\uB85C\uC774\uACE0 \"\uC218\uC815\uB428\"\uC774 \uD45C\uC2DC\uB3FC\uC694." }), _jsx(AltTexts, { content: content, open: showAlts, onOpen: () => setShowAlts(true), localUrls: images.localUrls.current, onChange: (i, alt) => setContent((c) => setAlt(c, i, alt)) }), pendingIds(content).length > 0 && _jsx("p", { className: "error small", children: "\uC5C5\uB85C\uB4DC\uAC00 \uB05D\uB098\uC9C0 \uC54A\uC740 \uC0AC\uC9C4\uC774 \uC788\uC5B4\uC694. \uB2E4 \uC62C\uB77C\uAC04 \uB4A4 \uBC1C\uD589\uD560 \uC218 \uC788\uC5B4\uC694." }), _jsxs("footer", { className: "dialog-footer", children: [_jsx("button", { type: "button", className: "btn btn-text", onClick: () => setShowPublish(false), disabled: publishing, children: "\uCDE8\uC18C" }), _jsx("button", { type: "button", className: "btn btn-primary", onClick: publish, disabled: publishing || thumbnailBusy, children: publishing ? '발행 중…' : '발행하기' })] })] })), showRevisions && (_jsx(RevisionHistory, { postId: view.id, current: current(), onClose: () => setShowRevisions(false), onLoad: async (r) => {
+                                } }), errors.contentMd && _jsx("small", { id: "content-error", className: "error", children: errors.contentMd }), _jsx(SeriesPicker, { postId: view.id }), _jsx(AttachmentEditor, { postId: view.id, published: view.status === 'PUBLISHED' })] }), _jsxs("section", { className: "editor-preview", "aria-label": t('미리보기'), children: [_jsx("h1", { className: "post-title", children: title || _jsx("span", { className: "muted", children: t('제목 없음') }) }), previewError && _jsx("p", { className: "error", role: "alert", children: previewError }), _jsx("div", { className: "post-body markdown", ref: previewRef, dangerouslySetInnerHTML: { __html: preview } })] })] }), showPublish && (_jsxs(Modal, { labelledBy: "publish-title", onClose: () => { if (!publishing)
+                    setShowPublish(false); }, children: [_jsx("h2", { id: "publish-title", children: view.status === 'PUBLISHED' ? t('다시 발행') : t('발행') }), _jsxs("fieldset", { className: "field", children: [_jsx("legend", { children: t('공개 범위') }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'PUBLIC', onChange: () => setVisibility('PUBLIC') }), " ", _jsx("span", { "aria-hidden": "true", children: "\uD83C\uDF10" }), "  ", t('전체 공개')] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'FRIENDS', onChange: () => setVisibility('FRIENDS') }), " ", _jsx("span", { "aria-hidden": "true", children: "\uD83D\uDC65" }), "  ", t('친구에게만')] }), _jsxs("label", { children: [_jsx("input", { type: "radio", name: "visibility", checked: visibility === 'PRIVATE', onChange: () => setVisibility('PRIVATE') }), " ", _jsx("span", { "aria-hidden": "true", children: "\uD83D\uDD12" }), "  ", t('비공개 (나만 보기)')] })] }), visibility === 'FRIENDS' && _jsx(NoFriendsHint, { onPublic: () => setVisibility('PUBLIC') }), _jsx(TagInput, { value: tags, onChange: (t) => { setTags(t); setErrors((m) => withoutTagErrors(m)); }, errors: tagErrors(errors) }), _jsx(AiTagSuggest, { postId: view.id, title: title, content: content, tags: tags, onAdd: (t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)); } }), _jsx(BranchSuggest, { postId: view.id, tags: tags }), _jsxs("label", { className: "field", children: [_jsx("span", { children: tNodes('짧은 소개 ({0}/{1})', { 0: summaryLength(summary), 1: SUMMARY_MAX }) }), _jsx("textarea", { value: summary, rows: 3, "aria-invalid": errors.summary ? true : undefined, "aria-describedby": errors.summary ? 'summary-error' : undefined, placeholder: t('비워 두면 본문 앞부분이 목록에 보여요'), onChange: (e) => { setSummary(e.target.value); setErrors(({ summary: _, ...rest }) => rest); } })] }), errors.summary && _jsx("p", { id: "summary-error", className: "error small", role: "alert", children: errors.summary }), _jsx(ThumbnailPicker, { value: thumbnail, content: content, error: errors.thumbnail, onBusy: setThumbnailBusy, onChange: (c) => { setThumbnail(c); setErrors(({ thumbnail: _, ...rest }) => rest); } }), Object.keys(errors).some((k) => !isPublishField(k)) && _jsx("p", { className: "error small", children: t('제목이나 본문도 확인해 주세요.') }), _jsx(PrepublishCheck, { title: title, contentMd: content, summary: summary, tags: tags, thumbnail: thumbnail }), view.status === 'PUBLISHED' && _jsx("p", { className: "muted small", children: t('주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.') }), _jsx(AltTexts, { content: content, open: showAlts, onOpen: () => setShowAlts(true), localUrls: images.localUrls.current, onChange: (i, alt) => setContent((c) => setAlt(c, i, alt)) }), pendingIds(content).length > 0 && _jsx("p", { className: "error small", children: t('업로드가 끝나지 않은 사진이 있어요. 다 올라간 뒤 발행할 수 있어요.') }), _jsxs("footer", { className: "dialog-footer", children: [_jsx("button", { type: "button", className: "btn btn-text", onClick: () => setShowPublish(false), disabled: publishing, children: t('취소') }), _jsx("button", { type: "button", className: "btn btn-primary", onClick: publish, disabled: publishing || thumbnailBusy, children: publishing ? t('발행 중…') : t('발행하기') })] })] })), showRevisions && (_jsx(RevisionHistory, { postId: view.id, current: current(), onClose: () => setShowRevisions(false), onLoad: async (r) => {
                     // 지금 내용은 이 기기 백업에 남겨 둔다: 불러오기로 사라지지 않게 (백업 불러오기와 같은 규칙)
                     const mine = { memberId, postId: view.id, ...current(), at: Date.now() };
                     if ((mine.title !== r.title || mine.contentMd !== r.contentMd) && !(await localDrafts.addBackup(mine))) {
-                        if (!confirm('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 이 판을 불러올까요?'))
+                        if (!confirm(t('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 이 판을 불러올까요?')))
                             return;
                     }
                     setTitle(r.title);
@@ -349,34 +350,34 @@ function Editor({ view, local, memberId }) {
                     setSummary(r.summary ?? '');
                     setBackups(await localDrafts.backups(memberId, view.id));
                     setShowRevisions(false);
-                    setNotice({ ok: true, text: `${r.no}판을 불러왔어요. 다시 발행하면 독자에게 보여요. 바로 전 내용은 이 기기 백업에 있어요.` });
-                } })), showBackups && (_jsxs(Modal, { labelledBy: "backups-title", onClose: () => setShowBackups(false), children: [_jsx("h2", { id: "backups-title", children: "\uC774 \uAE30\uAE30 \uBC31\uC5C5" }), _jsx("p", { className: "muted small", children: "[\uC800\uC7A5\uB41C \uB0B4\uC6A9 \uBD88\uB7EC\uC624\uAE30]\uB97C \uACE0\uB97C \uB54C \uD3B8\uC9D1 \uC911\uC774\uB358 \uB0B4\uC6A9\uC774\uC5D0\uC694. 7\uC77C \uB3D9\uC548 \uC774 \uBE0C\uB77C\uC6B0\uC800\uC5D0\uB9CC \uB0A8\uC544\uC694." }), _jsx("ul", { className: "backup-list", children: backups.map((b) => (_jsxs("li", { children: [_jsxs("div", { children: [_jsx("b", { children: b.title || '제목 없음' }), " ", _jsxs("span", { className: "muted small", children: [fullDate(new Date(b.at).toISOString()), " ", clock(new Date(b.at))] }), _jsx("p", { className: "small muted backup-excerpt", children: b.contentMd.slice(0, 120) })] }), _jsxs("div", { className: "row", children: [_jsx("button", { type: "button", className: "btn btn-outline", onClick: async () => {
+                    setNotice({ ok: true, text: t('{0}판을 불러왔어요. 다시 발행하면 독자에게 보여요. 바로 전 내용은 이 기기 백업에 있어요.', { 0: r.no }) });
+                } })), showBackups && (_jsxs(Modal, { labelledBy: "backups-title", onClose: () => setShowBackups(false), children: [_jsx("h2", { id: "backups-title", children: t('이 기기 백업') }), _jsx("p", { className: "muted small", children: t('[저장된 내용 불러오기]를 고를 때 편집 중이던 내용이에요. 7일 동안 이 브라우저에만 남아요.') }), _jsx("ul", { className: "backup-list", children: backups.map((b) => (_jsxs("li", { children: [_jsxs("div", { children: [_jsx("b", { children: b.title || t('제목 없음') }), " ", _jsxs("span", { className: "muted small", children: [fullDate(new Date(b.at).toISOString()), " ", clock(new Date(b.at))] }), _jsx("p", { className: "small muted backup-excerpt", children: b.contentMd.slice(0, 120) })] }), _jsxs("div", { className: "row", children: [_jsx("button", { type: "button", className: "btn btn-outline", onClick: async () => {
                                                 // 지금 내용도 백업해 두고 바꾼다: 어느 쪽도 모르게 사라지지 않게 (FR-013)
                                                 const mine = { memberId, postId: view.id, ...current(), at: Date.now() };
                                                 if ((mine.title !== b.title || mine.contentMd !== b.contentMd) && !(await localDrafts.addBackup(mine))) {
-                                                    if (!confirm('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 백업을 불러올까요?'))
+                                                    if (!confirm(t('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 백업을 불러올까요?')))
                                                         return;
                                                 }
                                                 setTitle(b.title);
                                                 setContent(b.contentMd);
                                                 setBackups(await localDrafts.backups(memberId, view.id));
                                                 setShowBackups(false);
-                                                setNotice({ ok: true, text: '백업한 내용을 불러왔어요. 바로 전 내용도 백업해 두었어요.' });
-                                            }, children: "\uBD88\uB7EC\uC624\uAE30" }), _jsx("button", { type: "button", className: "btn btn-text", onClick: async () => {
-                                                if (!confirm('이 백업을 지울까요? 되돌릴 수 없어요.'))
+                                                setNotice({ ok: true, text: t('백업한 내용을 불러왔어요. 바로 전 내용도 백업해 두었어요.') });
+                                            }, children: t('불러오기') }), _jsx("button", { type: "button", className: "btn btn-text", onClick: async () => {
+                                                if (!confirm(t('이 백업을 지울까요? 되돌릴 수 없어요.')))
                                                     return;
                                                 await localDrafts.removeBackup(b);
                                                 setBackups((list) => list.filter((x) => x !== b));
-                                            }, children: "\uC9C0\uC6B0\uAE30" })] })] }, b.at))) }), _jsx("footer", { className: "dialog-footer", children: _jsx("button", { type: "button", className: "btn btn-text", onClick: () => setShowBackups(false), children: "\uB2EB\uAE30" }) })] })), showConflict && conflictServer && (_jsx(ConflictDialog, { server: conflictServer, mine: current(), onClose: () => setShowConflict(false), onOverwrite: () => void saveNow(conflictServer.version), onLoadServer: async () => {
+                                            }, children: t('지우기') })] })] }, b.at))) }), _jsx("footer", { className: "dialog-footer", children: _jsx("button", { type: "button", className: "btn btn-text", onClick: () => setShowBackups(false), children: t('닫기') }) })] })), showConflict && conflictServer && (_jsx(ConflictDialog, { server: conflictServer, mine: current(), onClose: () => setShowConflict(false), onOverwrite: () => void saveNow(conflictServer.version), onLoadServer: async () => {
                     // 편집 중이던 내용은 이 기기에 7일 백업한다 (FR-012). 백업을 못 하면 불러오기 전에 알린다
                     const backup = { memberId, postId: view.id, ...current(), at: Date.now() };
                     if (!(await localDrafts.addBackup(backup))) {
-                        if (!confirm('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 저장된 내용을 불러올까요?'))
+                        if (!confirm(t('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 저장된 내용을 불러올까요?')))
                             return;
                     }
                     else {
                         setBackups((b) => [backup, ...b]);
-                        setNotice({ ok: true, text: '편집 중인 내용은 이 기기에 7일 동안 백업돼요.' });
+                        setNotice({ ok: true, text: t('편집 중인 내용은 이 기기에 7일 동안 백업돼요.') });
                     }
                     setTitle(conflictServer.title);
                     setContent(conflictServer.contentMd);
@@ -390,7 +391,7 @@ function Editor({ view, local, memberId }) {
                     }
                     catch (e) {
                         setShowConflict(false);
-                        setNotice({ ok: false, text: e instanceof ApiError ? e.message : '새 글로 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.' });
+                        setNotice({ ok: false, text: e instanceof ApiError ? e.message : t('새 글로 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.') });
                         return;
                     }
                     saver.current.reset({ title: conflictServer.title, contentMd: conflictServer.contentMd }, conflictServer.version);
@@ -408,11 +409,11 @@ function AltTexts({ content, open, onOpen, localUrls, onChange }) {
     if (list.length === 0)
         return null;
     if (!open) {
-        return missing > 0 ? (_jsxs("p", { className: "small", children: ["\uB300\uCCB4\uAE00\uC774 \uC5C6\uB294 \uC0AC\uC9C4\uC774 ", missing, "\uC7A5 \uC788\uC5B4\uC694 ", _jsx("button", { type: "button", className: "btn btn-text", onClick: onOpen, children: "\uB300\uCCB4\uAE00 \uB123\uAE30" })] })) : null;
+        return missing > 0 ? (_jsx("p", { className: "small", children: tNodes('대체글이 없는 사진이 {0}장 있어요 {1}', { 0: missing, 1: _jsx("button", { type: "button", className: "btn btn-text", onClick: onOpen, children: t('대체글 넣기') }) }) })) : null;
     }
-    return (_jsxs("fieldset", { className: "field alt-texts", children: [_jsx("legend", { children: "\uC0AC\uC9C4 \uB300\uCCB4\uAE00" }), _jsx("p", { className: "muted small", children: "\uC0AC\uC9C4\uC744 \uBCFC \uC218 \uC5C6\uB294 \uBD84\uAED8 \uC77D\uC5B4 \uC904 \uC124\uBA85\uC774\uC5D0\uC694." }), list.map((img) => {
+    return (_jsxs("fieldset", { className: "field alt-texts", children: [_jsx("legend", { children: t('사진 대체글') }), _jsx("p", { className: "muted small", children: t('사진을 볼 수 없는 분께 읽어 줄 설명이에요.') }), list.map((img) => {
                 const src = img.src.startsWith('local:') ? localUrls.get(img.src.slice(6)) : img.src;
-                return (_jsxs("label", { className: "alt-row", children: [src ? _jsx("img", { src: src, alt: "", className: "alt-thumb" }) : _jsx("span", { className: "alt-thumb" }), _jsxs("span", { className: "alt-input", children: [_jsx("input", { value: img.alt, placeholder: "\uC608: \uB85C\uADF8\uC778 \uD654\uBA74\uC758 \uC624\uB958 \uBA54\uC2DC\uC9C0", onChange: (e) => onChange(img.index, e.target.value) }), img.alt.length > ALT_SOFT_LIMIT && _jsxs("small", { className: "muted", children: ["\uC9E7\uAC8C \uC4F0\uBA74 \uB354 \uB4E3\uAE30 \uD3B8\uD574\uC694 (", img.alt.length, "\uC790)"] })] })] }, img.index));
+                return (_jsxs("label", { className: "alt-row", children: [src ? _jsx("img", { src: src, alt: "", className: "alt-thumb" }) : _jsx("span", { className: "alt-thumb" }), _jsxs("span", { className: "alt-input", children: [_jsx("input", { value: img.alt, placeholder: t('예: 로그인 화면의 오류 메시지'), onChange: (e) => onChange(img.index, e.target.value) }), img.alt.length > ALT_SOFT_LIMIT && _jsx("small", { className: "muted", children: tNodes('짧게 쓰면 더 듣기 편해요 ({0}자)', { 0: img.alt.length }) })] })] }, img.index));
             })] }));
 }
 // 상태 영역(role=status)은 하나만 두고 글자만 바꾼다: 새로 끼우면 화면 읽기 프로그램이 바뀐 상태를 놓친다
@@ -423,21 +424,21 @@ function SaveIndicator({ state, localStored, onCompare }) {
     switch (state.kind) {
         case 'saved':
             cls = 'save-state ok';
-            body = _jsxs(_Fragment, { children: [icon('✓'), "\uC800\uC7A5\uB428", state.at ? ` ${clock(state.at)}` : ''] });
+            body = _jsxs(_Fragment, { children: [icon('✓'), t('저장됨'), state.at ? ` ${clock(state.at)}` : ''] });
             break;
         case 'dirty':
-            body = _jsxs(_Fragment, { children: [icon('●'), localStored ? '이 기기에 저장됨 (동기화 대기)' : '저장 대기'] });
+            body = _jsxs(_Fragment, { children: [icon('●'), localStored ? t('이 기기에 저장됨 (동기화 대기)') : t('저장 대기')] });
             break;
         case 'saving':
-            body = '저장 중…';
+            body = t('저장 중…');
             break;
         case 'offline':
             cls = 'save-state warn';
-            body = _jsxs(_Fragment, { children: [icon('⚠'), "\uC624\uD504\uB77C\uC778 \u2014 \uC774 \uAE30\uAE30\uC5D0 \uC800\uC7A5 \uC911, \uC5F0\uACB0\uB418\uBA74 \uC790\uB3D9 \uB3D9\uAE30\uD654"] });
+            body = _jsx(_Fragment, { children: tNodes('{0}오프라인 — 이 기기에 저장 중, 연결되면 자동 동기화', { 0: icon('⚠') }) });
             break;
         case 'conflict':
             cls = '';
-            body = (_jsxs("button", { type: "button", className: "save-state warn btn-text", onClick: onCompare, children: [icon('⚠'), "\uB2E4\uB978 \uACF3\uC5D0\uC11C \uC218\uC815\uB428 \u2014 \uC774 \uAE30\uAE30\uC5D0\uB9CC \uC800\uC7A5 \uC911 [\uBE44\uAD50\uD558\uAE30]"] }));
+            body = (_jsx("button", { type: "button", className: "save-state warn btn-text", onClick: onCompare, children: tNodes('{0}다른 곳에서 수정됨 — 이 기기에만 저장 중 [비교하기]', { 0: icon('⚠') }) }));
             break;
         case 'error':
             cls = 'save-state warn';
@@ -457,5 +458,5 @@ function NoFriendsHint({ onPublic }) {
     }, []);
     if (count !== 0)
         return null;
-    return (_jsxs("p", { className: "banner small", role: "status", children: ["\uC544\uC9C1 \uCE5C\uAD6C\uAC00 \uC5C6\uC5B4\uC11C \uC9C0\uAE08\uC740 \uB098\uB9CC \uBCFC \uC218 \uC788\uC5B4\uC694.", ' ', _jsx("button", { type: "button", className: "btn btn-text", onClick: onPublic, children: "\uC804\uCCB4 \uACF5\uAC1C\uB85C \uBC14\uAFB8\uAE30" })] }));
+    return (_jsx("p", { className: "banner small", role: "status", children: tNodes('아직 친구가 없어서 지금은 나만 볼 수 있어요. {0}', { 0: _jsx("button", { type: "button", className: "btn btn-text", onClick: onPublic, children: t('전체 공개로 바꾸기') }) }) }));
 }

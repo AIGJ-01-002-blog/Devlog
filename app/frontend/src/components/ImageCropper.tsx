@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { cropAt, PROFILE_SIZE, type Crop } from '../lib/image'
+import { t } from '../lib/i18n'
 
 /**
  * 정사각형 자르기 (005 FR-011): 끌거나 화살표 키로 위치를, 막대·휠로 확대를 조정한다. 미리보기는 실제로 올라갈 256×256 그대로다.
@@ -63,18 +64,18 @@ export function ImageCropper({ image, onApply, onCancel, busy }: {
   }
 
   return (
-    <div className="cropper" role="group" aria-label="사진 자르기">
+    <div className="cropper" role="group" aria-label={t('사진 자르기')}>
       <canvas ref={canvas} width={PROFILE_SIZE} height={PROFILE_SIZE} className="cropper-canvas"
-              tabIndex={0} role="img" aria-label="사진 위치 (화살표 키로 옮기기)" onKeyDown={onKey}
+              tabIndex={0} role="img" aria-label={t('사진 위치 (화살표 키로 옮기기)')} onKeyDown={onKey}
               onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} />
       <label className="cropper-zoom">
-        <span className="small muted">확대</span>
-        <input type="range" min={1} max={8} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} aria-label="확대" />
+        <span className="small muted">{t('확대')}</span>
+        <input type="range" min={1} max={8} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} aria-label={t('확대')} />
       </label>
-      <p className="small muted">끌거나 화살표 키로 위치를 맞추세요. 256×256 크기로 바뀌고 촬영 위치 같은 사진 정보는 지워져요.</p>
+      <p className="small muted">{t('끌거나 화살표 키로 위치를 맞추세요. 256×256 크기로 바뀌고 촬영 위치 같은 사진 정보는 지워져요.')}</p>
       <div className="row">
-        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => onApply(crop)}>{busy ? '올리는 중…' : '이 사진 쓰기'}</button>
-        <button type="button" className="btn btn-text" disabled={busy} onClick={onCancel}>취소</button>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => onApply(crop)}>{busy ? t('올리는 중…') : t('이 사진 쓰기')}</button>
+        <button type="button" className="btn btn-text" disabled={busy} onClick={onCancel}>{t('취소')}</button>
       </div>
     </div>
   )

@@ -1,3 +1,4 @@
+import { t } from './i18n'
 // Mermaid 다이어그램 (spec 071). 본문의 ```mermaid 코드 블록을 글 화면에서 그림으로 그린다.
 // 서버는 코드 블록을 그대로 저장·정화하고(language-mermaid), 그림은 읽는 화면이 그린다. 그래서 어느 AI 앱이 쓴 글이든 같은 그림이 나온다.
 // mermaid는 크므로 다이어그램이 있는 글에서만 불러온다. 그리지 못하면 코드 블록을 그대로 두고 한 줄 안내를 붙인다.
@@ -55,7 +56,7 @@ function figureFor(svg: string, source: string): HTMLElement {
   const details = document.createElement('details')
   details.className = 'diagram-source'
   const summary = document.createElement('summary')
-  summary.textContent = '다이어그램 코드 보기'
+  summary.textContent = t('다이어그램 코드 보기')
   const pre = document.createElement('pre')
   const code = document.createElement('code')
   code.className = 'language-mermaid'
@@ -73,7 +74,7 @@ function failed(code: HTMLElement) {
   if (!pre || pre.nextElementSibling?.classList.contains('diagram-error')) return
   const note = document.createElement('p')
   note.className = 'diagram-error muted small'
-  note.textContent = '다이어그램을 그리지 못해 코드로 보여 드려요.'
+  note.textContent = t('다이어그램을 그리지 못해 코드로 보여 드려요.')
   pre.after(note)
 }
 
@@ -81,9 +82,9 @@ function failed(code: HTMLElement) {
 export function label(source: string): string {
   const kind = source.trim().split(/\s+/)[0] ?? ''
   const names: Record<string, string> = {
-    flowchart: '흐름도', graph: '흐름도', sequenceDiagram: '순서도', classDiagram: '클래스 다이어그램', erDiagram: 'ERD',
-    stateDiagram: '상태 다이어그램', 'stateDiagram-v2': '상태 다이어그램', gantt: '간트 차트', pie: '원그래프', mindmap: '마인드맵',
-    timeline: '타임라인', gitGraph: 'Git 그래프', journey: '사용자 여정',
+    flowchart: t('흐름도'), graph: t('흐름도'), sequenceDiagram: t('순서도'), classDiagram: t('클래스 다이어그램'), erDiagram: 'ERD',
+    stateDiagram: t('상태 다이어그램'), 'stateDiagram-v2': t('상태 다이어그램'), gantt: t('간트 차트'), pie: t('원그래프'), mindmap: t('마인드맵'),
+    timeline: t('타임라인'), gitGraph: t('Git 그래프'), journey: t('사용자 여정'),
   }
-  return names[kind] ? `다이어그램: ${names[kind]}` : '다이어그램'
+  return names[kind] ? t('다이어그램: {0}', { 0: names[kind] }) : t('다이어그램')
 }

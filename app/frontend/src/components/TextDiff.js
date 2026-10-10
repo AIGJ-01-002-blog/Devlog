@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { diffLines, diffWordsWithSpace } from 'diff';
 import { useMemo } from 'react';
+import { tNodes } from '../lib/i18n';
 /**
  * 두 글을 줄 단위로 나란히 비교한다 (충돌 창 docs/04 §2-7, 수정 이력 058). 색만으로 구분하지 않고 −/+ 기호를 붙인다.
  * 좁은 화면에서는 두 칸이 위아래로 쌓인다(.diff 미디어 쿼리).
@@ -46,7 +47,7 @@ function Line({ row, side }) {
         const lines = text.split('\n');
         // 바뀌지 않은 긴 구간은 접는다
         if (lines.length > 8) {
-            return _jsxs("span", { className: "diff-same", children: [lines.slice(0, 3).join('\n'), '\n', _jsxs("span", { className: "diff-fold", children: ["\u22EF \uAC19\uC740 \uB0B4\uC6A9 ", lines.length - 6, "\uC904 \u22EF"] }), '\n', lines.slice(-3).join('\n')] });
+            return _jsxs("span", { className: "diff-same", children: [lines.slice(0, 3).join('\n'), '\n', _jsx("span", { className: "diff-fold", children: tNodes('⋯ 같은 내용 {0}줄 ⋯', { 0: lines.length - 6 }) }), '\n', lines.slice(-3).join('\n')] });
         }
         return _jsx("span", { className: "diff-same", children: text });
     }

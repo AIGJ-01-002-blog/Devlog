@@ -1,5 +1,6 @@
 // 글 첨부파일 (022). 서버 규칙(PostFiles·FileInspector)과 같은 값을 화면에서 먼저 확인해 헛된 업로드를 줄인다.
 import { api, ApiError } from './api'
+import { t } from './i18n'
 
 export interface Attachment {
   id: number
@@ -21,12 +22,12 @@ export function extension(name: string): string {
 
 /** 올리기 전 확인. 문제가 없으면 null. 내용 검사는 서버가 다시 한다. */
 export function checkFile(file: { name: string; size: number }, count: number): string | null {
-  if (count >= MAX_FILES) return `첨부는 ${MAX_FILES}개까지 할 수 있어요.`
+  if (count >= MAX_FILES) return t('첨부는 {0}개까지 할 수 있어요.', { 0: MAX_FILES })
   const ext = extension(file.name)
-  if (IMAGE_EXTENSIONS.includes(ext)) return '사진은 본문에 넣어 주세요.'
-  if (!EXTENSIONS.includes(ext)) return `${EXTENSIONS.join(', ')} 파일만 첨부할 수 있어요.`
-  if (file.size === 0) return '빈 파일은 첨부할 수 없어요.'
-  if (file.size > MAX_FILE_BYTES) return '파일 하나는 20MB까지 첨부할 수 있어요.'
+  if (IMAGE_EXTENSIONS.includes(ext)) return t('사진은 본문에 넣어 주세요.')
+  if (!EXTENSIONS.includes(ext)) return t('{0} 파일만 첨부할 수 있어요.', { 0: EXTENSIONS.join(', ') })
+  if (file.size === 0) return t('빈 파일은 첨부할 수 없어요.')
+  if (file.size > MAX_FILE_BYTES) return t('파일 하나는 20MB까지 첨부할 수 있어요.')
   return null
 }
 
@@ -68,5 +69,5 @@ export function saveFiles(postId: number, ids: number[]): Promise<Attachment[]> 
 
 export function fileErrorText(e: unknown): string {
   if (e instanceof ApiError) return e.fieldError('fileIds') ?? e.message
-  return '파일을 올리지 못했어요. 잠시 뒤 다시 시도해 주세요.'
+  return t('파일을 올리지 못했어요. 잠시 뒤 다시 시도해 주세요.')
 }

@@ -1,5 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { applyFormat, MD_TOOLS } from '../lib/mdFormat';
+import { t } from '../lib/i18n';
 const MOD = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+';
 /**
  * 본문 위 서식 도구 (spec 055). 버튼마다 툴팁에 이름과 단축키가 보인다.
@@ -24,7 +25,7 @@ export function formatTextarea(el, format, onChange) {
     applyMdEdit(el, applyFormat(el.value, el.selectionStart, el.selectionEnd, format), onChange);
 }
 export function MarkdownToolbar({ bodyRef, onChange }) {
-    return (_jsx("div", { className: "md-toolbar", role: "toolbar", "aria-label": "\uC11C\uC2DD", children: MD_TOOLS.map((t, i) => (_jsxs("span", { className: "md-tool-wrap", children: [(i === 3 || i === 6 || i === 9) && _jsx("span", { className: "md-sep", "aria-hidden": "true" }), _jsx("button", { type: "button", className: `md-tool md-${t.format}`, "aria-label": t.label, "data-tip": t.key ? `${t.label} (${MOD}${t.key.toUpperCase()})` : t.label, 
+    return (_jsx("div", { className: "md-toolbar", role: "toolbar", "aria-label": t('서식'), children: MD_TOOLS.map((t, i) => (_jsxs("span", { className: "md-tool-wrap", children: [(i === 3 || i === 6 || i === 9) && _jsx("span", { className: "md-sep", "aria-hidden": "true" }), _jsx("button", { type: "button", className: `md-tool md-${t.format}`, "aria-label": t.label, "data-tip": t.key ? `${t.label} (${MOD}${t.key.toUpperCase()})` : t.label, 
                     // 누를 때 본문 초점·선택이 풀리지 않게
                     onMouseDown: (e) => e.preventDefault(), onClick: () => { if (bodyRef.current)
                         formatTextarea(bodyRef.current, t.format, onChange); }, children: _jsx("span", { "aria-hidden": "true", children: t.icon }) })] }, t.format))) }));

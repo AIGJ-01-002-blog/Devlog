@@ -370,6 +370,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.59.0 | 2026-10-10 | 界面多语言第二阶段（写作、设置、文章管理、反馈、AI 连接页面也支持英语、日语、中文） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.0) |
 | v1.58.0 | 2026-10-10 | 界面多语言第一阶段（英语、日语、中文，页脚 🌐 语言选择） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.58.0) |
 | v1.57.0 | 2026-10-10 | Kakao 登录（`ka-` 地址，设置 Kakao 密钥后显示按钮） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.57.0) |
 | v1.56.0 | 2026-10-10 | 粉丝·关注列表公开/私密设置（私密时显示“私密账号”，数量照常显示） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.56.0) |

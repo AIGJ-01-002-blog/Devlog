@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { addTag, MAX_TAGS, moveTag, tagFormatError, tagsApi, type TagSuggestion } from '../lib/tags'
+import { t, tNodes } from '../lib/i18n'
 
 /**
  * 발행 설정 창의 태그 입력 (docs/22 §3·§7, 010 US1·US4). Enter·쉼표로 추가, 띄어쓰기는 하이픈, ×·빈 칸 Backspace로 삭제,
@@ -81,25 +82,25 @@ export function TagInput({ value, onChange, errors }: {
   const listError = errors.get(-1)
   return (
     <div className="field tag-field">
-      <label htmlFor={`${listId}-input`}>태그</label>
+      <label htmlFor={`${listId}-input`}>{t('태그')}</label>
       <div className="tag-box">
       <div className={`tag-input${listError ? ' invalid' : ''}`}>
-        {value.map((t, i) => {
-          const error = errors.get(i) ?? tagFormatError(t)
+        {value.map((tag, i) => {
+          const error = errors.get(i) ?? tagFormatError(tag)
           return (
-            <span key={t} ref={(el) => { chipRefs.current[i] = el }} className={`tag-chip${error ? ' invalid' : ''}`}
-                  tabIndex={0} draggable aria-label={`태그 ${t}${error ? `, 오류: ${error}` : ''}. Alt와 방향키로 순서를 바꿔요`}
+            <span key={tag} ref={(el) => { chipRefs.current[i] = el }} className={`tag-chip${error ? ' invalid' : ''}`}
+                  tabIndex={0} draggable aria-label={t('태그 {0}{1}. Alt와 방향키로 순서를 바꿔요', { 0: tag, 1: error ? `, 오류: ${error}` : '' })}
                   onKeyDown={(e) => onChipKey(e, i)}
                   onDragStart={() => setDragFrom(i)} onDragEnd={() => setDragFrom(null)}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => { e.preventDefault(); if (dragFrom != null) onChange(moveTag(value, dragFrom, i)); setDragFrom(null) }}>
-              {error && <span aria-hidden="true">⚠ </span>}#{t}
-              <button type="button" className="tag-remove" aria-label={`${t} 태그 지우기`}
+              {error && <span aria-hidden="true">⚠ </span>}#{tag}
+              <button type="button" className="tag-remove" aria-label={t('{0} 태그 지우기', { 0: tag })}
                       onClick={() => onChange(value.filter((_, j) => j !== i))}>×</button>
             </span>
           )
         })}
-        <input id={`${listId}-input`} value={text} placeholder={value.length ? '' : '태그 입력'} autoComplete="off"
+        <input id={`${listId}-input`} value={text} placeholder={value.length ? '' : t('태그 입력')} autoComplete="off"
                role="combobox" aria-expanded={suggestions.length > 0} aria-controls={listId} aria-describedby={hintId}
                aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
                onChange={(e) => {
@@ -122,7 +123,7 @@ export function TagInput({ value, onChange, errors }: {
           {suggestions.map((s, i) => (
             <li key={s.name} id={`${listId}-${i}`} role="option" aria-selected={i === active}
                 onMouseDown={(e) => { e.preventDefault(); commit(s.name) }}>
-              <span>{s.name}{s.mine && <span className="muted small"> · 내 태그</span>}</span>
+              <span>{s.name}{s.mine && <span className="muted small">  {t('· 내 태그')}</span>}</span>
               <span className="muted small">{s.postCount}</span>
             </li>
           ))}
@@ -130,7 +131,7 @@ export function TagInput({ value, onChange, errors }: {
       )}
       </div>
       <small id={hintId} className={value.length > MAX_TAGS ? 'error' : 'muted'}>
-        {value.length} / {MAX_TAGS} · Enter나 쉼표로 추가
+        {tNodes('{0} / {1} · Enter나 쉼표로 추가', { 0: value.length, 1: MAX_TAGS })}
       </small>
       {[...errors.entries()].filter(([i]) => i >= 0).map(([i, m]) => (
         <small key={i} className="error" role="alert">#{value[i] ?? ''}: {m}</small>

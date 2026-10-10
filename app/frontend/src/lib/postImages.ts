@@ -1,5 +1,6 @@
 import { api } from './api'
 import { ACCEPTED_TYPES } from './image'
+import { t } from './i18n'
 
 // 본문 사진 (009). 브라우저에서 줄이고(긴 변 1920px) 다시 그려 사진 정보를 지운 뒤, 가로 640px 썸네일과 함께 올린다.
 // 못 올린 사진은 이 기기에 보관하고 본문에는 "업로드 대기" 임시 표시(local:…)를 넣는다. 발행은 서버가 막는다.
@@ -32,8 +33,8 @@ export interface PreparedImage {
 
 /** 고르기 전 검사. 문제가 있으면 안내 문구. */
 export function checkImageFile(file: { type: string; size: number }): string | null {
-  if (!ACCEPTED_TYPES.includes(file.type)) return 'jpg·png·gif·webp 사진만 올릴 수 있어요.'
-  if (file.size > MAX_BYTES) return '사진은 10MB까지 올릴 수 있어요.'
+  if (!ACCEPTED_TYPES.includes(file.type)) return t('jpg·png·gif·webp 사진만 올릴 수 있어요.')
+  if (file.size > MAX_BYTES) return t('사진은 10MB까지 올릴 수 있어요.')
   return null
 }
 
@@ -78,13 +79,13 @@ export async function prepareImage(file: Blob): Promise<PreparedImage> {
   try {
     bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   } catch {
-    throw new Error('사진 파일을 열 수 없어요. 손상된 파일인지 확인해 주세요.')
+    throw new Error(t('사진 파일을 열 수 없어요. 손상된 파일인지 확인해 주세요.'))
   }
   try {
     const png = file.type === 'image/png' || file.type === 'image/gif'
     const thumb = await draw(bitmap, fitWidth(bitmap.width, bitmap.height, THUMB_WIDTH), png)
     if (file.type === 'image/gif') {
-      if (bitmap.width > MAX_EDGE || bitmap.height > MAX_EDGE) throw new Error('GIF는 가로·세로 1920px까지 올릴 수 있어요.')
+      if (bitmap.width > MAX_EDGE || bitmap.height > MAX_EDGE) throw new Error(t('GIF는 가로·세로 1920px까지 올릴 수 있어요.'))
       return { image: file, thumb }
     }
     const image = await draw(bitmap, fitWithin(bitmap.width, bitmap.height, MAX_EDGE), png)
@@ -174,7 +175,7 @@ export function restorePendingInPreview(html: string, urls: Map<string, string>)
     if (src) img.src = src
     img.alt = ''
     img.className = 'pending-image'
-    img.title = '업로드 대기 중'
+    img.title = t('업로드 대기 중')
     a.replaceWith(img)
   })
   return doc.body.firstElementChild!.innerHTML

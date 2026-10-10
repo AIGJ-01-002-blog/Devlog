@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import {
   ACCEPT, type Attachment, checkFile, fileErrorText, fileSize, listFiles, MAX_FILES, move, saveFiles, uploadFile,
 } from '../lib/files'
+import { t, tNodes } from '../lib/i18n'
 
 interface Uploading { key: number; name: string; error?: string }
 
 function uploadStatus(list: Uploading[]): string {
   const busy = list.filter((u) => !u.error).length
-  if (busy > 0) return `파일 ${busy}개를 올리는 중이에요`
+  if (busy > 0) return t('파일 {0}개를 올리는 중이에요', { 0: busy })
   const failed = list.length
-  return failed > 0 ? `파일 ${failed}개를 올리지 못했어요` : ''
+  return failed > 0 ? t('파일 {0}개를 올리지 못했어요', { 0: failed }) : ''
 }
 
 /**
@@ -76,17 +77,18 @@ export function AttachmentEditor({ postId, published }: { postId: number; publis
   if (files === null) return null
   const count = files.length
   return (
-    <section className="attachments attachments-edit" aria-label="첨부파일">
+    <section className="attachments attachments-edit" aria-label={t('첨부파일')}>
       <div className="attachments-head">
-        <h2>첨부파일 <span className="muted">{count}/{MAX_FILES}</span></h2>
+        <h2>{tNodes('첨부파일 {0}', { 0: <span className="muted">{count}/{MAX_FILES}</span> })}</h2>
         <button type="button" className="btn btn-small" onClick={() => input.current?.click()} disabled={count >= MAX_FILES}>
-          파일 첨부
+          
+          {t('파일 첨부')}
         </button>
         <input ref={input} type="file" accept={ACCEPT} multiple hidden
                onChange={(e) => { void add(e.target.files); e.target.value = '' }} />
       </div>
-      <p className="muted small">pdf, zip, txt, md, csv, docx, xlsx, pptx · 파일 하나 20MB까지
-        {published && ' · 발행한 글의 첨부는 바로 바뀌어요'}</p>
+      <p className="muted small">{t('pdf, zip, txt, md, csv, docx, xlsx, pptx · 파일 하나 20MB까지')}
+        {published && t(' · 발행한 글의 첨부는 바로 바뀌어요')}</p>
       {error && <p className="error small" role="alert">{error}</p>}
       {/* 올리기 진행을 읽어 주는 자리는 늘 두고 글만 바꾼다 */}
       <p className="sr-only" role="status">{uploadStatus(uploading)}</p>
@@ -97,22 +99,22 @@ export function AttachmentEditor({ postId, published }: { postId: number; publis
               <span className="attachment-name" title={f.name}>{f.name}</span>
               <span className="muted small">{fileSize(f.sizeBytes)}</span>
               <span className="attachment-actions">
-                <button type="button" className="btn btn-text" aria-label={`${f.name} 위로`} disabled={i === 0}
+                <button type="button" className="btn btn-text" aria-label={t('{0} 위로', { 0: f.name })} disabled={i === 0}
                         onClick={() => save(move(files, i, -1))}>↑</button>
-                <button type="button" className="btn btn-text" aria-label={`${f.name} 아래로`} disabled={i === count - 1}
+                <button type="button" className="btn btn-text" aria-label={t('{0} 아래로', { 0: f.name })} disabled={i === count - 1}
                         onClick={() => save(move(files, i, 1))}>↓</button>
-                <button type="button" className="btn btn-text danger" aria-label={`${f.name} 빼기`}
-                        onClick={() => { if (confirm('첨부를 뺄까요?')) save(files.filter((x) => x.id !== f.id)) }}>✕</button>
+                <button type="button" className="btn btn-text danger" aria-label={t('{0} 빼기', { 0: f.name })}
+                        onClick={() => { if (confirm(t('첨부를 뺄까요?'))) save(files.filter((x) => x.id !== f.id)) }}>✕</button>
               </span>
             </li>
           ))}
           {uploading.map((u) => (
             <li key={`u${u.key}`} className={u.error ? 'attachment-failed' : 'attachment-pending'}>
               <span className="attachment-name" title={u.name}>{u.name}</span>
-              {u.error ? <span className="error small">{u.error}</span> : <span className="muted small">올리는 중…</span>}
+              {u.error ? <span className="error small">{u.error}</span> : <span className="muted small">{t('올리는 중…')}</span>}
               {u.error && (
                 <span className="attachment-actions">
-                  <button type="button" className="btn btn-text" aria-label={`${u.name} 알림 닫기`}
+                  <button type="button" className="btn btn-text" aria-label={t('{0} 알림 닫기', { 0: u.name })}
                           onClick={() => setUploading((l) => l.filter((x) => x.key !== u.key))}>✕</button>
                 </span>
               )}

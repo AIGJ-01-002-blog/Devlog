@@ -1,4 +1,5 @@
 import { api } from './api'
+import { t } from './i18n'
 
 /** 프로필 사진 만들기 (005 FR-011·FR-018): 브라우저에서 정사각형으로 잘라 256×256 한 가지 크기로 다시 그린다. */
 export const PROFILE_SIZE = 256
@@ -12,8 +13,8 @@ export interface Uploaded { id: number; url: string }
 
 /** 고를 수 있는 파일인지. 문제가 있으면 안내 문구. */
 export function checkSourceFile(file: { type: string; size: number }): string | null {
-  if (!ACCEPTED_TYPES.includes(file.type)) return 'jpg·png·gif·webp 사진만 올릴 수 있어요.'
-  if (file.size > MAX_SOURCE_BYTES) return '사진은 10MB까지 고를 수 있어요.'
+  if (!ACCEPTED_TYPES.includes(file.type)) return t('jpg·png·gif·webp 사진만 올릴 수 있어요.')
+  if (file.size > MAX_SOURCE_BYTES) return t('사진은 10MB까지 고를 수 있어요.')
   return null
 }
 

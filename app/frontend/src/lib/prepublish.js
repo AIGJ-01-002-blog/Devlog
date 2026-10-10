@@ -1,5 +1,6 @@
 import { bodyImages } from './postImages';
 import { thumbnailPreview } from './postThumbnail';
+import { t } from './i18n';
 /** 본문이 이보다 짧으면 알린다(코드·사진 문법은 빼고 센다). */
 export const SHORT_BODY = 200;
 const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/;
@@ -69,28 +70,28 @@ export function prepublishChecks(p) {
     const empty = emptyLinks(p.contentMd);
     const length = proseLength(p.contentMd);
     items.push(p.summary.trim()
-        ? { id: 'summary', level: 'ok', text: '짧은 소개가 있어요' }
-        : { id: 'summary', level: 'info', text: '짧은 소개가 없어 본문 앞부분이 목록에 보여요' });
+        ? { id: 'summary', level: 'ok', text: t('짧은 소개가 있어요') }
+        : { id: 'summary', level: 'info', text: t('짧은 소개가 없어 본문 앞부분이 목록에 보여요') });
     items.push(p.tags.length > 0
-        ? { id: 'tags', level: 'ok', text: `태그 ${p.tags.length}개` }
-        : { id: 'tags', level: 'warn', text: '태그가 없으면 태그·검색으로 찾기 어려워요' });
+        ? { id: 'tags', level: 'ok', text: t('태그 {0}개', { 0: p.tags.length }) }
+        : { id: 'tags', level: 'warn', text: t('태그가 없으면 태그·검색으로 찾기 어려워요') });
     items.push(thumbnailPreview(p.thumbnail, p.contentMd)
-        ? { id: 'thumbnail', level: 'ok', text: '목록에 대표 사진이 보여요' }
-        : { id: 'thumbnail', level: 'info', text: '목록에 대표 사진 없이 보여요' });
+        ? { id: 'thumbnail', level: 'ok', text: t('목록에 대표 사진이 보여요') }
+        : { id: 'thumbnail', level: 'info', text: t('목록에 대표 사진 없이 보여요') });
     if (images.length > 0) {
         items.push(noAlt === 0
-            ? { id: 'alt', level: 'ok', text: '모든 사진에 대체글이 있어요' }
-            : { id: 'alt', level: 'warn', text: `대체글이 없는 사진 ${noAlt}장` });
+            ? { id: 'alt', level: 'ok', text: t('모든 사진에 대체글이 있어요') }
+            : { id: 'alt', level: 'warn', text: t('대체글이 없는 사진 {0}장', { 0: noAlt }) });
     }
     if (length < SHORT_BODY)
-        items.push({ id: 'length', level: 'info', text: `본문이 짧아요 (${length}자)` });
+        items.push({ id: 'length', level: 'info', text: t('본문이 짧아요 ({0}자)', { 0: length }) });
     if (repeatsTitle(p.title, p.contentMd))
-        items.push({ id: 'heading', level: 'warn', text: '본문 첫 줄 제목이 글 제목과 같아 두 번 보여요' });
+        items.push({ id: 'heading', level: 'warn', text: t('본문 첫 줄 제목이 글 제목과 같아 두 번 보여요') });
     if (fences.unclosed)
-        items.push({ id: 'fence', level: 'warn', text: '닫히지 않은 코드 블록이 있어요 (``` 짝 확인)' });
+        items.push({ id: 'fence', level: 'warn', text: t('닫히지 않은 코드 블록이 있어요 (``` 짝 확인)') });
     else if (fences.noLang > 0)
-        items.push({ id: 'lang', level: 'info', text: `언어를 적지 않은 코드 블록 ${fences.noLang}개 (\`\`\`java처럼 적으면 색이 입혀져요)` });
+        items.push({ id: 'lang', level: 'info', text: t('언어를 적지 않은 코드 블록 {0}개 (```java처럼 적으면 색이 입혀져요)', { 0: fences.noLang }) });
     if (empty > 0)
-        items.push({ id: 'links', level: 'warn', text: `주소가 빈 링크 ${empty}개` });
+        items.push({ id: 'links', level: 'warn', text: t('주소가 빈 링크 {0}개', { 0: empty }) });
     return items;
 }

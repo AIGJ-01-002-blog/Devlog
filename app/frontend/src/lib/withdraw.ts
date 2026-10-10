@@ -1,5 +1,6 @@
 // 회원 탈퇴·복구 (spec 020). 탈퇴 화면과 복구 화면이 같은 안내(GET /api/me/withdrawal)를 쓴다.
 import { api, ApiError } from './api'
+import { t } from './i18n'
 
 export interface WithdrawalSummary {
   handle: string
@@ -14,7 +15,7 @@ export interface WithdrawalSummary {
   admin: boolean
 }
 
-export const CONFIRM_TEXT = '탈퇴'
+export const CONFIRM_TEXT = t('탈퇴')
 
 export const withdrawApi = {
   summary: () => api<WithdrawalSummary>('/api/me/withdrawal'),
@@ -37,14 +38,14 @@ export function daysLeft(restoreBy: string, now: Date = new Date()): number {
 
 /** 2026년 11월 6일 21:30 */
 export function deadline(iso: string): string {
-  const t = new Date(iso)
+  const d = new Date(iso)
   const p = (n: number) => String(n).padStart(2, '0')
-  return `${t.getFullYear()}년 ${t.getMonth() + 1}월 ${t.getDate()}일 ${p(t.getHours())}:${p(t.getMinutes())}`
+  return t('{0}년 {1}월 {2}일 {3}:{4}', { 0: d.getFullYear(), 1: d.getMonth() + 1, 2: d.getDate(), 3: p(d.getHours()), 4: p(d.getMinutes()) })
 }
 
 /** 탈퇴 요청 오류를 칸별 문구로: 비밀번호·확인 문구는 그 칸에, 나머지(관리자·잠금 등)는 화면 위에 */
 export function withdrawErrorText(err: unknown): { field: 'password' | 'confirmText' | 'form'; text: string } {
-  if (!(err instanceof ApiError)) return { field: 'form', text: '잠시 후 다시 시도해 주세요.' }
+  if (!(err instanceof ApiError)) return { field: 'form', text: t('잠시 후 다시 시도해 주세요.') }
   const f = err.errors.find((e) => e.field === 'password' || e.field === 'confirmText')
   if (f) return { field: f.field as 'password' | 'confirmText', text: f.message }
   return { field: 'form', text: err.errors[0]?.message ?? err.message }
