@@ -370,6 +370,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.59.3 | 2026-10-10 | カカオで登録するとプロフィール写真が設定されない問題を修正 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.3) |
 | v1.59.2 | 2026-10-10 | スマホで文字がボックス内で不自然に折り返される問題を修正（語単位の改行、ブログのタブ、エディタの公開ボタン） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.2) |
 | v1.59.1 | 2026-10-10 | 🌐 言語メニューをフッターからヘッダー（テーマボタンの隣）へ移動 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.1) |
 | v1.59.0 | 2026-10-10 | 画面の多言語対応 第2段階（執筆・設定・記事管理・お問い合わせ・AI連携画面も英語・日本語・中国語に） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.0) |

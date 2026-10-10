@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, apiFile } from './api';
 import { t } from './i18n';
 /** 프로필 사진 만들기 (005 FR-011·FR-018): 브라우저에서 정사각형으로 잘라 256×256 한 가지 크기로 다시 그린다. */
 export const PROFILE_SIZE = 256;
@@ -103,30 +103,56 @@ export function loadRemoteImage(url, timeoutMs = 5000) {
         img.src = url;
     });
 }
+/** 서버가 가입 대기 중인 사람의 소셜 사진을 대신 받아 준다 (080 FR-012). 사진 서버가 다른 사이트의 가공을 막을 때 쓴다. */
+export const SIGNUP_AVATAR_RELAY = '/api/auth/signup/avatar';
+async function loadRelayedImage(signal) {
+    const { blob } = await apiFile(SIGNUP_AVATAR_RELAY, signal);
+    return createImageBitmap(blob);
+}
+function sizeOf(img) {
+    return img instanceof HTMLImageElement ? { width: img.naturalWidth, height: img.naturalHeight } : img;
+}
 /**
- * 가입 직후 소셜 사진 복사 (FR-018·FR-021): 받아서 가운데를 잘라 올리고 프로필로 연결한다. 5초 안에 끝나지 않으면 실패.
- * @return 성공하면 true. 실패해도 가입은 그대로이고 기본 이미지다
+ * 가입 전에 소셜 사진을 256×256으로 만들어 둔다 (FR-018). 사진 서버에서 바로 받고, 막히면 서버 대신 받기로 한 번 더 시도한다.
+ * 서버 대신 받기는 가입 대기 정보가 있어야 해서 가입 요청보다 먼저 부른다. 제한 시간을 넘기거나 실패하면 null.
  */
-export async function copySocialAvatar(url, timeoutMs = 5000) {
+export async function prepareSocialAvatar(url, timeoutMs = 5000) {
     const src = socialAvatarSource(url);
     if (!src)
-        return false;
-    const deadline = Date.now() + timeoutMs;
+        return null;
+    const ctrl = new AbortController();
+    let timer;
     try {
-        const img = await loadRemoteImage(src, timeoutMs);
-        const blob = await renderSquare(img, centerCrop(img.naturalWidth, img.naturalHeight));
-        const ctrl = new AbortController();
-        const timer = window.setTimeout(() => ctrl.abort(), Math.max(deadline - Date.now(), 1));
-        try {
-            const up = await api('/api/me/profile-image', { method: 'POST', rawBody: blob, signal: ctrl.signal });
-            await api('/api/me/profile', { method: 'PATCH', body: { profileImageId: up.id }, signal: ctrl.signal });
-        }
-        finally {
-            window.clearTimeout(timer);
-        }
+        const img = await loadRemoteImage(src, timeoutMs).catch(() => {
+            timer = window.setTimeout(() => ctrl.abort(), timeoutMs);
+            return loadRelayedImage(ctrl.signal);
+        });
+        const { width, height } = sizeOf(img);
+        return await renderSquare(img, centerCrop(width, height));
+    }
+    catch {
+        return null;
+    }
+    finally {
+        window.clearTimeout(timer);
+    }
+}
+/**
+ * 가입 직후 만들어 둔 사진을 올리고 프로필로 연결한다 (FR-018·FR-021). 5초 안에 끝나지 않으면 실패.
+ * @return 성공하면 true. 실패해도 가입은 그대로이고 기본 이미지다
+ */
+export async function attachProfileImage(blob, timeoutMs = 5000) {
+    const ctrl = new AbortController();
+    const timer = window.setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+        const up = await api('/api/me/profile-image', { method: 'POST', rawBody: blob, signal: ctrl.signal });
+        await api('/api/me/profile', { method: 'PATCH', body: { profileImageId: up.id }, signal: ctrl.signal });
         return true;
     }
     catch {
         return false;
+    }
+    finally {
+        window.clearTimeout(timer);
     }
 }

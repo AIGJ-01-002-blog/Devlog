@@ -82,12 +82,13 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   return data as T
 }
 
-/** 파일로 받는 GET (059 내보내기). 오류는 {@link api}와 같은 ApiError로 던진다. */
-export async function apiFile(path: string): Promise<{ blob: Blob; fileName: string | null }> {
+/** 파일로 받는 GET (059 내보내기, 080 소셜 사진 대신 받기). 오류는 {@link api}와 같은 ApiError로 던진다. */
+export async function apiFile(path: string, signal?: AbortSignal): Promise<{ blob: Blob; fileName: string | null }> {
   let res: Response
   try {
-    res = await fetch(path, { credentials: 'same-origin' })
-  } catch {
+    res = await fetch(path, { credentials: 'same-origin', signal })
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') throw e
     throw new ApiError(0, 'NETWORK', t('네트워크에 연결할 수 없어요.'))
   }
   if (!res.ok) {
