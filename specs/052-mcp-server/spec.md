@@ -31,6 +31,7 @@
 - **FR-010**: OAuth 2.1 인가 서버. 메타데이터 `/.well-known/oauth-protected-resource`(RFC 9728)·`/.well-known/oauth-authorization-server`(RFC 8414), 401 응답의 `WWW-Authenticate`에 `resource_metadata`. 동적 등록 `POST /api/oauth/register`(RFC 7591, 공개 클라이언트, 돌아갈 주소는 https 또는 localhost http, IP당 시간 20번).
 - **FR-011**: 인가 코드 + PKCE(S256)만. 동의는 로그인 세션 + CSRF로 보내고, 코드는 5분·한 번만. 응답에 `iss`(RFC 9207)를 붙인다. `resource`가 오면 이 서버의 MCP 주소여야 한다. 범위는 `devlog.read`·`devlog.write`(없으면 쓰기까지).
 - **FR-012**: `POST /api/oauth/token`은 `authorization_code`·`refresh_token`. 접근 토큰 1시간, 갱신 토큰 90일이며 쓸 때마다 바꾼다(회전). OAuth 연결 하나가 토큰 표의 한 행이라 같은 권한 검사·요청 제한·폐기를 따르고, 개인 토큰 10개 한도에는 세지 않는다.
+- **FR-012a**: (2026-10-10, ChatGPT 연결 보강) 등록 본문의 다른 표준 필드(`grant_types`·`token_endpoint_auth_method` 등)는 무시하고 공개 클라이언트(`none`)로 답한다. 토큰 요청에 `client_id`가 본문에 없으면 `Authorization: Basic`의 앞부분에서 읽고 비밀값은 보지 않는다(`client_secret_basic`으로 보내는 앱). ChatGPT의 커넥터별 돌아갈 주소(`https://chatgpt.com/connector/oauth/...`)도 https라 그대로 받는다.
 - **FR-013**: Codex는 개인 토큰을 환경 변수(`bearer_token_env_var`)로 쓰는 설정을 안내 화면에서 복사한다.
 
 - **FR-014**: (민서님 답 4번 변경) 태그 추천·메모 다듬기는 `blog.ai.prefer=local`(기본)이면 집 PC Ollama를 먼저 부르고, 연결 실패·시간 초과·바쁨이면 같은 요청을 Gemini로 넘긴다. 연결 실패 뒤 `local.down-for`(60초) 동안 집 PC를 건너뛴다. 형식 오류는 건너뛰지 않는다. `prefer=gemini`면 예전 순서(018).

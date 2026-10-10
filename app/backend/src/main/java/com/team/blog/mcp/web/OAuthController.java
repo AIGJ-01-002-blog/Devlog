@@ -129,6 +129,8 @@ public class OAuthController {
         if (!rateLimiter.tryAcquire("oauth-token:" + ips.resolve(request), 60, Duration.ofMinutes(1))) {
             throw new OAuthServer.OAuthError("slow_down", "요청이 너무 많아요.", false);
         }
+        // client_secret_basic으로 보내는 앱은 client_id를 본문 대신 Authorization: Basic에 담는다. 비밀값은 보지 않는다(공개 클라이언트)
+        if (clientId == null || clientId.isBlank()) clientId = basicClientId(request.getHeader("Authorization"));
         AccessTokens.OAuthGrant g = switch (grantType == null ? "" : grantType) {
             case "authorization_code" -> oauth.exchange(code, clientId, redirectUri, verifier);
             case "refresh_token" -> oauth.refresh(refreshToken, clientId);
@@ -150,6 +152,19 @@ public class OAuthController {
         HttpStatus status = "slow_down".equals(e.error) ? HttpStatus.TOO_MANY_REQUESTS : HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).cacheControl(CacheControl.noStore())
                 .body(Map.of("error", e.error, "error_description", e.getMessage(), "code", e.error, "message", e.getMessage()));
+    }
+
+    /** Authorization: Basic base64(client_id:secret)에서 client_id만 꺼낸다 (RFC 6749 2.3.1: 각 부분은 form 인코딩) */
+    static String basicClientId(String authorization) {
+        if (authorization == null || !authorization.regionMatches(true, 0, "Basic ", 0, 6)) return null;
+        try {
+            String decoded = new String(java.util.Base64.getDecoder().decode(authorization.substring(6).trim()), java.nio.charset.StandardCharsets.UTF_8);
+            int colon = decoded.indexOf(':');
+            String id = java.net.URLDecoder.decode(colon < 0 ? decoded : decoded.substring(0, colon), java.nio.charset.StandardCharsets.UTF_8);
+            return id.isBlank() ? null : id;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static ResponseEntity<Map<String, Object>> metadata(Map<String, Object> body) {
