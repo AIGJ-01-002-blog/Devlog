@@ -4,7 +4,7 @@ import { SignupAgreements } from '../components/SignupAgreements';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { setFlash } from '../lib/flash';
-import { copySocialAvatar, socialAvatarSource } from '../lib/image';
+import { attachProfileImage, prepareSocialAvatar, socialAvatarSource } from '../lib/image';
 import { navigate } from '../lib/router';
 import { t } from '../lib/i18n';
 /** 소셜 가입 마무리 (docs/08·09): 접두어 고정 + 본문 입력, 0.5초 뒤 중복 확인, 닉네임, 약관 동의. */
@@ -24,6 +24,8 @@ export function SignupSocialPage() {
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const timers = useRef({});
+    // 가입 요청이 오류로 돌아와 다시 눌러도 사진은 한 번만 만든다
+    const preparedPhoto = useRef(null);
     useEffect(() => {
         api('/api/auth/signup').then((d) => {
             setDraft(d);
@@ -59,11 +61,16 @@ export function SignupSocialPage() {
         e.preventDefault();
         setSubmitting(true);
         setErrors({});
+        // 서버 대신 받기는 가입 대기 정보가 있을 때만 되므로 가입 요청보다 먼저 사진을 만들어 둔다
+        const wantPhoto = !!photo && usePhoto;
+        if (wantPhoto)
+            preparedPhoto.current ??= prepareSocialAvatar(draft.avatarUrl);
+        const blob = wantPhoto ? await preparedPhoto.current : null;
         try {
             const r = await api('/api/auth/signup', {
                 method: 'POST', body: { handleBody: body, nickname, agreeTerms: agreed.terms, agreePrivacy: agreed.privacy, agreeAi: agreed.ai, email: draft.emailRequired ? email : undefined },
             });
-            if (photo && usePhoto && !(await copySocialAvatar(draft.avatarUrl))) {
+            if (wantPhoto && !(blob && (await attachProfileImage(blob)))) {
                 setFlash(t('소셜 사진을 가져오지 못했어요. 설정에서 직접 올릴 수 있어요.'));
             }
             await refresh();

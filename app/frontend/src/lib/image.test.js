@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { centerCrop, checkSourceFile, cropAt, socialAvatarSource } from './image';
+import { describe, expect, it, vi } from 'vitest';
+import { centerCrop, checkSourceFile, cropAt, prepareSocialAvatar, socialAvatarSource } from './image';
 describe('프로필 사진 자르기', () => {
     it('가운데 정사각형으로 시작한다', () => {
         expect(centerCrop(400, 300)).toEqual({ x: 50, y: 0, size: 300 });
@@ -33,5 +33,13 @@ describe('소셜 사진 주소', () => {
         expect(socialAvatarSource('https://avatars.githubusercontent.com:444/u/1')).toBeNull();
         expect(socialAvatarSource('not a url')).toBeNull();
         expect(socialAvatarSource(null)).toBeNull();
+    });
+});
+describe('가입 전 소셜 사진 만들기', () => {
+    it('허용되지 않은 주소는 받지도, 서버에 대신 받아 달라고도 하지 않는다', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        expect(await prepareSocialAvatar('https://example.com/a.png')).toBeNull();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
     });
 });

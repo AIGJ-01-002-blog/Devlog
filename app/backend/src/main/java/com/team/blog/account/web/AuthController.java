@@ -8,7 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +23,7 @@ import com.team.blog.account.application.EmailVerification;
 import com.team.blog.account.application.MemberQueryService;
 import com.team.blog.account.application.PendingSignup;
 import com.team.blog.account.application.SignupService;
+import com.team.blog.account.infra.oauth.SocialAvatarRelay;
 import com.team.blog.media.ProfileImages;
 import com.team.blog.shared.config.BlogProperties;
 import com.team.blog.shared.error.ApiException;
@@ -39,18 +42,20 @@ public class AuthController {
     private final EmailVerification verification;
     private final ProfileImages profileImages;
     private final LoginSessions sessions;
+    private final SocialAvatarRelay avatarRelay;
     private final BlogProperties props;
     private final Clock clock;
 
     public AuthController(SignupService signupService, AgreementService agreementService, MemberQueryService memberQuery,
-                          EmailVerification verification, ProfileImages profileImages, LoginSessions sessions, BlogProperties props,
-                          Clock clock) {
+                          EmailVerification verification, ProfileImages profileImages, LoginSessions sessions,
+                          SocialAvatarRelay avatarRelay, BlogProperties props, Clock clock) {
         this.signupService = signupService;
         this.agreementService = agreementService;
         this.memberQuery = memberQuery;
         this.verification = verification;
         this.profileImages = profileImages;
         this.sessions = sessions;
+        this.avatarRelay = avatarRelay;
         this.props = props;
         this.clock = clock;
     }
@@ -90,6 +95,19 @@ public class AuthController {
         SignupService.SignupDraft d = signupService.draftFor(pending);
         return new SignupDraftResponse(d.provider().name(), d.prefix(), d.handleBody(), d.nickname(), d.email(), d.avatarUrl(),
                 d.emailRequired(), terms());
+    }
+
+    /**
+     * 가입 대기 중인 사람의 소셜 사진을 대신 받아 준다 (080 FR-012). 카카오 사진 서버처럼 브라우저가 직접 가공할 수 없을 때 가입 화면이 쓴다.
+     * 소셜 인증이 돌려준 주소만 받으므로 다른 주소를 요청하게 만들 수 없다.
+     */
+    @GetMapping("/auth/signup/avatar")
+    public ResponseEntity<byte[]> signupAvatar(HttpServletRequest request) {
+        PendingSignup pending = requirePending(request);
+        SocialAvatarRelay.Image image = avatarRelay.fetch(pending.profile().avatarUrl())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "AVATAR_NOT_AVAILABLE", "소셜 사진을 가져오지 못했어요."));
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(image.contentType()))
+                .cacheControl(CacheControl.noStore()).body(image.data());
     }
 
     /** @param agreeAi 선택 항목이라 보내지 않으면 동의하지 않은 것으로 본다 */

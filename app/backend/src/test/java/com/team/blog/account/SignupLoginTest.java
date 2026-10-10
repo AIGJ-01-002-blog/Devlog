@@ -275,6 +275,16 @@ class SignupLoginTest extends IntegrationTest {
     }
 
     @Test
+    void 소셜_사진_대신_받기는_가입_대기_중에만_되고_사진_주소가_없으면_404() throws Exception {
+        browser().perform(get("/api/auth/signup/avatar"))
+                .andExpect(status().isGone()).andExpect(jsonPath("$.code").value("SIGNUP_EXPIRED"));
+        String login = uniqueLogin("noavatar");
+        Browser b = githubAuthenticated(gid(), login, login, login + "@x.com");
+        b.perform(get("/api/auth/signup/avatar"))
+                .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("AVATAR_NOT_AVAILABLE"));
+    }
+
+    @Test
     void 중복_확인_API는_사용_중인_주소에_다음_번호를_제안한다() throws Exception {
         Session s = signup(uniqueLogin("avail"));
         mvc.perform(get("/api/handles/availability").param("handle", s.handle()))
