@@ -9,6 +9,7 @@ import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2Clien
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 
@@ -35,7 +36,7 @@ class OAuthClientsConfigTest {
 
     @Test
     void kakaoIsOffWithoutClientId() throws Exception {
-        assertThat(repository(Map.of()).findByRegistrationId("kakao")).isNull();
+        assertThat(repository(Map.of("KAKAO_CLIENT_ID", "")).findByRegistrationId("kakao")).isNull();
     }
 
     @Test
@@ -55,6 +56,17 @@ class OAuthClientsConfigTest {
         var kakao = repository(Map.of("KAKAO_CLIENT_ID", "k-id", "KAKAO_SCOPES", "profile_nickname, profile_image"))
                 .findByRegistrationId("kakao");
         assertThat(kakao.getScopes()).containsExactlyInAnyOrder("profile_nickname", "profile_image");
+    }
+
+    @Test
+    void kakaoAuthorizeJoinsScopesWithCommaButGoogleKeepsSpaces() throws Exception {
+        var repo = repository(Map.of("SITE_BASE_URL", "https://devlog.life", "KAKAO_CLIENT_ID", "k-id", "GOOGLE_CLIENT_ID", "g-id"));
+        var resolver = new KakaoScopeResolver(repo);
+        var kakao = resolver.resolve(new MockHttpServletRequest("GET", "/oauth2/authorization/kakao"));
+        assertThat(kakao.getAuthorizationRequestUri()).startsWith("https://kauth.kakao.com/oauth/authorize?")
+                .containsPattern("scope=[a-z_]+,[a-z_]+,[a-z_]+&");
+        var google = resolver.resolve(new MockHttpServletRequest("GET", "/oauth2/authorization/google"));
+        assertThat(google.getAuthorizationRequestUri()).contains("scope=openid%20profile%20email");
     }
 
     @Test

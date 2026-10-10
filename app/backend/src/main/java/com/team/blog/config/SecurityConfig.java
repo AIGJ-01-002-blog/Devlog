@@ -30,6 +30,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import com.team.blog.account.infra.AuthIdentityRepository;
 import com.team.blog.account.infra.MemberRepository;
 import com.team.blog.account.infra.oauth.GithubOAuth2UserService;
+import com.team.blog.account.infra.oauth.KakaoScopeResolver;
 import com.team.blog.account.infra.oauth.OAuth2LoginHandlers;
 import com.team.blog.account.web.AccountStateFilter;
 import com.team.blog.account.web.LoginGuardFilter;
@@ -79,7 +80,7 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     SecurityFilterChain securityFilterChain(HttpSecurity http, MemberRepository members, AuthIdentityRepository identities,
-                                            GithubOAuth2UserService githubUsers,
+                                            GithubOAuth2UserService githubUsers, KakaoScopeResolver authorizationRequests,
                                             OAuth2LoginHandlers loginHandlers, RateLimiter rateLimiter,
                                             ClientIpResolver ipResolver, StringRedisTemplate redis, BlogProperties props,
                                             ContentSecurityPolicy csp) throws Exception {
@@ -105,6 +106,7 @@ public class SecurityConfig {
                         }))
                 .oauth2Login(o -> o
                         .loginPage("/login")
+                        .authorizationEndpoint(a -> a.authorizationRequestResolver(authorizationRequests))
                         .userInfoEndpoint(u -> u.userService(githubUsers))
                         .successHandler(loginHandlers)
                         .failureHandler(loginHandlers))
