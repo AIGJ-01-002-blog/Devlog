@@ -36,8 +36,9 @@ export function FollowsPage({ handle, direction }) {
         setError(false);
         try {
             const page = await followApi.list(handle, direction, from);
-            setPeople((prev) => (from ? appendPeople(prev, page.items) : page.items));
-            setCursor(page.nextCursor);
+            // 보는 사이에 비공개로 바뀌면 이미 받은 사람도 지운다 (079)
+            setPeople((prev) => (page.hidden ? [] : from ? appendPeople(prev, page.items) : page.items));
+            setCursor(page.hidden ? null : page.nextCursor);
             setHidden(page.hidden === true);
             setLoaded(true);
         }

@@ -49,18 +49,18 @@ public class FollowController {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(follows.set(me.id(), handle, false));
     }
 
-    /** 보는 사람마다 팔로우 버튼 상태가 달라 공유 캐시에 넣지 않는다. */
+    /** 보는 사람마다 팔로우 버튼 상태가 다르고 비공개 목록은 본인·관리자만 보므로(079) 저장하지 않는다. */
     @GetMapping("/api/members/{handle}/followers")
     public ResponseEntity<FollowQuery.Page> followers(@PathVariable String handle, @RequestParam(required = false) String cursor,
                                                       @CurrentMember(required = false) MemberPrincipal me) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noCache().cachePrivate())
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore().cachePrivate())
                 .body(query.list(handle, FollowQuery.Direction.FOLLOWERS, cursor, me == null ? null : me.id(), me != null && me.isStaff()));
     }
 
     @GetMapping("/api/members/{handle}/following")
     public ResponseEntity<FollowQuery.Page> following(@PathVariable String handle, @RequestParam(required = false) String cursor,
                                                       @CurrentMember(required = false) MemberPrincipal me) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noCache().cachePrivate())
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore().cachePrivate())
                 .body(query.list(handle, FollowQuery.Direction.FOLLOWING, cursor, me == null ? null : me.id(), me != null && me.isStaff()));
     }
 

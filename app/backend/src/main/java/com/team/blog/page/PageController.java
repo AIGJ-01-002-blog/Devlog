@@ -249,7 +249,7 @@ public class PageController {
                 first.friendsView() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate());
     }
 
-    /** 팔로워·팔로잉 목록 (016 US3). 주인이 비공개로 두면 본인·관리자만 본다(079). 누구나 보지만 보는 사람마다 버튼 상태가 달라 공유 캐시에 넣지 않는다. 얇은 목록이라 수집하지 않는다. */
+    /** 팔로워·팔로잉 목록 (016 US3). 주인이 비공개로 두면 본인·관리자만 본다(079). 보는 사람마다 버튼 상태가 다르고 비공개 목록도 있어 저장하지 않는다. 얇은 목록이라 수집하지 않는다. */
     @GetMapping({"/@{handle}/followers", "/@{handle}/following"})
     public ResponseEntity<String> follows(@PathVariable String handle, HttpServletRequest request,
                                           @CurrentMember(required = false) MemberPrincipal me) {
@@ -271,7 +271,7 @@ public class PageController {
                 .append(SpaShell.esc(x.nickname())).append(" @").append(SpaShell.esc(x.handle())).append("</a></li>"));
         body.append("</ul></main>");
         return html(HttpStatus.OK, shell.render(HeadMeta.privatePage(site.name(), title), body.toString(),
-                Map.of("page", "follows", "profile", p, "follows", first)), CacheControl.noCache().cachePrivate());
+                Map.of("page", "follows", "profile", p, "follows", first)), CacheControl.noStore().cachePrivate());
     }
 
     /** 블로그의 시리즈 탭 (024 US2-2). 남과 다른 응답(친구·주인)은 저장하지 않는다. */

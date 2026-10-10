@@ -312,15 +312,19 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
     }
   }
 
+  const [savingFollowList, setSavingFollowList] = useState(false)
   const changeFollowList = async (open: boolean) => {
     const before = settings
     onChange({ ...settings, followListPublic: open })
+    setSavingFollowList(true) // 저장이 끝나기 전에 다시 바꿔 요청 순서가 뒤집히지 않게
     try {
       await api('/api/me/settings', { method: 'PATCH', body: { followListPublic: open } })
       setMessage({ ok: true, text: open ? '이제 누구나 내 팔로워·팔로잉 목록을 볼 수 있어요.' : '이제 다른 사람에게는 "비공개 계정입니다"로 보여요. 수는 그대로 보여요.' })
     } catch {
       onChange(before)
       setMessage({ ok: false, text: '바꾸지 못했어요. 다시 시도해 주세요.' })
+    } finally {
+      setSavingFollowList(false)
     }
   }
 
@@ -361,7 +365,7 @@ function AccountSection({ settings, onChange }: { settings: Settings; onChange: 
         <dt>팔로워·팔로잉 목록</dt>
         <dd>
           <label title="끄면 나와 관리자만 목록을 보고, 다른 사람에게는 '비공개 계정입니다'로 보여요">
-            <input type="checkbox" checked={settings.followListPublic} onChange={(e) => changeFollowList(e.target.checked)} /> 다른 사람에게 공개
+            <input type="checkbox" checked={settings.followListPublic} disabled={savingFollowList} onChange={(e) => changeFollowList(e.target.checked)} /> 다른 사람에게 공개
           </label>
           <span className="muted small"> 끄면 다른 사람에게는 "비공개 계정입니다"로 보여요. 팔로워·팔로잉 수는 그대로 보여요.</span>
         </dd>

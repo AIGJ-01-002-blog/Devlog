@@ -302,7 +302,9 @@ class FollowTest extends IntegrationTest {
                 assertThat(hidden.path("items")).isEmpty();
             }
             for (var http : List.of(owner.http(), adminHttp)) {
-                JsonNode open = read(http.perform(get(url)).andExpect(status().isOk()).andReturn());
+                var res = http.perform(get(url)).andExpect(status().isOk()).andReturn();
+                assertThat(res.getResponse().getHeader("Cache-Control")).contains("no-store");
+                JsonNode open = read(res);
                 assertThat(open.path("hidden").asBoolean()).isFalse();
                 assertThat(open.path("items")).hasSize(1);
             }
