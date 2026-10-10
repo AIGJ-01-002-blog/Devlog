@@ -186,7 +186,7 @@
 /* 테마를 바꾸는 순간에는 색이 서서히 바뀌지 않게 한다 (FR-012) */
 .theme-switching, .theme-switching * { transition: none !important; }
 /* 스크립트가 꺼져 있으면 테마 버튼을 숨긴다 (FR-011) */
-html:not(.js) .theme-toggle { display: none; }
+html:not(.js) .theme-toggle, html:not(.js) .lang-menu { display: none; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -640,8 +640,10 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .site-footer-links a { color: var(--color-text-muted); display: inline-flex; align-items: center; min-height: 32px; }
 .site-footer-links a:hover { color: var(--color-text); text-decoration: underline; }
 .site-footer-links b { font-weight: 600; }
-.site-footer-lang { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--color-text-muted); }
-.site-footer-lang select { min-height: 32px; padding: 2px 6px; font-size: inherit; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 6px; }
+.lang-list { min-width: 160px; padding: 6px; }
+.lang-list button { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius); }
+.lang-list button[aria-checked="true"] { font-weight: 600; color: var(--color-text); }
+.lang-check { width: 1em; color: var(--color-brand); }
 @media (max-width: 600px) {
   .settings-list { grid-template-columns: 1fr; gap: 4px; }
   .settings-list dd { margin-bottom: 12px; }
@@ -1324,10 +1326,10 @@ a.attachment-name:hover { color: var(--color-brand); }
   body { padding-bottom: calc(57px + env(safe-area-inset-bottom)); }
   html { scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   /* 머리말 아이콘 버튼은 손가락으로 누르기 쉽게 40px 이상 (WCAG 2.5.8은 24px, 애플·구글 권장은 44·48px) */
-  .header-actions .bell-button, .header-actions .theme-toggle, .header-actions .menu-button {
+  .header-actions .bell-button, .header-actions .theme-toggle, .header-actions .lang-toggle, .header-actions .menu-button {
     min-width: 40px; min-height: 40px; justify-content: center; align-items: center;
   }
-  .header-actions .theme-toggle { display: inline-flex; padding: 0; }
+  .header-actions .theme-toggle, .header-actions .lang-toggle { display: inline-flex; padding: 0; }
   .header-actions { gap: 4px; }
   .header-actions .btn-outline, .header-actions .btn-dark { min-height: 36px; }
   /* 에디터: 도구 줄을 한 줄로 두고 옆으로 밀어 본다 */

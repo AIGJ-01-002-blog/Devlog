@@ -1311,4 +1311,5 @@ export const en = {
     "🌐 전체 공개": "🌐 Public",
     "👥 친구에게만": "👥 Friends only",
     "🔒 비공개": "🔒 Private",
+    "언어: {0}": "Language: {0}",
 };
