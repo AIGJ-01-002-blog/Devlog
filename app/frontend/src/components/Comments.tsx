@@ -258,7 +258,7 @@ function CommentItem({ c, rootId, ctx }: { c: CommentView; rootId: number | null
           <>
             <Link to={`/@${c.author.handle}`} className="comment-author">
               <Avatar src={c.author.profileImageUrl} name={c.author.nickname} seed={c.author.handle} size={28} />
-              <b>{c.author.nickname}</b> <span className="muted">@{c.author.handle}</span>
+              <b>{c.author.nickname}</b> <span className="muted nowrap">@{c.author.handle}</span>
             </Link>
             {c.author.isPostAuthor && <span className="badge">{t('작성자')}</span>}
           </>

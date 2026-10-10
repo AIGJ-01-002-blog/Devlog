@@ -94,7 +94,7 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
               <Link to={`/@${p.handle}`} className="person-who">
                 <Avatar src={p.profileImageUrl} name={p.nickname} seed={p.handle} size={40} />
                 <span>
-                  <b>{p.nickname}</b> <span className="muted small">@{p.handle}</span>
+                  <b>{p.nickname}</b> <span className="muted small nowrap">@{p.handle}</span>
                   {p.bioFirstLine && <span className="person-bio muted small">{p.bioFirstLine}</span>}
                 </span>
               </Link>

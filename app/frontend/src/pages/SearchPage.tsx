@@ -85,7 +85,7 @@ function PeopleResults({ q }: { q: string }) {
           <Link to={`/@${p.handle}`} className="person">
             <Avatar src={p.profileImageUrl} name={p.nickname} seed={p.handle} size={48} />
             <span>
-              <b>{p.nickname}</b> <span className="muted">@{p.handle}</span>
+              <b>{p.nickname}</b> <span className="muted nowrap">@{p.handle}</span>
               {p.bioFirstLine && <span className="person-bio muted">{p.bioFirstLine}</span>}
             </span>
           </Link>

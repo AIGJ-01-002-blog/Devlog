@@ -201,6 +201,10 @@ body {
   line-height: 1.5;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  /* 한국어는 낱말(어절) 단위로 줄을 바꾼다 (082). 기본값이면 '시리/즈'처럼 글자 사이에서 끊긴다.
+     너무 긴 낱말만 칸 끝에서 끊는다(break-word: anywhere와 달리 칸의 최소 너비를 한 글자로 줄이지 않는다) */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -388,7 +392,7 @@ select { width: auto; }
 .card-title a:hover { color: var(--color-brand); }
 .card-excerpt {
   margin: 0 0 20px; font-size: 0.875rem; color: var(--color-text-2); line-height: 1.6; flex: 1;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; overflow-wrap: anywhere;
 }
 .card-meta { font-size: 0.75rem; color: var(--color-text-muted); }
 .card-footer {
@@ -637,7 +641,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 /* 사이트 맨 아래 링크 (077) */
 .site-footer { margin-top: 48px; border-top: 1px solid var(--color-border); }
 .site-footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; padding-top: 16px; padding-bottom: 24px; font-size: 0.8125rem; }
-.site-footer-links a { color: var(--color-text-muted); display: inline-flex; align-items: center; min-height: 32px; }
+.site-footer-links a { color: var(--color-text-muted); display: inline-flex; align-items: center; min-height: 32px; white-space: nowrap; }
 .site-footer-links a:hover { color: var(--color-text); text-decoration: underline; }
 .site-footer-links b { font-weight: 600; }
 .lang-list { min-width: 160px; padding: 6px; }
@@ -1337,7 +1341,9 @@ a.attachment-name:hover { color: var(--color-brand); }
   .md-toolbar::-webkit-scrollbar { display: none; }
   .md-tool { min-width: 40px; height: 40px; }
   .editor-toolbar { padding: 8px 12px; row-gap: 6px; }
-  .editor-toolbar > .row:last-child { width: 100%; flex-wrap: nowrap; }
+  /* 좁은 화면(320px)이나 수정 이력·백업 버튼이 더 붙는 글에서는 [발행]이 화면 밖으로 밀렸다.
+     넘치면 버튼을 오른쪽 정렬로 다음 줄에 내린다 (082) */
+  .editor-toolbar > .row:last-child { width: 100%; flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
   .editor-toolbar > .row:last-child .tabs-mobile { margin-right: auto; }
   .editor-toolbar .tabs-mobile button, .editor-toolbar .btn { white-space: nowrap; }
   /* 글 상세 아래 좋아요·공유·신고를 손가락 크기로 */
@@ -1439,7 +1445,7 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
   display: flex; width: fit-content; gap: 2px; margin: 24px auto; padding: 4px; border: 1px solid var(--color-border);
   border-radius: 999px; background: var(--color-surface-2);
 }
-.blog-tabs a { padding: 6px 22px; border-radius: 999px; border-bottom: 0; font-weight: 600; color: var(--color-text-muted); text-decoration: none; }
+.blog-tabs a { flex-shrink: 0; white-space: nowrap; padding: 6px 22px; border-radius: 999px; border-bottom: 0; font-weight: 600; color: var(--color-text-muted); text-decoration: none; }
 .blog-tabs a:hover { color: var(--color-text); }
 .blog-tabs a[aria-current="page"] { background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow); border-bottom: 0; }
 .blog-tags .tag-link { border-radius: 999px; }
@@ -1459,6 +1465,15 @@ a.blog-stat:hover { background: var(--color-hover); color: var(--color-brand); }
   .blog-tags { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 16px; padding: 0 16px; }
   .blog-tags::-webkit-scrollbar { display: none; }
   .blog-tags .tag-link, .blog-tags .btn { flex-shrink: 0; }
+  /* 탭이 화면보다 넓으면 글자를 쪼개지 않고 옆으로 밀어 본다 (082) */
+  .blog-tabs { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .blog-tabs::-webkit-scrollbar { display: none; }
+  .blog-tabs a { padding: 6px 14px; }
+}
+/* 작은 휴대폰(갤럭시 폴드 앞화면·아이폰 SE 1세대 등 320~380px)에서도 네 탭이 한눈에 들어오게 (082) */
+@media (max-width: 380px) {
+  .blog-tabs { gap: 0; }
+  .blog-tabs a { padding: 6px 9px; font-size: 0.9375rem; }
 }
 
 /* 내 글 관리 (063): 상태 숫자 카드가 탭이 되고, 글은 표지 색과 상태 칩이 있는 카드로 */

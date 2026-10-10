@@ -9,7 +9,7 @@ export function AuthorPanel({ author, linkToMember = true }: { author: AuthorInf
     <section className="admin-section">
       <h2>{t('작성자')}</h2>
       <p>
-        {linkToMember ? <Link to={`/admin/members/${author.handle}`}>@{author.handle}</Link> : <b>@{author.handle}</b>}
+        {linkToMember ? <Link to={`/admin/members/${author.handle}`} className="nowrap">@{author.handle}</Link> : <b className="nowrap">@{author.handle}</b>}
         {author.nickname && <> · {author.nickname}</>}
         {author.admin && <span className="badge"> {author.role === 'MANAGER' ? t('매니저') : t('관리자')}</span>}
         {author.suspended && <span className="badge badge-warn">  {t('정지 중')}</span>}
