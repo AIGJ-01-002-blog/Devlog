@@ -23,8 +23,8 @@ export function SignupAgreements({ value, onChange, termsDate, privacyDate, erro
     <fieldset className="field agreements">
       <legend className="sr-only">{t('약관 동의')}</legend>
       <label><input type="checkbox" checked={all} onChange={(e) => onChange({ terms: e.target.checked, privacy: e.target.checked, ai: e.target.checked })} /> <b>{t('모두 동의 (선택 항목 포함)')}</b></label>
-      <label><input type="checkbox" checked={value.terms} aria-describedby={describedBy} onChange={(e) => onChange({ ...value, terms: e.target.checked })} />  {t('(필수) 이용약관')}{termsDate ? t(' ({0} 시행)', { 0: termsDate }) : ''}</label>
-      <label><input type="checkbox" checked={value.privacy} aria-describedby={describedBy} onChange={(e) => onChange({ ...value, privacy: e.target.checked })} />  {t('(필수) 개인정보 처리방침')}{privacyDate ? t(' ({0} 시행)', { 0: privacyDate }) : ''}</label>
+      <label><input type="checkbox" checked={value.terms} aria-describedby={describedBy} onChange={(e) => onChange({ ...value, terms: e.target.checked })} />  {t('(필수) 이용약관')}{termsDate ? <span className="nowrap">{t(' ({0} 시행)', { 0: termsDate })}</span> : ''}</label>
+      <label><input type="checkbox" checked={value.privacy} aria-describedby={describedBy} onChange={(e) => onChange({ ...value, privacy: e.target.checked })} />  {t('(필수) 개인정보 처리방침')}{privacyDate ? <span className="nowrap">{t(' ({0} 시행)', { 0: privacyDate })}</span> : ''}</label>
       <label>
         <input type="checkbox" checked={value.ai} onChange={(e) => onChange({ ...value, ai: e.target.checked })} aria-describedby="agree-ai-help" />
         <span>

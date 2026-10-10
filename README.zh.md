@@ -370,6 +370,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.59.2 | 2026-10-10 | 修复手机上文字在框内被拆开换行的问题（按词换行、博客标签页、编辑器发布按钮） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.2) |
 | v1.59.1 | 2026-10-10 | 将 🌐 语言菜单从页脚移到页眉（主题按钮旁） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.1) |
 | v1.59.0 | 2026-10-10 | 界面多语言第二阶段（写作、设置、文章管理、反馈、AI 连接页面也支持英语、日语、中文） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.0) |
 | v1.58.0 | 2026-10-10 | 界面多语言第一阶段（英语、日语、中文，页脚 🌐 语言选择） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.58.0) |

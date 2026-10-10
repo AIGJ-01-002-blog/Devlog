@@ -45,5 +45,5 @@ function PeopleResults({ q }) {
         return _jsx("p", { className: "search-notice", role: "status", children: NOTICE_TEXT.TOO_SHORT });
     if (page.items.length === 0)
         return _jsx("div", { className: "empty", children: _jsx("p", { children: t('\'{0}\'에 해당하는 사람이 없어요', { 0: q }) }) });
-    return (_jsx("ul", { className: "people-list", children: page.items.map((p) => (_jsx("li", { children: _jsxs(Link, { to: `/@${p.handle}`, className: "person", children: [_jsx(Avatar, { src: p.profileImageUrl, name: p.nickname, seed: p.handle, size: 48 }), _jsxs("span", { children: [_jsx("b", { children: p.nickname }), " ", _jsxs("span", { className: "muted", children: ["@", p.handle] }), p.bioFirstLine && _jsx("span", { className: "person-bio muted", children: p.bioFirstLine })] })] }) }, p.id))) }));
+    return (_jsx("ul", { className: "people-list", children: page.items.map((p) => (_jsx("li", { children: _jsxs(Link, { to: `/@${p.handle}`, className: "person", children: [_jsx(Avatar, { src: p.profileImageUrl, name: p.nickname, seed: p.handle, size: 48 }), _jsxs("span", { children: [_jsx("b", { children: p.nickname }), " ", _jsxs("span", { className: "muted nowrap", children: ["@", p.handle] }), p.bioFirstLine && _jsx("span", { className: "person-bio muted", children: p.bioFirstLine })] })] }) }, p.id))) }));
 }

@@ -370,6 +370,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.59.2 | 2026-10-10 | Fixed awkward text wrapping inside boxes on phones (word-level line breaks, blog tabs, editor Publish button) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.2) |
 | v1.59.1 | 2026-10-10 | Moved the 🌐 language menu from the footer to the header (next to the theme button) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.1) |
 | v1.59.0 | 2026-10-10 | Multilingual UI, phase 2 (editor, settings, post manager, support and AI connect screens in English, Japanese, Chinese) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.0) |
 | v1.58.0 | 2026-10-10 | Multilingual UI, phase 1 (English, Japanese, Chinese; 🌐 language picker in the footer) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.58.0) |

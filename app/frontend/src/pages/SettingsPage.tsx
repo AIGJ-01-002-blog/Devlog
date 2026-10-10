@@ -704,7 +704,7 @@ function FriendsSection() {
     <li key={p.handle} className="friend-row">
       <Link to={`/@${p.handle}`} className="friend-who">
         <Avatar src={p.profileImageUrl} name={p.nickname} seed={p.handle} size={32} />
-        <span><b>{p.nickname}</b> <span className="muted small">@{p.handle}</span></span>
+        <span><b>{p.nickname}</b> <span className="muted small nowrap">@{p.handle}</span></span>
       </Link>
       {extra && <span className="muted small">{extra}</span>}
       <span className="friend-row-actions">{actions}</span>
