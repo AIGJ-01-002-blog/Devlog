@@ -9,6 +9,7 @@ import {
   type PeoplePage, type SearchPostPage, type SearchSort, type SearchTab,
 } from '../lib/search'
 import type { FeedPage } from '../lib/types'
+import { t } from '../lib/i18n'
 
 /** 검색 (spec 014): 글 탭(관련도순·최신순, 9개씩 [더 보기])과 사람 탭. 서버 화면은 수집 거부(noindex)다. */
 export function SearchPage() {
@@ -19,25 +20,25 @@ export function SearchPage() {
   const [initial] = useState(() => takeInitialData<{ result?: SearchPostPage }>('search')?.result ?? null)
 
   useEffect(() => {
-    document.title = q ? `'${q}' 검색 - devlog` : '검색 - devlog'
+    document.title = q ? t('\'{0}\' 검색 - devlog', { 0: q }) : t('검색 - devlog')
   }, [q])
 
   const go = (nq: string, ntab: SearchTab = tab, nsort: SearchSort = sort) => navigate(searchPath(nq, ntab, nsort))
   return (
     <main className="container">
-      <h1 className="sr-only">검색</h1>
-      <SearchBox initial={q} placeholder="글·태그·사람 검색" autoFocus={!q} onSearch={(nq) => go(nq)} />
+      <h1 className="sr-only">{t('검색')}</h1>
+      <SearchBox initial={q} placeholder={t('글·태그·사람 검색')} autoFocus={!q} onSearch={(nq) => go(nq)} />
       {q && (
         <>
           <div className="search-head">
             <div className="tabs" role="tablist">
-              <button type="button" role="tab" aria-selected={tab === 'posts'} onClick={() => go(q, 'posts')}>글</button>
-              <button type="button" role="tab" aria-selected={tab === 'people'} onClick={() => go(q, 'people')}>사람</button>
+              <button type="button" role="tab" aria-selected={tab === 'posts'} onClick={() => go(q, 'posts')}>{t('글')}</button>
+              <button type="button" role="tab" aria-selected={tab === 'people'} onClick={() => go(q, 'people')}>{t('사람')}</button>
             </div>
             {tab === 'posts' && (
-              <select aria-label="정렬" value={sort} onChange={(e) => go(q, 'posts', e.target.value as SearchSort)}>
-                <option value="relevance">관련도순</option>
-                <option value="latest">최신순</option>
+              <select aria-label={t('정렬')} value={sort} onChange={(e) => go(q, 'posts', e.target.value as SearchSort)}>
+                <option value="relevance">{t('관련도순')}</option>
+                <option value="latest">{t('최신순')}</option>
               </select>
             )}
           </div>
@@ -73,10 +74,10 @@ function PeopleResults({ q }: { q: string }) {
     searchApi.people(q).then(setPage).catch(() => setError(true))
   }
   useEffect(load, [q])
-  if (error) return <p className="feed-error" role="alert">불러오지 못했어요 <button type="button" className="btn btn-text" onClick={load}>다시 시도</button></p>
-  if (!page) return <p className="muted center">불러오는 중…</p>
+  if (error) return <p className="feed-error" role="alert">{t('불러오지 못했어요')} <button type="button" className="btn btn-text" onClick={load}>{t('다시 시도')}</button></p>
+  if (!page) return <p className="muted center">{t('불러오는 중…')}</p>
   if (page.notice === 'TOO_SHORT') return <p className="search-notice" role="status">{NOTICE_TEXT.TOO_SHORT}</p>
-  if (page.items.length === 0) return <div className="empty"><p>'{q}'에 해당하는 사람이 없어요</p></div>
+  if (page.items.length === 0) return <div className="empty"><p>{t('\'{0}\'에 해당하는 사람이 없어요', { 0: q })}</p></div>
   return (
     <ul className="people-list">
       {page.items.map((p) => (

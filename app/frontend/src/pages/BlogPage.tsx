@@ -19,6 +19,7 @@ import { BlogAbout } from '../components/BlogAbout'
 import { NavIcon } from '../components/NavIcons'
 import { avatarColor, AVATAR_COLORS } from '../lib/avatar'
 import { compactNumber } from '../lib/format'
+import { t } from '../lib/i18n'
 
 /** 블로그 표지 색(0~3). 같은 블로그는 언제나 같은 색이다. */
 export function blogTone(handle: string): number {
@@ -50,7 +51,7 @@ export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'pos
   }, [handle, profile])
 
   if (missing || badTag) return <NotFoundPage />
-  if (!profile) return <main className="container"><p className="muted center">불러오는 중…</p></main>
+  if (!profile) return <main className="container"><p className="muted center">{t('불러오는 중…')}</p></main>
   return (
     <main className="container">
       <header className="blog-hero">
@@ -59,12 +60,12 @@ export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'pos
           <div className="blog-hero-top">
             <span className="blog-avatar"><Avatar src={profile.profileImageUrl} name={profile.nickname} seed={profile.handle} size={112} /></span>
             <div className="blog-hero-actions">
-              <Link to={`/@${profile.handle}/rss`} className="btn btn-outline btn-icon" aria-label="RSS 구독"
-                    data-tip="RSS 구독: 구독 앱으로 이 블로그의 새 글 받기"><NavIcon name="rss" /></Link>
+              <Link to={`/@${profile.handle}/rss`} className="btn btn-outline btn-icon" aria-label={t('RSS 구독')}
+                    data-tip={t('RSS 구독: 구독 앱으로 이 블로그의 새 글 받기')}><NavIcon name="rss" /></Link>
               {profile.mine ? <>
-                <Link to="/settings#profile" className="btn btn-outline" data-tip="사진·닉네임·소개 바꾸기">프로필 편집</Link>
-                <Link to="/manage/posts" className="btn btn-outline" data-tip="임시글·발행 글·휴지통 관리">글 관리</Link>
-                <Link to="/write" className="btn btn-primary" data-tip="새 글 쓰기"><NavIcon name="pen" size={16} />새 글</Link>
+                <Link to="/settings#profile" className="btn btn-outline" data-tip={t('사진·닉네임·소개 바꾸기')}>{t('프로필 편집')}</Link>
+                <Link to="/manage/posts" className="btn btn-outline" data-tip={t('임시글·발행 글·휴지통 관리')}>{t('글 관리')}</Link>
+                <Link to="/write" className="btn btn-primary" data-tip={t('새 글 쓰기')}><NavIcon name="pen" size={16} />{t('새 글')}</Link>
               </> : <>
                 <FriendButton profile={profile} onChange={(f) => {
                   setProfile((p) => p && { ...p, friendship: f, lastActiveDaysAgo: null })
@@ -78,32 +79,32 @@ export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'pos
           </div>
           <h1 className="blog-name">{profile.nickname}</h1>
           <p className="blog-handle muted">@{profile.handle}
-            {lastActiveLabel(profile.lastActiveDaysAgo) && <span className="blog-active"> · 최근 활동 {lastActiveLabel(profile.lastActiveDaysAgo)}</span>}
+            {lastActiveLabel(profile.lastActiveDaysAgo) && <span className="blog-active">  {t('· 최근 활동')} {lastActiveLabel(profile.lastActiveDaysAgo)}</span>}
           </p>
           {profile.bio && <p className="bio">{profile.bio}</p>}
           <SocialLinkList links={profile.socialLinks} />
           <ul className="blog-stats">
-            <li><span className="blog-stat"><b>{compactNumber(profile.publicPostCount)}</b><span>공개 글</span></span></li>
-            <li><Link to={`/@${profile.handle}/followers`} className="blog-stat" data-tip="나를 팔로우하는 사람"><b>{compactNumber(profile.followerCount)}</b><span>팔로워</span></Link></li>
-            <li><Link to={`/@${profile.handle}/following`} className="blog-stat" data-tip="내가 팔로우하는 사람"><b>{compactNumber(profile.followingCount)}</b><span>팔로잉</span></Link></li>
+            <li><span className="blog-stat"><b>{compactNumber(profile.publicPostCount)}</b><span>{t('공개 글')}</span></span></li>
+            <li><Link to={`/@${profile.handle}/followers`} className="blog-stat" data-tip={t('나를 팔로우하는 사람')}><b>{compactNumber(profile.followerCount)}</b><span>{t('팔로워')}</span></Link></li>
+            <li><Link to={`/@${profile.handle}/following`} className="blog-stat" data-tip={t('내가 팔로우하는 사람')}><b>{compactNumber(profile.followingCount)}</b><span>{t('팔로잉')}</span></Link></li>
           </ul>
         </div>
       </header>
-      <nav className="blog-tabs" aria-label="블로그 메뉴">
-        <Link to={`/@${profile.handle}`} aria-current={tab === 'posts' ? 'page' : undefined}>글</Link>
-        <Link to={`/@${profile.handle}/series`} aria-current={tab === 'series' ? 'page' : undefined}>시리즈</Link>
-        <Link to={`/@${profile.handle}/about`} aria-current={tab === 'about' ? 'page' : undefined}>소개</Link>
-        <Link to={`/@${profile.handle}/portfolio`} className="blog-tab-portfolio" data-tip="프로젝트 위주로 정리한 포트폴리오 화면">
-          <GraphLogo size={16} /> 포트폴리오로 보기
+      <nav className="blog-tabs" aria-label={t('블로그 메뉴')}>
+        <Link to={`/@${profile.handle}`} aria-current={tab === 'posts' ? 'page' : undefined}>{t('글')}</Link>
+        <Link to={`/@${profile.handle}/series`} aria-current={tab === 'series' ? 'page' : undefined}>{t('시리즈')}</Link>
+        <Link to={`/@${profile.handle}/about`} aria-current={tab === 'about' ? 'page' : undefined}>{t('소개')}</Link>
+        <Link to={`/@${profile.handle}/portfolio`} className="blog-tab-portfolio" data-tip={t('프로젝트 위주로 정리한 포트폴리오 화면')}>
+          <GraphLogo size={16} />  {t('포트폴리오로 보기')}
         </Link>
       </nav>
       {tab === 'about' ? <BlogAbout handle={profile.handle} /> : tab === 'series' ? <BlogSeries handle={profile.handle} mine={profile.mine} /> : <>
-      <SearchBox initial={q} placeholder={`${profile.nickname}님의 글 검색`} onSearch={searchIn} />
+      <SearchBox initial={q} placeholder={t('{0}님의 글 검색', { 0: profile.nickname })} onSearch={searchIn} />
       {q ? (
         <>
           <div className="filter-head row">
-            <b>'{q}' 검색 결과</b>
-            <Link to={`/@${handle}`} className="btn btn-text">검색 해제</Link>
+            <b>{t('\'{0}\' 검색 결과', { 0: q })}</b>
+            <Link to={`/@${handle}`} className="btn btn-text">{t('검색 해제')}</Link>
           </div>
           {/* 블로그 안 검색 (014 FR-003): 본인이 봐도 공개 글만 */}
           <PostResults key={q} q={q} sort={parseSort(search.get('sort'))} initial={null} blog={handle} />
@@ -114,9 +115,9 @@ export function BlogPage({ handle, tab = 'posts' }: { handle: string; tab?: 'pos
             endpoint={`/api/members/${encodeURIComponent(handle)}/posts${tag ? `?tag=${encodeURIComponent(tag)}` : ''}`}
             storageKey={`feed:blog:${handle}${tag ? `:tag:${tag}` : ''}`}
             initial={initial?.profile.handle === handle && (initial.tag ?? null) === tag ? initial.feed : null}
-            empty={tag ? <p>이 태그로 공개한 글이 없어요.</p> : profile.mine
-              ? <><p>아직 공개한 글이 없어요.</p><Link to="/write" className="btn btn-primary">첫 글 쓰기</Link></>
-              : <p>아직 공개한 글이 없어요.</p>} />
+            empty={tag ? <p>{t('이 태그로 공개한 글이 없어요.')}</p> : profile.mine
+              ? <><p>{t('아직 공개한 글이 없어요.')}</p><Link to="/write" className="btn btn-primary">{t('첫 글 쓰기')}</Link></>
+              : <p>{t('아직 공개한 글이 없어요.')}</p>} />
       </>}
       </>}
     </main>
@@ -136,20 +137,20 @@ function BlogTags({ handle, initial, active }: { handle: string; initial: TagCou
   return (
     <>
       {tags.length > 0 && (
-        <nav className="blog-tags" aria-label="이 블로그의 태그">
+        <nav className="blog-tags" aria-label={t('이 블로그의 태그')}>
           {shown.map((t) => (
             <Link key={t.name} to={blogTagPath(handle, t.name)} className={`tag-link${t.name === active ? ' active' : ''}`}
                   aria-current={t.name === active ? 'page' : undefined}>
               #{t.name} <span className="muted">{t.postCount}</span>
             </Link>
           ))}
-          {tags.length > 10 && !all && <button type="button" className="btn btn-text" onClick={() => setAll(true)}>태그 더 보기</button>}
+          {tags.length > 10 && !all && <button type="button" className="btn btn-text" onClick={() => setAll(true)}>{t('태그 더 보기')}</button>}
         </nav>
       )}
       {active && (
         <div className="filter-head row">
-          <b>#{active} 글 {activeCount}개</b>
-          <Link to={`/@${handle}`} className="btn btn-text">필터 해제</Link>
+          <b>#{active}  {t('글 {0}개', { 0: activeCount })}</b>
+          <Link to={`/@${handle}`} className="btn btn-text">{t('필터 해제')}</Link>
         </div>
       )}
     </>
@@ -170,7 +171,7 @@ function FriendButton({ profile, onChange }: { profile: BlogProfile; onChange: (
     try {
       onChange(await fn())
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : '처리하지 못했어요. 다시 시도해 주세요.')
+      setError(e instanceof ApiError ? e.message : t('처리하지 못했어요. 다시 시도해 주세요.'))
     } finally {
       setBusy(false)
     }
@@ -183,31 +184,31 @@ function FriendButton({ profile, onChange }: { profile: BlogProfile; onChange: (
   return (
     <div className="friend-actions row">
       {relation === 'NONE' && (
-        <button type="button" className="btn btn-outline" disabled={busy} data-tip="상대가 수락하면 친구가 돼 친구 공개 글을 서로 볼 수 있어요. 상대에게 알림이 가요"
-                onClick={() => run(() => friendsApi.request(profile.handle))}>친구 요청</button>
+        <button type="button" className="btn btn-outline" disabled={busy} data-tip={t('상대가 수락하면 친구가 돼 친구 공개 글을 서로 볼 수 있어요. 상대에게 알림이 가요')}
+                onClick={() => run(() => friendsApi.request(profile.handle))}>{t('친구 요청')}</button>
       )}
       {relation === 'SENT' && (
         <>
-          <span className="muted small">친구 요청을 보냈어요</span>
-          <button type="button" className="btn btn-text" disabled={busy} data-tip="보낸 요청을 거둬요(상대에게 알리지 않아요)"
-                  onClick={() => run(removeAs('NONE'))}>요청 취소</button>
+          <span className="muted small">{t('친구 요청을 보냈어요')}</span>
+          <button type="button" className="btn btn-text" disabled={busy} data-tip={t('보낸 요청을 거둬요(상대에게 알리지 않아요)')}
+                  onClick={() => run(removeAs('NONE'))}>{t('요청 취소')}</button>
         </>
       )}
       {relation === 'RECEIVED' && (
         <>
-          <span className="muted small">나에게 친구 요청을 보냈어요</span>
-          <button type="button" className="btn btn-primary" disabled={busy} data-tip="친구가 되고 상대에게 수락 알림이 가요"
-                  onClick={() => run(() => friendsApi.accept(profile.handle))}>수락</button>
-          <button type="button" className="btn btn-text" disabled={busy} data-tip="요청을 지워요(상대에게 알리지 않아요)"
-                  onClick={() => run(removeAs('NONE'))}>거절</button>
+          <span className="muted small">{t('나에게 친구 요청을 보냈어요')}</span>
+          <button type="button" className="btn btn-primary" disabled={busy} data-tip={t('친구가 되고 상대에게 수락 알림이 가요')}
+                  onClick={() => run(() => friendsApi.accept(profile.handle))}>{t('수락')}</button>
+          <button type="button" className="btn btn-text" disabled={busy} data-tip={t('요청을 지워요(상대에게 알리지 않아요)')}
+                  onClick={() => run(removeAs('NONE'))}>{t('거절')}</button>
         </>
       )}
       {relation === 'FRIENDS' && (
         <>
-          <span className="badge"><span aria-hidden="true">👥</span> 친구</span>
-          <button type="button" className="btn btn-text" disabled={busy} data-tip="친구 관계를 끊어요(상대에게 알리지 않아요)" onClick={() => {
-            if (confirm(`${profile.nickname}님과 친구를 끊을까요? 상대에게 알림은 가지 않아요.`)) void run(removeAs('NONE'))
-          }}>친구 끊기</button>
+          <span className="badge"><span aria-hidden="true">👥</span>  {t('친구')}</span>
+          <button type="button" className="btn btn-text" disabled={busy} data-tip={t('친구 관계를 끊어요(상대에게 알리지 않아요)')} onClick={() => {
+            if (confirm(t('{0}님과 친구를 끊을까요? 상대에게 알림은 가지 않아요.', { 0: profile.nickname }))) void run(removeAs('NONE'))
+          }}>{t('친구 끊기')}</button>
         </>
       )}
       {error && <p className="error small" role="alert">{error}</p>}

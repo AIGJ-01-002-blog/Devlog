@@ -1,4 +1,5 @@
 import { SOCIAL_FIELDS, type SocialLinks } from '../lib/socialLinks'
+import { t } from '../lib/i18n'
 
 /**
  * 블로그 머리의 소셜 정보 (spec 043). 값이 있는 것만 보인다.
@@ -8,7 +9,7 @@ export function SocialLinkList({ links }: { links: SocialLinks | undefined }) {
   const shown = SOCIAL_FIELDS.filter((f) => links?.[f.kind])
   if (!shown.length) return null
   return (
-    <ul className="social-links" aria-label="소셜 정보">
+    <ul className="social-links" aria-label={t('소셜 정보')}>
       {shown.map((f) => {
         const value = links![f.kind]!
         return (

@@ -3,6 +3,7 @@ import { loginPath, useAuth } from '../lib/auth'
 import { compactNumber } from '../lib/format'
 import { createLikeSync, likesApi, type LikeState } from '../lib/likes'
 import { Link } from '../lib/router'
+import { t } from '../lib/i18n'
 
 /**
  * 글 상세 좋아요 (spec 012, docs/30 §5). 작성자에게는 개수만, 비회원·인증 전 회원에게는 버튼을 보이고 누르면 안내한다.
@@ -36,7 +37,7 @@ export function LikeButton({ postId, mine, initial, onChange }: {
   }, [postId])
 
   const count = compactNumber(state.likeCount)
-  if (mine) return <span className="like-count"><span aria-hidden="true">♥ {count}</span><span className="sr-only">좋아요 {state.likeCount}개</span></span>
+  if (mine) return <span className="like-count"><span aria-hidden="true">♥ {count}</span><span className="sr-only">{t('좋아요 {0}개', { 0: state.likeCount })}</span></span>
 
   const press = () => {
     if (!me?.authenticated) return setNotice('login')
@@ -48,14 +49,14 @@ export function LikeButton({ postId, mine, initial, onChange }: {
   return (
     <span className="like">
       <button type="button" className={`like-button${state.liked ? ' liked' : ''}`} aria-pressed={state.liked}
-              aria-label={`좋아요 ${state.likeCount}개`} onClick={press}>
+              aria-label={t('좋아요 {0}개', { 0: state.likeCount })} onClick={press}>
         <span aria-hidden="true">{state.liked ? '♥' : '♡'} {count}</span>
       </button>
       {notice === 'login' && (
-        <span className="like-notice" role="status">로그인하고 좋아요를 눌러 보세요 <Link to={loginPath()} className="btn btn-text">로그인</Link></span>
+        <span className="like-notice" role="status">{t('로그인하고 좋아요를 눌러 보세요')} <Link to={loginPath()} className="btn btn-text">{t('로그인')}</Link></span>
       )}
-      {notice === 'verify' && <span className="like-notice" role="status">이메일 인증 후 누를 수 있어요</span>}
-      {notice === 'failed' && <span className="like-notice error" role="alert">좋아요를 반영하지 못했어요</span>}
+      {notice === 'verify' && <span className="like-notice" role="status">{t('이메일 인증 후 누를 수 있어요')}</span>}
+      {notice === 'failed' && <span className="like-notice error" role="alert">{t('좋아요를 반영하지 못했어요')}</span>}
     </span>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { takeFlash } from '../lib/flash'
+import { t } from '../lib/i18n'
 
 export function Flash({ path }: { path: string }) {
   const [message, setMessage] = useState<string | null>(null)
@@ -13,7 +14,7 @@ export function Flash({ path }: { path: string }) {
       {message && (
         <div className="banner banner-warn flash">
           <span>{message}</span>
-          <button type="button" className="btn btn-text" onClick={() => setMessage(null)} aria-label="닫기">✕</button>
+          <button type="button" className="btn btn-text" onClick={() => setMessage(null)} aria-label={t('닫기')}>✕</button>
         </div>
       )}
     </div>

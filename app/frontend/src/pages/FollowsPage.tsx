@@ -7,6 +7,7 @@ import { HIDDEN_FOLLOW_TEXT, appendPeople, emptyFollowText, followApi, type Foll
 import { Link } from '../lib/router'
 import type { BlogProfile } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
+import { t, tNodes } from '../lib/i18n'
 
 /**
  * 팔로워·팔로잉 목록 (016 US3): 최근에 팔로우한 순 20개씩 무한 스크롤(spec 069), 보는 사람 기준 팔로우 버튼. 비회원도 본다.
@@ -56,29 +57,33 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
   }, [])
 
   useEffect(() => {
-    if (profile) document.title = `${profile.nickname}님의 ${direction === 'followers' ? '팔로워' : '팔로잉'} - devlog`
+    if (profile) document.title = t('{0}님의 {1} - devlog', { 0: profile.nickname, 1: direction === 'followers' ? t('팔로워') : t('팔로잉') })
   }, [profile, direction])
 
   if (missing) return <NotFoundPage />
+  const who = profile ? <Link to={`/@${handle}`}>{profile.nickname}</Link> : '…'
   return (
     <main className="container narrow">
       <h1 className="page-title">
-        {profile ? <Link to={`/@${handle}`}>{profile.nickname}</Link> : '…'}
-        {direction === 'followers' ? '님의 팔로워' : '님이 팔로우하는 사람'}
+        {direction === 'followers'
+          ? tNodes('{0}님의 팔로워', { 0: who })
+          : tNodes('{0}님이 팔로우하는 사람', { 0: who })}
       </h1>
-      <nav className="tabs follow-tabs" aria-label="팔로워·팔로잉">
+      <nav className="tabs follow-tabs" aria-label={t('팔로워·팔로잉')}>
         <Link to={`/@${handle}/followers`} aria-current={direction === 'followers' ? 'page' : undefined}>
-          팔로워{profile && ` ${profile.followerCount}`}
+          
+          {t('팔로워')}{profile && ` ${profile.followerCount}`}
         </Link>
         <Link to={`/@${handle}/following`} aria-current={direction === 'following' ? 'page' : undefined}>
-          팔로잉{profile && ` ${profile.followingCount}`}
+          
+          {t('팔로잉')}{profile && ` ${profile.followingCount}`}
         </Link>
       </nav>
       {loaded && hidden && (
         <div className="follow-hidden center" role="status">
           <span className="follow-hidden-icon" aria-hidden="true">🔒</span>
           <p><b>{HIDDEN_FOLLOW_TEXT}</b></p>
-          <p className="muted small">이 회원은 팔로워·팔로잉 목록을 공개하지 않았어요.</p>
+          <p className="muted small">{t('이 회원은 팔로워·팔로잉 목록을 공개하지 않았어요.')}</p>
         </div>
       )}
       {loaded && !hidden && people.length === 0 && !error && <p className="muted center empty">{emptyFollowText(direction)}</p>}
@@ -98,7 +103,7 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
           ))}
         </ul>
       )}
-      {loading && cursor == null && <p className="muted center">불러오는 중…</p>}
+      {loading && cursor == null && <p className="muted center">{t('불러오는 중…')}</p>}
       <InfiniteLoader hasMore={cursor != null} loading={loading} failed={error}
         onMore={() => void more(cursor)} />
     </main>

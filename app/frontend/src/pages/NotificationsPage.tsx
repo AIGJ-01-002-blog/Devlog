@@ -3,6 +3,7 @@ import { InfiniteLoader } from '../components/InfiniteLoader'
 import { NotificationEntry } from '../components/NotificationEntry'
 import { notificationsApi, notifyChanged, type NotificationItem } from '../lib/notifications'
 import { Link } from '../lib/router'
+import { t } from '../lib/i18n'
 
 /** 모든 알림 (015 US3): 20개씩 무한 스크롤(spec 069), 하나씩 [×] 삭제, [모두 읽음]. 보관 기간은 90일. */
 export function NotificationsPage() {
@@ -14,7 +15,7 @@ export function NotificationsPage() {
   // 목록 읽기와 따로: 모두 읽음·삭제 실패는 목록을 다시 불러올 일이 아니다
   const [actionError, setActionError] = useState<string | null>(null)
 
-  useEffect(() => { document.title = '알림 - devlog' }, [])
+  useEffect(() => { document.title = t('알림 - devlog') }, [])
 
   const more = useCallback(async (from: string | null) => {
     setLoading(true)
@@ -48,7 +49,7 @@ export function NotificationsPage() {
       notifyChanged()
     } catch {
       setItems(before)
-      setActionError('알림을 지우지 못했어요')
+      setActionError(t('알림을 지우지 못했어요'))
     }
   }
 
@@ -59,17 +60,17 @@ export function NotificationsPage() {
       setItems((l) => l.map((n) => ({ ...n, read: true })))
       notifyChanged()
     } catch {
-      setActionError('모두 읽음으로 바꾸지 못했어요')
+      setActionError(t('모두 읽음으로 바꾸지 못했어요'))
     }
   }
 
   return (
     <main className="container narrow">
       <div className="notifications-head">
-        <h1 className="page-title">알림</h1>
+        <h1 className="page-title">{t('알림')}</h1>
         <span className="row">
-          <button type="button" className="btn btn-text" onClick={readAll} disabled={items.every((n) => n.read)}>모두 읽음</button>
-          <Link to="/settings#notifications" className="btn btn-text">알림 설정</Link>
+          <button type="button" className="btn btn-text" onClick={readAll} disabled={items.every((n) => n.read)}>{t('모두 읽음')}</button>
+          <Link to="/settings#notifications" className="btn btn-text">{t('알림 설정')}</Link>
         </span>
       </div>
       {actionError && <p className="error center" role="alert">{actionError}</p>}
@@ -78,11 +79,11 @@ export function NotificationsPage() {
           {items.map((n) => <NotificationEntry key={n.id} item={n} onRead={markRead} onRemove={remove} />)}
         </ul>
       )}
-      {!loading && !error && done && items.length === 0 && <p className="muted center">새 알림이 없어요</p>}
-      {loading && cursor == null && <p className="muted center">불러오는 중…</p>}
+      {!loading && !error && done && items.length === 0 && <p className="muted center">{t('새 알림이 없어요')}</p>}
+      {loading && cursor == null && <p className="muted center">{t('불러오는 중…')}</p>}
       <InfiniteLoader hasMore={cursor != null} loading={loading} failed={error}
-        onMore={() => void more(cursor)} failedText="알림을 불러오지 못했어요" />
-      <p className="muted small center">알림은 90일 동안 보관해요.</p>
+        onMore={() => void more(cursor)} failedText={t('알림을 불러오지 못했어요')} />
+      <p className="muted small center">{t('알림은 90일 동안 보관해요.')}</p>
     </main>
   )
 }

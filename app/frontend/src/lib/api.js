@@ -1,4 +1,4 @@
-// 서버 API 호출. 쿠키 세션 + CSRF(XSRF-TOKEN 쿠키 → X-XSRF-TOKEN 헤더), 공통 오류 형식 {code, message, errors, details}.
+import { t } from './i18n';
 export class ApiError extends Error {
     status;
     code;
@@ -54,7 +54,7 @@ export async function api(path, options = {}) {
     catch (e) {
         if (e instanceof DOMException && e.name === 'AbortError')
             throw e;
-        throw new ApiError(0, 'NETWORK', '네트워크에 연결할 수 없어요.');
+        throw new ApiError(0, 'NETWORK', t('네트워크에 연결할 수 없어요.'));
     }
     if (res.status === 204)
         return undefined;
@@ -71,7 +71,7 @@ export async function apiFile(path) {
         res = await fetch(path, { credentials: 'same-origin' });
     }
     catch {
-        throw new ApiError(0, 'NETWORK', '네트워크에 연결할 수 없어요.');
+        throw new ApiError(0, 'NETWORK', t('네트워크에 연결할 수 없어요.'));
     }
     if (!res.ok) {
         const text = await res.text().catch(() => '');
@@ -97,7 +97,7 @@ export function attachmentName(header) {
 function errorOf(res, data) {
     const body = (data ?? {});
     const retry = res.headers.get('Retry-After');
-    return new ApiError(res.status, body.code ?? `HTTP_${res.status}`, body.message ?? '잠시 후 다시 시도해 주세요.', body.errors ?? [], body.details ?? null, retry ? Number(retry) : null);
+    return new ApiError(res.status, body.code ?? `HTTP_${res.status}`, body.message ?? t('잠시 후 다시 시도해 주세요.'), body.errors ?? [], body.details ?? null, retry ? Number(retry) : null);
 }
 function safeJson(text) {
     try {

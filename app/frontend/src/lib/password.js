@@ -1,3 +1,4 @@
+import { t } from './i18n';
 // 비밀번호 규칙 (docs/07 §4, 004 FR-015·FR-018). 서버 PasswordPolicy와 같은 규칙을 입력 중에 보여 주기 위한 것이고,
 // 최종 판정(흔한 비밀번호 목록 포함)은 서버가 한다.
 export const SPECIALS = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~";
@@ -5,12 +6,12 @@ export function passwordRules(password, email = '') {
     const chars = [...password];
     const local = email.includes('@') ? email.slice(0, email.indexOf('@')).trim().toLowerCase() : '';
     return [
-        { id: 'length', label: '8~16자 (최대 16자)', ok: chars.length >= 8 && chars.length <= 16 },
-        { id: 'letter', label: '영문 1자 이상', ok: /[A-Za-z]/.test(password) },
-        { id: 'digit', label: '숫자 1자 이상', ok: /[0-9]/.test(password) },
-        { id: 'special', label: '특수문자 1자 이상', ok: chars.some((c) => SPECIALS.includes(c)) },
-        { id: 'chars', label: '공백·한글 없이 영문·숫자·특수문자만', ok: chars.every((c) => /[A-Za-z0-9]/.test(c) || SPECIALS.includes(c)) },
-        { id: 'email', label: '이메일 앞부분 넣지 않기', ok: local.length < 3 || !password.toLowerCase().includes(local) },
+        { id: 'length', label: t('8~16자 (최대 16자)'), ok: chars.length >= 8 && chars.length <= 16 },
+        { id: 'letter', label: t('영문 1자 이상'), ok: /[A-Za-z]/.test(password) },
+        { id: 'digit', label: t('숫자 1자 이상'), ok: /[0-9]/.test(password) },
+        { id: 'special', label: t('특수문자 1자 이상'), ok: chars.some((c) => SPECIALS.includes(c)) },
+        { id: 'chars', label: t('공백·한글 없이 영문·숫자·특수문자만'), ok: chars.every((c) => /[A-Za-z0-9]/.test(c) || SPECIALS.includes(c)) },
+        { id: 'email', label: t('이메일 앞부분 넣지 않기'), ok: local.length < 3 || !password.toLowerCase().includes(local) },
     ];
 }
 export function passwordOk(password, email = '') {

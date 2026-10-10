@@ -370,6 +370,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.58.0 | 2026-10-10 | 画面の多言語対応 第1段階（英語・日本語・中国語、フッターの 🌐 言語選択） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.58.0) |
 | v1.57.0 | 2026-10-10 | Kakao ログイン（`ka-` アドレス、Kakao のキーを設定するとボタンが表示） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.57.0) |
 | v1.56.0 | 2026-10-10 | フォロワー・フォロー中リストの公開/非公開設定（非公開なら「非公開アカウントです」、数はそのまま） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.56.0) |
 | v1.55.0 | 2026-10-10 | 友達リクエストの受信と承認を通知（Telegram・Discordにも、通知設定でオフ可能） | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.55.0) |

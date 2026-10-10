@@ -1,6 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { useEffect, useState } from 'react';
 import { activeIndex, extractToc, TOC_MIN_ITEMS } from '../lib/toc';
+import { t } from '../lib/i18n';
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 /** 헤더 높이만큼 아래를 기준선으로 본다 */
 const OFFSET = 96;
@@ -38,7 +39,7 @@ export function Toc({ bodyRef, html }) {
     }, [items]);
     if (items.length < TOC_MIN_ITEMS)
         return null;
-    return (_jsx("aside", { className: "toc", "aria-label": "\uBAA9\uCC28", children: _jsx("ul", { className: "toc-inner", children: items.map((item, i) => (_jsx("li", { style: { paddingLeft: `${item.depth * 12}px` }, children: _jsx("a", { href: `#${encodeURIComponent(item.id)}`, className: i === active ? 'active' : undefined, "aria-current": i === active ? 'location' : undefined, onClick: (e) => {
+    return (_jsx("aside", { className: "toc", "aria-label": t('목차'), children: _jsx("ul", { className: "toc-inner", children: items.map((item, i) => (_jsx("li", { style: { paddingLeft: `${item.depth * 12}px` }, children: _jsx("a", { href: `#${encodeURIComponent(item.id)}`, className: i === active ? 'active' : undefined, "aria-current": i === active ? 'location' : undefined, onClick: (e) => {
                         e.preventDefault();
                         document.getElementById(item.id)?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
                         history.replaceState(history.state, '', `#${encodeURIComponent(item.id)}`);

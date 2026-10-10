@@ -1,5 +1,6 @@
 import { api } from './api'
 import type { Card } from './types'
+import { t } from './i18n'
 
 // 태그 정규화·주소 (docs/22 §2·§5). 서버 TagNormalizer와 같은 순서다. 화면 정규화는 안내용이고 서버가 다시 검사한다.
 
@@ -20,8 +21,8 @@ export function normalizeTag(raw: string): string {
 
 /** 금칙어를 뺀 형식 검사. 문제가 없으면 null. */
 export function tagFormatError(name: string): string | null {
-  if (!name || !ALLOWED.test(name) || !HAS_WORD.test(name)) return '한글·영문·숫자와 - _ . + #만 쓸 수 있어요.'
-  if ([...name].length > MAX_TAG_LENGTH) return `${MAX_TAG_LENGTH}자까지 쓸 수 있어요.`
+  if (!name || !ALLOWED.test(name) || !HAS_WORD.test(name)) return t('한글·영문·숫자와 - _ . + #만 쓸 수 있어요.')
+  if ([...name].length > MAX_TAG_LENGTH) return t('{0}자까지 쓸 수 있어요.', { 0: MAX_TAG_LENGTH })
   return null
 }
 

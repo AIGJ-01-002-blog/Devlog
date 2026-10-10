@@ -5,6 +5,7 @@ import { enhanceGifs } from '../lib/gifPlayer';
 import { renderDiagramsWithin } from '../lib/diagram';
 import { highlightWithin } from '../lib/highlight';
 import { setLeaveGuard } from '../lib/router';
+import { t } from '../lib/i18n';
 /** 서버와 같은 길이 제한 (spec 042 FR-002) */
 export const ABOUT_MAX = 10_000;
 export const aboutApi = {
@@ -44,16 +45,16 @@ export function BlogAbout({ handle }) {
             return;
         const guard = (e) => { e.preventDefault(); e.returnValue = ''; };
         window.addEventListener('beforeunload', guard);
-        setLeaveGuard(() => confirm('작성 중인 소개를 버릴까요?'));
+        setLeaveGuard(() => confirm(t('작성 중인 소개를 버릴까요?')));
         return () => {
             window.removeEventListener('beforeunload', guard);
             setLeaveGuard(null);
         };
     }, [dirty]);
     if (failed)
-        return _jsx("p", { className: "muted center", children: "\uC18C\uAC1C\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694." });
+        return _jsx("p", { className: "muted center", children: t('소개를 불러오지 못했어요.') });
     if (!about)
-        return _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" });
+        return _jsx("p", { className: "muted center", children: t('불러오는 중…') });
     const save = async () => {
         if (draft == null)
             return;
@@ -65,7 +66,7 @@ export function BlogAbout({ handle }) {
             setDraft(null);
         }
         catch (e) {
-            setError(e instanceof ApiError ? e.message : '저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+            setError(e instanceof ApiError ? e.message : t('저장하지 못했어요. 잠시 후 다시 시도해 주세요.'));
         }
         finally {
             setSaving(false);
@@ -73,14 +74,14 @@ export function BlogAbout({ handle }) {
     };
     if (draft != null) {
         const length = [...draft].length;
-        return (_jsxs("section", { className: "blog-about", "aria-label": "\uC18C\uAC1C \uC218\uC815", children: [_jsx("label", { htmlFor: "about-editor", className: "sr-only", children: "\uBE14\uB85C\uADF8 \uC18C\uAC1C (\uB9C8\uD06C\uB2E4\uC6B4)" }), _jsx("textarea", { id: "about-editor", ref: editorRef, className: "about-editor", value: draft, rows: 14, "aria-describedby": "about-count", placeholder: "\uB098\uB97C \uC18C\uAC1C\uD558\uB294 \uAE00\uC744 \uB9C8\uD06C\uB2E4\uC6B4\uC73C\uB85C \uC368 \uBCF4\uC138\uC694.", onChange: (e) => setDraft(e.target.value) }), _jsxs("div", { className: "row about-actions", children: [_jsxs("span", { id: "about-count", className: `muted small${length > ABOUT_MAX ? ' danger' : ''}`, children: [length.toLocaleString(), " / ", ABOUT_MAX.toLocaleString(), "\uC790"] }), _jsx("button", { type: "button", className: "btn btn-text", onClick: () => {
-                                if (dirty && !confirm('작성 중인 소개를 버릴까요?'))
+        return (_jsxs("section", { className: "blog-about", "aria-label": t('소개 수정'), children: [_jsx("label", { htmlFor: "about-editor", className: "sr-only", children: t('블로그 소개 (마크다운)') }), _jsx("textarea", { id: "about-editor", ref: editorRef, className: "about-editor", value: draft, rows: 14, "aria-describedby": "about-count", placeholder: t('나를 소개하는 글을 마크다운으로 써 보세요.'), onChange: (e) => setDraft(e.target.value) }), _jsxs("div", { className: "row about-actions", children: [_jsx("span", { id: "about-count", className: `muted small${length > ABOUT_MAX ? ' danger' : ''}`, children: t('{0} / {1}자', { 0: length.toLocaleString(), 1: ABOUT_MAX.toLocaleString() }) }), _jsx("button", { type: "button", className: "btn btn-text", onClick: () => {
+                                if (dirty && !confirm(t('작성 중인 소개를 버릴까요?')))
                                     return;
                                 setDraft(null);
                                 setError(null);
-                            }, disabled: saving, children: "\uCDE8\uC18C" }), _jsx("button", { type: "button", className: "btn btn-primary", onClick: save, disabled: saving || length > ABOUT_MAX, children: saving ? '저장 중…' : '저장' })] }), error && _jsx("p", { className: "error", role: "alert", children: error })] }));
+                            }, disabled: saving, children: t('취소') }), _jsx("button", { type: "button", className: "btn btn-primary", onClick: save, disabled: saving || length > ABOUT_MAX, children: saving ? t('저장 중…') : t('저장') })] }), error && _jsx("p", { className: "error", role: "alert", children: error })] }));
     }
     return (_jsxs("section", { className: "blog-about", children: [about.html
                 ? _jsx("div", { className: "markdown", ref: bodyRef, dangerouslySetInnerHTML: { __html: about.html } })
-                : _jsx("p", { className: "muted center", children: about.mine ? '아직 블로그 소개가 없어요.' : '소개가 없어요.' }), about.mine && (_jsx("div", { className: "row about-actions", children: _jsx("button", { type: "button", className: "btn btn-outline", onClick: () => setDraft(about.contentMd ?? ''), children: about.html ? '소개 수정' : '소개 쓰기' }) }))] }));
+                : _jsx("p", { className: "muted center", children: about.mine ? t('아직 블로그 소개가 없어요.') : t('소개가 없어요.') }), about.mine && (_jsx("div", { className: "row about-actions", children: _jsx("button", { type: "button", className: "btn btn-outline", onClick: () => setDraft(about.contentMd ?? ''), children: about.html ? t('소개 수정') : t('소개 쓰기') }) }))] }));
 }

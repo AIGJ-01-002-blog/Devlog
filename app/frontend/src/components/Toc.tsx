@@ -1,5 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react'
 import { activeIndex, extractToc, TOC_MIN_ITEMS, type TocItem } from '../lib/toc'
+import { t } from '../lib/i18n'
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
@@ -40,7 +41,7 @@ export function Toc({ bodyRef, html }: { bodyRef: RefObject<HTMLElement | null>;
 
   if (items.length < TOC_MIN_ITEMS) return null
   return (
-    <aside className="toc" aria-label="목차">
+    <aside className="toc" aria-label={t('목차')}>
       <ul className="toc-inner">
         {items.map((item, i) => (
           <li key={item.id} style={{ paddingLeft: `${item.depth * 12}px` }}>

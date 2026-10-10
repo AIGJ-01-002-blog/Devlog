@@ -1,10 +1,11 @@
 import { useEffect, type RefObject } from 'react'
 import { api } from './api'
+import { t } from './i18n'
 
 /** 글이 화면에 이만큼 연속으로 보이면 한 번 본 것으로 친다 (spec 013 FR-001). */
 export const VIEW_DWELL_MS = 1000
 
-export const VIEW_HINT = '같은 사람은 하루에 한 번만 세요'
+export const VIEW_HINT = t('같은 사람은 하루에 한 번만 세요')
 
 /**
  * 탭이 보이고 글이 화면 안에 있는 동안만 시간을 잰다. 다시 가려지면 처음부터 잰다.

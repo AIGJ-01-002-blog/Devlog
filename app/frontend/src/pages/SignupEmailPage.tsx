@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth'
 import { fieldErrors } from '../lib/fieldErrors'
 import { cleanHandleInput, passwordOk } from '../lib/password'
 import { Link, navigate, useLocation } from '../lib/router'
+import { t } from '../lib/i18n'
 
 interface Terms { termsEffectiveDate: string; privacyEffectiveDate: string }
 interface Check { available: boolean; message: string | null; suggestion?: string | null; code?: string | null }
@@ -125,17 +126,17 @@ export function SignupEmailPage() {
     setWithdrawnAccount(false)
     try {
       const r = await api<{ expiresInSeconds: number }>('/api/auth/signup/email-code', { method: 'POST', body: { email: target } })
-      const t = Date.now()
+      const sentAt = Date.now()
       setSentTo(target)
       setCode('')
-      setNow(t)
-      setExpiresAt(t + r.expiresInSeconds * 1000)
-      setResendAt(t + RESEND_SECONDS * 1000)
-      setCodeMsg({ text: '인증번호를 보냈어요. 메일함(스팸함 포함)을 확인해 주세요.', error: false })
+      setNow(sentAt)
+      setExpiresAt(sentAt + r.expiresInSeconds * 1000)
+      setResendAt(sentAt + RESEND_SECONDS * 1000)
+      setCodeMsg({ text: t('인증번호를 보냈어요. 메일함(스팸함 포함)을 확인해 주세요.'), error: false })
     } catch (err) {
       if (err instanceof ApiError && err.code === 'EMAIL_TAKEN') setEmailTaken(true)
       else if (err instanceof ApiError && err.code === 'WITHDRAWN_ACCOUNT') setWithdrawnAccount(true)
-      else setCodeMsg({ text: err instanceof ApiError ? err.message : '인증번호를 보내지 못했어요.', error: true })
+      else setCodeMsg({ text: err instanceof ApiError ? err.message : t('인증번호를 보내지 못했어요.'), error: true })
     } finally {
       setSending(false)
     }
@@ -150,7 +151,7 @@ export function SignupEmailPage() {
       setErrors((prev) => { const { email: _drop, ...rest } = prev; return rest })
     } catch (err) {
       if (err instanceof ApiError && (err.code === 'CODE_EXPIRED' || err.code === 'CODE_TOO_MANY_TRIES')) setResendAt(0)
-      setCodeMsg({ text: err instanceof ApiError ? err.message : '인증하지 못했어요.', error: true })
+      setCodeMsg({ text: err instanceof ApiError ? err.message : t('인증하지 못했어요.'), error: true })
     } finally {
       setConfirming(false)
     }
@@ -177,7 +178,7 @@ export function SignupEmailPage() {
         setWithdrawnAccount(true)
       } else if (err instanceof ApiError && err.code === 'HANDLE_TAKEN') {
         const s = (err.details as { suggestion?: string } | null)?.suggestion
-        setErrors({ handleBody: `이미 쓰는 주소예요.${s ? ` "${s}"는 어때요?` : ''}` })
+        setErrors({ handleBody: (s ? t('이미 쓰는 주소예요. "{0}"는 어때요?', { 0: s }) : t('이미 쓰는 주소예요.')) })
       } else if (err instanceof ApiError && err.code === 'NICKNAME_TAKEN') {
         setErrors({ nickname: err.message })
       } else {
@@ -192,18 +193,18 @@ export function SignupEmailPage() {
   const ready = agreed.terms && agreed.privacy && passwordOk(password, email) && password === confirm && body.length >= 3
     && handleCheck?.available === true && emailUsable && (!codeRequired || verified)
   const emailHelp = errors.email ?? (emailTaken || withdrawnAccount ? null
-    : emailCheck == null ? '로그인할 때 쓰는 아이디예요.'
-    : emailCheck.available ? (verified ? '인증을 마쳤어요.' : codeOpen ? '쓸 수 있는 아이디예요. 메일로 받은 인증번호를 넣어 주세요.'
-      : codeRequired ? '쓸 수 있는 아이디예요. [인증]을 눌러 인증번호를 받아 주세요.' : '쓸 수 있는 아이디예요.')
+    : emailCheck == null ? t('로그인할 때 쓰는 아이디예요.')
+    : emailCheck.available ? (verified ? t('인증을 마쳤어요.') : codeOpen ? t('쓸 수 있는 아이디예요. 메일로 받은 인증번호를 넣어 주세요.')
+      : codeRequired ? t('쓸 수 있는 아이디예요. [인증]을 눌러 인증번호를 받아 주세요.') : t('쓸 수 있는 아이디예요.'))
     : emailCheck.message)
-  const sendLabel = verified ? '인증됨' : sending ? '보내는 중…' : codeOpen && resendLeft > 0 ? `다시 보내기 ${resendLeft}초` : codeOpen ? '다시 보내기' : '인증'
+  const sendLabel = verified ? t('인증됨') : sending ? t('보내는 중…') : codeOpen && resendLeft > 0 ? t('다시 보내기 {0}초', { 0: resendLeft }) : codeOpen ? t('다시 보내기') : t('인증')
 
   return (
     <main className="container narrow auth-page">
-      <h1>이메일로 가입</h1>
+      <h1>{t('이메일로 가입')}</h1>
       <form onSubmit={submit} className="form" noValidate>
         <div className="field">
-          <span id="signup-email-label">아이디(이메일)</span>
+          <span id="signup-email-label">{t('아이디(이메일)')}</span>
           <div className="input-action">
             <input id="signup-email" aria-labelledby="signup-email-label" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setEmailTaken(false); setWithdrawnAccount(false) }}
                    maxLength={254} autoComplete="email" spellCheck={false} autoCapitalize="none" required aria-describedby="email-help"
@@ -211,8 +212,8 @@ export function SignupEmailPage() {
             {codeRequired && (
               <button type="button" className={verified ? 'btn btn-outline ok' : 'btn btn-outline'} onClick={sendCode}
                       disabled={verified || sending || !emailUsable || (codeOpen && resendLeft > 0)}
-                      title={verified ? '이 이메일은 인증을 마쳤어요' : codeOpen ? '인증번호를 새로 보내요. 앞서 보낸 번호는 쓸 수 없게 돼요'
-                        : '아이디를 확인하고 이 이메일로 6자리 인증번호를 보내요'}>
+                      title={verified ? t('이 이메일은 인증을 마쳤어요') : codeOpen ? t('인증번호를 새로 보내요. 앞서 보낸 번호는 쓸 수 없게 돼요')
+                        : t('아이디를 확인하고 이 이메일로 6자리 인증번호를 보내요')}>
                 {verified ? '✓ ' : ''}{sendLabel}
               </button>
             )}
@@ -222,38 +223,40 @@ export function SignupEmailPage() {
           )}
           {codeOpen && (
             <div className="input-action">
-              <input aria-label="인증번호 6자리" value={code} inputMode="numeric" autoComplete="one-time-code" maxLength={6} spellCheck={false}
-                     placeholder="인증번호 6자리" onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              <input aria-label={t('인증번호 6자리')} value={code} inputMode="numeric" autoComplete="one-time-code" maxLength={6} spellCheck={false}
+                     placeholder={t('인증번호 6자리')} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (code.length === 6) void confirmCode() } }} />
               <button type="button" className="btn btn-primary" onClick={confirmCode} disabled={confirming || code.length !== 6 || expireLeft === 0}
-                      title="받은 인증번호가 맞는지 확인해요">
-                {confirming ? '확인 중…' : '확인'}
+                      title={t('받은 인증번호가 맞는지 확인해요')}>
+                {confirming ? t('확인 중…') : t('확인')}
               </button>
             </div>
           )}
-          {codeOpen && expireLeft > 0 && <small className="muted">{mmss(expireLeft)} 안에 넣어 주세요.</small>}
-          {codeOpen && expireLeft === 0 && !codeMsg?.error && <small className="error">인증번호가 만료됐어요. 다시 보내기를 눌러 주세요.</small>}
+          {codeOpen && expireLeft > 0 && <small className="muted">{t('{0} 안에 넣어 주세요.', { 0: mmss(expireLeft) })}</small>}
+          {codeOpen && expireLeft === 0 && !codeMsg?.error && <small className="error">{t('인증번호가 만료됐어요. 다시 보내기를 눌러 주세요.')}</small>}
           {codeMsg && !verified && <small className={codeMsg.error ? 'error' : 'muted'} role={codeMsg.error ? 'alert' : undefined}>{codeMsg.text}</small>}
           {withdrawnAccount && (
             <div className="banner banner-warn" role="alert">
-              탈퇴 신청한 계정이 있어요. 로그인하면 복구할 수 있어요.
+              
+              {t('탈퇴 신청한 계정이 있어요. 로그인하면 복구할 수 있어요.')}
               <div className="banner-actions">
-                <Link to="/login" className="btn btn-outline">로그인</Link>
+                <Link to="/login" className="btn btn-outline">{t('로그인')}</Link>
               </div>
             </div>
           )}
           {emailTaken && (
             <div className="banner banner-warn" role="alert">
-              이미 가입된 이메일이에요.
+              
+              {t('이미 가입된 이메일이에요.')}
               <div className="banner-actions">
-                <Link to="/login" className="btn btn-outline">로그인</Link>
-                <Link to="/forgot-password" className="btn btn-outline">비밀번호 찾기</Link>
+                <Link to="/login" className="btn btn-outline">{t('로그인')}</Link>
+                <Link to="/forgot-password" className="btn btn-outline">{t('비밀번호 찾기')}</Link>
               </div>
             </div>
           )}
         </div>
         <label className="field">
-          <span>블로그 주소</span>
+          <span>{t('블로그 주소')}</span>
           <div className="input-prefix">
             <span>devlog/@</span>
             <input value={body} lang="en" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false}
@@ -261,49 +264,49 @@ export function SignupEmailPage() {
                    maxLength={20} autoComplete="off" aria-describedby="handle-help" required />
           </div>
           <small id="handle-help" aria-live="polite" className={errors.handleBody || handleCheck?.available === false ? 'error' : 'muted'}>
-            {errors.handleBody ?? (handleCheck == null ? '영문 소문자·숫자·_ 3~20자' : handleCheck.available ? '쓸 수 있는 주소예요.'
-              : `${handleCheck.message}${handleCheck.suggestion ? ` "${handleCheck.suggestion}"는 어때요?` : ''}`)}
+            {errors.handleBody ?? (handleCheck == null ? t('영문 소문자·숫자·_ 3~20자') : handleCheck.available ? t('쓸 수 있는 주소예요.')
+              : `${handleCheck.message}${handleCheck.suggestion ? t(' "{0}"는 어때요?', { 0: handleCheck.suggestion }) : ''}`)}
           </small>
-          {autoFilled && <small className="muted">이메일 앞부분으로 미리 채웠어요. 이메일을 드러내고 싶지 않으면 바꿔 주세요.</small>}
-          <small className="muted">블로그 주소는 가입 후 바꿀 수 없어요.</small>
+          {autoFilled && <small className="muted">{t('이메일 앞부분으로 미리 채웠어요. 이메일을 드러내고 싶지 않으면 바꿔 주세요.')}</small>}
+          <small className="muted">{t('블로그 주소는 가입 후 바꿀 수 없어요.')}</small>
           {handleCheck?.suggestion && !handleCheck.available && (
-            <button type="button" className="btn btn-text" onClick={() => { setBody(handleCheck.suggestion!); setBodyTouched(true) }}>추천 주소 쓰기</button>
+            <button type="button" className="btn btn-text" onClick={() => { setBody(handleCheck.suggestion!); setBodyTouched(true) }}>{t('추천 주소 쓰기')}</button>
           )}
         </label>
         <label className="field">
-          <span>비밀번호</span>
+          <span>{t('비밀번호')}</span>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={64}
                  autoComplete="new-password" aria-describedby="pw-rules" required />
           <PasswordRules password={password} email={email} id="pw-rules" />
           {errors.password && <small className="error">{errors.password}</small>}
         </label>
         <label className="field">
-          <span>비밀번호 확인</span>
+          <span>{t('비밀번호 확인')}</span>
           <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} maxLength={64} autoComplete="new-password" required />
           {(errors.passwordConfirm || (confirm && confirm !== password)) && (
-            <small className="error">{errors.passwordConfirm ?? '비밀번호가 서로 달라요.'}</small>
+            <small className="error">{errors.passwordConfirm ?? t('비밀번호가 서로 달라요.')}</small>
           )}
         </label>
         <label className="field">
-          <span>닉네임</span>
+          <span>{t('닉네임')}</span>
           <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} required autoComplete="nickname"
                  aria-describedby="nickname-help" aria-invalid={!!errors.nickname || nickCheck?.available === false} />
           <small id="nickname-help" aria-live="polite" className={errors.nickname || nickCheck?.available === false ? 'error' : 'muted'}>
-            {errors.nickname ?? (nickCheck == null ? '한글·영문·숫자 2~10자' : nickCheck.available ? '쓸 수 있는 닉네임이에요.' : nickCheck.message)}
+            {errors.nickname ?? (nickCheck == null ? t('한글·영문·숫자 2~10자') : nickCheck.available ? t('쓸 수 있는 닉네임이에요.') : nickCheck.message)}
           </small>
         </label>
         <SignupAgreements value={agreed} onChange={setAgreed} termsDate={terms?.termsEffectiveDate}
                           privacyDate={terms?.privacyEffectiveDate} error={errors.agreeTerms ?? errors.agreePrivacy} />
         {errors.form && <div className="banner banner-warn" role="alert">{errors.form}</div>}
-        <button className="btn btn-primary btn-block" disabled={submitting || !ready}>{submitting ? '가입하는 중…' : '가입하기'}</button>
+        <button className="btn btn-primary btn-block" disabled={submitting || !ready}>{submitting ? t('가입하는 중…') : t('가입하기')}</button>
         {!ready && !submitting && (
           <p className="muted small">
-            {codeRequired && !verified ? '아이디 확인과 이메일 인증을 마치면 가입할 수 있어요.' : '빠진 항목을 채우면 가입할 수 있어요.'}
+            {codeRequired && !verified ? t('아이디 확인과 이메일 인증을 마치면 가입할 수 있어요.') : t('빠진 항목을 채우면 가입할 수 있어요.')}
           </p>
         )}
-        {!codeRequired && <p className="muted small">가입하면 인증 메일을 보내요. 메일의 링크를 눌러야 글을 쓸 수 있어요.</p>}
+        {!codeRequired && <p className="muted small">{t('가입하면 인증 메일을 보내요. 메일의 링크를 눌러야 글을 쓸 수 있어요.')}</p>}
       </form>
-      <p className="auth-links small">이미 계정이 있나요? <Link to="/login">로그인</Link></p>
+      <p className="auth-links small">{t('이미 계정이 있나요?')} <Link to="/login">{t('로그인')}</Link></p>
     </main>
   )
 }

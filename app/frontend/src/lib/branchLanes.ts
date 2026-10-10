@@ -1,4 +1,5 @@
 import type { Branch, Card } from './types'
+import { t } from './i18n'
 
 /** 브랜치 줄은 main 옆으로 이만큼만 나란히 그린다. 휴대폰 폭에서 제목 자리를 지키려는 값이다 (072) */
 export const MAX_LANES = 3
@@ -107,17 +108,17 @@ export function branchLanes(cards: Card[], hasMore: boolean, maxLanes = MAX_LANE
 
 /** 날짜 줄 이름: 오늘·어제·10월 7일(올해가 아니면 2025년 10월 7일) */
 export function dayLabel(iso: string, now: Date = new Date()): string {
-  const t = new Date(iso)
-  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-  const diff = Math.round((day(now) - day(t)) / 86_400_000)
-  if (diff === 0) return '오늘'
-  if (diff === 1) return '어제'
-  const md = `${t.getMonth() + 1}월 ${t.getDate()}일`
-  return t.getFullYear() === now.getFullYear() ? md : `${t.getFullYear()}년 ${md}`
+  const d = new Date(iso)
+  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const diff = Math.round((day(now) - day(d)) / 86_400_000)
+  if (diff === 0) return t('오늘')
+  if (diff === 1) return t('어제')
+  if (d.getFullYear() === now.getFullYear()) return t('{0}월 {1}일', { 0: d.getMonth() + 1, 1: d.getDate() })
+  return t('{0}년 {1}월 {2}일', { 0: d.getFullYear(), 1: d.getMonth() + 1, 2: d.getDate() })
 }
 
 /** 브랜치 이름표 문구 */
 export function branchLabel(b: Branch): string {
-  if (b.kind === 'SERIES') return b.index === 1 ? `${b.name} 시리즈 시작, 1편` : `${b.name} 시리즈, ${b.index}편`
-  return b.index === 1 ? `${b.name} 브랜치 시작` : `${b.name} 브랜치, ${b.total}편 중 ${b.index}편`
+  if (b.kind === 'SERIES') return b.index === 1 ? t('{0} 시리즈 시작, 1편', { 0: b.name }) : t('{0} 시리즈, {1}편', { 0: b.name, 1: b.index })
+  return b.index === 1 ? t('{0} 브랜치 시작', { 0: b.name }) : t('{0} 브랜치, {1}편 중 {2}편', { 0: b.name, 1: b.total, 2: b.index })
 }

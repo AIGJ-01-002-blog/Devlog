@@ -29,6 +29,7 @@ import { withdrawnRedirect } from './lib/withdraw'
 import { lazyPage } from './lib/lazyPage'
 import { PageErrorBoundary } from './components/PageErrorBoundary'
 import { sendPage } from './lib/views'
+import { t } from './lib/i18n'
 
 // 글 읽기(홈·글·블로그·태그·검색·피드)는 첫 묶음에 두고, 쓰기·설정·가입·관리자 화면은 처음 열 때 받는다.
 // 독자가 받는 첫 JS를 줄이려는 것이다 (spec 028).
@@ -134,7 +135,7 @@ function route(path: string): ReactNode {
 
 function Loading() {
   // 페이지 자리(#main)의 유일한 <main>이다. 안에 다른 <main>을 품지 않는다
-  return <main className="container" aria-busy="true"><p className="muted center" role="status">불러오는 중…</p></main>
+  return <main className="container" aria-busy="true"><p className="muted center" role="status">{t('불러오는 중…')}</p></main>
 }
 
 function RequireLogin({ children }: { children: ReactNode }) {

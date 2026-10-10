@@ -1,5 +1,6 @@
 import { api } from './api'
 import type { Card } from './types'
+import { t } from './i18n'
 
 // 팔로우·피드 (spec 016). 팔로우는 상태 지정(PUT·DELETE)이라 여러 번 보내도 결과가 같다.
 
@@ -48,17 +49,17 @@ export const FEED_ENDPOINT = '/api/feed'
 
 /** 버튼 글자 (FR-008): 팔로우 안 함 [팔로우], 팔로우 중 [팔로잉 ✓], 그 위에 마우스·초점이면 [언팔로우]. */
 export function followLabel(following: boolean, hover: boolean): string {
-  if (!following) return '팔로우'
-  return hover ? '언팔로우' : '팔로잉 ✓'
+  if (!following) return t('팔로우')
+  return hover ? t('언팔로우') : t('팔로잉 ✓')
 }
 
-export const FOLLOW_ERROR = '잠시 후 다시 시도해 주세요'
+export const FOLLOW_ERROR = t('잠시 후 다시 시도해 주세요')
 
 /** 비공개로 둔 목록을 다른 사람이 열었을 때 (spec 079) */
-export const HIDDEN_FOLLOW_TEXT = '비공개 계정입니다'
+export const HIDDEN_FOLLOW_TEXT = t('비공개 계정입니다')
 
 export function emptyFollowText(direction: FollowDirection): string {
-  return direction === 'followers' ? '아직 팔로워가 없어요' : '아직 팔로우한 사람이 없어요'
+  return direction === 'followers' ? t('아직 팔로워가 없어요') : t('아직 팔로우한 사람이 없어요')
 }
 
 /** 목록 이어 붙이기: 사이에 팔로우가 바뀌어 경계가 밀려도 같은 사람을 두 번 보이지 않는다. */

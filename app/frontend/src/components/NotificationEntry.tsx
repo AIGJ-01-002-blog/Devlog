@@ -1,5 +1,6 @@
 import { messageOf, notificationTime, notificationsApi, notifyChanged, type NotificationItem } from '../lib/notifications'
 import { navigate } from '../lib/router'
+import { t } from '../lib/i18n'
 
 /**
  * 알림 한 줄 (종 목록·알림 페이지 공용). 누르면 그 알림만 읽음으로 하고 링크로 간다(FR-028).
@@ -24,7 +25,7 @@ export function NotificationEntry({ item, onRead, onRemove }: {
   return (
     <li className={`notification${item.read ? '' : ' unread'}`}>
       <button type="button" className="notification-open" onClick={open}>
-        {!item.read && <span className="notification-dot"><span aria-hidden="true">●</span><span className="sr-only">안 읽음</span></span>}
+        {!item.read && <span className="notification-dot"><span aria-hidden="true">●</span><span className="sr-only">{t('안 읽음')}</span></span>}
         <span className="notification-body">
           <span className="notification-text">{m.who && <b>{m.who}</b>}{m.text}</span>
           {m.quote && <span className="notification-quote">“{m.quote}”</span>}
@@ -32,7 +33,7 @@ export function NotificationEntry({ item, onRead, onRemove }: {
         </span>
       </button>
       {onRemove && (
-        <button type="button" className="btn btn-text notification-remove" aria-label="알림 삭제" onClick={() => onRemove(item.id)}>×</button>
+        <button type="button" className="btn btn-text notification-remove" aria-label={t('알림 삭제')} onClick={() => onRemove(item.id)}>×</button>
       )}
     </li>
   )

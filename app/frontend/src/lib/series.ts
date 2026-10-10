@@ -1,5 +1,6 @@
 import { api } from './api'
 import type { Card } from './types'
+import { t } from './i18n'
 
 // 시리즈 (spec 024). 보이는 글·개수·순서는 서버가 보는 사람 기준으로 정해서 준다.
 
@@ -71,9 +72,9 @@ export const seriesPath = (handle: string, slug: string) => `/@${handle}/series/
 /** 서버와 같은 규칙의 이름 검사 (FR-001): 앞뒤 공백을 빼고 1~50자, 글자나 숫자가 하나는 있어야 주소를 만든다. */
 export function seriesNameError(raw: string): string | null {
   const name = raw.trim().replace(/\s+/g, ' ')
-  if (!name) return '시리즈 이름을 써 주세요.'
-  if ([...name].length > SERIES_NAME_MAX) return `${SERIES_NAME_MAX}자 안으로 써 주세요.`
-  if (!/[\p{L}\p{N}]/u.test(name)) return '글자나 숫자를 넣어 주세요.'
+  if (!name) return t('시리즈 이름을 써 주세요.')
+  if ([...name].length > SERIES_NAME_MAX) return t('{0}자 안으로 써 주세요.', { 0: SERIES_NAME_MAX })
+  if (!/[\p{L}\p{N}]/u.test(name)) return t('글자나 숫자를 넣어 주세요.')
   return null
 }
 
