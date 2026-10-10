@@ -23,7 +23,7 @@ import com.team.blog.post.query.PostCard;
  * 팔로우 API (016).
  * <ul>
  *   <li>PUT·DELETE /api/members/{handle}/follow: 팔로우·언팔로우 (상태 지정, 여러 번 보내도 같음). 이메일 인증 전에도 된다(FR-002)</li>
- *   <li>GET /api/members/{handle}/followers, /following: 누구나 (FR-010)</li>
+ *   <li>GET /api/members/{handle}/followers, /following: 누구나 (FR-010). 주인이 비공개로 두면 본인·관리자만 (079)</li>
  *   <li>GET /api/feed: 팔로잉 피드, 로그인 필요 (FR-015)</li>
  * </ul>
  */
@@ -54,14 +54,14 @@ public class FollowController {
     public ResponseEntity<FollowQuery.Page> followers(@PathVariable String handle, @RequestParam(required = false) String cursor,
                                                       @CurrentMember(required = false) MemberPrincipal me) {
         return ResponseEntity.ok().cacheControl(CacheControl.noCache().cachePrivate())
-                .body(query.list(handle, FollowQuery.Direction.FOLLOWERS, cursor, me == null ? null : me.id()));
+                .body(query.list(handle, FollowQuery.Direction.FOLLOWERS, cursor, me == null ? null : me.id(), me != null && me.isStaff()));
     }
 
     @GetMapping("/api/members/{handle}/following")
     public ResponseEntity<FollowQuery.Page> following(@PathVariable String handle, @RequestParam(required = false) String cursor,
                                                       @CurrentMember(required = false) MemberPrincipal me) {
         return ResponseEntity.ok().cacheControl(CacheControl.noCache().cachePrivate())
-                .body(query.list(handle, FollowQuery.Direction.FOLLOWING, cursor, me == null ? null : me.id()));
+                .body(query.list(handle, FollowQuery.Direction.FOLLOWING, cursor, me == null ? null : me.id(), me != null && me.isStaff()));
     }
 
     /** @param followsAnyone 빈 피드 문구를 고르는 데 쓴다 (FR-020). 첫 쪽에서만 센다 */

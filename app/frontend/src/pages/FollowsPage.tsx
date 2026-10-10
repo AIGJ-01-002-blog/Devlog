@@ -3,12 +3,15 @@ import { Avatar } from '../components/Avatar'
 import { InfiniteLoader } from '../components/InfiniteLoader'
 import { FollowButton } from '../components/FollowButton'
 import { ApiError, api, takeInitialData } from '../lib/api'
-import { appendPeople, emptyFollowText, followApi, type FollowDirection, type FollowPage, type FollowPerson } from '../lib/follow'
+import { HIDDEN_FOLLOW_TEXT, appendPeople, emptyFollowText, followApi, type FollowDirection, type FollowPage, type FollowPerson } from '../lib/follow'
 import { Link } from '../lib/router'
 import type { BlogProfile } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
 
-/** 팔로워·팔로잉 목록 (016 US3): 최근에 팔로우한 순 20개씩 무한 스크롤(spec 069), 보는 사람 기준 팔로우 버튼. 비회원도 본다. */
+/**
+ * 팔로워·팔로잉 목록 (016 US3): 최근에 팔로우한 순 20개씩 무한 스크롤(spec 069), 보는 사람 기준 팔로우 버튼. 비회원도 본다.
+ * 주인이 목록을 비공개로 두면 본인·관리자 말고는 "비공개 계정입니다"만 보인다(spec 079). 탭의 수는 그대로다.
+ */
 export function FollowsPage({ handle, direction }: { handle: string; direction: FollowDirection }) {
   const [initial] = useState(() => {
     const d = takeInitialData<{ profile: BlogProfile; follows: FollowPage }>('follows')
@@ -21,6 +24,7 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const [missing, setMissing] = useState(false)
+  const [hidden, setHidden] = useState(initial?.follows.hidden === true)
 
   useEffect(() => {
     if (profile) return
@@ -35,6 +39,7 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
       const page = await followApi.list(handle, direction, from)
       setPeople((prev) => (from ? appendPeople(prev, page.items) : page.items))
       setCursor(page.nextCursor)
+      setHidden(page.hidden === true)
       setLoaded(true)
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) setMissing(true)
@@ -68,7 +73,14 @@ export function FollowsPage({ handle, direction }: { handle: string; direction: 
           팔로잉{profile && ` ${profile.followingCount}`}
         </Link>
       </nav>
-      {loaded && people.length === 0 && !error && <p className="muted center empty">{emptyFollowText(direction)}</p>}
+      {loaded && hidden && (
+        <div className="follow-hidden center" role="status">
+          <span className="follow-hidden-icon" aria-hidden="true">🔒</span>
+          <p><b>{HIDDEN_FOLLOW_TEXT}</b></p>
+          <p className="muted small">이 회원은 팔로워·팔로잉 목록을 공개하지 않았어요.</p>
+        </div>
+      )}
+      {loaded && !hidden && people.length === 0 && !error && <p className="muted center empty">{emptyFollowText(direction)}</p>}
       {people.length > 0 && (
         <ul className="person-list">
           {people.map((p) => (

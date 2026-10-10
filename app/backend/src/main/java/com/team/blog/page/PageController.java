@@ -249,7 +249,7 @@ public class PageController {
                 first.friendsView() ? CacheControl.noStore().cachePrivate() : CacheControl.noCache().cachePrivate());
     }
 
-    /** 팔로워·팔로잉 목록 (016 US3). 누구나 보지만 보는 사람마다 버튼 상태가 달라 공유 캐시에 넣지 않는다. 얇은 목록이라 수집하지 않는다. */
+    /** 팔로워·팔로잉 목록 (016 US3). 주인이 비공개로 두면 본인·관리자만 본다(079). 누구나 보지만 보는 사람마다 버튼 상태가 달라 공유 캐시에 넣지 않는다. 얇은 목록이라 수집하지 않는다. */
     @GetMapping({"/@{handle}/followers", "/@{handle}/following"})
     public ResponseEntity<String> follows(@PathVariable String handle, HttpServletRequest request,
                                           @CurrentMember(required = false) MemberPrincipal me) {
@@ -262,9 +262,11 @@ public class PageController {
         if (profile.isEmpty()) return notFound();
         FeedQuery.BlogProfile p = profile.get();
         FollowQuery.Page first = follows.list(handle, followers ? FollowQuery.Direction.FOLLOWERS : FollowQuery.Direction.FOLLOWING,
-                null, me == null ? null : me.id());
+                null, me == null ? null : me.id(), me != null && me.isStaff());
         String title = p.nickname() + (followers ? "님의 팔로워" : "님이 팔로우하는 사람");
-        StringBuilder body = new StringBuilder("<main><h1>").append(SpaShell.esc(title)).append("</h1><ul>");
+        StringBuilder body = new StringBuilder("<main><h1>").append(SpaShell.esc(title)).append("</h1>");
+        if (first.hidden()) body.append("<p>비공개 계정입니다</p>");
+        body.append("<ul>");
         first.items().forEach(x -> body.append("<li><a href=\"/@").append(SpaShell.esc(x.handle())).append("\">")
                 .append(SpaShell.esc(x.nickname())).append(" @").append(SpaShell.esc(x.handle())).append("</a></li>"));
         body.append("</ul></main>");

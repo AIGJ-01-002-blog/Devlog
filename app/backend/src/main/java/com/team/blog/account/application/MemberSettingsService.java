@@ -42,7 +42,7 @@ public class MemberSettingsService {
      */
     public record Settings(String handle, String nickname, Instant nicknameNextChangeableAt, String bio, String profileImageUrl,
                            String email, boolean emailVerified, String provider, boolean hasPassword,
-                           PreviousLogin previousLogin, String defaultVisibility, boolean lastActiveVisible, boolean aiAgreed,
+                           PreviousLogin previousLogin, String defaultVisibility, boolean lastActiveVisible, boolean followListPublic, boolean aiAgreed,
                            Terms terms, SocialLinks.Links socialLinks) {}
 
     public record PreviousLogin(Instant at, String provider) {}
@@ -58,7 +58,7 @@ public class MemberSettingsService {
         return new Settings(m.getHandle(), p.nickname(), p.nicknameNextChangeableAt(), p.bio(), p.profileImageUrl(),
                 identity == null ? null : identity.getEmail(), identity != null && identity.isEmailVerified(),
                 me.provider(), identity != null && identity.getPasswordHash() != null,
-                new PreviousLogin(me.previousLoginAt(), me.provider()), m.getDefaultVisibility().name(), m.isLastActiveVisible(),
+                new PreviousLogin(me.previousLoginAt(), me.provider()), m.getDefaultVisibility().name(), m.isLastActiveVisible(), m.isFollowListPublic(),
                 agreements.hasAgreed(me.id(), AgreementType.AI),
                 new Terms(t.termsVersion(), t.termsEffectiveDate(), t.privacyVersion(), t.privacyEffectiveDate()),
                 socialLinks.of(me.id()));
@@ -75,5 +75,12 @@ public class MemberSettingsService {
     public void changeLastActiveVisible(long memberId, boolean visible) {
         Member m = members.findById(memberId).orElseThrow();
         if (m.isLastActiveVisible() != visible) m.changeLastActiveVisible(visible, Times.now(clock));
+    }
+
+    /** 팔로워·팔로잉 목록 공개 (079). 끄면 본인·관리자만 목록을 보고 수는 그대로 보인다. */
+    @Transactional
+    public void changeFollowListPublic(long memberId, boolean open) {
+        Member m = members.findById(memberId).orElseThrow();
+        if (m.isFollowListPublic() != open) m.changeFollowListPublic(open, Times.now(clock));
     }
 }
