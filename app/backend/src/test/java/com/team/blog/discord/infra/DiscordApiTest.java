@@ -1,8 +1,11 @@
 package com.team.blog.discord.infra;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+
+import com.team.blog.discord.application.DiscordProperties;
 
 /** 웹훅 주소 읽기 (078 FR-002): 디스코드 공식 주소만 받고 번호·토큰만 뗀다. */
 class DiscordApiTest {
@@ -30,5 +33,23 @@ class DiscordApiTest {
     @Test
     void 토큰은_문자열로_찍히지_않는다() {
         assertThat(new DiscordApi.Webhook("1", TOKEN).toString()).doesNotContain(TOKEN);
+    }
+
+    @Test
+    void 긴_문구는_이모지를_가르지_않고_2000자로_자른다() {
+        String text = "가".repeat(1997) + "😀" + "끝까지";
+        String clipped = HttpDiscordApi.clip(text);
+        assertThat(clipped).hasSizeLessThanOrEqualTo(HttpDiscordApi.MAX_CHARS).endsWith("…");
+        assertThat(Character.isHighSurrogate(clipped.charAt(clipped.length() - 2))).isFalse();
+        assertThat(HttpDiscordApi.clip("짧은 글")).isEqualTo("짧은 글");
+    }
+
+    @Test
+    void 보내는_주소는_디스코드만_쓸_수_있다() {
+        assertThatThrownBy(() -> new DiscordProperties(true, "http://discord.com"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new DiscordProperties(true, "https://evil.example"))
+                .isInstanceOf(IllegalArgumentException.class);
+        new DiscordProperties(true, "https://discord.com");
     }
 }

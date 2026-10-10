@@ -68,7 +68,7 @@ class HttpDiscordApi implements DiscordApi {
     @Override
     public Result send(Webhook w, String text) {
         ObjectNode body = json.createObjectNode();
-        body.put("content", text.length() > MAX_CHARS ? text.substring(0, MAX_CHARS - 1) + "…" : text);
+        body.put("content", clip(text));
         body.put("username", "devlog");
         body.putObject("allowed_mentions").putArray("parse");
         body.put("flags", SUPPRESS_EMBEDS);
@@ -87,6 +87,14 @@ class HttpDiscordApi implements DiscordApi {
             Thread.currentThread().interrupt();
             return Result.FAILED;
         }
+    }
+
+    /** 2,000자를 넘으면 말줄임표까지 2,000자로 자른다. 이모지(서로게이트 쌍)를 반으로 가르지 않는다 */
+    static String clip(String text) {
+        if (text.length() <= MAX_CHARS) return text;
+        int end = MAX_CHARS - 1;
+        if (Character.isHighSurrogate(text.charAt(end - 1))) end--;
+        return text.substring(0, end) + "…";
     }
 
     /** 401 잘못된 토큰, 404 지운 웹훅: 다시 보내도 안 된다 */
