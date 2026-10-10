@@ -3,6 +3,7 @@ package com.team.blog.page;
 import java.net.URI;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -67,11 +68,13 @@ public class PageController {
     private final MemberAbout about;
     private final ReleaseNotes releaseNotes;
     private final PortfolioQuery portfolios;
+    private final SiteOwner owner;
 
     public PageController(SpaShell shell, FeedQuery feed, PostDetailQuery details, BlogProperties props, TagQuery tags,
                           TagController tagApi, CommentQuery comments, SearchQuery search, FollowQuery follows,
                           TrendingService trending, SeriesQuery series, MemberAbout about, ReleaseNotes releaseNotes,
-                          PortfolioQuery portfolios) {
+                          PortfolioQuery portfolios, SiteOwner owner) {
+        this.owner = owner;
         this.portfolios = portfolios;
         this.releaseNotes = releaseNotes;
         this.about = about;
@@ -173,6 +176,30 @@ public class PageController {
         HeadMeta meta = HeadMeta.site("AI에 devlog 연결하기 - " + site.name(), SLOGAN + " devlog MCP로 AI가 개발 일지를 써 줍니다.",
                 absolute("/mcp"), absolute(site.defaultOgImage()));
         return html(HttpStatus.OK, shell.render(meta, body, Map.of("page", "mcp")), CacheControl.noCache());
+    }
+
+    /**
+     * 사이트 소개 (077): 무엇을 하는 곳인지, 누가 운영하는지, 어디로 연락하는지. 애드센스 심사처럼 사람이 아닌 읽기 도구도
+     * 내용을 보도록 서버가 본문을 그리고, React가 같은 내용을 다시 그린다.
+     */
+    @GetMapping("/about")
+    public ResponseEntity<String> siteAbout() {
+        String ownerHandle = owner.handle().orElse(null);
+        StringBuilder body = new StringBuilder("<main><h1>devlog 소개</h1><p>").append(SpaShell.esc(SLOGAN)).append("</p>")
+                .append("<p>devlog는 개발자가 개발 일지와 기술 글을 쓰고 읽는 블로그예요. Claude 같은 AI 도구에 devlog를 연결하면 ")
+                .append("그날 작업한 내용을 정리해 개발 일지 임시글로 올려 주고, 발행은 글쓴이가 직접 정해요.</p>")
+                .append("<h2>누가 운영하나요</h2><p>학교 팀 프로젝트로 시작했고, 지금은 운영자 한 명이 서버와 서비스를 맡고 있어요.");
+        if (ownerHandle != null) {
+            body.append(" 운영자 블로그: <a href=\"/@").append(SpaShell.esc(ownerHandle)).append("\">@").append(SpaShell.esc(ownerHandle)).append("</a>");
+        }
+        body.append("</p><h2>연락하기</h2><p><a href=\"/support\">문의·신고</a>에서 질문, 버그, 권리 침해 신고를 받아요. 답변을 알림으로 드리려고 로그인한 뒤 남기도록 했어요.</p>")
+                .append("<p><a href=\"/terms\">이용약관</a> · <a href=\"/privacy\">개인정보 처리방침</a></p></main>");
+        HeadMeta meta = HeadMeta.site("소개 - " + site.name(), SLOGAN + " devlog가 어떤 곳이고 누가 운영하는지 알려 드려요.",
+                absolute("/about"), absolute(site.defaultOgImage()));
+        var data = new HashMap<String, Object>(); // 운영자 주소가 비면 null이라 Map.of를 못 쓴다
+        data.put("page", "about");
+        data.put("ownerHandle", ownerHandle);
+        return html(HttpStatus.OK, shell.render(meta, body.toString(), data), CacheControl.noCache());
     }
 
     /** 릴리스 노트 (054): 누구나 보는 공개 화면. 서버는 최근 버전 제목만 그리고 React가 본문을 그린다. */

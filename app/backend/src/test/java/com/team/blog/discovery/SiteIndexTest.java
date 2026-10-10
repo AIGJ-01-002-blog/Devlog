@@ -48,6 +48,7 @@ class SiteIndexTest extends IntegrationTest {
         assertThat(xml).contains("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">")
                 .contains("/@" + s.handle() + "/posts/" + open + "</loc>")
                 .contains("/@" + s.handle() + "</loc>")
+                .contains("/about</loc>")
                 .doesNotContain("/posts/" + friends + "<").doesNotContain("/posts/" + priv + "<")
                 .doesNotContain("/posts/" + hidden + "<")
                 .doesNotContain("/@" + quiet.handle() + "<")

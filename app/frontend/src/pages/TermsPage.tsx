@@ -9,6 +9,11 @@ export function TermsPage({ kind }: { kind: 'terms' | 'privacy' }) {
   useEffect(() => {
     api<Terms>('/api/terms/current').then(setTerms).catch(() => setTerms(null))
   }, [])
+  // 재동의 화면의 "전문 보기"(/privacy#ads)처럼 항목을 가리켜 왔으면 그 항목으로 내려간다. 본문은 늦게 받는 묶음이라 브라우저가 못 찾는다
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1))
+    if (id) document.getElementById(id)?.scrollIntoView({ block: 'start' })
+  }, [kind])
   const date = kind === 'terms' ? terms?.termsEffectiveDate : terms?.privacyEffectiveDate
   return (
     <main className="container narrow terms">
