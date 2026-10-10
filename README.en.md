@@ -63,7 +63,7 @@ The name comes from **development log**. We have registered [devlog.life](https:
 
 Once the production server is up, the service opens at https://devlog.life. Until then you can run it on your own machine as shown below.
 
-1. Sign up with a GitHub or Google account, or with email, then choose your blog address (`/@your-id`) and nickname.
+1. Sign up with a GitHub, Google, Kakao or Facebook account, or with email, then choose your blog address (`/@your-id`) and nickname.
 2. Write in Markdown under **New post**. The preview updates on the right as you type, and your draft is saved automatically.
 3. Choose tags and visibility under **Publish**, and the post shows up on the home page, tag pages, search, and your followers' feed.
 
@@ -135,12 +135,12 @@ If you have agreed to AI use, the AI adds a title and tidies up the text; otherw
 - **View counts**: the same person viewing the same post counts once per 24 hours. Original IP addresses are never stored.
 - **Follow and feed**: `/feed` shows only the public posts of people you follow.
 - **Friends**: send and accept friend requests, see friends' recent activity, and read friends-only posts.
-- **Notifications**: likes on the same post are grouped as "X and N others," and each type can be turned off. Kept for 90 days.
+- **Notifications**: likes on the same post are grouped as "X and N others," and each type can be turned off. Also delivered to Telegram and Discord. Kept for 90 days.
 
 ### Accounts and moderation
 
-- **Sign-up and login**: GitHub and Google OAuth2, or email (verification mail, password reset). Rules and reserved words for blog addresses and nicknames.
-- **Profile and settings**: photo cropping, nickname and bio, a blog About tab, social links, default visibility, notification settings.
+- **Sign-up and login**: GitHub, Google, Kakao and Facebook OAuth2, or email (verification mail, password reset). Rules and reserved words for blog addresses and nicknames.
+- **Profile and settings**: photo cropping, nickname and bio, a blog About tab, social links, default visibility, follower/following list visibility, notification settings. The interface comes in Korean, English, Japanese and Chinese.
 - **Report, hide, suspend**: report posts and comments (6 reasons), an admin screen for handling reports, suspensions from 1 day to permanent.
 - **Account deletion and recovery**: log in during the 30-day grace period to recover your account. After that, accounts are purged one person per day, each in a single transaction.
 
@@ -166,7 +166,7 @@ flowchart LR
 
 | Module | What it does | Storage |
 | --- | --- | --- |
-| **account** | Sign-up and login (GitHub, Google, email), blog address and nickname, profile and settings, About, social links, account deletion and recovery | PostgreSQL, Redis (sessions) |
+| **account** | Sign-up and login (GitHub, Google, Kakao, Facebook, email), blog address and nickname, profile and settings, About, social links, account deletion and recovery | PostgreSQL, Redis (sessions) |
 | **post** | Writing, autosave, publishing and editing, visibility, trash, post management, Markdown preview | PostgreSQL, Redis (autosave, idempotency keys) |
 | **media** | Uploading and checking images, GIFs and attachments; cleaning up unused files | MinIO/S3 (local folder if not set) |
 | **discovery · page** | Home, blog and post pages, previous/next post, RSS, the page shell with head tags for link previews | PostgreSQL |
@@ -322,7 +322,7 @@ To try it on Kubernetes, run `kubectl apply -k deploy/k8s/overlays/local` on kin
 | --- | --- | --- | --- |
 | Java | 21 | Whole app | LTS release. Records keep request and response shapes short |
 | Spring Boot | 4.1.1 | Whole app | One version for web MVC, validation, security, mail and Actuator health checks (Kubernetes readiness) |
-| Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub and Google login, sessions, CSRF, per-path authorization |
+| Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub, Google, Kakao and Facebook login, sessions, CSRF, per-path authorization |
 | Spring Data JPA (Hibernate) | Boot 4.1 | All domains | Storing members, posts, comments and other domain data |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | Sessions, rate limits, views, cache | Lets multiple pods share sessions, and decides concurrent requests with a single Redis script |
 | Flyway | Boot 4.1 | Database | Manages the schema as migrations V1~V31, applied at startup |
@@ -388,7 +388,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 | v1.53.0 | 2026-10-10 | Site about page (/about) and footer links, re-consent to the privacy policy with the new ads and cookies section | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.0) |
 | v1.52.0 | 2026-10-10 | Google AdSense: ad code on public pages, strict CSP for ad pages, ads.txt, ads and cookies section in the privacy policy | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.52.0) |
 | v1.51.3 | 2026-10-10 | AI diary reads like a person wrote it: paragraphs per topic instead of timestamped lists, diary-voice memo guidance | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.3) |
-| v1.51.2 | 2026-10-09 | Operations dashboard (Kubernetes Dashboard, read-only login) (deployment config) | [View](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.51.2) |
+| v1.51.2 | 2026-10-09 | Operations dashboard (Kubernetes Dashboard, read-only login) (deployment config) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.2) |
 | v1.51.1 | 2026-10-09 | `suggest_topics` no longer tags topics as ops/security just because a note says "deployed" or "color token" | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.1) |
 | v1.51.0 | 2026-10-09 | MCP `suggest_topics`: topic ideas for engineers from your notes, AI diaries, proposals and drafts | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.0) |
 | v1.50.2 | 2026-10-09 | Home branch chips stay put when you pick one, and long names truncate inside the chip | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.2) |
