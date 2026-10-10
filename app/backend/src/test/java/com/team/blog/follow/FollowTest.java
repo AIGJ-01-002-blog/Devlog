@@ -143,6 +143,28 @@ class FollowTest extends IntegrationTest {
     }
 
     @Test
+    void 혼자_팔로우했다가_취소하고_다시_팔로우해도_알림은_하나다() throws Exception {
+        Session target = signup(uniqueLogin("fg")), fan = signup(uniqueLogin("fh"));
+        follow(fan, target.handle(), true);
+        assertThat(notifications(target)).hasSize(1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM notification WHERE receiver_id = ? AND type = 'FOLLOW'", Long.class,
+                target.memberId())).isEqualTo(1L);
+
+        // 안 읽은 동안 혼자 있던 사람이 빠지면 지우지 않고 읽음으로 돌린다. 텔레그램으로 이미 나간 알림을 다시 보내지 않기 위해서다
+        follow(fan, target.handle(), false);
+        JsonNode items = notifications(target);
+        assertThat(items).hasSize(1);
+        assertThat(items.get(0).path("read").asBoolean()).isTrue();
+
+        follow(fan, target.handle(), true);
+        drain();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM notification WHERE receiver_id = ? AND type = 'FOLLOW'", Long.class,
+                target.memberId())).isEqualTo(1L);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM notification WHERE receiver_id = ? AND read_at IS NULL", Long.class,
+                target.memberId())).isZero();
+    }
+
+    @Test
     void 처음_전체_공개될_때_팔로워에게_새_글_알림이_한_번_간다() throws Exception {
         Session author = signup(uniqueLogin("fg")), fan = signup(uniqueLogin("fh")), muted = signup(uniqueLogin("fi")),
                 gone = signup(uniqueLogin("fj"));
