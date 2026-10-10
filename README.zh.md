@@ -371,6 +371,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.61.1 | 2026-10-10 | 整理英文、日文、中文界面在手机上的换行(溢出、单字断行) | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.61.1) |
 | v1.61.0 | 2026-10-10 | Facebook 登录(`fb-` 地址，填入 Facebook 密钥后显示按钮) | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.61.0) |
 | v1.60.0 | 2026-10-10 | 管理员可立即清理已注销会员，无需等待 30 天 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.60.0) |
 | v1.59.3 | 2026-10-10 | 修复使用 Kakao 注册时头像未被设置的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.3) |
