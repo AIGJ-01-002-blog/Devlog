@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { absoluteUrl, browserShareEnv, shareLink, type ShareResult } from '../lib/share'
+import { t } from '../lib/i18n'
 
 const MESSAGES: Partial<Record<ShareResult, string>> = {
-  copied: '링크를 복사했어요',
-  failed: '복사하지 못했어요. 주소창의 링크를 복사해 주세요',
+  copied: t('링크를 복사했어요'),
+  failed: t('복사하지 못했어요. 주소창의 링크를 복사해 주세요'),
 }
 
 /** 글 상세 공유 버튼 (spec 039). 결과는 화면 읽기 프로그램도 읽도록 status로 잠깐 보인다. */
@@ -29,8 +30,8 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
   const message = result ? MESSAGES[result] : undefined
   return (
     <span className="share">
-      <button type="button" className="like-button" data-tip="이 글 링크를 복사하거나 공유해요" onClick={press}>
-        <span aria-hidden="true">↗</span> 공유
+      <button type="button" className="like-button" data-tip={t('이 글 링크를 복사하거나 공유해요')} onClick={press}>
+        <span aria-hidden="true">↗</span>  {t('공유')}
       </button>
       <span className={`like-notice${result === 'failed' ? ' error' : ''}`} role="status">{message ?? ''}</span>
     </span>

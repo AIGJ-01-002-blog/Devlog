@@ -4,6 +4,7 @@ import {
 } from '../lib/notifications'
 import { Link } from '../lib/router'
 import { NotificationEntry } from './NotificationEntry'
+import { t } from '../lib/i18n'
 
 type ListState = { kind: 'loading' } | { kind: 'error' } | { kind: 'ok'; items: NotificationItem[] }
 
@@ -108,23 +109,24 @@ export function NotificationBell() {
         {badge && <span className="bell-badge" aria-hidden="true">{badge}</span>}
       </button>
       {open && (
-        <div className="menu-list notification-panel" role="dialog" aria-label="알림" ref={panelRef} tabIndex={-1}>
+        <div className="menu-list notification-panel" role="dialog" aria-label={t('알림')} ref={panelRef} tabIndex={-1}>
           <div className="notification-panel-head">
-            <b>알림</b>
+            <b>{t('알림')}</b>
             <button type="button" className="btn btn-text small" onClick={readAll}
-                    disabled={list.kind !== 'ok' || list.items.every((n) => n.read)}>모두 읽음</button>
+                    disabled={list.kind !== 'ok' || list.items.every((n) => n.read)}>{t('모두 읽음')}</button>
           </div>
-          {readAllFailed && <p className="error center small notification-state" role="alert">모두 읽음으로 바꾸지 못했어요. 다시 시도해 주세요.</p>}
-          {list.kind === 'loading' && <p className="muted center small notification-state">불러오는 중…</p>}
+          {readAllFailed && <p className="error center small notification-state" role="alert">{t('모두 읽음으로 바꾸지 못했어요. 다시 시도해 주세요.')}</p>}
+          {list.kind === 'loading' && <p className="muted center small notification-state">{t('불러오는 중…')}</p>}
           {list.kind === 'error' && (
             <p className="error center small notification-state">
-              알림을 불러오지 못했어요 <button type="button" className="btn btn-text small" onClick={load}>다시 시도</button>
+              
+              {t('알림을 불러오지 못했어요')} <button type="button" className="btn btn-text small" onClick={load}>{t('다시 시도')}</button>
             </p>
           )}
           {list.kind === 'ok' && (list.items.length === 0
-            ? <p className="muted center small notification-state">새 알림이 없어요</p>
+            ? <p className="muted center small notification-state">{t('새 알림이 없어요')}</p>
             : <ul className="notification-list">{list.items.map((n) => <NotificationEntry key={n.id} item={n} onRead={markRead} />)}</ul>)}
-          <Link to="/notifications" className="notification-all" onClick={() => setOpen(false)}>모든 알림 보기</Link>
+          <Link to="/notifications" className="notification-all" onClick={() => setOpen(false)}>{t('모든 알림 보기')}</Link>
         </div>
       )}
     </div>

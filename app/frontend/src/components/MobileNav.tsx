@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { NavIcon } from './NavIcons'
 import { loginPath, useAuth } from '../lib/auth'
 import { Link } from '../lib/router'
+import { t } from '../lib/i18n'
 
 interface Item { to: string; label: string; tip: string; icon: ReactNode; active: (p: string) => boolean }
 
@@ -13,18 +14,18 @@ export function MobileNav({ path }: { path: string }) {
   const { me } = useAuth()
   const member = me?.member
   const items: Item[] = [
-    { to: '/', label: '홈', tip: '최신·트렌딩 글', icon: <NavIcon name="home" size={22} />, active: (p) => p === '/' },
+    { to: '/', label: t('홈'), tip: t('최신·트렌딩 글'), icon: <NavIcon name="home" size={22} />, active: (p) => p === '/' },
     member
-      ? { to: '/feed', label: '피드', tip: '팔로우한 사람의 새 글', icon: <NavIcon name="feed" size={22} />, active: (p) => p === '/feed' }
-      : { to: '/mcp', label: 'AI 연결', tip: 'AI 도구에 devlog 연결하기', icon: <NavIcon name="ai" size={22} />, active: (p) => p === '/mcp' },
-    { to: '/search', label: '검색', tip: '글·사람 검색', icon: <NavIcon name="search" size={22} />, active: (p) => p === '/search' },
-    { to: '/tags', label: '태그', tip: '태그별로 글 모아 보기', icon: <NavIcon name="tag" size={22} />, active: (p) => p === '/tags' || p.startsWith('/tags/') },
+      ? { to: '/feed', label: t('피드'), tip: t('팔로우한 사람의 새 글'), icon: <NavIcon name="feed" size={22} />, active: (p) => p === '/feed' }
+      : { to: '/mcp', label: t('AI 연결'), tip: t('AI 도구에 devlog 연결하기'), icon: <NavIcon name="ai" size={22} />, active: (p) => p === '/mcp' },
+    { to: '/search', label: t('검색'), tip: t('글·사람 검색'), icon: <NavIcon name="search" size={22} />, active: (p) => p === '/search' },
+    { to: '/tags', label: t('태그'), tip: t('태그별로 글 모아 보기'), icon: <NavIcon name="tag" size={22} />, active: (p) => p === '/tags' || p.startsWith('/tags/') },
     member
-      ? { to: `/@${member.handle}`, label: '내 블로그', tip: '내 블로그로 가기', icon: <NavIcon name="me" size={22} />, active: (p) => p === `/@${member.handle}` || p.startsWith(`/@${member.handle}/`) }
-      : { to: loginPath(), label: '로그인', tip: '로그인하고 글쓰기·좋아요·팔로우', icon: <NavIcon name="me" size={22} />, active: (p) => p === '/login' },
+      ? { to: `/@${member.handle}`, label: t('내 블로그'), tip: t('내 블로그로 가기'), icon: <NavIcon name="me" size={22} />, active: (p) => p === `/@${member.handle}` || p.startsWith(`/@${member.handle}/`) }
+      : { to: loginPath(), label: t('로그인'), tip: t('로그인하고 글쓰기·좋아요·팔로우'), icon: <NavIcon name="me" size={22} />, active: (p) => p === '/login' },
   ]
   return (
-    <nav className="mobile-nav" aria-label="주요 메뉴">
+    <nav className="mobile-nav" aria-label={t('주요 메뉴')}>
       {items.map((it) => {
         const on = it.active(path)
         return (

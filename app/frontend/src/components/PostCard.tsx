@@ -5,6 +5,7 @@ import type { Card } from '../lib/types'
 import { VISIBILITY_ICON, VISIBILITY_LABEL } from '../lib/visibility'
 import { Avatar } from './Avatar'
 import { NavIcon } from './NavIcons'
+import { intlTag, t } from '../lib/i18n'
 
 /** 표지 색 번호(0~3). 같은 글은 언제나 같은 색이다. */
 export function coverTone(id: number): number {
@@ -42,10 +43,10 @@ export function PostCard({ card, showAuthor = true }: { card: Card; showAuthor?:
         <div className="card-meta">
           {card.similar && (
             // 하이브리드 검색(054)에서 의미로만 찾은 글. 검색어 강조가 없는 이유를 알려 준다
-            <><span className="badge badge-similar" title="검색어가 그대로 들어 있지 않지만 내용이 비슷해 찾은 글이에요">비슷한 글</span>{' · '}</>
+            <><span className="badge badge-similar" title={t('검색어가 그대로 들어 있지 않지만 내용이 비슷해 찾은 글이에요')}>{t('비슷한 글')}</span>{' · '}</>
           )}
           {card.visibility === 'FRIENDS' && (
-            <><span className="badge" title="친구에게만 보이는 글">{VISIBILITY_ICON.FRIENDS} {VISIBILITY_LABEL.FRIENDS}</span>{' · '}</>
+            <><span className="badge" title={t('친구에게만 보이는 글')}>{VISIBILITY_ICON.FRIENDS} {VISIBILITY_LABEL.FRIENDS}</span>{' · '}</>
           )}
           <time dateTime={card.firstPublicAt ?? card.publishedAt} title={fullDate(card.firstPublicAt ?? card.publishedAt)}>{relativeDate(card.firstPublicAt ?? card.publishedAt)}</time>
         </div>
@@ -67,12 +68,12 @@ export function CardTags({ tags }: { tags: string[] }) {
   if (tags.length === 0) return null
   const rest = tags.slice(CARD_TAG_LIMIT)
   return (
-    <ul className="card-tags" aria-label="태그">
-      {tags.slice(0, CARD_TAG_LIMIT).map((t) => (
-        <li key={t}><Link to={tagPath(t)} className="card-tag" data-tip={`#${t} 태그 글 보기`}>#{t}</Link></li>
+    <ul className="card-tags" aria-label={t('태그')}>
+      {tags.slice(0, CARD_TAG_LIMIT).map((tag) => (
+        <li key={tag}><Link to={tagPath(tag)} className="card-tag" data-tip={t('#{0} 태그 글 보기', { 0: tag })}>#{tag}</Link></li>
       ))}
       {rest.length > 0 && (
-        <li className="card-tag-more" tabIndex={0} aria-label={`태그 ${rest.length}개 더: ${rest.join(', ')}`}
+        <li className="card-tag-more" tabIndex={0} aria-label={t('태그 {0}개 더: {1}', { 0: rest.length, 1: rest.join(', ') })}
             data-tip={rest.map((t) => `#${t}`).join(' ')}>…</li>
       )}
     </ul>
@@ -83,16 +84,16 @@ export function CardTags({ tags }: { tags: string[] }) {
 export function CardStats({ card }: { card: Card }) {
   const views = card.viewCount ?? 0
   const items = [
-    { key: 'view', icon: 'eye', label: '조회', n: views, unit: '회' },
-    { key: 'comment', icon: 'comment', label: '댓글', n: card.commentCount, unit: '개' },
-    { key: 'like', icon: 'heart', label: '좋아요', n: card.likeCount, unit: '개' },
+    { key: 'view', icon: 'eye', n: views, text: (n: string) => t('조회 {0}회', { 0: n }) },
+    { key: 'comment', icon: 'comment', n: card.commentCount, text: (n: string) => t('댓글 {0}개', { 0: n }) },
+    { key: 'like', icon: 'heart', n: card.likeCount, text: (n: string) => t('좋아요 {0}개', { 0: n }) },
   ] as const
   return (
     <span className="card-stats">
       {items.map((it) => (
-        <span key={it.key} className={`card-stat card-${it.key}`} data-tip={`${it.label} ${it.n.toLocaleString('ko-KR')}${it.unit}`}>
+        <span key={it.key} className={`card-stat card-${it.key}`} data-tip={it.text(it.n.toLocaleString(intlTag()))}>
           <span aria-hidden="true"><NavIcon name={it.icon} size={14} />{cappedCount(it.n)}</span>
-          <span className="sr-only">{it.label} {it.n.toLocaleString('ko-KR')}{it.unit}</span>
+          <span className="sr-only">{it.text(it.n.toLocaleString(intlTag()))}</span>
         </span>
       ))}
     </span>

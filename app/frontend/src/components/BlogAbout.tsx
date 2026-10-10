@@ -4,6 +4,7 @@ import { enhanceGifs } from '../lib/gifPlayer'
 import { renderDiagramsWithin } from '../lib/diagram'
 import { highlightWithin } from '../lib/highlight'
 import { setLeaveGuard } from '../lib/router'
+import { t } from '../lib/i18n'
 
 /** 서버와 같은 길이 제한 (spec 042 FR-002) */
 export const ABOUT_MAX = 10_000
@@ -54,15 +55,15 @@ export function BlogAbout({ handle }: { handle: string }) {
     if (!dirty) return
     const guard = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
     window.addEventListener('beforeunload', guard)
-    setLeaveGuard(() => confirm('작성 중인 소개를 버릴까요?'))
+    setLeaveGuard(() => confirm(t('작성 중인 소개를 버릴까요?')))
     return () => {
       window.removeEventListener('beforeunload', guard)
       setLeaveGuard(null)
     }
   }, [dirty])
 
-  if (failed) return <p className="muted center">소개를 불러오지 못했어요.</p>
-  if (!about) return <p className="muted center">불러오는 중…</p>
+  if (failed) return <p className="muted center">{t('소개를 불러오지 못했어요.')}</p>
+  if (!about) return <p className="muted center">{t('불러오는 중…')}</p>
 
   const save = async () => {
     if (draft == null) return
@@ -73,7 +74,7 @@ export function BlogAbout({ handle }: { handle: string }) {
       setAbout(await aboutApi.of(handle))
       setDraft(null)
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : '저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+      setError(e instanceof ApiError ? e.message : t('저장하지 못했어요. 잠시 후 다시 시도해 주세요.'))
     } finally {
       setSaving(false)
     }
@@ -82,20 +83,20 @@ export function BlogAbout({ handle }: { handle: string }) {
   if (draft != null) {
     const length = [...draft].length
     return (
-      <section className="blog-about" aria-label="소개 수정">
-        <label htmlFor="about-editor" className="sr-only">블로그 소개 (마크다운)</label>
+      <section className="blog-about" aria-label={t('소개 수정')}>
+        <label htmlFor="about-editor" className="sr-only">{t('블로그 소개 (마크다운)')}</label>
         <textarea id="about-editor" ref={editorRef} className="about-editor" value={draft} rows={14}
-                  aria-describedby="about-count" placeholder="나를 소개하는 글을 마크다운으로 써 보세요."
+                  aria-describedby="about-count" placeholder={t('나를 소개하는 글을 마크다운으로 써 보세요.')}
                   onChange={(e) => setDraft(e.target.value)} />
         <div className="row about-actions">
-          <span id="about-count" className={`muted small${length > ABOUT_MAX ? ' danger' : ''}`}>{length.toLocaleString()} / {ABOUT_MAX.toLocaleString()}자</span>
+          <span id="about-count" className={`muted small${length > ABOUT_MAX ? ' danger' : ''}`}>{t('{0} / {1}자', { 0: length.toLocaleString(), 1: ABOUT_MAX.toLocaleString() })}</span>
           <button type="button" className="btn btn-text" onClick={() => {
-            if (dirty && !confirm('작성 중인 소개를 버릴까요?')) return
+            if (dirty && !confirm(t('작성 중인 소개를 버릴까요?'))) return
             setDraft(null)
             setError(null)
-          }} disabled={saving}>취소</button>
+          }} disabled={saving}>{t('취소')}</button>
           <button type="button" className="btn btn-primary" onClick={save} disabled={saving || length > ABOUT_MAX}>
-            {saving ? '저장 중…' : '저장'}
+            {saving ? t('저장 중…') : t('저장')}
           </button>
         </div>
         {error && <p className="error" role="alert">{error}</p>}
@@ -107,11 +108,11 @@ export function BlogAbout({ handle }: { handle: string }) {
     <section className="blog-about">
       {about.html
         ? <div className="markdown" ref={bodyRef} dangerouslySetInnerHTML={{ __html: about.html }} />
-        : <p className="muted center">{about.mine ? '아직 블로그 소개가 없어요.' : '소개가 없어요.'}</p>}
+        : <p className="muted center">{about.mine ? t('아직 블로그 소개가 없어요.') : t('소개가 없어요.')}</p>}
       {about.mine && (
         <div className="row about-actions">
           <button type="button" className="btn btn-outline" onClick={() => setDraft(about.contentMd ?? '')}>
-            {about.html ? '소개 수정' : '소개 쓰기'}
+            {about.html ? t('소개 수정') : t('소개 쓰기')}
           </button>
         </div>
       )}

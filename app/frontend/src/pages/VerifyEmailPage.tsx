@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { Link, useLocation } from '../lib/router'
+import { t } from '../lib/i18n'
 
 /** 인증 메일의 링크 (004 US1). 링크를 여는 것만으로 바뀌지 않게, 화면이 한 번 확인 요청을 보낸다. */
 export function VerifyEmailPage() {
@@ -30,9 +31,9 @@ export function VerifyEmailPage() {
     setMessage(null)
     try {
       await api('/api/auth/email/resend', { method: 'POST' })
-      setMessage('인증 메일을 다시 보냈어요.')
+      setMessage(t('인증 메일을 다시 보냈어요.'))
     } catch (e) {
-      setMessage(e instanceof ApiError ? e.message : '보내지 못했어요.')
+      setMessage(e instanceof ApiError ? e.message : t('보내지 못했어요.'))
     } finally {
       setSending(false)
     }
@@ -40,24 +41,24 @@ export function VerifyEmailPage() {
 
   return (
     <main className="container narrow auth-page">
-      {state === 'pending' && <p className="muted center">확인하는 중…</p>}
+      {state === 'pending' && <p className="muted center">{t('확인하는 중…')}</p>}
       {state === 'done' && (
         <>
-          <h1>인증이 완료됐어요</h1>
-          <p className="muted">이제 글을 쓸 수 있어요.</p>
-          <Link to={me?.authenticated ? '/write' : '/login'} className="btn btn-primary btn-block">{me?.authenticated ? '첫 글 쓰기' : '로그인'}</Link>
+          <h1>{t('인증이 완료됐어요')}</h1>
+          <p className="muted">{t('이제 글을 쓸 수 있어요.')}</p>
+          <Link to={me?.authenticated ? '/write' : '/login'} className="btn btn-primary btn-block">{me?.authenticated ? t('첫 글 쓰기') : t('로그인')}</Link>
         </>
       )}
       {state === 'expired' && (
         <>
-          <h1>링크가 만료됐어요</h1>
-          <p className="muted">이미 쓴 링크이거나 24시간이 지났어요.</p>
+          <h1>{t('링크가 만료됐어요')}</h1>
+          <p className="muted">{t('이미 쓴 링크이거나 24시간이 지났어요.')}</p>
           {me?.authenticated && !me.emailVerified
-            ? <button type="button" className="btn btn-primary btn-block" disabled={sending} onClick={resend}>{sending ? '보내는 중…' : '인증 메일 다시 보내기'}</button>
-            : <Link to="/login" className="btn btn-primary btn-block">로그인하고 다시 받기</Link>}
+            ? <button type="button" className="btn btn-primary btn-block" disabled={sending} onClick={resend}>{sending ? t('보내는 중…') : t('인증 메일 다시 보내기')}</button>
+            : <Link to="/login" className="btn btn-primary btn-block">{t('로그인하고 다시 받기')}</Link>}
         </>
       )}
-      {state === 'error' && <><h1>지금은 확인할 수 없어요</h1><p className="muted">잠시 후 링크를 다시 열어 주세요.</p></>}
+      {state === 'error' && <><h1>{t('지금은 확인할 수 없어요')}</h1><p className="muted">{t('잠시 후 링크를 다시 열어 주세요.')}</p></>}
       {message && <p className="muted small" role="status">{message}</p>}
     </main>
   )

@@ -5,6 +5,7 @@ import { Link, navigate } from '../lib/router'
 import { normalizeTag, tagFormatError, tagPath, type TagPageData } from '../lib/tags'
 import type { FeedPage } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
+import { t } from '../lib/i18n'
 
 /** 태그별 글 목록 (010 FR-019~FR-022). 공개 글이 없는 태그도 정상 페이지로 빈 상태를 보인다. */
 export function TagPage({ name }: { name: string }) {
@@ -26,11 +27,11 @@ export function TagPage({ name }: { name: string }) {
     <main className="container">
       <header className="tag-header">
         <h1 className="page-title">#{name}</h1>
-        {count != null && <p className="muted">공개 글 {count}</p>}
-        <Link to="/tags" className="btn btn-text">전체 태그</Link>
+        {count != null && <p className="muted">{t('공개 글')} {count}</p>}
+        <Link to="/tags" className="btn btn-text">{t('전체 태그')}</Link>
       </header>
       <Feed endpoint={`/api/tags/${encodeURIComponent(name)}/posts`} storageKey={`feed:tag:${name}`} initial={first}
-            onFirstPage={onFirstPage} empty={<p>아직 이 태그로 공개된 글이 없어요.</p>} />
+            onFirstPage={onFirstPage} empty={<p>{t('아직 이 태그로 공개된 글이 없어요.')}</p>} />
     </main>
   )
 }

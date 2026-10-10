@@ -1,8 +1,9 @@
 import { api } from './api';
+import { t } from './i18n';
 export const SEARCH_MAX_LENGTH = 50;
 export const NOTICE_TEXT = {
-    TWO_CHAR_TITLE_TAG_ONLY: '두 글자 단어는 제목·태그에서만 찾았어요',
-    TOO_SHORT: '두 글자 이상 입력해 주세요',
+    TWO_CHAR_TITLE_TAG_ONLY: t('두 글자 단어는 제목·태그에서만 찾았어요'),
+    TOO_SHORT: t('두 글자 이상 입력해 주세요'),
 };
 export function searchPath(q, tab = 'posts', sort = 'relevance') {
     const params = new URLSearchParams({ q: q.trim() });
@@ -21,7 +22,7 @@ export function postsEndpoint(q, sort, blog) {
     return `/api/search/posts?${params.toString().replace(/\+/g, '%20')}`;
 }
 export function emptyMessage(q) {
-    return `'${q}'에 대한 글이 없어요`;
+    return t('\'{0}\'에 대한 글이 없어요', { 0: q });
 }
 /** 검색어에 2글자 단어가 있는지 (안내를 미리 보이려고). 1글자는 무시되므로 세지 않는다. */
 export function hasShortWord(q) {

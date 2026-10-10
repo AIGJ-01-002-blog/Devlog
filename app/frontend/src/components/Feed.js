@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { api, ApiError } from '../lib/api';
 import { InfiniteLoader } from './InfiniteLoader';
 import { PostCard } from './PostCard';
+import { t } from '../lib/i18n';
 const KEEP_MS = 30 * 60 * 1000;
 /**
  * 카드 목록 + 무한 스크롤(spec 069). 이어 붙일 때 이미 있는 글은 건너뛴다(docs/10 §4-3).
@@ -40,7 +41,7 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
         catch (e) {
             // 보던 순위표가 만료됨 (017 트렌딩): 안내 뒤 최신 순위를 처음부터 다시 받는다
             if (next && e instanceof ApiError && e.status === 410) {
-                setNotice(e.message || '순위가 새로 바뀌었어요.');
+                setNotice(e.message || t('순위가 새로 바뀌었어요.'));
                 window.scrollTo(0, 0);
                 // 첫 쪽을 다시 받을 때까지 기다린다: 먼저 끝난 것으로 보이면 무한 스크롤이 만료된 커서로 또 부른다
                 await load(null);
@@ -72,7 +73,7 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
     }, [storageKey]);
     if (loaded && items.length === 0 && !error)
         return _jsx("div", { className: "empty", children: empty });
-    return (_jsxs("section", { children: [notice && _jsx("p", { className: "feed-notice", role: "status", children: notice }), renderItems ? renderItems(items, cursor != null) : (_jsx("div", { className: "card-grid", children: items.map((c) => _jsx(PostCard, { card: c, showAuthor: showAuthor }, c.id)) })), _jsx(InfiniteLoader, { hasMore: cursor != null, loading: loading, failed: error, onMore: () => void load(cursor), failedText: "\uAE00\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694" }), !loaded && loading && _jsx("p", { className: "muted center", children: "\uBD88\uB7EC\uC624\uB294 \uC911\u2026" })] }));
+    return (_jsxs("section", { children: [notice && _jsx("p", { className: "feed-notice", role: "status", children: notice }), renderItems ? renderItems(items, cursor != null) : (_jsx("div", { className: "card-grid", children: items.map((c) => _jsx(PostCard, { card: c, showAuthor: showAuthor }, c.id)) })), _jsx(InfiniteLoader, { hasMore: cursor != null, loading: loading, failed: error, onMore: () => void load(cursor), failedText: t('글을 불러오지 못했어요') }), !loaded && loading && _jsx("p", { className: "muted center", children: t('불러오는 중…') })] }));
 }
 function readSaved(key) {
     try {

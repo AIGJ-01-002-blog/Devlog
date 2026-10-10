@@ -1,4 +1,5 @@
 import { api } from './api';
+import { t } from './i18n';
 // 태그 정규화·주소 (docs/22 §2·§5). 서버 TagNormalizer와 같은 순서다. 화면 정규화는 안내용이고 서버가 다시 검사한다.
 export const MAX_TAGS = 10;
 export const MAX_TAG_LENGTH = 30;
@@ -16,9 +17,9 @@ export function normalizeTag(raw) {
 /** 금칙어를 뺀 형식 검사. 문제가 없으면 null. */
 export function tagFormatError(name) {
     if (!name || !ALLOWED.test(name) || !HAS_WORD.test(name))
-        return '한글·영문·숫자와 - _ . + #만 쓸 수 있어요.';
+        return t('한글·영문·숫자와 - _ . + #만 쓸 수 있어요.');
     if ([...name].length > MAX_TAG_LENGTH)
-        return `${MAX_TAG_LENGTH}자까지 쓸 수 있어요.`;
+        return t('{0}자까지 쓸 수 있어요.', { 0: MAX_TAG_LENGTH });
     return null;
 }
 /** 경로 조각 인코딩: #은 %23, +와 .은 그대로 (서버 UriUtils.encodePathSegment와 같은 모양). */

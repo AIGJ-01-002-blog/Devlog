@@ -6,6 +6,7 @@ import { Avatar } from './Avatar'
 import { NavIcon, type IconName } from './NavIcons'
 import { NotificationBell } from './NotificationBell'
 import { ThemeToggle } from './ThemeToggle'
+import { t } from '../lib/i18n'
 
 interface NavItem {
   to: string; label: string; tip: string; icon: IconName; on: (p: string) => boolean; memberOnly?: boolean
@@ -21,13 +22,13 @@ interface NavItem {
  */
 export function headerItems(path: string): NavItem[] {
   return [
-    { to: '/feed', label: '피드', tip: '팔로우한 사람의 새 글', icon: 'feed', on: (p) => p === '/feed', memberOnly: true },
-    { to: '/lists/liked', label: '좋아한 글', tip: '내가 좋아요를 누른 글', icon: 'heart', on: (p) => p === '/lists/liked', memberOnly: true },
-    { to: '/tags', label: '태그', tip: '태그별로 글 모아 보기', icon: 'tag', on: (p) => p === '/tags' || p.startsWith('/tags/') },
+    { to: '/feed', label: t('피드'), tip: t('팔로우한 사람의 새 글'), icon: 'feed', on: (p) => p === '/feed', memberOnly: true },
+    { to: '/lists/liked', label: t('좋아한 글'), tip: t('내가 좋아요를 누른 글'), icon: 'heart', on: (p) => p === '/lists/liked', memberOnly: true },
+    { to: '/tags', label: t('태그'), tip: t('태그별로 글 모아 보기'), icon: 'tag', on: (p) => p === '/tags' || p.startsWith('/tags/') },
     // 지금 화면 주소를 함께 넘겨 버그가 난 곳을 남긴다 (054)
-    { to: path.startsWith('/support') ? '/support' : `/support?from=${encodeURIComponent(path)}`, label: '문의·신고',
-      tip: '궁금한 점·버그·제안을 운영자에게 보내요', icon: 'support', on: (p) => p === '/support', inMenu: true },
-    { to: '/releases', label: '릴리스 노트', tip: '버전마다 바뀐 점을 봐요', icon: 'releases', on: (p) => p === '/releases', inMenu: true },
+    { to: path.startsWith('/support') ? '/support' : `/support?from=${encodeURIComponent(path)}`, label: t('문의·신고'),
+      tip: t('궁금한 점·버그·제안을 운영자에게 보내요'), icon: 'support', on: (p) => p === '/support', inMenu: true },
+    { to: '/releases', label: t('릴리스 노트'), tip: t('버전마다 바뀐 점을 봐요'), icon: 'releases', on: (p) => p === '/releases', inMenu: true },
   ]
 }
 
@@ -84,7 +85,7 @@ export function Header() {
       await logout()
       navigate('/')
     } catch {
-      alert('로그아웃하지 못했어요. 잠시 뒤 다시 시도해 주세요.')
+      alert(t('로그아웃하지 못했어요. 잠시 뒤 다시 시도해 주세요.'))
     }
   }
 
@@ -98,12 +99,12 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <Link to="/" className="logo" data-tip="첫 화면으로"><span className="logo-mark" aria-hidden="true" />devlog</Link>
-        <nav className="header-actions" aria-label="머리말 메뉴">
-          <Link to="/search" className="btn btn-text header-search header-nav" aria-label="검색" data-tip="글·사람 검색">
+        <Link to="/" className="logo" data-tip={t('첫 화면으로')}><span className="logo-mark" aria-hidden="true" />devlog</Link>
+        <nav className="header-actions" aria-label={t('머리말 메뉴')}>
+          <Link to="/search" className="btn btn-text header-search header-nav" aria-label={t('검색')} data-tip={t('글·사람 검색')}>
             <NavIcon name="search" />
           </Link>
-          <Link to="/mcp" className="btn btn-text header-mcp" data-tip="Claude·ChatGPT 같은 AI 도구에 devlog 연결하기">AI 연결</Link>
+          <Link to="/mcp" className="btn btn-text header-mcp" data-tip={t('Claude·ChatGPT 같은 AI 도구에 devlog 연결하기')}>{t('AI 연결')}</Link>
           <span className="header-sep header-nav" aria-hidden="true" />
           {items.map((it) => {
             const on = it.on(path)
@@ -117,31 +118,31 @@ export function Header() {
           {member ? (
             <>
               {isStaff(member.role) && (
-                <Link to="/admin" className={`btn btn-text header-admin header-nav header-link${path.startsWith('/admin') ? ' on' : ''}`} aria-label="관리자 페이지"
-                      data-tip="관리자 페이지: 통계·글·회원·신고 관리" aria-current={path.startsWith('/admin') ? 'page' : undefined}>
+                <Link to="/admin" className={`btn btn-text header-admin header-nav header-link${path.startsWith('/admin') ? ' on' : ''}`} aria-label={t('관리자 페이지')}
+                      data-tip={t('관리자 페이지: 통계·글·회원·신고 관리')} aria-current={path.startsWith('/admin') ? 'page' : undefined}>
                   <NavIcon name="shield" />
                 </Link>
               )}
               <NotificationBell />
-              <Link to="/write" className="btn btn-outline header-write" aria-label="새 글 작성" data-tip="새 글 쓰기"><span className="long">새 글 작성</span><span className="short" aria-hidden="true">글쓰기</span><span className="icon" aria-hidden="true">✏️</span></Link>
+              <Link to="/write" className="btn btn-outline header-write" aria-label={t('새 글 작성')} data-tip={t('새 글 쓰기')}><span className="long">{t('새 글 작성')}</span><span className="short" aria-hidden="true">{t('글쓰기')}</span><span className="icon" aria-hidden="true">✏️</span></Link>
               <div className="menu" ref={menuRef} onBlur={(e) => {
                 // 초점이 메뉴 밖의 다른 요소로 옮겨 가면 닫는다 (빈 곳 클릭은 mousedown이 맡는다)
                 if (open && e.relatedTarget && !e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false)
               }}>
-                <button type="button" ref={buttonRef} className="menu-button" aria-haspopup="menu" aria-expanded={open} data-tip="내 메뉴: 내 설정·내 블로그·글 관리·로그아웃"
+                <button type="button" ref={buttonRef} className="menu-button" aria-haspopup="menu" aria-expanded={open} data-tip={t('내 메뉴: 내 설정·내 블로그·글 관리·로그아웃')}
                         onClick={() => setOpen((o) => !o)}>
                   <Avatar src={member.profileImageUrl} name={member.nickname} seed={member.handle} />
-                  <span className="sr-only">내 메뉴</span>
+                  <span className="sr-only">{t('내 메뉴')}</span>
                 </button>
                 {open && (
-                  <div className="menu-list profile-menu" role="menu" aria-label="내 메뉴" onClick={() => setOpen(false)} onKeyDown={onMenuKey}>
+                  <div className="menu-list profile-menu" role="menu" aria-label={t('내 메뉴')} onClick={() => setOpen(false)} onKeyDown={onMenuKey}>
                     <div className="menu-who" role="none">
                       <Avatar src={member.profileImageUrl} name={member.nickname} seed={member.handle} size={40} />
                       <span><b>{member.nickname}</b><span className="muted">@{member.handle}</span></span>
                     </div>
-                    <Link to="/settings" role="menuitem"><NavIcon name="settings" />내 설정</Link>
-                    <Link to={`/@${member.handle}`} role="menuitem"><NavIcon name="blog" />내 블로그</Link>
-                    <Link to="/manage/posts" role="menuitem"><NavIcon name="posts" />내 글 관리</Link>
+                    <Link to="/settings" role="menuitem"><NavIcon name="settings" />{t('내 설정')}</Link>
+                    <Link to={`/@${member.handle}`} role="menuitem"><NavIcon name="blog" />{t('내 블로그')}</Link>
+                    <Link to="/manage/posts" role="menuitem"><NavIcon name="posts" />{t('내 글 관리')}</Link>
                     {mobileExtra.length > 0 && (
                       <div className="menu-mobile-only" role="none">
                         <div className="menu-sep" role="separator" />
@@ -153,17 +154,17 @@ export function Header() {
                     {isStaff(member.role) && (
                       <>
                         <div className="menu-sep" role="separator" />
-                        <Link to="/admin" role="menuitem" title="통계·글·회원·신고·문의 관리"><NavIcon name="shield" />관리자 페이지</Link>
+                        <Link to="/admin" role="menuitem" title={t('통계·글·회원·신고·문의 관리')}><NavIcon name="shield" />{t('관리자 페이지')}</Link>
                       </>
                     )}
                     <div className="menu-sep" role="separator" />
-                    <button type="button" role="menuitem" onClick={() => void onLogout()}><NavIcon name="logout" />로그아웃</button>
+                    <button type="button" role="menuitem" onClick={() => void onLogout()}><NavIcon name="logout" />{t('로그아웃')}</button>
                   </div>
                 )}
               </div>
             </>
           ) : (
-            <Link to={loginPath()} className="btn btn-dark" data-tip="로그인하고 글쓰기·좋아요·팔로우">로그인</Link>
+            <Link to={loginPath()} className="btn btn-dark" data-tip={t('로그인하고 글쓰기·좋아요·팔로우')}>{t('로그인')}</Link>
           )}
           <ThemeToggle />
         </nav>

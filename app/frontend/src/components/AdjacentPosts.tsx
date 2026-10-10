@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { Link } from '../lib/router'
 import type { SeriesItem } from '../lib/series'
+import { t } from '../lib/i18n'
 
 /** 서버가 보는 사람의 블로그 목록 순서로 정한 이웃 글 (spec 040). prev가 더 오래된 글. */
 export interface Adjacent {
@@ -21,16 +22,16 @@ export function AdjacentPosts({ postId }: { postId: number }) {
 
   if (!adj || (!adj.prev && !adj.next)) return null
   return (
-    <nav className="adjacent-posts" aria-label="이전 글과 다음 글">
+    <nav className="adjacent-posts" aria-label={t('이전 글과 다음 글')}>
       {adj.prev && (
         <Link to={adj.prev.url} className="adjacent prev" rel="prev">
-          <span className="muted small">← 이전 글</span>
+          <span className="muted small">{t('← 이전 글')}</span>
           <b>{adj.prev.title}</b>
         </Link>
       )}
       {adj.next && (
         <Link to={adj.next.url} className="adjacent next" rel="next">
-          <span className="muted small">다음 글 →</span>
+          <span className="muted small">{t('다음 글 →')}</span>
           <b>{adj.next.title}</b>
         </Link>
       )}

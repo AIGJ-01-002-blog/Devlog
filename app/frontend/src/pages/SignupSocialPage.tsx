@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { setFlash } from '../lib/flash'
 import { copySocialAvatar, socialAvatarSource } from '../lib/image'
 import { navigate } from '../lib/router'
+import { t } from '../lib/i18n'
 
 interface Terms { termsVersion: string; termsEffectiveDate: string; privacyVersion: string; privacyEffectiveDate: string }
 interface Draft {
@@ -15,7 +16,7 @@ interface Draft {
 interface Check { available: boolean; message: string | null; suggestion?: string | null }
 
 /** 소셜 가입 마무리 (docs/08·09): 접두어 고정 + 본문 입력, 0.5초 뒤 중복 확인, 닉네임, 약관 동의. */
-const PROVIDER_NAMES: Record<string, string> = { GITHUB: 'GitHub', GOOGLE: 'Google', KAKAO: '카카오' }
+const PROVIDER_NAMES: Record<string, string> = { GITHUB: 'GitHub', GOOGLE: 'Google', KAKAO: t('카카오') }
 
 export function SignupSocialPage() {
   const { refresh } = useAuth()
@@ -60,13 +61,13 @@ export function SignupSocialPage() {
   if (expired) {
     return (
       <main className="container narrow auth-page">
-        <h1>가입 시간이 지났어요</h1>
-        <p className="muted">소셜 로그인부터 다시 시작해 주세요.</p>
-        <a className="btn btn-primary" href="/login">로그인으로</a>
+        <h1>{t('가입 시간이 지났어요')}</h1>
+        <p className="muted">{t('소셜 로그인부터 다시 시작해 주세요.')}</p>
+        <a className="btn btn-primary" href="/login">{t('로그인으로')}</a>
       </main>
     )
   }
-  if (!draft) return <main className="container narrow"><p className="muted center">불러오는 중…</p></main>
+  if (!draft) return <main className="container narrow"><p className="muted center">{t('불러오는 중…')}</p></main>
 
   const providerName = PROVIDER_NAMES[draft.provider] ?? draft.provider
   // 메일 인증 전에는 사진을 올릴 수 없어(005 FR-017) 이메일을 따로 받는 가입은 복사하지 않는다
@@ -81,7 +82,7 @@ export function SignupSocialPage() {
         method: 'POST', body: { handleBody: body, nickname, agreeTerms: agreed.terms, agreePrivacy: agreed.privacy, agreeAi: agreed.ai, email: draft.emailRequired ? email : undefined },
       })
       if (photo && usePhoto && !(await copySocialAvatar(draft.avatarUrl!))) {
-        setFlash('소셜 사진을 가져오지 못했어요. 설정에서 직접 올릴 수 있어요.')
+        setFlash(t('소셜 사진을 가져오지 못했어요. 설정에서 직접 올릴 수 있어요.'))
       }
       await refresh()
       navigate(r.redirect || '/', { replace: true })
@@ -92,7 +93,7 @@ export function SignupSocialPage() {
         err.errors.forEach((f) => (map[f.field] = f.message))
         if (err.code === 'HANDLE_TAKEN') {
           const s = (err.details as { suggestion?: string } | null)?.suggestion
-          map.handleBody = `이미 쓰는 주소예요.${s ? ` "${s}"는 어때요?` : ''}`
+          map.handleBody = (s ? t('이미 쓰는 주소예요. "{0}"는 어때요?', { 0: s }) : t('이미 쓰는 주소예요.'))
         } else if (err.code === 'NICKNAME_TAKEN') map.nickname = err.message
         else if (!err.errors.length) map.form = err.message
         setErrors(map)
@@ -104,58 +105,58 @@ export function SignupSocialPage() {
 
   return (
     <main className="container narrow auth-page">
-      <h1>가입 마무리</h1>
-      <p className="muted">블로그 주소는 가입 뒤 바꿀 수 없어요.</p>
+      <h1>{t('가입 마무리')}</h1>
+      <p className="muted">{t('블로그 주소는 가입 뒤 바꿀 수 없어요.')}</p>
       <form onSubmit={submit} className="form">
         {draft.emailRequired && (
           <label className="field">
-            <span>이메일</span>
+            <span>{t('이메일')}</span>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" maxLength={254} required
                    spellCheck={false} autoCapitalize="none" aria-describedby="email-help" aria-invalid={!!errors.email} />
             <small id="email-help" className={errors.email ? 'error' : 'muted'}>
-              {errors.email ?? `${providerName} 계정에 인증된 이메일이 없어요. 받을 수 있는 이메일을 넣으면 인증 메일을 보내요.`}
+              {errors.email ?? t('{0} 계정에 인증된 이메일이 없어요. 받을 수 있는 이메일을 넣으면 인증 메일을 보내요.', { 0: providerName })}
             </small>
           </label>
         )}
         <label className="field">
-          <span>블로그 주소</span>
+          <span>{t('블로그 주소')}</span>
           <div className="input-prefix">
             <span>devlog/@{draft.prefix}</span>
             <input value={body} onChange={(e) => setBody(e.target.value.toLowerCase())} maxLength={20}
                    autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} aria-describedby="handle-help" required />
           </div>
           <small id="handle-help" aria-live="polite" className={errors.handleBody || handleCheck?.available === false ? 'error' : 'muted'}>
-            {errors.handleBody ?? (handleCheck == null ? '영문 소문자·숫자·_ 3~20자' : handleCheck.available ? '쓸 수 있는 주소예요.'
-              : `${handleCheck.message}${handleCheck.suggestion ? ` "${handleCheck.suggestion}"는 어때요?` : ''}`)}
+            {errors.handleBody ?? (handleCheck == null ? t('영문 소문자·숫자·_ 3~20자') : handleCheck.available ? t('쓸 수 있는 주소예요.')
+              : `${handleCheck.message}${handleCheck.suggestion ? t(' "{0}"는 어때요?', { 0: handleCheck.suggestion }) : ''}`)}
           </small>
           {handleCheck?.suggestion && !handleCheck.available && (
-            <button type="button" className="btn btn-text" onClick={() => setBody(handleCheck.suggestion!)}>추천 주소 쓰기</button>
+            <button type="button" className="btn btn-text" onClick={() => setBody(handleCheck.suggestion!)}>{t('추천 주소 쓰기')}</button>
           )}
         </label>
         <label className="field">
-          <span>닉네임</span>
+          <span>{t('닉네임')}</span>
           <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} required autoComplete="nickname"
                  aria-describedby="nickname-help" aria-invalid={!!errors.nickname || nickCheck?.available === false} />
           <small id="nickname-help" aria-live="polite" className={errors.nickname || nickCheck?.available === false ? 'error' : 'muted'}>
-            {errors.nickname ?? (nickCheck == null ? '2~10자' : nickCheck.available ? '쓸 수 있는 닉네임이에요.' : nickCheck.message)}
+            {errors.nickname ?? (nickCheck == null ? t('2~10자') : nickCheck.available ? t('쓸 수 있는 닉네임이에요.') : nickCheck.message)}
           </small>
         </label>
         {photo && (
           <label className="field social-photo">
             <span className="row">
               <input type="checkbox" checked={usePhoto} onChange={(e) => setUsePhoto(e.target.checked)} />
-              {providerName} 프로필 사진 사용
+              {providerName}  {t('프로필 사진 사용')}
             </span>
             <img src={photo} alt="" width={64} height={64} className="avatar" referrerPolicy="no-referrer"
                  onError={() => setPhotoBroken(true)} />
-            <small className="muted">가입할 때 한 번 복사해 와요. 나중에 설정에서 바꿀 수 있어요.</small>
+            <small className="muted">{t('가입할 때 한 번 복사해 와요. 나중에 설정에서 바꿀 수 있어요.')}</small>
           </label>
         )}
         <SignupAgreements value={agreed} onChange={setAgreed} termsDate={draft.terms.termsEffectiveDate}
                           privacyDate={draft.terms.privacyEffectiveDate} error={errors.agreeTerms ?? errors.agreePrivacy} />
         {errors.form && <div className="banner banner-warn" role="alert">{errors.form}</div>}
         <button className="btn btn-primary btn-block" disabled={submitting || !agreed.terms || !agreed.privacy}>
-          {submitting ? (photo && usePhoto ? '가입하고 사진을 가져오는 중…' : '가입하는 중…') : '가입하기'}
+          {submitting ? (photo && usePhoto ? t('가입하고 사진을 가져오는 중…') : t('가입하는 중…')) : t('가입하기')}
         </button>
       </form>
     </main>

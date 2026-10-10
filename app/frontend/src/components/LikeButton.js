@@ -4,6 +4,7 @@ import { loginPath, useAuth } from '../lib/auth';
 import { compactNumber } from '../lib/format';
 import { createLikeSync, likesApi } from '../lib/likes';
 import { Link } from '../lib/router';
+import { t } from '../lib/i18n';
 /**
  * 글 상세 좋아요 (spec 012, docs/30 §5). 작성자에게는 개수만, 비회원·인증 전 회원에게는 버튼을 보이고 누르면 안내한다.
  * 누르는 즉시 ♡/♥와 숫자가 바뀌고, 마지막 상태만 0.3초 뒤에 보낸다.
@@ -30,7 +31,7 @@ export function LikeButton({ postId, mine, initial, onChange }) {
     }, [postId]);
     const count = compactNumber(state.likeCount);
     if (mine)
-        return _jsxs("span", { className: "like-count", children: [_jsxs("span", { "aria-hidden": "true", children: ["\u2665 ", count] }), _jsxs("span", { className: "sr-only", children: ["\uC88B\uC544\uC694 ", state.likeCount, "\uAC1C"] })] });
+        return _jsxs("span", { className: "like-count", children: [_jsxs("span", { "aria-hidden": "true", children: ["\u2665 ", count] }), _jsx("span", { className: "sr-only", children: t('좋아요 {0}개', { 0: state.likeCount }) })] });
     const press = () => {
         if (!me?.authenticated)
             return setNotice('login');
@@ -39,5 +40,5 @@ export function LikeButton({ postId, mine, initial, onChange }) {
         setNotice(null);
         sync.current?.toggle();
     };
-    return (_jsxs("span", { className: "like", children: [_jsx("button", { type: "button", className: `like-button${state.liked ? ' liked' : ''}`, "aria-pressed": state.liked, "aria-label": `좋아요 ${state.likeCount}개`, onClick: press, children: _jsxs("span", { "aria-hidden": "true", children: [state.liked ? '♥' : '♡', " ", count] }) }), notice === 'login' && (_jsxs("span", { className: "like-notice", role: "status", children: ["\uB85C\uADF8\uC778\uD558\uACE0 \uC88B\uC544\uC694\uB97C \uB20C\uB7EC \uBCF4\uC138\uC694 ", _jsx(Link, { to: loginPath(), className: "btn btn-text", children: "\uB85C\uADF8\uC778" })] })), notice === 'verify' && _jsx("span", { className: "like-notice", role: "status", children: "\uC774\uBA54\uC77C \uC778\uC99D \uD6C4 \uB204\uB97C \uC218 \uC788\uC5B4\uC694" }), notice === 'failed' && _jsx("span", { className: "like-notice error", role: "alert", children: "\uC88B\uC544\uC694\uB97C \uBC18\uC601\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694" })] }));
+    return (_jsxs("span", { className: "like", children: [_jsx("button", { type: "button", className: `like-button${state.liked ? ' liked' : ''}`, "aria-pressed": state.liked, "aria-label": t('좋아요 {0}개', { 0: state.likeCount }), onClick: press, children: _jsxs("span", { "aria-hidden": "true", children: [state.liked ? '♥' : '♡', " ", count] }) }), notice === 'login' && (_jsxs("span", { className: "like-notice", role: "status", children: [t('로그인하고 좋아요를 눌러 보세요'), " ", _jsx(Link, { to: loginPath(), className: "btn btn-text", children: t('로그인') })] })), notice === 'verify' && _jsx("span", { className: "like-notice", role: "status", children: t('이메일 인증 후 누를 수 있어요') }), notice === 'failed' && _jsx("span", { className: "like-notice error", role: "alert", children: t('좋아요를 반영하지 못했어요') })] }));
 }

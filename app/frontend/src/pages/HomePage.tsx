@@ -8,6 +8,7 @@ import { Link, useLocation } from '../lib/router'
 import { TRENDING_ENDPOINT, TRENDING_HINT } from '../lib/trending'
 import { tagPath } from '../lib/tags'
 import type { Branch, Card, FeedPage } from '../lib/types'
+import { t } from '../lib/i18n'
 
 /**
  * 홈 (003, 017, 072): [최신] [트렌딩] 탭. 기본은 최신, 트렌딩은 `/?tab=trending`. 순위 숫자는 보이지 않는다.
@@ -21,7 +22,7 @@ export function HomePage() {
   const { me, loading } = useAuth()
   // 브랜치 버튼은 거르지 않은 최신 목록에서 뽑는다. 걸러 본 목록에서 뽑으면 다른 브랜치 버튼이 사라진다
   const [latest, setLatest] = useState<Card[] | null>(() => boot?.feed?.items ?? null)
-  useEffect(() => { document.title = trending ? '트렌딩 - devlog' : 'devlog' }, [trending])
+  useEffect(() => { document.title = trending ? t('트렌딩 - devlog') : 'devlog' }, [trending])
   useEffect(() => {
     if (!branch || latest) return
     let live = true
@@ -34,19 +35,19 @@ export function HomePage() {
       <div className="home-main">
         {!loading && !me?.authenticated && <HomeHero />}
         <div className="home-head">
-          <h1 className="page-title">{trending ? '트렌딩' : '개발 기록'}</h1>
-          <p className="muted small">{trending ? TRENDING_HINT : '새 글은 main에 쌓이고, 이어지는 글은 시리즈·주제 브랜치로 갈라져요.'}</p>
+          <h1 className="page-title">{trending ? t('트렌딩') : t('개발 기록')}</h1>
+          <p className="muted small">{trending ? TRENDING_HINT : t('새 글은 main에 쌓이고, 이어지는 글은 시리즈·주제 브랜치로 갈라져요.')}</p>
         </div>
-        <nav className="tabs home-tabs" aria-label="글 목록">
-          <Link to="/" aria-current={trending ? undefined : 'page'}>최신</Link>
-          <Link to="/?tab=trending" aria-current={trending ? 'page' : undefined}>트렌딩</Link>
+        <nav className="tabs home-tabs" aria-label={t('글 목록')}>
+          <Link to="/" aria-current={trending ? undefined : 'page'}>{t('최신')}</Link>
+          <Link to="/?tab=trending" aria-current={trending ? 'page' : undefined}>{t('트렌딩')}</Link>
         </nav>
         {trending ? (
           <Feed key="trending" endpoint={TRENDING_ENDPOINT} storageKey="feed:trending" initial={boot?.trending ?? null}
             renderItems={(items, hasMore) => <BranchList items={items} hasMore={hasMore} graph={false} />} empty={
             <>
-              <p>아직 트렌딩 글이 없어요</p>
-              <Link to="/" className="btn btn-primary">최신 글 보기</Link>
+              <p>{t('아직 트렌딩 글이 없어요')}</p>
+              <Link to="/" className="btn btn-primary">{t('최신 글 보기')}</Link>
             </>
           } />
         ) : (
@@ -62,14 +63,14 @@ export function HomePage() {
             )}
             empty={branch ? (
               <>
-                <p>이 브랜치에 보이는 글이 없어요</p>
-                <Link to="/" className="btn btn-primary">모든 글 보기</Link>
+                <p>{t('이 브랜치에 보이는 글이 없어요')}</p>
+                <Link to="/" className="btn btn-primary">{t('모든 글 보기')}</Link>
               </>
             ) : (
               <>
-                <p>아직 올라온 글이 없어요. 첫 글의 주인공이 되어 보세요.</p>
-                {me?.authenticated ? <Link to="/write" className="btn btn-primary">글쓰기</Link>
-                  : <Link to={loginPath('/write')} className="btn btn-primary">로그인</Link>}
+                <p>{t('아직 올라온 글이 없어요. 첫 글의 주인공이 되어 보세요.')}</p>
+                {me?.authenticated ? <Link to="/write" className="btn btn-primary">{t('글쓰기')}</Link>
+                  : <Link to={loginPath('/write')} className="btn btn-primary">{t('로그인')}</Link>}
               </>
             )} />
         )}
@@ -88,8 +89,8 @@ function BranchChips({ base, visible, active, onBase }: {
   const chips = branchChips(base, active, visible)
   if (chips.length === 0 && !active) return null
   return (
-    <nav className="branch-chips" aria-label="브랜치로 걸러 보기">
-      <Link to="/" className="branch-chip" aria-current={active ? undefined : 'page'} data-tip="모든 글을 시간순으로 봐요">모든 글</Link>
+    <nav className="branch-chips" aria-label={t('브랜치로 걸러 보기')}>
+      <Link to="/" className="branch-chip" aria-current={active ? undefined : 'page'} data-tip={t('모든 글을 시간순으로 봐요')}>{t('모든 글')}</Link>
       {chips.map((b) => (
         <Link key={b.key} to={`/?branch=${b.key}`} className={`branch-chip branch-chip-${b.kind.toLowerCase()}`}
               aria-current={active === b.key ? 'page' : undefined}
@@ -104,8 +105,8 @@ function BranchChips({ base, visible, active, onBase }: {
 /** 브랜치 버튼 설명. 주제 브랜치는 글쓴이가 만든 시리즈가 아니라 자동으로 묶인 것임을 알린다 */
 function branchTip(b: Branch): string {
   return b.kind === 'SERIES'
-    ? `시리즈: 글쓴이가 엮은 ${b.name} ${b.total}편만 봐요`
-    : `주제 브랜치: 태그·내용이 비슷해 자동으로 묶인 글 ${b.total}편만 봐요`
+    ? t('시리즈: 글쓴이가 엮은 {0} {1}편만 봐요', { 0: b.name, 1: b.total })
+    : t('주제 브랜치: 태그·내용이 비슷해 자동으로 묶인 글 {0}편만 봐요', { 0: b.total })
 }
 
 interface PopularTopic { key: string; name: string; postCount: number; url: string }
@@ -121,15 +122,15 @@ function HomeAside() {
     api<PopularTag[]>('/api/tags?limit=8').then(setTags, () => setTags([]))
   }, [])
   return (
-    <aside className="home-aside" aria-label="둘러보기">
+    <aside className="home-aside" aria-label={t('둘러보기')}>
       {topics.length > 0 && (
         <section className="aside-box">
-          <h2 className="aside-title">이어지는 주제</h2>
+          <h2 className="aside-title">{t('이어지는 주제')}</h2>
           <ul className="aside-topics">
-            {topics.map((t) => (
-              <li key={t.key}>
-                <Link to={t.url} data-tip={`주제 브랜치: 태그·내용이 비슷해 자동으로 묶인 글 ${t.postCount}편이에요`}>
-                  <BranchMark kind="TOPIC" /><span>{t.name}</span><span className="muted small">{t.postCount}편</span>
+            {topics.map((topic) => (
+              <li key={topic.key}>
+                <Link to={topic.url} data-tip={t('주제 브랜치: 태그·내용이 비슷해 자동으로 묶인 글 {0}편이에요', { 0: topic.postCount })}>
+                  <BranchMark kind="TOPIC" /><span>{topic.name}</span><span className="muted small">{t('{0}편', { 0: topic.postCount })}</span>
                 </Link>
               </li>
             ))}
@@ -138,21 +139,21 @@ function HomeAside() {
       )}
       {tags.length > 0 && (
         <section className="aside-box">
-          <h2 className="aside-title">많이 쓰는 태그</h2>
+          <h2 className="aside-title">{t('많이 쓰는 태그')}</h2>
           <ul className="card-tags">
-            {tags.map((t) => <li key={t.name}><Link to={tagPath(t.name)} className="card-tag" data-tip={`글 ${t.postCount}편`}>#{t.name}</Link></li>)}
+            {tags.map((tag) => <li key={tag.name}><Link to={tagPath(tag.name)} className="card-tag" data-tip={t('글 {0}편', { 0: tag.postCount })}>#{tag.name}</Link></li>)}
           </ul>
         </section>
       )}
       <section className="aside-box aside-ai">
-        <h2 className="aside-title">AI가 쓰는 개발 일지</h2>
-        <p className="muted small">Claude·Cursor에 devlog를 연결하면 오늘 한 작업을 임시글로 정리해 줘요.</p>
-        <Link to="/mcp" className="btn btn-outline btn-small">AI에 연결하기</Link>
+        <h2 className="aside-title">{t('AI가 쓰는 개발 일지')}</h2>
+        <p className="muted small">{t('Claude·Cursor에 devlog를 연결하면 오늘 한 작업을 임시글로 정리해 줘요.')}</p>
+        <Link to="/mcp" className="btn btn-outline btn-small">{t('AI에 연결하기')}</Link>
       </section>
-      <nav className="aside-links" aria-label="도움말">
-        <Link to="/releases">릴리스 노트</Link>
+      <nav className="aside-links" aria-label={t('도움말')}>
+        <Link to="/releases">{t('릴리스 노트')}</Link>
         <span aria-hidden="true">·</span>
-        <Link to="/support">문의·신고</Link>
+        <Link to="/support">{t('문의·신고')}</Link>
       </nav>
     </aside>
   )
@@ -164,14 +165,14 @@ function HomeAside() {
  */
 function HomeHero() {
   return (
-    <section className="home-hero" aria-label="devlog 소개">
+    <section className="home-hero" aria-label={t('devlog 소개')}>
       <div className="home-hero-copy">
-        <p className="home-hero-eyebrow"><span className="home-hero-dot" aria-hidden="true" />MCP 개발 일지 · Claude · Cursor</p>
-        <p className="home-hero-title">코딩은 AI와,<br /><span className="home-hero-accent">기록은 devlog가.</span></p>
-        <p className="home-hero-sub">내 AI 도구에 devlog를 연결하면, 오늘 작업한 대화와 커밋을 정리해 개발 일지 초안을 써 줘요. 나는 확인하고 [발행]만 누르면 돼요.</p>
+        <p className="home-hero-eyebrow"><span className="home-hero-dot" aria-hidden="true" />{t('MCP 개발 일지 · Claude · Cursor')}</p>
+        <p className="home-hero-title">{t('코딩은 AI와,')}<br /><span className="home-hero-accent">{t('기록은 devlog가.')}</span></p>
+        <p className="home-hero-sub">{t('내 AI 도구에 devlog를 연결하면, 오늘 작업한 대화와 커밋을 정리해 개발 일지 초안을 써 줘요. 나는 확인하고 [발행]만 누르면 돼요.')}</p>
         <div className="home-hero-actions">
-          <Link to="/mcp" className="btn btn-primary btn-lg">AI에 devlog 연결하기</Link>
-          <Link to={loginPath('/write')} className="btn btn-outline btn-lg">직접 글쓰기</Link>
+          <Link to="/mcp" className="btn btn-primary btn-lg">{t('AI에 devlog 연결하기')}</Link>
+          <Link to={loginPath('/write')} className="btn btn-outline btn-lg">{t('직접 글쓰기')}</Link>
         </div>
       </div>
       <HeroDemo />
@@ -183,17 +184,17 @@ function HomeHero() {
 function HeroDemo() {
   return (
     <figure className="hero-demo">
-      <figcaption className="sr-only">예시: AI에게 "오늘 개발 일지 써 줘"라고 하면 devlog에 임시글이 생긴다</figcaption>
+      <figcaption className="sr-only">{t('예시: AI에게 "오늘 개발 일지 써 줘"라고 하면 devlog에 임시글이 생긴다')}</figcaption>
       <div className="hero-demo-bar" aria-hidden="true"><span /><span /><span /><b>Claude Code</b></div>
       <div className="hero-demo-body" aria-hidden="true">
-        <p className="hero-demo-me"><span>›</span> 오늘 한 작업으로 개발 일지 써 줘</p>
+        <p className="hero-demo-me"><span>›</span>  {t('오늘 한 작업으로 개발 일지 써 줘')}</p>
         <p className="hero-demo-tool"><span className="hero-demo-ok">●</span> devlog · <code>write_devlog</code></p>
         <div className="hero-demo-card">
-          <span className="hero-demo-label">임시글</span>
-          <b>Gemini 한도 넘으면 Ollama로 넘기기</b>
-          <span className="hero-demo-meta">커밋 4개 · 대화 요약 · 태그 spring-ai, ollama</span>
+          <span className="hero-demo-label">{t('임시글')}</span>
+          <b>{t('Gemini 한도 넘으면 Ollama로 넘기기')}</b>
+          <span className="hero-demo-meta">{t('커밋 4개 · 대화 요약 · 태그 spring-ai, ollama')}</span>
         </div>
-        <p className="hero-demo-ai">devlog에 임시글을 만들었어요. 읽어 보고 발행해 주세요.</p>
+        <p className="hero-demo-ai">{t('devlog에 임시글을 만들었어요. 읽어 보고 발행해 주세요.')}</p>
       </div>
     </figure>
   )

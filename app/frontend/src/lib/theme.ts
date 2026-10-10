@@ -1,3 +1,4 @@
+import { t } from './i18n'
 // 화면 테마 (spec 021). 선택은 이 기기 브라우저에만 저장하고(비회원 포함), 서버·계정에는 두지 않는다.
 // 처음 테마는 public/theme.js가 그리기 전에 정한다. 여기서는 버튼으로 바꿀 때만 쓴다.
 
@@ -7,7 +8,7 @@ export const THEME_KEY = 'blog.theme'
 
 const ORDER: ThemeChoice[] = ['system', 'light', 'dark']
 
-export const THEME_LABEL: Record<ThemeChoice, string> = { system: '시스템 설정', light: '라이트', dark: '다크' }
+export const THEME_LABEL: Record<ThemeChoice, string> = { system: t('시스템 설정'), light: t('라이트'), dark: t('다크') }
 export const THEME_ICON: Record<ThemeChoice, string> = { system: '🖥', light: '☀️', dark: '🌙' }
 
 /** 시스템 → 라이트 → 다크 → 시스템 (FR-004) */

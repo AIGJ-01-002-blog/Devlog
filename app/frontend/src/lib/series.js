@@ -1,4 +1,5 @@
 import { api } from './api';
+import { t } from './i18n';
 export const SERIES_NAME_MAX = 50;
 const member = (handle) => `/api/members/${encodeURIComponent(handle)}`;
 export const seriesApi = {
@@ -20,11 +21,11 @@ export const seriesPath = (handle, slug) => `/@${handle}/series/${encodeURICompo
 export function seriesNameError(raw) {
     const name = raw.trim().replace(/\s+/g, ' ');
     if (!name)
-        return '시리즈 이름을 써 주세요.';
+        return t('시리즈 이름을 써 주세요.');
     if ([...name].length > SERIES_NAME_MAX)
-        return `${SERIES_NAME_MAX}자 안으로 써 주세요.`;
+        return t('{0}자 안으로 써 주세요.', { 0: SERIES_NAME_MAX });
     if (!/[\p{L}\p{N}]/u.test(name))
-        return '글자나 숫자를 넣어 주세요.';
+        return t('글자나 숫자를 넣어 주세요.');
     return null;
 }
 /** 이전·다음 글. 지금 글이 목록에 없으면 둘 다 없다. */

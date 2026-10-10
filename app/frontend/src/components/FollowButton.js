@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { loginPath, useAuth } from '../lib/auth';
 import { FOLLOW_ERROR, followApi, followLabel } from '../lib/follow';
 import { navigate } from '../lib/router';
+import { t } from '../lib/i18n';
 /**
  * 팔로우 버튼 (016 FR-008·FR-009). 누르면 바로 바뀌고, 보내는 중에 또 누르면 끝난 뒤 마지막 상태만 보낸다.
  * 실패하면 서버가 마지막으로 확인해 준 상태로 돌리고 안내한다. 언팔로우는 확인 창 없이 된다.
@@ -55,5 +56,5 @@ export function FollowButton({ handle, following, onChange, small = false }) {
         wanted.current = next;
         void flush();
     };
-    return (_jsxs("span", { className: "follow-wrap", children: [_jsx("button", { type: "button", className: `btn ${on ? 'btn-outline following' : 'btn-primary'}${small ? ' btn-small' : ''}`, "aria-pressed": on, onClick: click, "data-tip": on ? '팔로우를 그만둬요(상대에게 알리지 않아요)' : '상대 수락 없이 새 글을 피드와 알림으로 받아요', onMouseEnter: () => setHover(true), onMouseLeave: () => setHover(false), onFocus: (e) => setHover(e.currentTarget.matches(':focus-visible')), onBlur: () => setHover(false), children: followLabel(on, hover) }), error && _jsx("span", { className: "error small", role: "alert", children: FOLLOW_ERROR })] }));
+    return (_jsxs("span", { className: "follow-wrap", children: [_jsx("button", { type: "button", className: `btn ${on ? 'btn-outline following' : 'btn-primary'}${small ? ' btn-small' : ''}`, "aria-pressed": on, onClick: click, "data-tip": on ? t('팔로우를 그만둬요(상대에게 알리지 않아요)') : t('상대 수락 없이 새 글을 피드와 알림으로 받아요'), onMouseEnter: () => setHover(true), onMouseLeave: () => setHover(false), onFocus: (e) => setHover(e.currentTarget.matches(':focus-visible')), onBlur: () => setHover(false), children: followLabel(on, hover) }), error && _jsx("span", { className: "error small", role: "alert", children: FOLLOW_ERROR })] }));
 }

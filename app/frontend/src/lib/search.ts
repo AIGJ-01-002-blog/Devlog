@@ -1,5 +1,6 @@
 import { api } from './api'
 import type { Card, CardAuthor } from './types'
+import { t } from './i18n'
 
 // 검색 (spec 014, docs/33). 검색어 규칙은 서버 SearchTerms가 정하고 화면은 안내만 한다.
 
@@ -38,8 +39,8 @@ export interface PeoplePage {
 export const SEARCH_MAX_LENGTH = 50
 
 export const NOTICE_TEXT: Record<Exclude<SearchNotice, null>, string> = {
-  TWO_CHAR_TITLE_TAG_ONLY: '두 글자 단어는 제목·태그에서만 찾았어요',
-  TOO_SHORT: '두 글자 이상 입력해 주세요',
+  TWO_CHAR_TITLE_TAG_ONLY: t('두 글자 단어는 제목·태그에서만 찾았어요'),
+  TOO_SHORT: t('두 글자 이상 입력해 주세요'),
 }
 
 export function searchPath(q: string, tab: SearchTab = 'posts', sort: SearchSort = 'relevance'): string {
@@ -57,7 +58,7 @@ export function postsEndpoint(q: string, sort: SearchSort, blog?: string): strin
 }
 
 export function emptyMessage(q: string): string {
-  return `'${q}'에 대한 글이 없어요`
+  return t('\'{0}\'에 대한 글이 없어요', { 0: q })
 }
 
 /** 검색어에 2글자 단어가 있는지 (안내를 미리 보이려고). 1글자는 무시되므로 세지 않는다. */

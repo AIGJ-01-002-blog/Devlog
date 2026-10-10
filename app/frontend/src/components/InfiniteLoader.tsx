@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { t } from '../lib/i18n'
 
 /** 목록 끝이 화면 아래 이만큼 안으로 들어오면 미리 다음 쪽을 부른다 */
 export const PREFETCH_MARGIN_PX = 600
@@ -9,7 +10,7 @@ export const PREFETCH_MARGIN_PX = 600
  * - 한 쪽을 다 받고도 끝이 여전히 보이면(큰 화면) 감시를 새로 걸어 이어서 부른다.
  * - IntersectionObserver가 없는 브라우저는 예전처럼 [더 보기] 버튼을 쓴다.
  */
-export function InfiniteLoader({ hasMore, loading, failed, onMore, failedText = '목록을 불러오지 못했어요' }: {
+export function InfiniteLoader({ hasMore, loading, failed, onMore, failedText = t('목록을 불러오지 못했어요') }: {
   hasMore: boolean
   loading: boolean
   failed: boolean
@@ -39,7 +40,7 @@ export function InfiniteLoader({ hasMore, loading, failed, onMore, failedText = 
     return (
       <p className="error center load-more-error" role="alert">
         {failedText}{' '}
-        <button type="button" className="btn btn-text" title="이어서 다시 불러와요" onClick={() => more.current()}>다시 시도</button>
+        <button type="button" className="btn btn-text" title={t('이어서 다시 불러와요')} onClick={() => more.current()}>{t('다시 시도')}</button>
       </p>
     )
   }
@@ -47,8 +48,8 @@ export function InfiniteLoader({ hasMore, loading, failed, onMore, failedText = 
   return (
     <div ref={sentinel} className="more" data-testid="infinite-sentinel">
       {loading
-        ? <p className="muted" role="status">불러오는 중…</p>
-        : !observable && <button type="button" className="btn btn-outline" title="다음 글을 불러와요" onClick={() => more.current()}>더 보기</button>}
+        ? <p className="muted" role="status">{t('불러오는 중…')}</p>
+        : !observable && <button type="button" className="btn btn-outline" title={t('다음 글을 불러와요')} onClick={() => more.current()}>{t('더 보기')}</button>}
     </div>
   )
 }

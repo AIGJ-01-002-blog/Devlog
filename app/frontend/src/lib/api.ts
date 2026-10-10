@@ -1,3 +1,4 @@
+import { t } from './i18n'
 // 서버 API 호출. 쿠키 세션 + CSRF(XSRF-TOKEN 쿠키 → X-XSRF-TOKEN 헤더), 공통 오류 형식 {code, message, errors, details}.
 
 export interface FieldError {
@@ -72,7 +73,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     })
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') throw e
-    throw new ApiError(0, 'NETWORK', '네트워크에 연결할 수 없어요.')
+    throw new ApiError(0, 'NETWORK', t('네트워크에 연결할 수 없어요.'))
   }
   if (res.status === 204) return undefined as T
   const text = await res.text()
@@ -87,7 +88,7 @@ export async function apiFile(path: string): Promise<{ blob: Blob; fileName: str
   try {
     res = await fetch(path, { credentials: 'same-origin' })
   } catch {
-    throw new ApiError(0, 'NETWORK', '네트워크에 연결할 수 없어요.')
+    throw new ApiError(0, 'NETWORK', t('네트워크에 연결할 수 없어요.'))
   }
   if (!res.ok) {
     const text = await res.text().catch(() => '')
@@ -113,7 +114,7 @@ export function attachmentName(header: string | null): string | null {
 function errorOf(res: Response, data: unknown): ApiError {
   const body = (data ?? {}) as Partial<{ code: string; message: string; errors: FieldError[]; details: unknown }>
   const retry = res.headers.get('Retry-After')
-  return new ApiError(res.status, body.code ?? `HTTP_${res.status}`, body.message ?? '잠시 후 다시 시도해 주세요.',
+  return new ApiError(res.status, body.code ?? `HTTP_${res.status}`, body.message ?? t('잠시 후 다시 시도해 주세요.'),
     body.errors ?? [], body.details ?? null, retry ? Number(retry) : null)
 }
 

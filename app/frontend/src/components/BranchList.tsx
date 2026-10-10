@@ -5,6 +5,7 @@ import { Link } from '../lib/router'
 import type { Branch, Card } from '../lib/types'
 import { Avatar } from './Avatar'
 import { CardStats, CardTags } from './PostCard'
+import { t } from '../lib/i18n'
 
 /**
  * 홈 최신 글의 브랜치 그래프 목록 (072). 왼쪽 그래프 칸에 main과 브랜치 줄을 그리고, 오른쪽에 글을 한 줄씩 보인다.
@@ -72,7 +73,7 @@ function BranchRow({ row, graph }: { row: GraphRow; graph: boolean }) {
         <div className="bl-text">
           {b && (
             <Link to={b.url} className={`bl-branch bl-branch-${b.kind.toLowerCase()}`}
-                  data-tip={b.kind === 'SERIES' ? '이 시리즈 글 모두 보기' : '태그·내용이 비슷해 자동으로 묶인 글만 보기'}>
+                  data-tip={b.kind === 'SERIES' ? t('이 시리즈 글 모두 보기') : t('태그·내용이 비슷해 자동으로 묶인 글만 보기')}>
               <BranchMark kind={b.kind} />{branchLabel(b)}
             </Link>
           )}

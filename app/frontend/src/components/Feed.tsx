@@ -3,6 +3,7 @@ import { api, ApiError } from '../lib/api'
 import type { Card, FeedPage } from '../lib/types'
 import { InfiniteLoader } from './InfiniteLoader'
 import { PostCard } from './PostCard'
+import { t } from '../lib/i18n'
 
 const KEEP_MS = 30 * 60 * 1000
 
@@ -57,7 +58,7 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
     } catch (e) {
       // 보던 순위표가 만료됨 (017 트렌딩): 안내 뒤 최신 순위를 처음부터 다시 받는다
       if (next && e instanceof ApiError && e.status === 410) {
-        setNotice(e.message || '순위가 새로 바뀌었어요.')
+        setNotice(e.message || t('순위가 새로 바뀌었어요.'))
         window.scrollTo(0, 0)
         // 첫 쪽을 다시 받을 때까지 기다린다: 먼저 끝난 것으로 보이면 무한 스크롤이 만료된 커서로 또 부른다
         await load(null)
@@ -96,8 +97,8 @@ export function Feed({ endpoint, storageKey, initial, showAuthor = true, empty, 
         </div>
       )}
       <InfiniteLoader hasMore={cursor != null} loading={loading} failed={error} onMore={() => void load(cursor)}
-        failedText="글을 불러오지 못했어요" />
-      {!loaded && loading && <p className="muted center">불러오는 중…</p>}
+        failedText={t('글을 불러오지 못했어요')} />
+      {!loaded && loading && <p className="muted center">{t('불러오는 중…')}</p>}
     </section>
   )
 }

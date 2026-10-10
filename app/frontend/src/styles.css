@@ -640,6 +640,8 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .site-footer-links a { color: var(--color-text-muted); display: inline-flex; align-items: center; min-height: 32px; }
 .site-footer-links a:hover { color: var(--color-text); text-decoration: underline; }
 .site-footer-links b { font-weight: 600; }
+.site-footer-lang { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--color-text-muted); }
+.site-footer-lang select { min-height: 32px; padding: 2px 6px; font-size: inherit; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 6px; }
 @media (max-width: 600px) {
   .settings-list { grid-template-columns: 1fr; gap: 4px; }
   .settings-list dd { margin-bottom: 12px; }
@@ -1812,3 +1814,6 @@ select:not([multiple]):not([size]):not(.visibility-picker select) {
 }
 select:not([multiple]):not([size]):not(.visibility-picker select):disabled { cursor: not-allowed; opacity: 0.6; }
 select::-ms-expand { display: none; }
+
+/* 일본어·중국어 화면은 낱말 사이에 빈칸이 없어 keep-all이면 줄이 넘친다 (081) */
+html:lang(ja) *, html:lang(zh) * { word-break: normal; line-break: strict; }

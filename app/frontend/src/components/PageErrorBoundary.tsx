@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react'
+import { t } from '../lib/i18n'
 
 /**
  * 나뉜 화면을 받지 못했을 때(새로 고친 뒤에도 실패) 앱 전체가 비지 않게 이 자리에만 안내를 띄운다.
@@ -22,8 +23,8 @@ export class PageErrorBoundary extends Component<Props, State> {
     if (!this.state.failed) return this.props.children
     return (
       <main className="container">
-        <p className="muted center" role="alert">화면을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.</p>
-        <p className="center"><button type="button" className="btn" onClick={() => window.location.reload()}>다시 시도</button></p>
+        <p className="muted center" role="alert">{t('화면을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.')}</p>
+        <p className="center"><button type="button" className="btn" onClick={() => window.location.reload()}>{t('다시 시도')}</button></p>
       </main>
     )
   }
