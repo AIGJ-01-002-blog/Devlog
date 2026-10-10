@@ -7,6 +7,8 @@ export const MUTABLE_TYPES = [
     { type: 'LIKE', label: '좋아요' },
     { type: 'FOLLOW', label: '새 팔로워' },
     { type: 'NEW_POST', label: '팔로우한 사람의 새 글' },
+    { type: 'FRIEND_REQUEST', label: '받은 친구 요청' },
+    { type: 'FRIEND_ACCEPTED', label: '친구 요청 수락' },
     { type: 'AI_PROPOSAL', label: 'AI의 글 제안' },
 ];
 export const POLL_MS = 30_000;
@@ -58,6 +60,10 @@ export function messageOf(n) {
             return { who: `${who}님${others}`, text: `이 ${title}을(를) 좋아해요`, quote: null };
         case 'FOLLOW':
             return { who: `${who}님${others}`, text: '이 회원님을 팔로우해요', quote: null };
+        case 'FRIEND_REQUEST':
+            return { who: `${who}님`, text: '이 친구 요청을 보냈어요', quote: null };
+        case 'FRIEND_ACCEPTED':
+            return { who: `${who}님`, text: '이 친구 요청을 수락했어요', quote: null };
         case 'NEW_POST':
             return { who: `${who}님`, text: `이 새 글 ${title}을(를) 올렸어요`, quote: null };
         default:

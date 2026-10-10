@@ -64,6 +64,7 @@ export function FollowButton({ handle, following, onChange, small = false }: {
     <span className="follow-wrap">
       <button type="button" className={`btn ${on ? 'btn-outline following' : 'btn-primary'}${small ? ' btn-small' : ''}`}
               aria-pressed={on} onClick={click}
+              data-tip={on ? '팔로우를 그만둬요(상대에게 알리지 않아요)' : '상대 수락 없이 새 글을 피드와 알림으로 받아요'}
               onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
               onFocus={(e) => setHover(e.currentTarget.matches(':focus-visible'))} onBlur={() => setHover(false)}>
         {followLabel(on, hover)}

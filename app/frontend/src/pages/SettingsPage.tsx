@@ -422,7 +422,7 @@ function PasswordSection() {
   )
 }
 
-/** 친구 (008 US1·US2): 받은 요청 수락·거절, 친구 목록과 최근 활동, 보낸 요청 취소. 처리해도 상대에게 알리지 않는다. */
+/** 친구 (008 US1·US2): 받은 요청 수락·거절, 친구 목록과 최근 활동, 보낸 요청 취소. 수락하면 요청한 사람에게 알린다(015 A-1). 거절·취소·끊기는 알리지 않는다. */
 /** 알림 끄기 (015 US5). 바로 저장하고, 실패하면 되돌린다. 운영 알림은 목록에 없다(끌 수 없음). */
 function NotificationsSection() {
   const [muted, setMuted] = useState<MutableType[] | null>(null)
@@ -693,9 +693,9 @@ function FriendsSection() {
           <h3>받은 친구 요청 {data.received.length}</h3>
           <ul className="friend-list">
             {data.received.map((p) => row(p, <>
-              <button type="button" className="btn btn-primary" disabled={busy === p.handle}
+              <button type="button" className="btn btn-primary" disabled={busy === p.handle} data-tip="친구가 되고 상대에게 수락 알림이 가요"
                       onClick={() => act(p.handle, () => friendsApi.accept(p.handle), `${p.nickname}님과 친구가 됐어요.`)}>수락</button>
-              <button type="button" className="btn btn-text" disabled={busy === p.handle}
+              <button type="button" className="btn btn-text" disabled={busy === p.handle} data-tip="요청을 지워요(상대에게 알리지 않아요)"
                       onClick={() => act(p.handle, () => friendsApi.remove(p.handle), '요청을 거절했어요.')}>거절</button>
             </>))}
           </ul>
@@ -707,7 +707,7 @@ function FriendsSection() {
         : (
           <ul className="friend-list">
             {data.friends.map((p) => row(p,
-              <button type="button" className="btn btn-text" disabled={busy === p.handle} onClick={() => {
+              <button type="button" className="btn btn-text" disabled={busy === p.handle} data-tip="친구 관계를 끊어요(상대에게 알리지 않아요)" onClick={() => {
                 if (confirm(`${p.nickname}님과 친구를 끊을까요? 상대에게 알림은 가지 않아요.`)) {
                   void act(p.handle, () => friendsApi.remove(p.handle), '친구를 끊었어요.')
                 }
@@ -720,7 +720,7 @@ function FriendsSection() {
           <h3>보낸 요청 {data.sent.length}</h3>
           <ul className="friend-list">
             {data.sent.map((p) => row(p,
-              <button type="button" className="btn btn-text" disabled={busy === p.handle}
+              <button type="button" className="btn btn-text" disabled={busy === p.handle} data-tip="보낸 요청을 거둬요(상대에게 알리지 않아요)"
                       onClick={() => act(p.handle, () => friendsApi.remove(p.handle), '요청을 취소했어요.')}>요청 취소</button>))}
           </ul>
         </>

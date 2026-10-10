@@ -28,6 +28,8 @@ public final class NotificationText {
                     : "🛡️ 신고하신 내용을 검토했지만 운영 정책 위반은 아니었어요.";
             case CONTENT_HIDDEN -> hidden(n);
             case INQUIRY_ANSWERED -> "📮 남기신 문의에 답변이 왔어요" + (n.inquiry() == null ? "" : ": 「" + n.inquiry().title() + "」");
+            case FRIEND_REQUEST -> "🤝 " + who + " 친구 요청을 보냈어요";
+            case FRIEND_ACCEPTED -> "🤝 " + who + " 친구 요청을 수락했어요";
             case AI_PROPOSAL -> "🤖 AI가 글을 제안했어요" + (n.proposal() == null ? "" : ": 「" + n.proposal().title() + "」");
         };
         if (text == null) return null;

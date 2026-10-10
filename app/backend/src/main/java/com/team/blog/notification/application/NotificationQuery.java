@@ -35,6 +35,7 @@ public class NotificationQuery {
     static final int COMMENT_PREVIEW = 50;
     /** AI 글 제안 알림이 가는 곳 (071): 내 글 관리 임시글 탭의 제안 목록 */
     static final String PROPOSALS_LINK = "/manage/posts?tab=drafts#ai-proposals";
+    static final String FRIENDS_LINK = "/settings#friends";
 
     private final JdbcTemplate jdbc;
     private final CursorCodec cursors;
@@ -259,7 +260,11 @@ public class NotificationQuery {
             }
         }
         // 새 팔로워는 글이 없고 대표 팔로워의 블로그로 간다
-        if (r.type() == NotificationType.FOLLOW && actor != null && !actor.withdrawn()) link = "/@" + actor.handle();
+        if ((r.type() == NotificationType.FOLLOW || r.type() == NotificationType.FRIEND_ACCEPTED) && actor != null && !actor.withdrawn()) {
+            link = "/@" + actor.handle();
+        }
+        // 받은 친구 요청은 설정 > 친구에서 수락·거절한다
+        if (r.type() == NotificationType.FRIEND_REQUEST) link = FRIENDS_LINK;
         return new Item(r.id(), r.type(), r.read(), r.at(), actor, others, post, preview, link, null, null, null, null);
     }
 

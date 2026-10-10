@@ -22,6 +22,12 @@ describe('notifications', () => {
     expect(messageOf({ ...base, type: 'REPLY' }).text).toBe('이 회원님의 댓글에 답글을 남겼어요')
   })
 
+  it('친구 요청·수락 (015 A-1)', () => {
+    const friend = { ...base, post: null, commentPreview: null, link: '/settings#friends' }
+    expect(messageOf({ ...friend, type: 'FRIEND_REQUEST' })).toEqual({ who: '민서님', text: '이 친구 요청을 보냈어요', quote: null })
+    expect(messageOf({ ...friend, type: 'FRIEND_ACCEPTED' }).text).toBe('이 친구 요청을 수락했어요')
+  })
+
   it('볼 수 없는 글·탈퇴한 사용자', () => {
     expect(messageOf({ ...base, post: { id: null, title: null, readable: false }, link: null }).text).toBe('볼 수 없는 글이에요')
     expect(messageOf({ ...base, actor: { nickname: null, handle: null, withdrawn: true } }).who).toBe('탈퇴한 사용자님')
