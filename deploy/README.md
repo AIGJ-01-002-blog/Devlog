@@ -115,6 +115,8 @@ kubectl -n blog rollout status deploy/blog-app
 | Secret | `GEMINI_API_KEY` | Google AI Studio의 Gemini API 열쇠. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어씀 | Gemini 안 씀(Ollama도 없으면 AI 기능 꺼짐) |
 | Secret | `OLLAMA_ACCESS_CLIENT_ID`, `OLLAMA_ACCESS_CLIENT_SECRET` | 집 PC Ollama 앞 Cloudflare Access 서비스 토큰 (docs/61). 앱이 이 헤더를 붙여 보내는 것은 docs/61의 앱 변경이 들어간 뒤부터 | Access 없이 요청(Access를 켰다면 거절됨) |
 | Secret | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google Cloud 콘솔 → API 및 서비스 → 사용자 인증 정보 → OAuth 클라이언트 ID(웹 애플리케이션)의 ID·보안 비밀. 승인된 리디렉션 URI는 `https://devlog.life/login/oauth2/code/google`. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어씀 | `BLOG_SECRET_ENV`의 값을 씀. 거기에도 `GOOGLE_CLIENT_ID`가 없으면 구글 로그인 버튼 안 보임(GitHub·이메일 로그인만) |
+| Secret | `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | 카카오 디벨로퍼스 → 내 애플리케이션 → 앱 키의 REST API 키와 카카오 로그인 → 보안의 Client Secret(사용함). 카카오 로그인을 켜고 Redirect URI에 `https://devlog.life/login/oauth2/code/kakao`를 넣는다. 동의항목은 닉네임·프로필 사진, 비즈 앱이면 카카오계정(이메일)까지. 있으면 `BLOG_SECRET_ENV`의 같은 값을 덮어씀 | `BLOG_SECRET_ENV`의 값을 씀. 거기에도 `KAKAO_CLIENT_ID`가 없으면 카카오 로그인 버튼 안 보임 |
+| Variable | `KAKAO_SCOPES` | 카카오에 요청할 동의항목(쉼표로 구분). 비즈 앱 전환 전이라 이메일을 못 받으면 `profile_nickname,profile_image`로 둔다 | `profile_nickname,profile_image,account_email` |
 | Secret | `OLLAMA_AUTH_TOKEN` | Ollama 앞에 Bearer 프록시를 따로 둘 때만 | 헤더 안 붙임 |
 | Secret | `SONAR_TOKEN` | SonarCloud(sonarcloud.io → My Account → Security) 토큰 | 품질 검사 건너뜀 |
 | Secret | `SONAR_HOST_URL` | 학교 SonarQube를 쓸 때만 그 주소 | SonarCloud 사용 |

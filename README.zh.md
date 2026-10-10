@@ -288,6 +288,7 @@ sequenceDiagram
 | `SITE_BASE_URL` | 用于邮件链接、RSS、链接预览的站点地址 | `http://localhost:8080` |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth 应用 | 开发用的值（无法真正用 GitHub 登录） |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth 客户端 | 隐藏 Google 登录 |
+| `KAKAO_CLIENT_ID` / `KAKAO_CLIENT_SECRET` / `KAKAO_SCOPES` | Kakao 登录应用(REST API 密钥、Client Secret、同意项) | 隐藏 Kakao 登录 |
 | `SMTP_HOST` / `SMTP_USERNAME` / `SMTP_PASSWORD` | 发送验证、重置邮件 | 不发送，只保存 |
 | `S3_ENDPOINT` / `S3_BUCKET` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` | 图片与附件的存储位置（MinIO、S3） | 保存到本地文件夹 |
 | `GEMINI_API_KEY` / `OLLAMA_BASE_URL` | AI 标签推荐 | 两者都为空则关闭该功能 |

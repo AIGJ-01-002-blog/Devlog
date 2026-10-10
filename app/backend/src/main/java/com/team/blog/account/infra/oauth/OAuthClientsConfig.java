@@ -13,11 +13,13 @@ import org.springframework.security.config.oauth2.client.CommonOAuth2Provider;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.util.StringUtils;
 
 /**
- * 소셜 로그인 앱 등록. GitHub은 application.yml, Google은 GOOGLE_CLIENT_ID에 값이 있을 때만 켠다 (004).
- * 비밀 파일에 Google 값이 빈 채로 있어도 앱이 뜨고, 화면은 /api/auth/providers를 보고 Google 버튼을 숨긴다.
+ * 소셜 로그인 앱 등록. GitHub은 application.yml, Google은 GOOGLE_CLIENT_ID, 카카오는 KAKAO_CLIENT_ID에 값이 있을 때만 켠다 (004, 080).
+ * 비밀 파일에 값이 빈 채로 있어도 앱이 뜨고, 화면은 /api/auth/providers를 보고 그 버튼을 숨긴다.
  */
 @Configuration
 @EnableConfigurationProperties(OAuth2ClientProperties.class)
@@ -34,7 +36,33 @@ public class OAuthClientsConfig {
                     .redirectUri(siteBaseUrl(env) + "/login/oauth2/code/{registrationId}")
                     .build());
         }
+        String kakaoId = env.getProperty("KAKAO_CLIENT_ID");
+        if (StringUtils.hasText(kakaoId) && all.stream().noneMatch(r -> r.getRegistrationId().equals("kakao"))) {
+            all.add(kakao(kakaoId, env));
+        }
         return new InMemoryClientRegistrationRepository(all);
+    }
+
+    /**
+     * 카카오 로그인 (spec 080). Spring에 기본 등록이 없어 주소를 직접 적는다. 카카오는 Client Secret을 요청 본문으로 받는다.
+     * 이메일(account_email)은 비즈 앱에서만 받을 수 있어 KAKAO_SCOPES로 줄일 수 있게 둔다. 없으면 가입 마무리 화면에서 이메일을 받는다.
+     */
+    static ClientRegistration kakao(String clientId, Environment env) {
+        String scopes = env.getProperty("KAKAO_SCOPES", "");
+        if (!StringUtils.hasText(scopes)) scopes = "profile_nickname,profile_image,account_email";
+        return ClientRegistration.withRegistrationId("kakao")
+                .clientId(clientId)
+                .clientSecret(env.getProperty("KAKAO_CLIENT_SECRET", ""))
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUri(siteBaseUrl(env) + "/login/oauth2/code/{registrationId}")
+                .scope(StringUtils.commaDelimitedListToSet(scopes.replace(" ", "")))
+                .authorizationUri("https://kauth.kakao.com/oauth/authorize")
+                .tokenUri("https://kauth.kakao.com/oauth/token")
+                .userInfoUri("https://kapi.kakao.com/v2/user/me")
+                .userNameAttributeName("id")
+                .clientName("Kakao")
+                .build();
     }
 
     /** 콜백 주소의 앞부분. 프록시 뒤의 안쪽 요청(http)이 아니라 사이트 주소(SITE_BASE_URL, https)를 쓴다. */

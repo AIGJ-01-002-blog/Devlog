@@ -288,6 +288,7 @@ GitHub Actions でテストし、イメージを作って GHCR に上げたあ�
 | `SITE_BASE_URL` | メールのリンク・RSS・リンクプレビューに使うサイトのアドレス | `http://localhost:8080` |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth アプリ | 開発用の値（実際の GitHub ログインは不可） |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth クライアント | Google ログインを非表示 |
+| `KAKAO_CLIENT_ID` / `KAKAO_CLIENT_SECRET` / `KAKAO_SCOPES` | Kakao ログインアプリ(REST API キー・Client Secret・同意項目) | Kakao ログインを非表示 |
 | `SMTP_HOST` / `SMTP_USERNAME` / `SMTP_PASSWORD` | 認証・再設定メールの送信 | 送らずに保管 |
 | `S3_ENDPOINT` / `S3_BUCKET` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` | 画像・添付の保存先（MinIO・S3） | ローカルフォルダーに保存 |
 | `GEMINI_API_KEY` / `OLLAMA_BASE_URL` | AI タグ提案 | 両方空なら機能オフ |

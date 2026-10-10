@@ -1,6 +1,7 @@
 package com.team.blog.account.infra.oauth;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +19,7 @@ import com.team.blog.account.application.SocialProfile;
 import com.team.blog.account.domain.AuthProvider;
 import com.team.blog.account.web.LoginFlow;
 
-/** GitHub OAuth2 성공·실패 처리. 성공하면 우리 로그인 흐름(LoginFlow)으로 넘긴다. */
+/** 소셜(GitHub·Google·카카오) OAuth2 성공·실패 처리. 성공하면 우리 로그인 흐름(LoginFlow)으로 넘긴다. */
 @Component
 public class OAuth2LoginHandlers implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
     private final LoginFlow loginFlow;
@@ -45,6 +46,7 @@ public class OAuth2LoginHandlers implements AuthenticationSuccessHandler, Authen
                     str(user.getAttributes().get("name")),
                     Boolean.TRUE.equals(user.getAttributes().get("email_verified")) ? str(user.getAttributes().get("email")) : null,
                     str(user.getAttributes().get("picture")));
+            case "kakao" -> kakao(user.getAttributes());
             default -> throw new IllegalStateException("지원하지 않는 로그인 수단");
         };
         response.sendRedirect(loginFlow.complete(profile, request, response));
@@ -54,6 +56,24 @@ public class OAuth2LoginHandlers implements AuthenticationSuccessHandler, Authen
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
             throws IOException {
         response.sendRedirect("/login?error=SOCIAL_LOGIN_FAILED");
+    }
+
+    /**
+     * 카카오 사용자 정보 (spec 080). 이메일은 유효하고(is_email_valid) 인증된(is_email_verified) 것만 쓴다.
+     * 기본 프로필 사진(is_default_image)은 넘기지 않고, 예전 계정이 주는 http 사진 주소는 https로 바꾼다.
+     */
+    static SocialProfile kakao(Map<String, Object> attrs) {
+        Map<?, ?> account = attrs.get("kakao_account") instanceof Map<?, ?> m ? m : Map.of();
+        Map<?, ?> profile = account.get("profile") instanceof Map<?, ?> m ? m : Map.of();
+        boolean emailOk = Boolean.TRUE.equals(account.get("is_email_valid")) && Boolean.TRUE.equals(account.get("is_email_verified"));
+        String photo = Boolean.TRUE.equals(profile.get("is_default_image")) ? null : str(profile.get("profile_image_url"));
+        if (photo != null && photo.startsWith("http://k.kakaocdn.net/")) photo = "https://" + photo.substring("http://".length());
+        return new SocialProfile(AuthProvider.KAKAO,
+                String.valueOf(attrs.get("id")),
+                null,
+                str(profile.get("nickname")),
+                emailOk ? str(account.get("email")) : null,
+                photo);
     }
 
     private static String str(Object o) {

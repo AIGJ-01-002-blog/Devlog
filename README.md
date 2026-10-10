@@ -286,6 +286,7 @@ GitHub Actions로 테스트하고 이미지를 만들어 GHCR에 올린 뒤, kus
 | `SITE_BASE_URL` | 메일 링크·RSS·링크 미리보기에 쓰는 사이트 주소 | `http://localhost:8080` |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth 앱 | 개발용 값(실제 GitHub 로그인 안 됨) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth 클라이언트 | Google 로그인 숨김 |
+| `KAKAO_CLIENT_ID` / `KAKAO_CLIENT_SECRET` / `KAKAO_SCOPES` | 카카오 로그인 앱(REST API 키·Client Secret, 동의항목) | 카카오 로그인 숨김 |
 | `SMTP_HOST` / `SMTP_USERNAME` / `SMTP_PASSWORD` | 인증·재설정 메일 발송 | 보내지 않고 보관 |
 | `S3_ENDPOINT` / `S3_BUCKET` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` | 사진·첨부 저장소(MinIO·S3) | 로컬 폴더에 저장 |
 | `GEMINI_API_KEY` / `OLLAMA_BASE_URL` | AI 태그 추천 | 둘 다 없으면 기능 꺼짐 |

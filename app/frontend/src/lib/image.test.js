@@ -23,6 +23,10 @@ describe('소셜 사진 주소', () => {
         expect(socialAvatarSource('https://lh3.googleusercontent.com/a/ACg8=s96-c')).toBe('https://lh3.googleusercontent.com/a/ACg8=s512-c');
         expect(socialAvatarSource('https://lh3.googleusercontent.com/a/ACg8')).toBe('https://lh3.googleusercontent.com/a/ACg8=s512-c');
     });
+    it('카카오 사진은 주소 그대로 쓴다', () => {
+        expect(socialAvatarSource('https://k.kakaocdn.net/dn/abc/img_640x640.jpg')).toBe('https://k.kakaocdn.net/dn/abc/img_640x640.jpg');
+        expect(socialAvatarSource('http://k.kakaocdn.net/dn/abc/img_640x640.jpg')).toBeNull();
+    });
     it('다른 곳이거나 https가 아니면 쓰지 않는다', () => {
         expect(socialAvatarSource('http://avatars.githubusercontent.com/u/1')).toBeNull();
         expect(socialAvatarSource('https://evil.example/a.png')).toBeNull();

@@ -446,6 +446,27 @@ class EmailAuthTest extends IntegrationTest {
     }
 
     @Test
+    void 카카오는_ka_주소로_가입하고_이메일_동의가_없으면_가입_때_이메일을_받는다() throws Exception {
+        String kid = String.valueOf(4_000_000_000L + System.nanoTime() % 100_000_000L);
+        String body = "kakao" + kid.substring(kid.length() - 8);
+        Browser b = browser();
+        b.perform(asJson(post("/api/dev/login"), Map.of("provider", "KAKAO", "providerUserId", kid, "login", "", "name", "카카오")))
+                .andExpect(jsonPath("$.redirect").value("/signup/social"));
+        b.perform(get("/api/auth/signup"))
+                .andExpect(jsonPath("$.provider").value("KAKAO"))
+                .andExpect(jsonPath("$.prefix").value("ka-"))
+                .andExpect(jsonPath("$.emailRequired").value(true));
+        b.perform(asJson(post("/api/auth/signup"), Map.of("handleBody", body, "nickname", "카카오" + kid.substring(kid.length() - 5),
+                "agreeTerms", true, "agreePrivacy", true, "email", uniqueEmail("kakao")))).andExpect(status().isCreated());
+        b.perform(get("/api/auth/me")).andExpect(jsonPath("$.member.handle").value("ka-" + body));
+
+        Browser again = browser();
+        again.perform(asJson(post("/api/dev/login"), Map.of("provider", "KAKAO", "providerUserId", kid, "login", "", "name", "카카오")))
+                .andExpect(jsonPath("$.redirect").value("/"));
+        again.perform(get("/api/auth/me")).andExpect(jsonPath("$.member.handle").value("ka-" + body));
+    }
+
+    @Test
     void 인증된_이메일이_없는_GitHub_계정은_가입_때_이메일을_받아_메일로_인증한다() throws Exception {
         String gid = String.valueOf(800_000_000L + System.nanoTime() % 100_000_000L);
         Browser b = browser();
