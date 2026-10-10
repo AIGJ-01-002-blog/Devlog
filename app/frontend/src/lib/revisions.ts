@@ -1,4 +1,5 @@
 import { api } from './api'
+import { t } from './i18n'
 
 // 글 수정 이력 (058). 발행할 때마다 한 판씩 남고, 작성자만 본다.
 
@@ -24,7 +25,7 @@ export const revisions = {
 
 /** 목록 한 줄 이름: 맨 위(가장 최근)는 "지금 발행본", 맨 처음 판은 "첫 발행". */
 export function revisionLabel(item: RevisionItem, latestNo: number): string {
-  if (item.no === latestNo) return `${item.no}판 · 지금 발행본`
-  if (item.no === 1) return '1판 · 첫 발행'
-  return `${item.no}판`
+  if (item.no === latestNo) return t('{0}판 · 지금 발행본', { 0: item.no })
+  if (item.no === 1) return t('1판 · 첫 발행')
+  return t('{0}판', { 0: item.no })
 }

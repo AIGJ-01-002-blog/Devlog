@@ -1,5 +1,6 @@
 import { diffLines, diffWordsWithSpace } from 'diff'
 import { useMemo } from 'react'
+import { tNodes } from '../lib/i18n'
 
 /**
  * 두 글을 줄 단위로 나란히 비교한다 (충돌 창 docs/04 §2-7, 수정 이력 058). 색만으로 구분하지 않고 −/+ 기호를 붙인다.
@@ -65,7 +66,7 @@ function Line({ row, side }: { row: Row; side: 'left' | 'right' }) {
     const lines = text.split('\n')
     // 바뀌지 않은 긴 구간은 접는다
     if (lines.length > 8) {
-      return <span className="diff-same">{lines.slice(0, 3).join('\n')}{'\n'}<span className="diff-fold">⋯ 같은 내용 {lines.length - 6}줄 ⋯</span>{'\n'}{lines.slice(-3).join('\n')}</span>
+      return <span className="diff-same">{lines.slice(0, 3).join('\n')}{'\n'}<span className="diff-fold">{tNodes('⋯ 같은 내용 {0}줄 ⋯', { 0: lines.length - 6 })}</span>{'\n'}{lines.slice(-3).join('\n')}</span>
     }
     return <span className="diff-same">{text}</span>
   }

@@ -28,6 +28,7 @@ import { aiHint, type AiHint } from '../lib/mcp'
 import { addTag, tagErrors } from '../lib/tags'
 import type { EditorView, FriendOverview, ServerContent, Visibility } from '../lib/types'
 import { NotFoundPage } from './NotFoundPage'
+import { t, tNodes } from '../lib/i18n'
 
 /** [새 글]: 임시글을 먼저 만들고 에디터 주소로 바꾼다 (docs/04 §2-5). */
 export function NewPostPage() {
@@ -37,7 +38,7 @@ export function NewPostPage() {
     setError(null)
     api<{ id: number }>('/api/posts', { method: 'POST', body: {} })
       .then((p) => navigate(`/write/${p.id}`, { replace: true }))
-      .catch((e) => setError(e instanceof ApiError ? e.message : '새 글을 만들지 못했어요.'))
+      .catch((e) => setError(e instanceof ApiError ? e.message : t('새 글을 만들지 못했어요.')))
   }, [])
   useEffect(() => {
     if (started.current) return
@@ -47,8 +48,8 @@ export function NewPostPage() {
   return (
     <main className="container narrow">
       {error
-        ? <p className="error center" role="alert">{error} <button type="button" className="btn btn-text" onClick={create}>다시 시도</button></p>
-        : <p className="muted center">새 글을 준비하는 중…</p>}
+        ? <p className="error center" role="alert">{error} <button type="button" className="btn btn-text" onClick={create}>{t('다시 시도')}</button></p>
+        : <p className="muted center">{t('새 글을 준비하는 중…')}</p>}
     </main>
   )
 }
@@ -68,7 +69,7 @@ export function WritePage({ id }: { id: string }) {
   }, [id, memberId])
 
   if (missing) return <NotFoundPage />
-  if (!loaded || memberId == null) return <main className="container"><p className="muted center">불러오는 중…</p></main>
+  if (!loaded || memberId == null) return <main className="container"><p className="muted center">{t('불러오는 중…')}</p></main>
   return <Editor key={loaded.view.id} view={loaded.view} local={loaded.local} memberId={memberId} />
 }
 
@@ -82,7 +83,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
   const [content, setContent] = useState(restored ? local!.contentMd : view.contentMd)
   const [state, setState] = useState<SaveState>({ kind: 'saved', at: new Date(view.savedAt) })
   const [showConflict, setShowConflict] = useState(restore === 'conflict')
-  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(restore === 'load' ? { ok: true, text: '이 기기에 저장되지 않은 변경을 불러왔어요.' } : null)
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(restore === 'load' ? { ok: true, text: t('이 기기에 저장되지 않은 변경을 불러왔어요.') } : null)
   const [localStored, setLocalStored] = useState(false)
   const [backups, setBackups] = useState<LocalBackup[]>([])
   const [showBackups, setShowBackups] = useState(false)
@@ -204,7 +205,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     window.addEventListener('pagehide', onPageHide)
     window.addEventListener('beforeunload', onBeforeUnload)
     window.addEventListener('online', onOnline)
-    setLeaveGuard(() => !(s.hasUnsaved || s.isConflict) || confirm('저장되지 않은 변경이 있어요. 떠날까요?'))
+    setLeaveGuard(() => !(s.hasUnsaved || s.isConflict) || confirm(t('저장되지 않은 변경이 있어요. 떠날까요?')))
     return () => {
       document.removeEventListener('visibilitychange', onHide)
       window.removeEventListener('pagehide', onPageHide)
@@ -220,14 +221,14 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
 
   // 미리보기: 발행과 같은 변환기(서버)로 만든다 (FR-003)
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       if (!content.trim()) return setPreview('')
       // 업로드 대기 사진은 이 기기 사진으로 보여 준다 (FR-016)
       api<{ html: string }>('/api/markdown/preview', { method: 'POST', body: { contentMd: forPreview(content) } })
         .then((r) => { setPreview(restorePendingInPreview(r.html, images.localUrls.current)); setPreviewError(null) })
-        .catch((e) => setPreviewError(e instanceof ApiError ? e.message : '미리보기를 만들지 못했어요.'))
+        .catch((e) => setPreviewError(e instanceof ApiError ? e.message : t('미리보기를 만들지 못했어요.')))
     }, 500)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
   }, [content])
 
   useEffect(() => {
@@ -278,7 +279,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
       const map: Record<string, string> = {}
       e.errors.forEach((f) => (map[f.field] = f.message))
       setErrors(map)
-      setState({ kind: 'error', message: e.errors.length ? '입력값을 확인해 주세요.' : e.message })
+      setState({ kind: 'error', message: e.errors.length ? t('입력값을 확인해 주세요.') : e.message })
     } else {
       setState({ kind: 'offline' })
     }
@@ -324,82 +325,83 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
     <main className="editor">
       <div className="editor-toolbar">
         <div className="row">
-          <button type="button" className="btn btn-text" data-tip="에디터 닫기. 쓴 내용은 자동으로 저장돼요" onClick={() => history.length > 1 ? history.back() : navigate('/manage/posts')}>← 나가기</button>
+          <button type="button" className="btn btn-text" data-tip={t('에디터 닫기. 쓴 내용은 자동으로 저장돼요')} onClick={() => history.length > 1 ? history.back() : navigate('/manage/posts')}>{t('← 나가기')}</button>
           <SaveIndicator state={state} localStored={localStored} onCompare={() => setShowConflict(true)} />
         </div>
         <div className="row">
           <div className="tabs-mobile" role="tablist">
-            <button type="button" role="tab" aria-selected={tab === 'write'} onClick={() => setTab('write')}>쓰기</button>
-            <button type="button" role="tab" aria-selected={tab === 'preview'} onClick={() => setTab('preview')}>미리보기</button>
+            <button type="button" role="tab" aria-selected={tab === 'write'} onClick={() => setTab('write')}>{t('쓰기')}</button>
+            <button type="button" role="tab" aria-selected={tab === 'preview'} onClick={() => setTab('preview')}>{t('미리보기')}</button>
           </div>
           <button type="button" className="btn btn-text" onClick={() => fileRef.current?.click()}
-                  data-tip="사진 넣기: jpg·png·gif·webp, 10MB까지. 움직이는 webp·png는 첫 장면만 남아요"><span aria-hidden="true">🖼</span> 사진</button>
+                  data-tip={t('사진 넣기: jpg·png·gif·webp, 10MB까지. 움직이는 webp·png는 첫 장면만 남아요')}>{tNodes('{0} 사진', { 0: <span aria-hidden="true">🖼</span> })}</button>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden
                  onChange={(e) => { addFiles(e.target.files); e.target.value = '' }} />
-          <button type="button" className="btn btn-outline" data-tip="지금 바로 저장 (Ctrl+S). 평소에도 몇 초마다 자동 저장돼요" onClick={() => saveNow()}>저장</button>
+          <button type="button" className="btn btn-outline" data-tip={t('지금 바로 저장 (Ctrl+S). 평소에도 몇 초마다 자동 저장돼요')} onClick={() => saveNow()}>{t('저장')}</button>
           {view.status === 'PUBLISHED' && (
             <button type="button" className="btn btn-text" onClick={() => setShowRevisions(true)}
-                    data-tip="발행한 판을 지금 내용과 비교하고, 이전 판을 불러와요"><span aria-hidden="true">🕘</span> 수정 이력</button>
+                    data-tip={t('발행한 판을 지금 내용과 비교하고, 이전 판을 불러와요')}>{tNodes('{0} 수정 이력', { 0: <span aria-hidden="true">🕘</span> })}</button>
           )}
           {backups.length > 0 && (
-            <button type="button" className="btn btn-text" data-tip="이 브라우저에 따로 남겨 둔 사본 보기" onClick={() => setShowBackups(true)}>이 기기 백업 {backups.length}</button>
+            <button type="button" className="btn btn-text" data-tip={t('이 브라우저에 따로 남겨 둔 사본 보기')} onClick={() => setShowBackups(true)}>{tNodes('이 기기 백업 {0}', { 0: backups.length })}</button>
           )}
-          <button type="button" className="btn btn-primary" data-tip="공개 범위·태그·썸네일을 정하고 발행해요" onClick={() => saver.current!.isConflict ? setShowConflict(true) : setShowPublish(true)}>
-            {view.status === 'PUBLISHED' ? '다시 발행' : '발행'}
+          <button type="button" className="btn btn-primary" data-tip={t('공개 범위·태그·썸네일을 정하고 발행해요')} onClick={() => saver.current!.isConflict ? setShowConflict(true) : setShowPublish(true)}>
+            {view.status === 'PUBLISHED' ? t('다시 발행') : t('발행')}
           </button>
         </div>
       </div>
       {state.kind === 'conflict' && (
         <div className="banner banner-warn" role="alert">
-          <span aria-hidden="true">⚠</span> 다른 탭이나 기기에서 이 글이 수정되었어요({clock(state.server.savedAt)}). 지금 내용은 이 기기에만 저장되고 있어요.
-          <button type="button" className="btn btn-text" onClick={() => setShowConflict(true)}>비교하기</button>
+          {tNodes('{0} 다른 탭이나 기기에서 이 글이 수정되었어요({1}). 지금 내용은 이 기기에만 저장되고 있어요.{2}', { 0: <span aria-hidden="true">⚠</span>, 1: clock(state.server.savedAt), 2: <button type="button" className="btn btn-text" onClick={() => setShowConflict(true)}>{t('비교하기')}</button> })}
         </div>
       )}
       {hint?.publishRequestedAt && (
         <div className="banner ai-hint-banner" role="status">
-          AI가 이 글의 발행을 요청했어요. 내용을 읽어 보고 괜찮으면 발행해 주세요.
-          {hint.tags.length > 0 && <span className="muted small"> 태그 제안 {hint.tags.length}개를 발행 창에 채워 뒀어요.</span>}
-          <button type="button" className="btn btn-text" onClick={() => saver.current!.isConflict ? setShowConflict(true) : setShowPublish(true)}>발행 창 열기</button>
+          
+          {t('AI가 이 글의 발행을 요청했어요. 내용을 읽어 보고 괜찮으면 발행해 주세요.')}
+          {hint.tags.length > 0 && <span className="muted small">  {tNodes('태그 제안 {0}개를 발행 창에 채워 뒀어요.', { 0: hint.tags.length })}</span>}
+          <button type="button" className="btn btn-text" onClick={() => saver.current!.isConflict ? setShowConflict(true) : setShowPublish(true)}>{t('발행 창 열기')}</button>
         </div>
       )}
       {notice && (
         <div className={notice.ok ? 'banner banner-ok' : 'banner banner-warn'} role={notice.ok ? 'status' : 'alert'}>
           {notice.text}
-          <button type="button" className="btn btn-text" aria-label="닫기" onClick={() => setNotice(null)}>✕</button>
+          <button type="button" className="btn btn-text" aria-label={t('닫기')} onClick={() => setNotice(null)}>✕</button>
         </div>
       )}
       {images.waiting > 0 && (
         <div className="banner banner-warn" role="status">
           {images.uploading > 0
-            ? `사진 ${images.waiting}장을 올리는 중…`
-            : <><span aria-hidden="true">⚠</span> 업로드 대기 사진 {images.waiting}장 — 연결되면 자동으로 올려요. 다 올라가야 발행할 수 있어요.</>}
-          {images.uploading === 0 && <button type="button" className="btn btn-text" onClick={() => void images.retryAll()}>다시 시도</button>}
+            ? t('사진 {0}장을 올리는 중…', { 0: images.waiting })
+            : <>{tNodes('{0} 업로드 대기 사진 {1}장 — 연결되면 자동으로 올려요. 다 올라가야 발행할 수 있어요.', { 0: <span aria-hidden="true">⚠</span>, 1: images.waiting })}</>}
+          {images.uploading === 0 && <button type="button" className="btn btn-text" onClick={() => void images.retryAll()}>{t('다시 시도')}</button>}
         </div>
       )}
       {images.error && (
         <div className="banner banner-warn" role="alert">
           {images.error}
-          <button type="button" className="btn btn-text" aria-label="닫기" onClick={images.clearError}>✕</button>
+          <button type="button" className="btn btn-text" aria-label={t('닫기')} onClick={images.clearError}>✕</button>
         </div>
       )}
       {images.usage && images.usage.usedBytes > images.usage.quotaBytes * 0.9 && (
         <p className="muted small editor-note">
-          사진 저장 공간: 남은 공간 약 {formatBytes(Math.max(0, images.usage.quotaBytes - images.usage.usedBytes))}
+          
+          {tNodes('사진 저장 공간: 남은 공간 약 {0}', { 0: formatBytes(Math.max(0, images.usage.quotaBytes - images.usage.usedBytes)) })}
         </p>
       )}
       {view.status === 'PUBLISHED' && (
-        <p className="muted small editor-note">발행한 글을 고치는 중이에요. 다시 발행할 때까지 독자에게는 이전 발행본이 보여요.</p>
+        <p className="muted small editor-note">{t('발행한 글을 고치는 중이에요. 다시 발행할 때까지 독자에게는 이전 발행본이 보여요.')}</p>
       )}
       <div className={`editor-panes show-${tab}`}>
         <section className="editor-write">
-          <input className="editor-title" placeholder="제목을 입력하세요" value={title} maxLength={100}
-                 onChange={(e) => setTitle(e.target.value)} aria-label="제목" aria-invalid={!!errors.title}
+          <input className="editor-title" placeholder={t('제목을 입력하세요')} value={title} maxLength={100}
+                 onChange={(e) => setTitle(e.target.value)} aria-label={t('제목')} aria-invalid={!!errors.title}
                  aria-describedby={errors.title ? 'title-error' : undefined} />
           {errors.title && <small id="title-error" className="error">{errors.title}</small>}
           <MarkdownToolbar bodyRef={bodyRef} onChange={setContent} />
           <textarea ref={bodyRef} className={`editor-body${dragging ? ' dragging' : ''}`}
-                    placeholder="Markdown으로 내용을 쓰세요… 사진은 붙여 넣거나 끌어 놓으세요" value={content}
-                    onChange={(e) => setContent(e.target.value)} aria-label="본문" aria-invalid={!!errors.contentMd}
+                    placeholder={t('Markdown으로 내용을 쓰세요… 사진은 붙여 넣거나 끌어 놓으세요')} value={content}
+                    onChange={(e) => setContent(e.target.value)} aria-label={t('본문')} aria-invalid={!!errors.contentMd}
                     aria-describedby={errors.contentMd ? 'content-error' : undefined}
                     onKeyDown={(e) => {
                       // Ctrl(⌘)+B·I·K는 서식
@@ -422,8 +424,8 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
           <SeriesPicker postId={view.id} />
           <AttachmentEditor postId={view.id} published={view.status === 'PUBLISHED'} />
         </section>
-        <section className="editor-preview" aria-label="미리보기">
-          <h1 className="post-title">{title || <span className="muted">제목 없음</span>}</h1>
+        <section className="editor-preview" aria-label={t('미리보기')}>
+          <h1 className="post-title">{title || <span className="muted">{t('제목 없음')}</span>}</h1>
           {previewError && <p className="error" role="alert">{previewError}</p>}
           <div className="post-body markdown" ref={previewRef} dangerouslySetInnerHTML={{ __html: preview }} />
         </section>
@@ -431,12 +433,12 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
 
       {showPublish && (
         <Modal labelledBy="publish-title" onClose={() => { if (!publishing) setShowPublish(false) }}>
-          <h2 id="publish-title">{view.status === 'PUBLISHED' ? '다시 발행' : '발행'}</h2>
+          <h2 id="publish-title">{view.status === 'PUBLISHED' ? t('다시 발행') : t('발행')}</h2>
           <fieldset className="field">
-            <legend>공개 범위</legend>
-            <label><input type="radio" name="visibility" checked={visibility === 'PUBLIC'} onChange={() => setVisibility('PUBLIC')} /> <span aria-hidden="true">🌐</span> 전체 공개</label>
-            <label><input type="radio" name="visibility" checked={visibility === 'FRIENDS'} onChange={() => setVisibility('FRIENDS')} /> <span aria-hidden="true">👥</span> 친구에게만</label>
-            <label><input type="radio" name="visibility" checked={visibility === 'PRIVATE'} onChange={() => setVisibility('PRIVATE')} /> <span aria-hidden="true">🔒</span> 비공개 (나만 보기)</label>
+            <legend>{t('공개 범위')}</legend>
+            <label><input type="radio" name="visibility" checked={visibility === 'PUBLIC'} onChange={() => setVisibility('PUBLIC')} /> <span aria-hidden="true">🌐</span>  {t('전체 공개')}</label>
+            <label><input type="radio" name="visibility" checked={visibility === 'FRIENDS'} onChange={() => setVisibility('FRIENDS')} /> <span aria-hidden="true">👥</span>  {t('친구에게만')}</label>
+            <label><input type="radio" name="visibility" checked={visibility === 'PRIVATE'} onChange={() => setVisibility('PRIVATE')} /> <span aria-hidden="true">🔒</span>  {t('비공개 (나만 보기)')}</label>
           </fieldset>
           {visibility === 'FRIENDS' && <NoFriendsHint onPublic={() => setVisibility('PUBLIC')} />}
           <TagInput value={tags} onChange={(t) => { setTags(t); setErrors((m) => withoutTagErrors(m)) }} errors={tagErrors(errors)} />
@@ -444,25 +446,25 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
                         onAdd={(t) => { setTags((cur) => addTag(cur, t)); setErrors((m) => withoutTagErrors(m)) }} />
           <BranchSuggest postId={view.id} tags={tags} />
           <label className="field">
-            <span>짧은 소개 ({summaryLength(summary)}/{SUMMARY_MAX})</span>
+            <span>{tNodes('짧은 소개 ({0}/{1})', { 0: summaryLength(summary), 1: SUMMARY_MAX })}</span>
             <textarea value={summary} rows={3} aria-invalid={errors.summary ? true : undefined}
                       aria-describedby={errors.summary ? 'summary-error' : undefined}
-                      placeholder="비워 두면 본문 앞부분이 목록에 보여요"
+                      placeholder={t('비워 두면 본문 앞부분이 목록에 보여요')}
                       onChange={(e) => { setSummary(e.target.value); setErrors(({ summary: _, ...rest }) => rest) }} />
           </label>
           {errors.summary && <p id="summary-error" className="error small" role="alert">{errors.summary}</p>}
           <ThumbnailPicker value={thumbnail} content={content} error={errors.thumbnail} onBusy={setThumbnailBusy}
                            onChange={(c) => { setThumbnail(c); setErrors(({ thumbnail: _, ...rest }) => rest) }} />
-          {Object.keys(errors).some((k) => !isPublishField(k)) && <p className="error small">제목이나 본문도 확인해 주세요.</p>}
+          {Object.keys(errors).some((k) => !isPublishField(k)) && <p className="error small">{t('제목이나 본문도 확인해 주세요.')}</p>}
           <PrepublishCheck title={title} contentMd={content} summary={summary} tags={tags} thumbnail={thumbnail} />
-          {view.status === 'PUBLISHED' && <p className="muted small">주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.</p>}
+          {view.status === 'PUBLISHED' && <p className="muted small">{t('주소와 처음 공개한 날짜는 그대로이고 "수정됨"이 표시돼요.')}</p>}
           <AltTexts content={content} open={showAlts} onOpen={() => setShowAlts(true)}
                     localUrls={images.localUrls.current} onChange={(i, alt) => setContent((c) => setAlt(c, i, alt))} />
-          {pendingIds(content).length > 0 && <p className="error small">업로드가 끝나지 않은 사진이 있어요. 다 올라간 뒤 발행할 수 있어요.</p>}
+          {pendingIds(content).length > 0 && <p className="error small">{t('업로드가 끝나지 않은 사진이 있어요. 다 올라간 뒤 발행할 수 있어요.')}</p>}
           <footer className="dialog-footer">
-            <button type="button" className="btn btn-text" onClick={() => setShowPublish(false)} disabled={publishing}>취소</button>
+            <button type="button" className="btn btn-text" onClick={() => setShowPublish(false)} disabled={publishing}>{t('취소')}</button>
             <button type="button" className="btn btn-primary" onClick={publish} disabled={publishing || thumbnailBusy}>
-              {publishing ? '발행 중…' : '발행하기'}
+              {publishing ? t('발행 중…') : t('발행하기')}
             </button>
           </footer>
         </Modal>
@@ -474,26 +476,26 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
             // 지금 내용은 이 기기 백업에 남겨 둔다: 불러오기로 사라지지 않게 (백업 불러오기와 같은 규칙)
             const mine = { memberId, postId: view.id, ...current(), at: Date.now() }
             if ((mine.title !== r.title || mine.contentMd !== r.contentMd) && !(await localDrafts.addBackup(mine))) {
-              if (!confirm('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 이 판을 불러올까요?')) return
+              if (!confirm(t('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 이 판을 불러올까요?'))) return
             }
             setTitle(r.title)
             setContent(r.contentMd)
             setSummary(r.summary ?? '')
             setBackups(await localDrafts.backups(memberId, view.id))
             setShowRevisions(false)
-            setNotice({ ok: true, text: `${r.no}판을 불러왔어요. 다시 발행하면 독자에게 보여요. 바로 전 내용은 이 기기 백업에 있어요.` })
+            setNotice({ ok: true, text: t('{0}판을 불러왔어요. 다시 발행하면 독자에게 보여요. 바로 전 내용은 이 기기 백업에 있어요.', { 0: r.no }) })
           }} />
       )}
 
       {showBackups && (
         <Modal labelledBy="backups-title" onClose={() => setShowBackups(false)}>
-          <h2 id="backups-title">이 기기 백업</h2>
-          <p className="muted small">[저장된 내용 불러오기]를 고를 때 편집 중이던 내용이에요. 7일 동안 이 브라우저에만 남아요.</p>
+          <h2 id="backups-title">{t('이 기기 백업')}</h2>
+          <p className="muted small">{t('[저장된 내용 불러오기]를 고를 때 편집 중이던 내용이에요. 7일 동안 이 브라우저에만 남아요.')}</p>
           <ul className="backup-list">
             {backups.map((b) => (
               <li key={b.at}>
                 <div>
-                  <b>{b.title || '제목 없음'}</b> <span className="muted small">{fullDate(new Date(b.at).toISOString())} {clock(new Date(b.at))}</span>
+                  <b>{b.title || t('제목 없음')}</b> <span className="muted small">{fullDate(new Date(b.at).toISOString())} {clock(new Date(b.at))}</span>
                   <p className="small muted backup-excerpt">{b.contentMd.slice(0, 120)}</p>
                 </div>
                 <div className="row">
@@ -501,25 +503,25 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
                     // 지금 내용도 백업해 두고 바꾼다: 어느 쪽도 모르게 사라지지 않게 (FR-013)
                     const mine = { memberId, postId: view.id, ...current(), at: Date.now() }
                     if ((mine.title !== b.title || mine.contentMd !== b.contentMd) && !(await localDrafts.addBackup(mine))) {
-                      if (!confirm('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 백업을 불러올까요?')) return
+                      if (!confirm(t('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 백업을 불러올까요?'))) return
                     }
                     setTitle(b.title)
                     setContent(b.contentMd)
                     setBackups(await localDrafts.backups(memberId, view.id))
                     setShowBackups(false)
-                    setNotice({ ok: true, text: '백업한 내용을 불러왔어요. 바로 전 내용도 백업해 두었어요.' })
-                  }}>불러오기</button>
+                    setNotice({ ok: true, text: t('백업한 내용을 불러왔어요. 바로 전 내용도 백업해 두었어요.') })
+                  }}>{t('불러오기')}</button>
                   <button type="button" className="btn btn-text" onClick={async () => {
-                    if (!confirm('이 백업을 지울까요? 되돌릴 수 없어요.')) return
+                    if (!confirm(t('이 백업을 지울까요? 되돌릴 수 없어요.'))) return
                     await localDrafts.removeBackup(b)
                     setBackups((list) => list.filter((x) => x !== b))
-                  }}>지우기</button>
+                  }}>{t('지우기')}</button>
                 </div>
               </li>
             ))}
           </ul>
           <footer className="dialog-footer">
-            <button type="button" className="btn btn-text" onClick={() => setShowBackups(false)}>닫기</button>
+            <button type="button" className="btn btn-text" onClick={() => setShowBackups(false)}>{t('닫기')}</button>
           </footer>
         </Modal>
       )}
@@ -532,10 +534,10 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
             // 편집 중이던 내용은 이 기기에 7일 백업한다 (FR-012). 백업을 못 하면 불러오기 전에 알린다
             const backup = { memberId, postId: view.id, ...current(), at: Date.now() }
             if (!(await localDrafts.addBackup(backup))) {
-              if (!confirm('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 저장된 내용을 불러올까요?')) return
+              if (!confirm(t('이 브라우저에는 백업을 남길 수 없어요. 편집 중인 내용을 버리고 저장된 내용을 불러올까요?'))) return
             } else {
               setBackups((b) => [backup, ...b])
-              setNotice({ ok: true, text: '편집 중인 내용은 이 기기에 7일 동안 백업돼요.' })
+              setNotice({ ok: true, text: t('편집 중인 내용은 이 기기에 7일 동안 백업돼요.') })
             }
             setTitle(conflictServer.title)
             setContent(conflictServer.contentMd)
@@ -549,7 +551,7 @@ function Editor({ view, local, memberId }: { view: EditorView; local: LocalDraft
               created = await api<{ id: number }>('/api/posts', { method: 'POST', body: current() })
             } catch (e) {
               setShowConflict(false)
-              setNotice({ ok: false, text: e instanceof ApiError ? e.message : '새 글로 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.' })
+              setNotice({ ok: false, text: e instanceof ApiError ? e.message : t('새 글로 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.') })
               return
             }
             saver.current!.reset({ title: conflictServer.title, contentMd: conflictServer.contentMd }, conflictServer.version)
@@ -575,22 +577,23 @@ function AltTexts({ content, open, onOpen, localUrls, onChange }: {
   if (!open) {
     return missing > 0 ? (
       <p className="small">
-        대체글이 없는 사진이 {missing}장 있어요 <button type="button" className="btn btn-text" onClick={onOpen}>대체글 넣기</button>
+        
+        {tNodes('대체글이 없는 사진이 {0}장 있어요 {1}', { 0: missing, 1: <button type="button" className="btn btn-text" onClick={onOpen}>{t('대체글 넣기')}</button> })}
       </p>
     ) : null
   }
   return (
     <fieldset className="field alt-texts">
-      <legend>사진 대체글</legend>
-      <p className="muted small">사진을 볼 수 없는 분께 읽어 줄 설명이에요.</p>
+      <legend>{t('사진 대체글')}</legend>
+      <p className="muted small">{t('사진을 볼 수 없는 분께 읽어 줄 설명이에요.')}</p>
       {list.map((img) => {
         const src = img.src.startsWith('local:') ? localUrls.get(img.src.slice(6)) : img.src
         return (
           <label key={img.index} className="alt-row">
             {src ? <img src={src} alt="" className="alt-thumb" /> : <span className="alt-thumb" />}
             <span className="alt-input">
-              <input value={img.alt} placeholder="예: 로그인 화면의 오류 메시지" onChange={(e) => onChange(img.index, e.target.value)} />
-              {img.alt.length > ALT_SOFT_LIMIT && <small className="muted">짧게 쓰면 더 듣기 편해요 ({img.alt.length}자)</small>}
+              <input value={img.alt} placeholder={t('예: 로그인 화면의 오류 메시지')} onChange={(e) => onChange(img.index, e.target.value)} />
+              {img.alt.length > ALT_SOFT_LIMIT && <small className="muted">{tNodes('짧게 쓰면 더 듣기 편해요 ({0}자)', { 0: img.alt.length })}</small>}
             </span>
           </label>
         )
@@ -607,23 +610,23 @@ function SaveIndicator({ state, localStored, onCompare }: { state: SaveState; lo
   switch (state.kind) {
     case 'saved':
       cls = 'save-state ok'
-      body = <>{icon('✓')}저장됨{state.at ? ` ${clock(state.at)}` : ''}</>
+      body = <>{icon('✓')}{t('저장됨')}{state.at ? ` ${clock(state.at)}` : ''}</>
       break
     case 'dirty':
-      body = <>{icon('●')}{localStored ? '이 기기에 저장됨 (동기화 대기)' : '저장 대기'}</>
+      body = <>{icon('●')}{localStored ? t('이 기기에 저장됨 (동기화 대기)') : t('저장 대기')}</>
       break
     case 'saving':
-      body = '저장 중…'
+      body = t('저장 중…')
       break
     case 'offline':
       cls = 'save-state warn'
-      body = <>{icon('⚠')}오프라인 — 이 기기에 저장 중, 연결되면 자동 동기화</>
+      body = <>{tNodes('{0}오프라인 — 이 기기에 저장 중, 연결되면 자동 동기화', { 0: icon('⚠') })}</>
       break
     case 'conflict':
       cls = ''
       body = (
         <button type="button" className="save-state warn btn-text" onClick={onCompare}>
-          {icon('⚠')}다른 곳에서 수정됨 — 이 기기에만 저장 중 [비교하기]
+          {tNodes('{0}다른 곳에서 수정됨 — 이 기기에만 저장 중 [비교하기]', { 0: icon('⚠') })}
         </button>
       )
       break
@@ -646,8 +649,8 @@ function NoFriendsHint({ onPublic }: { onPublic: () => void }) {
   if (count !== 0) return null
   return (
     <p className="banner small" role="status">
-      아직 친구가 없어서 지금은 나만 볼 수 있어요.{' '}
-      <button type="button" className="btn btn-text" onClick={onPublic}>전체 공개로 바꾸기</button>
+      
+      {tNodes('아직 친구가 없어서 지금은 나만 볼 수 있어요. {0}', { 0: <button type="button" className="btn btn-text" onClick={onPublic}>{t('전체 공개로 바꾸기')}</button> })}
     </p>
   )
 }

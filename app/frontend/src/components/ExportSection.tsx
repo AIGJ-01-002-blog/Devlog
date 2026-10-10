@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { downloadExport, exportErrorText, exportSummary } from '../lib/export'
+import { t, tNodes } from '../lib/i18n'
 
 /**
  * 내 글 내보내기 (059). Crowfoot의 Markdown 내보내기처럼, 내 글을 언제든 들고 나갈 수 있게 한다.
@@ -19,7 +20,7 @@ export function ExportSection() {
     setMessage(null)
     try {
       const name = await downloadExport()
-      setMessage({ ok: true, text: `${name} 파일을 받았어요.` })
+      setMessage({ ok: true, text: t('{0} 파일을 받았어요.', { 0: name }) })
     } catch (e) {
       setMessage({ ok: false, text: exportErrorText(e) })
     } finally {
@@ -29,14 +30,16 @@ export function ExportSection() {
 
   return (
     <section className="settings-section" id="export">
-      <h2>내 글 내보내기</h2>
+      <h2>{t('내 글 내보내기')}</h2>
       <p className="muted small">
-        휴지통에 없는 내 글{count != null ? ` ${count}개` : ''}를 글마다 Markdown 파일 하나로 묶어 zip으로 받아요.
-        제목·날짜·태그·시리즈가 파일 맨 위에 적혀 있어 다른 블로그로 옮기거나 백업하기 좋아요.
+        
+        {count != null
+          ? t('휴지통에 없는 내 글 {0}개를 글마다 Markdown 파일 하나로 묶어 zip으로 받아요. 제목·날짜·태그·시리즈가 파일 맨 위에 적혀 있어 다른 블로그로 옮기거나 백업하기 좋아요.', { 0: count })
+          : t('휴지통에 없는 내 글을 글마다 Markdown 파일 하나로 묶어 zip으로 받아요. 제목·날짜·태그·시리즈가 파일 맨 위에 적혀 있어 다른 블로그로 옮기거나 백업하기 좋아요.')}
       </p>
       <button type="button" className="btn btn-outline" onClick={() => void download()} disabled={busy || count === 0}
-              data-tip="발행한 글(posts/)과 임시글(drafts/)을 Markdown zip 파일로 받아요">
-        {busy ? '만드는 중…' : <><span aria-hidden="true">⬇</span> Markdown으로 내보내기</>}
+              data-tip={t('발행한 글(posts/)과 임시글(drafts/)을 Markdown zip 파일로 받아요')}>
+        {busy ? t('만드는 중…') : <>{tNodes('{0} Markdown으로 내보내기', { 0: <span aria-hidden="true">⬇</span> })}</>}
       </button>
       {message && <p className={message.ok ? 'small' : 'error small'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
     </section>

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { ACCEPTED_TYPES } from '../lib/image'
 import { prepareImage, uploadPostImage } from '../lib/postImages'
 import { thumbnailPreview, type ThumbnailChoice } from '../lib/postThumbnail'
+import { t } from '../lib/i18n'
 
 /**
  * 발행 창의 썸네일 칸 (047). velog처럼 미리보기와 [사진 올리기]·[본문 첫 사진으로]·[썸네일 없애기]를 둔다.
@@ -29,7 +30,7 @@ export function ThumbnailPicker({ value, content, error, onChange, onBusy }: {
       const up = await uploadPostImage(await prepareImage(file))
       onChange({ kind: 'image', url: up.url })
     } catch (e) {
-      setUploadError(e instanceof Error ? e.message : '사진을 올리지 못했어요.')
+      setUploadError(e instanceof Error ? e.message : t('사진을 올리지 못했어요.'))
     } finally {
       setUploading(false)
       onBusy(false)
@@ -38,27 +39,27 @@ export function ThumbnailPicker({ value, content, error, onChange, onBusy }: {
 
   return (
     <fieldset className="field thumbnail-picker">
-      <legend>썸네일</legend>
+      <legend>{t('썸네일')}</legend>
       <div className="thumbnail-preview">
         {preview
           ? <img src={preview} alt="" width={640} height={360} />
-          : <span className="muted small">{value.kind === 'none' ? '썸네일 없음' : '본문에 사진이 없어요'}</span>}
+          : <span className="muted small">{value.kind === 'none' ? t('썸네일 없음') : t('본문에 사진이 없어요')}</span>}
       </div>
       <p className="muted small" aria-live="polite">
-        {uploading ? '사진을 올리는 중…'
-          : value.kind === 'image' ? '직접 고른 사진이 목록과 공유 미리보기에 보여요.'
-          : value.kind === 'none' ? '목록에 사진 없이 보여요.'
-          : '본문 첫 사진이 목록과 공유 미리보기에 보여요.'}
+        {uploading ? t('사진을 올리는 중…')
+          : value.kind === 'image' ? t('직접 고른 사진이 목록과 공유 미리보기에 보여요.')
+          : value.kind === 'none' ? t('목록에 사진 없이 보여요.')
+          : t('본문 첫 사진이 목록과 공유 미리보기에 보여요.')}
       </p>
       <div className="row">
         <button type="button" className="btn btn-outline" disabled={uploading} onClick={() => fileRef.current?.click()}>
-          {value.kind === 'image' ? '다른 사진 올리기' : '사진 올리기'}
+          {value.kind === 'image' ? t('다른 사진 올리기') : t('사진 올리기')}
         </button>
         {value.kind !== 'auto' && (
-          <button type="button" className="btn btn-text" disabled={uploading} onClick={() => onChange({ kind: 'auto' })}>본문 첫 사진으로</button>
+          <button type="button" className="btn btn-text" disabled={uploading} onClick={() => onChange({ kind: 'auto' })}>{t('본문 첫 사진으로')}</button>
         )}
         {value.kind !== 'none' && (
-          <button type="button" className="btn btn-text" disabled={uploading} onClick={() => onChange({ kind: 'none' })}>썸네일 없애기</button>
+          <button type="button" className="btn btn-text" disabled={uploading} onClick={() => onChange({ kind: 'none' })}>{t('썸네일 없애기')}</button>
         )}
       </div>
       <input ref={fileRef} type="file" accept={ACCEPTED_TYPES.join(',')} hidden

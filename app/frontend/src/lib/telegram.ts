@@ -1,4 +1,5 @@
 import { api } from './api'
+import { t } from './i18n'
 
 // 텔레그램 연결 (spec 023). 봇 토큰이 없는 서버면 available=false라 설정 화면에서 숨긴다.
 
@@ -23,7 +24,7 @@ export function linkTimeLeft(expiresAt: string, now: number = Date.now()): strin
   const ms = new Date(expiresAt).getTime() - now
   if (!(ms > 0)) return null
   const min = Math.ceil(ms / 60_000)
-  return min > 1 ? `${min}분 안에 열어 주세요.` : '1분 안에 열어 주세요.'
+  return min > 1 ? t('{0}분 안에 열어 주세요.', { 0: min }) : t('1분 안에 열어 주세요.')
 }
 
 export const telegramApi = {

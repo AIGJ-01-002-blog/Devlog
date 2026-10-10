@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type FormEvent } from 'react'
 import { clearLocalData, useAuth } from '../lib/auth'
 import { Link, navigate } from '../lib/router'
 import { CONFIRM_TEXT, deadline, withdrawApi, withdrawErrorText, withdrawReady, type WithdrawalSummary } from '../lib/withdraw'
+import { t, tNodes } from '../lib/i18n'
 
 /**
  * 회원 탈퇴 (020 US1): 한 화면에 ① 잃게 되는 것과 확인 체크 → ② 본인 확인 → [탈퇴하기].
@@ -19,12 +20,12 @@ export function WithdrawPage() {
   const checkId = useId()
 
   useEffect(() => {
-    document.title = '회원 탈퇴 - devlog'
+    document.title = t('회원 탈퇴 - devlog')
     withdrawApi.summary().then(setS).catch(() => setLoadError(true))
   }, [])
 
-  if (loadError) return <main className="container narrow"><p className="error center" role="alert">불러오지 못했어요. 새로고침해 주세요.</p></main>
-  if (!s) return <main className="container narrow"><p className="muted center">불러오는 중…</p></main>
+  if (loadError) return <main className="container narrow"><p className="error center" role="alert">{t('불러오지 못했어요. 새로고침해 주세요.')}</p></main>
+  if (!s) return <main className="container narrow"><p className="muted center">{t('불러오는 중…')}</p></main>
 
   const ready = withdrawReady(s.method, checked, password, confirmText)
 
@@ -49,31 +50,30 @@ export function WithdrawPage() {
 
   return (
     <main className="container narrow withdraw-page">
-      <h1 className="page-title">회원 탈퇴</h1>
-      {s.admin && <div className="banner banner-warn" role="alert">관리자 권한을 해제한 뒤 탈퇴할 수 있어요.</div>}
+      <h1 className="page-title">{t('회원 탈퇴')}</h1>
+      {s.admin && <div className="banner banner-warn" role="alert">{t('관리자 권한을 해제한 뒤 탈퇴할 수 있어요.')}</div>}
       <form onSubmit={submit} noValidate>
         <section className="settings-section">
-          <h2>① 탈퇴하면 이렇게 돼요</h2>
+          <h2>{t('① 탈퇴하면 이렇게 돼요')}</h2>
           <ul className="withdraw-facts">
-            <li>블로그 <b>@{s.handle}</b>와 글 <b>{s.posts}개</b>가 바로 다른 사람에게 보이지 않아요.</li>
-            <li>남의 글에 쓴 댓글 <b>{s.comments}개</b>는 "탈퇴한 사용자의 댓글이에요"로 가려져요.</li>
-            <li><b>{deadline(s.restoreBy)}</b>까지 다시 로그인하면 모두 복구할 수 있어요.</li>
-            <li>30일이 지나면 글·사진·받은 좋아요 <b>{s.likesReceived}개</b>가 완전히 삭제되어 되돌릴 수 없어요.
-              답글이 달린 댓글은 내용 없이 자리만 남아요.</li>
-            <li>블로그 주소 <b>@{s.handle}</b>는 다른 사람도, 나도 다시 쓸 수 없어요.</li>
+            <li>{tNodes('블로그 {0}와 글 {1}가 바로 다른 사람에게 보이지 않아요.', { 0: <b>@{s.handle}</b>, 1: <b>{t('{0}개', { 0: s.posts })}</b> })}</li>
+            <li>{tNodes('남의 글에 쓴 댓글 {0}는 "탈퇴한 사용자의 댓글이에요"로 가려져요.', { 0: <b>{t('{0}개', { 0: s.comments })}</b> })}</li>
+            <li>{tNodes('{0}까지 다시 로그인하면 모두 복구할 수 있어요.', { 0: <b>{deadline(s.restoreBy)}</b> })}</li>
+            <li>{tNodes('30일이 지나면 글·사진·받은 좋아요 {0}가 완전히 삭제되어 되돌릴 수 없어요. 답글이 달린 댓글은 내용 없이 자리만 남아요.', { 0: <b>{t('{0}개', { 0: s.likesReceived })}</b> })}</li>
+            <li>{tNodes('블로그 주소 {0}는 다른 사람도, 나도 다시 쓸 수 없어요.', { 0: <b>@{s.handle}</b> })}</li>
           </ul>
           {s.posts > 0 && (
-            <p className="small">글을 간직하고 싶다면 먼저 <Link to="/settings#export">설정 › 내 글 내보내기</Link>에서 Markdown으로 받아 두세요.</p>
+            <p className="small">{tNodes('글을 간직하고 싶다면 먼저 {0}에서 Markdown으로 받아 두세요.', { 0: <Link to="/settings#export">{t('설정 › 내 글 내보내기')}</Link> })}</p>
           )}
           <label className="check" htmlFor={checkId}>
-            <input id={checkId} type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} /> 위 내용을 확인했어요
+            <input id={checkId} type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} />  {t('위 내용을 확인했어요')}
           </label>
         </section>
         <section className="settings-section">
-          <h2>② 본인 확인</h2>
+          <h2>{t('② 본인 확인')}</h2>
           {s.method === 'PASSWORD' ? (
             <label className="field">
-              <span>현재 비밀번호</span>
+              <span>{t('현재 비밀번호')}</span>
               <input type="password" value={password} maxLength={64} autoComplete="current-password"
                      onChange={(e) => { setPassword(e.target.value); setError(null) }} aria-invalid={error?.field === 'password'}
                      aria-describedby={error?.field === 'password' ? 'withdraw-error' : undefined} />
@@ -81,7 +81,7 @@ export function WithdrawPage() {
             </label>
           ) : (
             <label className="field">
-              <span>확인을 위해 "{CONFIRM_TEXT}"를 입력해 주세요</span>
+              <span>{tNodes('확인을 위해 "{0}"를 입력해 주세요', { 0: CONFIRM_TEXT })}</span>
               <input value={confirmText} maxLength={10} autoComplete="off" placeholder={CONFIRM_TEXT}
                      onChange={(e) => { setConfirmText(e.target.value); setError(null) }} aria-invalid={error?.field === 'confirmText'}
                      aria-describedby={error?.field === 'confirmText' ? 'withdraw-error' : undefined} />
@@ -91,8 +91,8 @@ export function WithdrawPage() {
         </section>
         {error?.field === 'form' && <div className="banner banner-warn" role="alert">{error.text}</div>}
         <div className="withdraw-actions">
-          <button type="button" className="btn btn-text" onClick={() => navigate('/settings')}>취소</button>
-          <button type="submit" className="btn btn-danger" disabled={!ready || busy || s.admin}>{busy ? '탈퇴하는 중…' : '탈퇴하기'}</button>
+          <button type="button" className="btn btn-text" onClick={() => navigate('/settings')}>{t('취소')}</button>
+          <button type="submit" className="btn btn-danger" disabled={!ready || busy || s.admin}>{busy ? t('탈퇴하는 중…') : t('탈퇴하기')}</button>
         </div>
       </form>
     </main>

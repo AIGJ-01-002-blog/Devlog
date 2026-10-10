@@ -30,7 +30,7 @@ export function compactNumber(n) {
     // 1만 이상은 소수 첫째 자리까지 내림 (12,950 → 1.2만, docs/30 §5)
     if (getLocale() === 'ko') {
         if (n >= 10_000)
-            return `${(Math.floor(n / 1_000) / 10).toString()}만`;
+            return (Math.floor(n / 1_000) / 10).toString() + '만';
         return n.toLocaleString('ko-KR');
     }
     // 다른 언어는 그 언어의 줄임 표기 (12,950 → 12.9K·1.2万)

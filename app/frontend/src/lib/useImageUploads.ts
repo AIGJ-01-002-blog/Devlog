@@ -5,6 +5,7 @@ import {
   pendingIds, placeholder, prepareImage, removePlaceholder, replacePlaceholder, storageUsage, uploadPostImage,
   type StorageUsage,
 } from './postImages'
+import { t } from './i18n'
 
 type SetContent = (update: (current: string) => string) => void
 
@@ -86,7 +87,7 @@ export function useImageUploads(memberId: number, postId: number, getContent: ()
       try {
         prepared = await prepareImage(file)
       } catch (e) {
-        setError(e instanceof Error ? e.message : '사진을 넣지 못했어요.')
+        setError(e instanceof Error ? e.message : t('사진을 넣지 못했어요.'))
         continue
       }
       const id = crypto.randomUUID().replaceAll('-', '').slice(0, 16)

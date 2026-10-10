@@ -1,5 +1,6 @@
 import type { RefObject } from 'react'
 import { applyFormat, MD_TOOLS, type MdEdit, type MdFormat } from '../lib/mdFormat'
+import { t } from '../lib/i18n'
 
 const MOD = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+'
 
@@ -24,7 +25,7 @@ export function formatTextarea(el: HTMLTextAreaElement, format: MdFormat, onChan
 
 export function MarkdownToolbar({ bodyRef, onChange }: { bodyRef: RefObject<HTMLTextAreaElement | null>; onChange: (next: string) => void }) {
   return (
-    <div className="md-toolbar" role="toolbar" aria-label="서식">
+    <div className="md-toolbar" role="toolbar" aria-label={t('서식')}>
       {MD_TOOLS.map((t, i) => (
         <span key={t.format} className="md-tool-wrap">
           {(i === 3 || i === 6 || i === 9) && <span className="md-sep" aria-hidden="true" />}

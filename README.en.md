@@ -370,6 +370,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.59.0 | 2026-10-10 | Multilingual UI, phase 2 (editor, settings, post manager, support and AI connect screens in English, Japanese, Chinese) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.0) |
 | v1.58.0 | 2026-10-10 | Multilingual UI, phase 1 (English, Japanese, Chinese; 🌐 language picker in the footer) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.58.0) |
 | v1.57.0 | 2026-10-10 | Kakao login (`ka-` addresses; the button appears once Kakao keys are set) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.57.0) |
 | v1.56.0 | 2026-10-10 | Make follower/following lists public or private (others see "private account"; counts stay visible) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.56.0) |

@@ -1,25 +1,26 @@
+import { t } from './i18n';
 const WRAP = {
-    bold: { mark: '**', placeholder: '굵은 글씨' },
-    italic: { mark: '_', placeholder: '기울인 글씨' },
-    strike: { mark: '~~', placeholder: '취소선' },
+    bold: { mark: '**', placeholder: t('굵은 글씨') },
+    italic: { mark: '_', placeholder: t('기울인 글씨') },
+    strike: { mark: '~~', placeholder: t('취소선') },
     code: { mark: '`', placeholder: 'code' },
 };
 const PREFIX = { h2: '## ', h3: '### ', h4: '#### ', quote: '> ', ul: '- ', ol: '1. ' };
 const HEADING = /^#{1,6} /;
 /** 도구 버튼의 이름과 단축키. 툴팁에 "굵게 (Ctrl+B)"처럼 보인다. */
 export const MD_TOOLS = [
-    { format: 'h2', label: '제목 2', icon: 'H2' },
-    { format: 'h3', label: '제목 3', icon: 'H3' },
-    { format: 'h4', label: '제목 4', icon: 'H4' },
-    { format: 'bold', label: '굵게', icon: 'B', key: 'b' },
-    { format: 'italic', label: '기울임', icon: 'I', key: 'i' },
-    { format: 'strike', label: '취소선', icon: 'S' },
-    { format: 'quote', label: '인용', icon: '❝' },
-    { format: 'ul', label: '글머리 목록', icon: '•' },
-    { format: 'ol', label: '번호 목록', icon: '1.' },
-    { format: 'link', label: '링크', icon: '🔗', key: 'k' },
-    { format: 'code', label: '인라인 코드', icon: '</>' },
-    { format: 'codeblock', label: '코드 블록', icon: '{ }' },
+    { format: 'h2', label: t('제목 2'), icon: 'H2' },
+    { format: 'h3', label: t('제목 3'), icon: 'H3' },
+    { format: 'h4', label: t('제목 4'), icon: 'H4' },
+    { format: 'bold', label: t('굵게'), icon: 'B', key: 'b' },
+    { format: 'italic', label: t('기울임'), icon: 'I', key: 'i' },
+    { format: 'strike', label: t('취소선'), icon: 'S' },
+    { format: 'quote', label: t('인용'), icon: '❝' },
+    { format: 'ul', label: t('글머리 목록'), icon: '•' },
+    { format: 'ol', label: t('번호 목록'), icon: '1.' },
+    { format: 'link', label: t('링크'), icon: '🔗', key: 'k' },
+    { format: 'code', label: t('인라인 코드'), icon: '</>' },
+    { format: 'codeblock', label: t('코드 블록'), icon: '{ }' },
 ];
 /** 단축키로 고를 서식. Ctrl(맥은 ⌘)과 함께 누른다. */
 export function formatForKey(key) {
@@ -33,7 +34,7 @@ export function applyFormat(value, start, end, format) {
     if (prefix)
         return prefixLines(value, start, end, format, prefix);
     if (format === 'link') {
-        const text = value.slice(start, end) || '링크 글자';
+        const text = value.slice(start, end) || t('링크 글자');
         const url = 'https://';
         const insert = `[${text}](${url})`;
         const urlAt = start + text.length + 3;

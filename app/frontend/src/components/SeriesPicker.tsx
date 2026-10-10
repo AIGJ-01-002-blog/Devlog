@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from '../lib/api'
 import { SERIES_NAME_MAX, seriesApi, seriesNameError, type MySeries } from '../lib/series'
+import { t } from '../lib/i18n'
 
 /**
  * 글쓰기 화면의 [시리즈] (024 US1). 고르는 즉시 저장한다. 임시글도 넣을 수 있고 독자에게는 발행된 뒤에 보인다.
@@ -28,7 +29,7 @@ export function SeriesPicker({ postId }: { postId: number }) {
     try {
       await fn()
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : '저장하지 못했어요. 다시 시도해 주세요.')
+      setError(e instanceof ApiError ? e.message : t('저장하지 못했어요. 다시 시도해 주세요.'))
     } finally {
       setBusy(false)
     }
@@ -60,20 +61,20 @@ export function SeriesPicker({ postId }: { postId: number }) {
   return (
     <div className="series-picker">
       <label>
-        <span className="muted small">시리즈</span>{' '}
+        <span className="muted small">{t('시리즈')}</span>{' '}
         <select value={current ?? ''} disabled={busy} onChange={(e) => choose(e.target.value)}>
-          <option value="">시리즈 없음</option>
+          <option value="">{t('시리즈 없음')}</option>
           {series.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.postCount})</option>)}
-          <option value="new">+ 새 시리즈</option>
+          <option value="new">{t('+ 새 시리즈')}</option>
         </select>
       </label>
       {creating && (
         <span className="row series-new">
-          <input aria-label="새 시리즈 이름" value={name} maxLength={SERIES_NAME_MAX} autoFocus placeholder="시리즈 이름"
+          <input aria-label={t('새 시리즈 이름')} value={name} maxLength={SERIES_NAME_MAX} autoFocus placeholder={t('시리즈 이름')}
                  onChange={(e) => setName(e.target.value)}
                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); create() } }} />
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={create}>만들기</button>
-          <button type="button" className="btn btn-text" onClick={() => { setCreating(false); setError(null) }}>취소</button>
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={create}>{t('만들기')}</button>
+          <button type="button" className="btn btn-text" onClick={() => { setCreating(false); setError(null) }}>{t('취소')}</button>
         </span>
       )}
       {error && <small className="error" role="alert">{error}</small>}

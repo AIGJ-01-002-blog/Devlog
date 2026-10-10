@@ -3,6 +3,7 @@ import { ApiError } from '../lib/api'
 import { topicApi, type Suggestion, type SuggestResult } from '../lib/branch'
 import { seriesApi, type MySeries } from '../lib/series'
 import { BranchMark } from './BranchList'
+import { t, tNodes } from '../lib/i18n'
 
 /** 태그를 바꾸고 잠시 뒤에 다시 묻는다 */
 const DEBOUNCE_MS = 400
@@ -37,7 +38,7 @@ export function BranchSuggest({ postId, tags }: { postId: number; tags: string[]
     try {
       await fn()
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : '저장하지 못했어요. 다시 시도해 주세요.')
+      setError(e instanceof ApiError ? e.message : t('저장하지 못했어요. 다시 시도해 주세요.'))
     } finally {
       setBusy(false)
     }
@@ -60,36 +61,37 @@ export function BranchSuggest({ postId, tags }: { postId: number; tags: string[]
   if (current?.kind === 'SERIES') {
     return (
       <div className="branch-suggest" role="status">
-        <Label s={current} /> <span className="muted small">시리즈로 이어져요.</span>
-        {result.portfolio && <p className="small branch-suggest-ok">이 시리즈는 포트폴리오 프로젝트라 이 글도 포트폴리오에 보여요.</p>}
+        <Label s={current} /> <span className="muted small">{t('시리즈로 이어져요.')}</span>
+        {result.portfolio && <p className="small branch-suggest-ok">{t('이 시리즈는 포트폴리오 프로젝트라 이 글도 포트폴리오에 보여요.')}</p>}
       </div>
     )
   }
   const best: Suggestion | null = series ?? topic ?? current
   return (
     <div className="branch-suggest">
-      <p className="branch-suggest-title">브랜치</p>
+      <p className="branch-suggest-title">{t('브랜치')}</p>
       {optedOut ? (
         <p className="small">
-          이 글은 비슷한 글과 자동으로 묶지 않아요.{' '}
-          <button type="button" className="btn btn-text btn-small" disabled={busy} onClick={() => void optOut(false)}>다시 묶기</button>
+          
+          {tNodes('이 글은 비슷한 글과 자동으로 묶지 않아요. {0}', { 0: <button type="button" className="btn btn-text btn-small" disabled={busy} onClick={() => void optOut(false)}>{t('다시 묶기')}</button> })}
         </p>
       ) : current ? (
-        <p className="small"><Label s={current} /> 브랜치에 이어져 있어요.</p>
+        <p className="small">{tNodes('{0} 브랜치에 이어져 있어요.', { 0: <Label s={current} /> })}</p>
       ) : best ? (
         <p className="small">
-          가장 비슷한 브랜치: <Label s={best} />
-          {best.shared.length > 0 && <span className="muted"> · 함께 쓴 태그 {best.shared.map((t) => `#${t}`).join(' ')}</span>}
+          
+          {t('가장 비슷한 브랜치:')} <Label s={best} />
+          {best.shared.length > 0 && <span className="muted">  {tNodes('· 함께 쓴 태그 {0}', { 0: best.shared.map((t) => `#${t}`).join(' ') })}</span>}
         </p>
       ) : (
-        <p className="small muted">비슷한 브랜치가 아직 없어요. 발행하면 main에 새 글로 올라가요.</p>
+        <p className="small muted">{t('비슷한 브랜치가 아직 없어요. 발행하면 main에 새 글로 올라가요.')}</p>
       )}
-      {accepted && topic && <p className="small branch-suggest-ok" role="status">발행하면 다음 계산 때 {topic.name} 브랜치에 이어져요.</p>}
+      {accepted && topic && <p className="small branch-suggest-ok" role="status">{tNodes('발행하면 다음 계산 때 {0} 브랜치에 이어져요.', { 0: topic.name })}</p>}
       {picking && (
         <label className="small branch-suggest-pick">
-          <span className="sr-only">넣을 시리즈</span>
+          <span className="sr-only">{t('넣을 시리즈')}</span>
           <select defaultValue="" disabled={busy} onChange={(e) => { if (e.target.value) void intoSeries(Number(e.target.value)) }}>
-            <option value="" disabled>{picking.length ? '시리즈 고르기' : '시리즈가 없어요. 글쓰기 화면 [시리즈]에서 만들 수 있어요'}</option>
+            <option value="" disabled>{picking.length ? t('시리즈 고르기') : t('시리즈가 없어요. 글쓰기 화면 [시리즈]에서 만들 수 있어요')}</option>
             {picking.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.postCount})</option>)}
           </select>
         </label>
@@ -97,19 +99,19 @@ export function BranchSuggest({ postId, tags }: { postId: number; tags: string[]
       <div className="row branch-suggest-actions">
         {series?.seriesId != null && (
           <button type="button" className="btn btn-outline btn-small" disabled={busy} onClick={() => void intoSeries(series.seriesId!)}
-                  data-tip={`이 글을 ${series.name} 시리즈 마지막 편으로 넣어요`}>이 시리즈에 넣기</button>
+                  data-tip={t('이 글을 {0} 시리즈 마지막 편으로 넣어요', { 0: series.name })}>{t('이 시리즈에 넣기')}</button>
         )}
         {!series && topic && !optedOut && !accepted && (
           <button type="button" className="btn btn-outline btn-small" onClick={() => setAccepted(true)}
-                  data-tip="비슷한 글은 자동으로 이어져요. 발행 뒤 다음 계산 때 붙어요">이 브랜치에 이어 붙이기</button>
+                  data-tip={t('비슷한 글은 자동으로 이어져요. 발행 뒤 다음 계산 때 붙어요')}>{t('이 브랜치에 이어 붙이기')}</button>
         )}
         {!picking && (
           <button type="button" className="btn btn-text btn-small" disabled={busy} onClick={() => void pickSeries()}
-                  data-tip="내 시리즈 중 하나를 골라 넣어요">내 시리즈에 넣기</button>
+                  data-tip={t('내 시리즈 중 하나를 골라 넣어요')}>{t('내 시리즈에 넣기')}</button>
         )}
         {!optedOut && (
           <button type="button" className="btn btn-text btn-small" disabled={busy} onClick={() => void optOut(true)}
-                  data-tip="이 글은 비슷한 글과 자동으로 묶지 않아요">묶지 않기</button>
+                  data-tip={t('이 글은 비슷한 글과 자동으로 묶지 않아요')}>{t('묶지 않기')}</button>
         )}
       </div>
       {error && <p className="error small" role="alert">{error}</p>}
@@ -120,5 +122,5 @@ export function BranchSuggest({ postId, tags }: { postId: number; tags: string[]
 function Label({ s }: { s: Suggestion }) {
   const body = <><BranchMark kind={s.kind} />{s.name}</>
   const cls = `bl-branch bl-branch-${s.kind.toLowerCase()}`
-  return s.url ? <a href={s.url} className={cls} target="_blank" rel="noopener" data-tip="새 탭에서 브랜치 보기">{body}</a> : <span className={cls}>{body}</span>
+  return s.url ? <a href={s.url} className={cls} target="_blank" rel="noopener" data-tip={t('새 탭에서 브랜치 보기')}>{body}</a> : <span className={cls}>{body}</span>
 }

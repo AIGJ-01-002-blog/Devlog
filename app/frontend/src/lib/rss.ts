@@ -1,3 +1,4 @@
+import { t } from './i18n'
 /**
  * RSS 구독 안내 (063). 브라우저로 RSS 주소를 열면 XML 대신 이 안내가 보인다(서버가 Sec-Fetch-Dest로 가른다).
  * 구독 앱 바로가기는 앱이 공개한 "구독 추가" 주소에 피드 주소를 넣은 것이다.
@@ -16,6 +17,6 @@ export function rawXmlPath(handle: string | null): string {
 }
 
 export const READERS: { name: string; tip: string; url: (feed: string) => string }[] = [
-  { name: 'Feedly', tip: 'Feedly에서 이 블로그 구독하기', url: (f) => `https://feedly.com/i/subscription/feed/${encodeURIComponent(f)}` },
-  { name: 'Inoreader', tip: 'Inoreader에서 이 블로그 구독하기', url: (f) => `https://www.inoreader.com/?add_feed=${encodeURIComponent(f)}` },
+  { name: 'Feedly', tip: t('Feedly에서 이 블로그 구독하기'), url: (f) => `https://feedly.com/i/subscription/feed/${encodeURIComponent(f)}` },
+  { name: 'Inoreader', tip: t('Inoreader에서 이 블로그 구독하기'), url: (f) => `https://www.inoreader.com/?add_feed=${encodeURIComponent(f)}` },
 ]

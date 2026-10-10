@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError } from './api';
 import { localDrafts } from './localDrafts';
 import { pendingIds, placeholder, prepareImage, removePlaceholder, replacePlaceholder, storageUsage, uploadPostImage, } from './postImages';
+import { t } from './i18n';
 /**
  * 에디터 사진 올리기 (009 US1·US2). 사진을 넣으면 본문에 업로드 대기 표시를 넣고 이 기기에 보관한 뒤 바로 올린다.
  * 올라가면 표시를 진짜 주소로 바꾸고, 네트워크·서버 문제로 못 올리면 보관해 두었다가 연결되면 다시 올린다.
@@ -83,7 +84,7 @@ export function useImageUploads(memberId, postId, getContent, setContent) {
                 prepared = await prepareImage(file);
             }
             catch (e) {
-                setError(e instanceof Error ? e.message : '사진을 넣지 못했어요.');
+                setError(e instanceof Error ? e.message : t('사진을 넣지 못했어요.'));
                 continue;
             }
             const id = crypto.randomUUID().replaceAll('-', '').slice(0, 16);
