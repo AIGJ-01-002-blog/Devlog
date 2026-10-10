@@ -170,7 +170,7 @@ jobs:
           OLLAMA_ACCESS_CLIENT_ID: ${{ secrets.OLLAMA_ACCESS_CLIENT_ID }}
           OLLAMA_ACCESS_CLIENT_SECRET: ${{ secrets.OLLAMA_ACCESS_CLIENT_SECRET }}
           OLLAMA_AUTH_TOKEN: ${{ secrets.OLLAMA_AUTH_TOKEN }}
-          # 구글 로그인(004): 두 값이 있으면 로그인 화면에 Google 버튼이 생긴다. 없으면 GitHub·이메일만
+          # 구글 로그인(004): 값이 있으면 BLOG_SECRET_ENV의 같은 값을 덮어쓴다. 여기와 BLOG_SECRET_ENV 둘 다 GOOGLE_CLIENT_ID가 없을 때만 Google 버튼이 숨는다
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
