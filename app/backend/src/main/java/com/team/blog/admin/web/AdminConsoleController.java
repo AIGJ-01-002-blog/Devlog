@@ -1,6 +1,7 @@
 package com.team.blog.admin.web;
 
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,8 +13,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.team.blog.account.application.RoleService;
+import com.team.blog.account.application.WithdrawalPurgeJob;
+import com.team.blog.account.domain.Member;
+import com.team.blog.account.domain.MemberStatus;
+import com.team.blog.account.infra.MemberRepository;
 import com.team.blog.admin.application.AdminStats;
 import com.team.blog.moderation.application.ModerationService;
+import com.team.blog.shared.error.ApiException;
 import com.team.blog.shared.error.NotFoundException;
 import com.team.blog.shared.security.CurrentMember;
 import com.team.blog.shared.security.MemberPrincipal;
@@ -28,11 +34,16 @@ public class AdminConsoleController {
     private final AdminStats stats;
     private final RoleService roles;
     private final ModerationService moderation;
+    private final MemberRepository members;
+    private final WithdrawalPurgeJob purgeJob;
 
-    public AdminConsoleController(AdminStats stats, RoleService roles, ModerationService moderation) {
+    public AdminConsoleController(AdminStats stats, RoleService roles, ModerationService moderation, MemberRepository members,
+                                  WithdrawalPurgeJob purgeJob) {
         this.stats = stats;
         this.roles = roles;
         this.moderation = moderation;
+        this.members = members;
+        this.purgeJob = purgeJob;
     }
 
     public record RoleRequest(String role) {}
@@ -87,6 +98,24 @@ public class AdminConsoleController {
     public ResponseEntity<Void> unhide(@PathVariable long postId, @CurrentMember MemberPrincipal me) {
         staff(me);
         moderation.unhidePost(me.id(), postId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 탈퇴 회원을 30일 유예를 기다리지 않고 바로 정리한다 (020 FR-039). 관리자만 한다(매니저는 403). 정리하면 되돌릴 수 없고,
+     * 블로그 주소는 그대로 예약되며, 같은 소셜 계정으로 오면 새로 가입한다.
+     */
+    @PostMapping("/members/{handle}/purge")
+    public ResponseEntity<Void> purge(@PathVariable String handle, @CurrentMember MemberPrincipal me) {
+        staff(me);
+        if (!me.isAdmin()) throw new ApiException(HttpStatus.FORBIDDEN, "ADMIN_ONLY", "탈퇴 회원 정리는 관리자만 할 수 있어요.");
+        Member m = members.findByHandle(handle).orElseThrow(NotFoundException::new);
+        if (m.getStatus() != MemberStatus.WITHDRAWN || m.getDeletedAt() != null) {
+            throw new ApiException(HttpStatus.CONFLICT, "NOT_WITHDRAWN", "탈퇴 신청한 회원만 바로 정리할 수 있어요.");
+        }
+        if (!purgeJob.purgeNow(m.getId())) {
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "PURGE_FAILED", "정리하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        }
         return ResponseEntity.noContent().build();
     }
 

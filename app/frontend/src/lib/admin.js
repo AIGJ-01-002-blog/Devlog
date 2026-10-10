@@ -28,6 +28,8 @@ export const consoleApi = {
     dashboard: (days) => api(`/api/admin/dashboard${query({ days })}`),
     members: (q, role, status, page) => api(`/api/admin/members${query({ q, role, status, page })}`),
     memberStats: (handle) => api(`/api/admin/members/${encodeURIComponent(handle)}/stats`),
+    /** 탈퇴 회원을 30일 유예 전에 바로 정리한다 (020 FR-039). 관리자만, 되돌릴 수 없다 */
+    purgeWithdrawn: (handle) => api(`/api/admin/members/${encodeURIComponent(handle)}/purge`, { method: 'POST' }),
     setRole: (handle, role) => api(`/api/admin/members/${encodeURIComponent(handle)}/role`, { method: 'PUT', body: { role } }),
     posts: (q, filter, author, page) => api(`/api/admin/posts${query({ q, filter: filter === 'all' ? null : filter, author, page })}`),
     hidePost: (id, reason) => api(`/api/admin/posts/${id}/hide`, { method: 'POST', body: { reason } }),
