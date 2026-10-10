@@ -116,13 +116,18 @@ export function LoginPage() {
         
         {t('카카오로 계속하기')}
       </a>}
+      {social.includes('facebook') && <a className="btn btn-facebook" href={`/oauth2/authorization/facebook?redirect=${encodeURIComponent(redirect)}`}
+        data-tip={t('Facebook 계정으로 로그인하거나 가입해요')}>
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.32l-.53 3.5h-2.8V24C19.62 23.1 24 18.1 24 12.07z"/></svg>
+        {t('Facebook으로 계속하기')}
+      </a>}
       <a className="btn btn-github" href={`/oauth2/authorization/github?redirect=${encodeURIComponent(redirect)}`}
         data-tip={t('GitHub 계정으로 로그인하거나 가입해요')}>
         <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         
         {t('GitHub로 계속하기')}
       </a>
-      <p className="muted small">{social.includes('kakao') ? t('카카오·Google·GitHub로 처음 오셨다면 블로그 주소와 닉네임을 정하고 가입을 마쳐요.') : t('Google·GitHub로 처음 오셨다면 블로그 주소와 닉네임을 정하고 가입을 마쳐요.')}</p>
+      <p className="muted small">{t('소셜 계정으로 처음 오셨다면 블로그 주소와 닉네임을 정하고 가입을 마쳐요.')}</p>
     </main>
   )
 }

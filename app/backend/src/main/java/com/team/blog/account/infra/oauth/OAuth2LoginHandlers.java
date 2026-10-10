@@ -19,7 +19,7 @@ import com.team.blog.account.application.SocialProfile;
 import com.team.blog.account.domain.AuthProvider;
 import com.team.blog.account.web.LoginFlow;
 
-/** 소셜(GitHub·Google·카카오) OAuth2 성공·실패 처리. 성공하면 우리 로그인 흐름(LoginFlow)으로 넘긴다. */
+/** 소셜(GitHub·Google·카카오·Facebook) OAuth2 성공·실패 처리. 성공하면 우리 로그인 흐름(LoginFlow)으로 넘긴다. */
 @Component
 public class OAuth2LoginHandlers implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
     private final LoginFlow loginFlow;
@@ -47,6 +47,7 @@ public class OAuth2LoginHandlers implements AuthenticationSuccessHandler, Authen
                     Boolean.TRUE.equals(user.getAttributes().get("email_verified")) ? str(user.getAttributes().get("email")) : null,
                     str(user.getAttributes().get("picture")));
             case "kakao" -> kakao(user.getAttributes());
+            case "facebook" -> facebook(user.getAttributes());
             default -> throw new IllegalStateException("지원하지 않는 로그인 수단");
         };
         response.sendRedirect(loginFlow.complete(profile, request, response));
@@ -73,6 +74,21 @@ public class OAuth2LoginHandlers implements AuthenticationSuccessHandler, Authen
                 null,
                 str(profile.get("nickname")),
                 emailOk ? str(account.get("email")) : null,
+                photo);
+    }
+
+    /**
+     * Facebook 사용자 정보 (spec 083). 사용자 식별은 앱마다 다른 숫자 id다. 이메일은 Facebook이 확인을 마친 주소만 주므로 그대로 쓰고,
+     * 휴대폰 번호로만 가입했거나 이메일 제공을 끄면 오지 않는다(가입 마무리 화면에서 받는다). 기본 실루엣 사진(is_silhouette)은 넘기지 않는다.
+     */
+    static SocialProfile facebook(Map<String, Object> attrs) {
+        Map<?, ?> picture = attrs.get("picture") instanceof Map<?, ?> m && m.get("data") instanceof Map<?, ?> d ? d : Map.of();
+        String photo = Boolean.TRUE.equals(picture.get("is_silhouette")) ? null : str(picture.get("url"));
+        return new SocialProfile(AuthProvider.FACEBOOK,
+                str(attrs.get("id")),
+                null,
+                str(attrs.get("name")),
+                str(attrs.get("email")),
                 photo);
     }
 

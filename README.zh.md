@@ -154,7 +154,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>多个 Pod]
     I -->|/blog-images| M[(MinIO / S3<br/>图片 · 附件)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V30)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V31)]
     A --> R[(Redis<br/>会话 · 限流 · 浏览数 · 缓存)]
     A --> M
     A -.可选.-> G[Google Gemini]
@@ -246,7 +246,7 @@ sequenceDiagram
 
 | 路径 | 说明 |
 | --- | --- |
-| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V30）、测试 |
+| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V31）、测试 |
 | [app/frontend](app/frontend) | 前端：React 19 SPA、TypeScript、Vite。界面、自动保存（IndexedDB）、深色模式 |
 | [deploy](deploy) | 部署：Dockerfile、Kubernetes 清单（base、selfhosted、nhn、local），部署、回滚、密钥检查脚本 |
 | [.github](.github) | CI/CD：后端与界面测试、镜像构建与部署、版本发布、Discord 与 Telegram 通知 |
@@ -289,6 +289,7 @@ sequenceDiagram
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth 应用 | 开发用的值（无法真正用 GitHub 登录） |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth 客户端 | 隐藏 Google 登录 |
 | `KAKAO_CLIENT_ID` / `KAKAO_CLIENT_SECRET` / `KAKAO_SCOPES` | Kakao 登录应用(REST API 密钥、Client Secret、同意项) | 隐藏 Kakao 登录 |
+| `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET` | Facebook 登录应用(应用 ID、应用密钥) | 隐藏 Facebook 登录 |
 | `SMTP_HOST` / `SMTP_USERNAME` / `SMTP_PASSWORD` | 发送验证、重置邮件 | 不发送，只保存 |
 | `S3_ENDPOINT` / `S3_BUCKET` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` | 图片与附件的存储位置（MinIO、S3） | 保存到本地文件夹 |
 | `GEMINI_API_KEY` / `OLLAMA_BASE_URL` | AI 标签推荐 | 两者都为空则关闭该功能 |
@@ -324,7 +325,7 @@ npm run dev        # http://localhost:5173
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub、Google 登录，会话，CSRF，按路径的权限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | 所有领域 | 保存会员、文章、评论等领域数据 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | 会话、限流、浏览数、缓存 | 多个 Pod 共享同一会话，并发请求也由一个 Redis 脚本判定 |
-| Flyway | Boot 4.1 | 数据库 | 用 V1~V30 迁移管理模式，启动时自动应用 |
+| Flyway | Boot 4.1 | 数据库 | 用 V1~V31 迁移管理模式，启动时自动应用 |
 | commonmark-java (+ GFM 扩展) | 0.30.0 | 正文渲染 | Markdown → HTML。表格、删除线、任务清单、自动链接、标题锚点 |
 | OWASP Java HTML Sanitizer | 20260924.2 | 正文净化 | 按白名单净化渲染后的 HTML，防止 XSS |
 | AWS SDK for Java (S3) | 2.55.12 | media | 把图片和附件上传到 MinIO、S3 |
@@ -370,6 +371,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.61.0 | 2026-10-10 | Facebook 登录(`fb-` 地址，填入 Facebook 密钥后显示按钮) | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.61.0) |
 | v1.60.0 | 2026-10-10 | 管理员可立即清理已注销会员，无需等待 30 天 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.60.0) |
 | v1.59.3 | 2026-10-10 | 修复使用 Kakao 注册时头像未被设置的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.3) |
 | v1.59.2 | 2026-10-10 | 修复手机上文字在框内被拆开换行的问题（按词换行、博客标签页、编辑器发布按钮） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.2) |

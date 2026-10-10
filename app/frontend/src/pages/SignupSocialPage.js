@@ -8,7 +8,7 @@ import { attachProfileImage, prepareSocialAvatar, socialAvatarSource } from '../
 import { navigate } from '../lib/router';
 import { t } from '../lib/i18n';
 /** 소셜 가입 마무리 (docs/08·09): 접두어 고정 + 본문 입력, 0.5초 뒤 중복 확인, 닉네임, 약관 동의. */
-const PROVIDER_NAMES = { GITHUB: 'GitHub', GOOGLE: 'Google', KAKAO: t('카카오') };
+const PROVIDER_NAMES = { GITHUB: 'GitHub', GOOGLE: 'Google', KAKAO: t('카카오'), FACEBOOK: 'Facebook' };
 export function SignupSocialPage() {
     const { refresh } = useAuth();
     const [draft, setDraft] = useState(null);

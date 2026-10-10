@@ -116,7 +116,6 @@ export const en: Record<string, string> = {
   "GitHub 보기": "View on GitHub",
   "GitHub로 계속하기": "Continue with GitHub",
   "Google 계정으로 로그인하거나 가입해요": "Log in or sign up with your Google account",
-  "Google·GitHub로 처음 오셨다면 블로그 주소와 닉네임을 정하고 가입을 마쳐요.": "Google, or GitHub first-timers: pick a blog handle and nickname to finish signing up.",
   "Google로 계속하기": "Continue with Google",
   "Google이 이 내용을 서비스 개선에 쓰고, 사람이 검토할 수 있어요.": "Google may use this content to improve its services, and humans may review it.",
   "Inoreader에서 이 블로그 구독하기": "Subscribe to this blog in Inoreader",
@@ -1171,7 +1170,6 @@ export const en: Record<string, string> = {
   "친구에게만 보이는 글": "Visible to friends only",
   "카카오": "Kakao",
   "카카오 계정으로 로그인하거나 가입해요": "Log in or sign up with your Kakao account",
-  "카카오·Google·GitHub로 처음 오셨다면 블로그 주소와 닉네임을 정하고 가입을 마쳐요.": "New here with Kakao, Google, or GitHub? Pick a blog handle and nickname to finish signing up.",
   "카카오로 계속하기": "Continue with Kakao",
   "커밋 4개 · 대화 요약 · 태그 spring-ai, ollama": "4 commits · chat summary · tags spring-ai, ollama",
   "켜면 연결한 AI가 글을 바로 발행하거나 삭제할 수 있어요. 삭제는 웹에서 지울 때와 같아요.": "When on, a connected AI can publish or delete posts directly. Deleting works the same as on the web.",
@@ -1312,4 +1310,7 @@ export const en: Record<string, string> = {
   "👥 친구에게만": "👥 Friends only",
   "🔒 비공개": "🔒 Private",
   "언어: {0}": "Language: {0}",
+  "Facebook 계정으로 로그인하거나 가입해요": "Log in or sign up with your Facebook account",
+  "Facebook으로 계속하기": "Continue with Facebook",
+  "소셜 계정으로 처음 오셨다면 블로그 주소와 닉네임을 정하고 가입을 마쳐요.": "New here with a social account? Pick a blog handle and nickname to finish signing up.",
 }

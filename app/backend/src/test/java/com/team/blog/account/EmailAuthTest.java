@@ -467,6 +467,29 @@ class EmailAuthTest extends IntegrationTest {
     }
 
     @Test
+    void 페이스북은_fb_주소로_가입하고_이메일이_오면_다시_묻지_않는다() throws Exception {
+        String fid = String.valueOf(10_200_000_000_000L + System.nanoTime() % 100_000_000L);
+        String localPart = "fb" + fid.substring(fid.length() - 8);
+        Browser b = browser();
+        b.perform(asJson(post("/api/dev/login"), Map.of("provider", "FACEBOOK", "providerUserId", fid, "login", "", "name", "Kim Minseo",
+                        "email", localPart + "@example.com")))
+                .andExpect(jsonPath("$.redirect").value("/signup/social"));
+        b.perform(get("/api/auth/signup"))
+                .andExpect(jsonPath("$.provider").value("FACEBOOK"))
+                .andExpect(jsonPath("$.prefix").value("fb-"))
+                .andExpect(jsonPath("$.handleBody").value(localPart))
+                .andExpect(jsonPath("$.emailRequired").value(false));
+        b.perform(asJson(post("/api/auth/signup"), Map.of("handleBody", localPart, "nickname", "페북" + fid.substring(fid.length() - 5),
+                "agreeTerms", true, "agreePrivacy", true))).andExpect(status().isCreated());
+        b.perform(get("/api/auth/me")).andExpect(jsonPath("$.member.handle").value("fb-" + localPart));
+
+        Browser again = browser();
+        again.perform(asJson(post("/api/dev/login"), Map.of("provider", "FACEBOOK", "providerUserId", fid, "login", "", "name", "Kim Minseo")))
+                .andExpect(jsonPath("$.redirect").value("/"));
+        again.perform(get("/api/auth/me")).andExpect(jsonPath("$.member.handle").value("fb-" + localPart));
+    }
+
+    @Test
     void 인증된_이메일이_없는_GitHub_계정은_가입_때_이메일을_받아_메일로_인증한다() throws Exception {
         String gid = String.valueOf(800_000_000L + System.nanoTime() % 100_000_000L);
         Browser b = browser();

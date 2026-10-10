@@ -70,6 +70,24 @@ class OAuthClientsConfigTest {
     }
 
     @Test
+    void facebookIsOffWithoutClientId() throws Exception {
+        assertThat(repository(Map.of("FACEBOOK_CLIENT_ID", "")).findByRegistrationId("facebook")).isNull();
+    }
+
+    @Test
+    void facebookUsesVersionedGraphApiAndAsksEmail() throws Exception {
+        var facebook = repository(Map.of("SITE_BASE_URL", "https://devlog.life", "FACEBOOK_CLIENT_ID", "f-id",
+                "FACEBOOK_CLIENT_SECRET", "f-secret")).findByRegistrationId("facebook");
+        assertThat(facebook.getRedirectUri()).isEqualTo("https://devlog.life/login/oauth2/code/{registrationId}");
+        assertThat(facebook.getClientAuthenticationMethod()).isEqualTo(ClientAuthenticationMethod.CLIENT_SECRET_POST);
+        assertThat(facebook.getScopes()).containsExactlyInAnyOrder("public_profile", "email");
+        var provider = facebook.getProviderDetails();
+        assertThat(provider.getAuthorizationUri()).matches("https://www\\.facebook\\.com/v\\d+\\.0/dialog/oauth");
+        assertThat(provider.getUserInfoEndpoint().getUri()).matches("https://graph\\.facebook\\.com/v\\d+\\.0/me\\?fields=id,name,email,picture.*");
+        assertThat(provider.getUserInfoEndpoint().getUserNameAttributeName()).isEqualTo("id");
+    }
+
+    @Test
     void googleCallbackUsesSiteBaseUrlWithoutDoubleSlash() throws Exception {
         var repo = repository(Map.of("SITE_BASE_URL", "https://devlog.life/", "GOOGLE_CLIENT_ID", "g-id"));
         assertThat(repo.findByRegistrationId("google").getRedirectUri())

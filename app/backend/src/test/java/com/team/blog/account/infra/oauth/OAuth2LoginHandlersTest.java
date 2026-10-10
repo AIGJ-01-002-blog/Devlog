@@ -94,6 +94,25 @@ class OAuth2LoginHandlersTest {
     }
 
     @Test
+    void facebookUsesAppScopedIdEmailAndRealPhoto() throws Exception {
+        Map<String, Object> attrs = Map.of("id", "10229876543210", "name", "Kim Minseo", "email", "MinSeo@Example.com",
+                "picture", Map.of("data", Map.of("url", "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=1&height=512",
+                        "is_silhouette", false)));
+        assertThat(succeed("facebook", "id", attrs)).isEqualTo(new SocialProfile(AuthProvider.FACEBOOK, "10229876543210", null,
+                "Kim Minseo", "minseo@example.com", "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=1&height=512"));
+    }
+
+    @Test
+    void facebookWithoutEmailAndSilhouetteStillLogsIn() throws Exception {
+        // 휴대폰 번호로만 가입했거나 이메일 제공을 끄면 email이 오지 않는다. 기본 실루엣 사진은 넘기지 않는다
+        SocialProfile p = succeed("facebook", "id", Map.of("id", "42", "name", "n",
+                "picture", Map.of("data", Map.of("url", "https://platform-lookaside.fbsbx.com/x", "is_silhouette", true))));
+        assertThat(p.providerUserId()).isEqualTo("42");
+        assertThat(p.verifiedEmail()).isNull();
+        assertThat(p.avatarUrl()).isNull();
+    }
+
+    @Test
     void failureGoesBackToLoginWithCode() throws Exception {
         MockHttpServletResponse res = new MockHttpServletResponse();
         handlers.onAuthenticationFailure(new MockHttpServletRequest(), res, new BadCredentialsException("x"));
