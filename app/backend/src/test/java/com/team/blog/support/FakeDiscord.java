@@ -17,7 +17,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 테스트용 가짜 디스코드 웹훅 API (078). 웹훅 조회(GET)·보내기(POST)만 흉내 내고 보낸 메시지를 남긴다.
- * deleted에 넣은 웹훅 번호는 404(지운 웹훅)로 답한다.
+ * deleted에 넣은 웹훅 번호는 404(지운 웹훅)로, limitedOnce에 넣은 번호는 한 번 429로 답한다.
  */
 public final class FakeDiscord {
     public static final String NAME = "블로그 알림";
@@ -31,6 +31,10 @@ public final class FakeDiscord {
     private final JsonMapper json = JsonMapper.builder().build();
     public final List<Sent> sent = new CopyOnWriteArrayList<>();
     public final Set<String> deleted = ConcurrentHashMap.newKeySet();
+    /** 여기 넣은 웹훅은 다음 보내기 한 번을 429(잠깐 기다리라)로 답한다 */
+    public final Set<String> limitedOnce = ConcurrentHashMap.newKeySet();
+    /** 보내기 요청에 wait=true가 붙어 왔는지 */
+    public final List<Boolean> waited = new CopyOnWriteArrayList<>();
 
     private FakeDiscord(HttpServer server) {
         this.server = server;
@@ -80,10 +84,15 @@ public final class FakeDiscord {
         } else if ("GET".equals(ex.getRequestMethod())) {
             status = 200;
             out = "{\"id\":\"" + id + "\",\"type\":1,\"name\":\"" + NAME + "\",\"channel_id\":\"1\"}";
+        } else if (limitedOnce.remove(id)) {
+            status = 429;
+            out = "{\"message\":\"You are being rate limited.\",\"retry_after\":0.2,\"global\":false}";
         } else {
+            waited.add("wait=true".equals(ex.getRequestURI().getQuery()));
             JsonNode body = json.readTree(new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
             sent.add(new Sent(id, body.path("content").asString(), body));
-            status = 204;
+            status = 200;
+            out = "{\"id\":\"1\",\"channel_id\":\"1\"}";
         }
         byte[] b = out.getBytes(StandardCharsets.UTF_8);
         ex.getResponseHeaders().add("Content-Type", "application/json");

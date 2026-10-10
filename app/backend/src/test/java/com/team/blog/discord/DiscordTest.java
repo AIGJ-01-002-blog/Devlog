@@ -101,6 +101,13 @@ class DiscordTest extends IntegrationTest {
         String id = connect(s);
         s.http().perform(post("/api/me/discord/test").with(csrf())).andExpect(status().isOk());
         assertThat(DC.await(id, 2)).contains("시험 알림");
+        assertThat(DC.waited).doesNotContain(false);
+
+        // 디스코드가 잠깐 기다리라고(429) 하면 알려 준 시간만큼 기다렸다 한 번 더 보낸다
+        DC.limitedOnce.add(id);
+        s.http().perform(post("/api/me/discord/test").with(csrf())).andExpect(status().isOk());
+        assertThat(DC.await(id, 3)).contains("시험 알림");
+
         s.http().perform(delete("/api/me/discord").with(csrf())).andExpect(status().isNoContent());
         assertThat(discord(s).path("linked").asBoolean()).isFalse();
         s.http().perform(post("/api/me/discord/test").with(csrf())).andExpect(status().isConflict());

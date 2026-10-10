@@ -30,6 +30,8 @@ class HttpDiscordApi implements DiscordApi {
     static final int MAX_CHARS = 2000;
     /** 메시지 플래그 SUPPRESS_EMBEDS */
     private static final int SUPPRESS_EMBEDS = 1 << 2;
+    /** 429일 때 이보다 오래 기다리라면 다시 보내지 않고 버린다 */
+    private static final Duration MAX_RETRY_WAIT = Duration.ofSeconds(5);
 
     private final DiscordProperties props;
     private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
@@ -73,13 +75,24 @@ class HttpDiscordApi implements DiscordApi {
         body.putObject("allowed_mentions").putArray("parse");
         body.put("flags", SUPPRESS_EMBEDS);
         try {
-            HttpRequest req = HttpRequest.newBuilder(uri(w)).timeout(TIMEOUT).header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body), StandardCharsets.UTF_8)).build();
-            HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (res.statusCode() / 100 == 2) return Result.OK;
-            if (gone(res.statusCode())) return Result.GONE;
-            log.warn("디스코드 메시지를 보내지 못했습니다 (HTTP {})", res.statusCode());
-            return Result.FAILED;
+            // wait=true: 디스코드가 메시지를 실제로 저장한 뒤에 답하게 해, 저장 실패를 성공으로 잘못 세지 않는다
+            URI target = URI.create(uri(w) + "?wait=true");
+            String payload = json.writeValueAsString(body);
+            for (int attempt = 1; ; attempt++) {
+                HttpRequest req = HttpRequest.newBuilder(target).timeout(TIMEOUT).header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8)).build();
+                HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (res.statusCode() / 100 == 2) return Result.OK;
+                if (gone(res.statusCode())) return Result.GONE;
+                // 429: 디스코드가 알려 준 시간이 짧으면 한 번만 기다렸다 다시 보낸다(보내기 전용 실행기라 블로그 처리는 막지 않음)
+                Duration wait = res.statusCode() == 429 && attempt == 1 ? retryAfter(res) : null;
+                if (wait != null) {
+                    Thread.sleep(wait.toMillis());
+                    continue;
+                }
+                log.warn("디스코드 메시지를 보내지 못했습니다 (HTTP {})", res.statusCode());
+                return Result.FAILED;
+            }
         } catch (IOException | RuntimeException e) {
             log.warn("디스코드 메시지를 보내지 못했습니다: {}", e.getClass().getSimpleName());
             return Result.FAILED;
@@ -87,6 +100,21 @@ class HttpDiscordApi implements DiscordApi {
             Thread.currentThread().interrupt();
             return Result.FAILED;
         }
+    }
+
+    /** 429 응답의 retry_after(초, 소수). MAX_RETRY_WAIT보다 길거나 읽을 수 없으면 null(다시 보내지 않음) */
+    private Duration retryAfter(HttpResponse<String> res) {
+        double seconds;
+        try {
+            seconds = json.readTree(res.body()).path("retry_after").asDouble(-1);
+        } catch (RuntimeException e) {
+            seconds = -1;
+        }
+        if (seconds < 0) seconds = res.headers().firstValue("Retry-After").map(v -> {
+            try { return Double.parseDouble(v); } catch (NumberFormatException e) { return -1d; }
+        }).orElse(-1d);
+        if (seconds < 0 || seconds > MAX_RETRY_WAIT.toSeconds()) return null;
+        return Duration.ofMillis((long) Math.ceil(seconds * 1000));
     }
 
     /** 2,000자를 넘으면 말줄임표까지 2,000자로 자른다. 이모지(서로게이트 쌍)를 반으로 가르지 않는다 */
