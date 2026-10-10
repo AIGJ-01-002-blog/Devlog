@@ -369,6 +369,7 @@ Kubernetes で試すなら、kind・k3s・Docker Desktop のどれでも `kubect
 
 | バージョン | 日付 | 主な内容 | リリースノート |
 | --- | --- | --- | --- |
+| v1.53.0 | 2026-10-10 | サイト紹介画面（/about）とフッターのリンク、広告・Cookieの項目を加えたプライバシーポリシーへの再同意 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.0) |
 | v1.52.0 | 2026-10-10 | Google AdSense：公開画面に広告コード、広告画面用の厳格なCSP、ads.txt、プライバシーポリシーに広告・Cookieの案内 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.52.0) |
 | v1.51.3 | 2026-10-10 | AI日記を人が書いたように：時刻リストの代わりにトピック別の段落、日記調メモの案内 | [見る](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.3) |
 | v1.51.2 | 2026-10-09 | 運用ダッシュボード（Kubernetes Dashboard、読み取り専用ログイン）を導入（デプロイ構成） | [見る](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.51.2) |

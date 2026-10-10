@@ -75,7 +75,7 @@ class SignupLoginTest extends IntegrationTest {
         Long id = jdbc.queryForObject("SELECT id FROM member WHERE handle = ?", Long.class, "gi-" + body);
         List<Map<String, Object>> rows = jdbc.queryForList("SELECT type, version FROM member_agreement WHERE member_id = ? ORDER BY type", id);
         assertThat(rows).extracting(m -> m.get("type")).containsExactly("PRIVACY", "TERMS");
-        assertThat(rows).extracting(m -> m.get("version")).containsOnly("2026-10-07");
+        assertThat(rows).extracting(m -> m.get("version")).containsExactly("2026-10-10", "2026-10-07");
         assertThat(jdbc.queryForObject("SELECT email_verified_at IS NOT NULL FROM auth_identity WHERE member_id = ?", Boolean.class, id)).isTrue();
         b.perform(get("/api/auth/me")).andExpect(jsonPath("$.member.handle").value("gi-" + body));
     }

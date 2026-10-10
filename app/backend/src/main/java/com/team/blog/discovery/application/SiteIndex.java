@@ -52,6 +52,7 @@ public class SiteIndex {
         StringBuilder xml = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                 .append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
         url(xml, "/", newest);
+        url(xml, "/about", null); // 사이트 소개 (077)
         blogs.forEach((handle, at) -> url(xml, "/@" + handle, at));
         for (var e : entries) url(xml, "/@" + e.handle() + "/posts/" + e.postId(), e.publishedAt());
         return xml.append("</urlset>\n").toString();

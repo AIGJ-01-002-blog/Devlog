@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { SkipLink } from './components/SkipLink';
 import { TooltipLayer } from './components/TooltipLayer';
 import { MobileNav } from './components/MobileNav';
+import { SiteFooter } from './components/SiteFooter';
 import { PageAnnouncer } from './components/PageAnnouncer';
 import { MAIN_ID } from './lib/focusMain';
 import { VerifyBanner } from './components/VerifyBanner';
@@ -58,10 +59,11 @@ const AdminMembersPage = lazyPage(() => import('./pages/AdminMembersPage'), 'Adm
 const AdminInquiriesPage = lazyPage(() => import('./pages/AdminInquiriesPage'), 'AdminInquiriesPage');
 const RssGuidePage = lazyPage(() => import('./pages/RssGuidePage'), 'RssGuidePage');
 const AdminInquiryPage = lazyPage(() => import('./pages/AdminInquiryPage'), 'AdminInquiryPage');
+const AboutPage = lazyPage(() => import('./pages/AboutPage'), 'AboutPage');
 export function App() {
     const { path } = useLocation();
     useEffect(() => { sendPage(path); }, [path]);
-    return (_jsxs(_Fragment, { children: [_jsx(SkipLink, {}), _jsx(PageAnnouncer, {}), !path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx("div", { id: MAIN_ID, tabIndex: -1, children: _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: _jsx(PageErrorBoundary, { path: path, children: _jsx(Suspense, { fallback: _jsx(Loading, {}), children: route(path) }) }) }) }) }), !path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && _jsx(MobileNav, { path: path }), _jsx(TooltipLayer, {})] }));
+    return (_jsxs(_Fragment, { children: [_jsx(SkipLink, {}), _jsx(PageAnnouncer, {}), !path.startsWith('/write') && path !== '/account/restore' && _jsx(Header, {}), path !== '/verify-email' && _jsx(VerifyBanner, {}), _jsx(Flash, { path: path }), _jsx("div", { id: MAIN_ID, tabIndex: -1, children: _jsx(WithdrawnGate, { path: path, children: _jsx(AgreementGate, { path: path, children: _jsx(PageErrorBoundary, { path: path, children: _jsx(Suspense, { fallback: _jsx(Loading, {}), children: route(path) }) }) }) }) }), !path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && !path.startsWith('/admin') && !path.startsWith('/manage/') && _jsx(SiteFooter, {}), !path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && _jsx(MobileNav, { path: path }), _jsx(TooltipLayer, {})] }));
 }
 function route(path) {
     let p;
@@ -119,6 +121,8 @@ function route(path) {
         return _jsx(TermsPage, { kind: "terms" });
     if (path === '/privacy')
         return _jsx(TermsPage, { kind: "privacy" });
+    if (path === '/about')
+        return _jsx(AboutPage, {});
     if (path === '/write')
         return _jsx(RequireLogin, { children: _jsx(NewPostPage, {}) });
     if ((p = match('/write/:id', path)))
@@ -194,12 +198,14 @@ function WithdrawnGate({ path, children }) {
         return null;
     return _jsx(_Fragment, { children: children });
 }
-/** 재동의가 필요하면 동의 화면만 쓸 수 있다 (서버도 403 AGREEMENT_REQUIRED로 막는다). */
+// 재동의 전에도 열 수 있는 화면: 동의할 약관·처리방침 본문 (077, 바뀐 내용을 읽고 동의하게)
+const READABLE_BEFORE_AGREEING = new Set(['/agreements', '/terms', '/privacy']);
+/** 재동의가 필요하면 동의 화면과 약관 본문만 쓸 수 있다 (서버도 403 AGREEMENT_REQUIRED로 막는다). */
 function AgreementGate({ path, children }) {
     const { me } = useAuth();
     useEffect(() => {
         // 탈퇴 유예 회원은 복구 화면만 쓴다(WithdrawnGate). 재동의 요청도 서버가 막으므로 여기서 보내지 않는다
-        if (me?.agreementRequired && me.member?.status !== 'WITHDRAWN' && path !== '/agreements') {
+        if (me?.agreementRequired && me.member?.status !== 'WITHDRAWN' && !READABLE_BEFORE_AGREEING.has(path)) {
             navigate(`/agreements?redirect=${encodeURIComponent(path)}`, { replace: true });
         }
     }, [me, path]);

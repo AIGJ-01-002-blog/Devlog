@@ -127,8 +127,9 @@ blog:
   agreements:
     terms-version: "2026-10-07"
     terms-effective-date: "2026-10-07"
-    privacy-version: "2026-10-07"
-    privacy-effective-date: "2026-10-07"
+    # 2026-10-10: 처리방침 "7. 광고와 쿠키"(076)를 더해 버전을 올렸다. 기존 회원은 다음 로그인 때 재동의한다 (077)
+    privacy-version: "2026-10-10"
+    privacy-effective-date: "2026-10-10"
   auth:
     pending-signup-ttl: 10m
     login-rate-limit-per-minute: 20
