@@ -765,7 +765,7 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 .comment-list.replies .comment { padding: 12px 0; }
 .comment-list.replies .comment:last-child { border-bottom: 0; }
 .comment-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.875rem; }
-.comment-author { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: inherit; }
+.comment-author { display: inline-flex; align-items: center; gap: 0 8px; flex-wrap: wrap; min-width: 0; max-width: 100%; font-weight: 600; color: inherit; }
 .avatar-blank { display: inline-block; width: 28px; height: 28px; border-radius: 50%; background: var(--color-border); }
 .comment-body { margin: 10px 0 0; white-space: pre-line; overflow-wrap: anywhere; line-height: 1.6; }
 .comment-reply-to { display: block; font-size: 0.8125rem; color: var(--color-text-muted); margin-bottom: 2px; }
