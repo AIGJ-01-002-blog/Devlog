@@ -75,16 +75,31 @@ public class WithdrawalPurgeJob {
         return done;
     }
 
-    private static final String DUE = "status = 'WITHDRAWN' AND deleted_at IS NULL AND withdrawn_at < now() - make_interval(days => "
+    private static final String WITHDRAWN = "status = 'WITHDRAWN' AND deleted_at IS NULL";
+    private static final String DUE = WITHDRAWN + " AND withdrawn_at < now() - make_interval(days => "
             + WithdrawalService.GRACE.toDays() + ")";
+
+    /**
+     * 관리자가 유예 기간을 기다리지 않고 탈퇴 회원 한 명을 바로 정리한다 (020 FR-039). 정리 단계는 30일 정리와 같다.
+     * @return 정리했으면 true. 탈퇴 상태가 아니거나(그 사이 복구) 이미 정리했으면 false
+     */
+    public boolean purgeNow(long memberId) {
+        boolean done = purgeOne(memberId, WITHDRAWN);
+        if (done) log.info("탈퇴 회원 {}을 유예 기간 전에 바로 정리했습니다", memberId);
+        return done;
+    }
 
     /** 회원 한 명. 그 사이 복구했으면 건너뛴다. */
     boolean purgeOne(long memberId) {
+        return purgeOne(memberId, DUE);
+    }
+
+    private boolean purgeOne(long memberId, String condition) {
         Optional<String> email;
         try {
             // 비어 있으면 그 사이 복구했거나 다른 실행이 잡고 있어 건너뛴다
             email = Objects.requireNonNullElse(tx.execute(s -> {
-                List<Long> locked = Columns.longs(jdbc, "SELECT id FROM member WHERE id = ? AND " + DUE + " FOR UPDATE SKIP LOCKED",
+                List<Long> locked = Columns.longs(jdbc, "SELECT id FROM member WHERE id = ? AND " + condition + " FOR UPDATE SKIP LOCKED",
                         memberId);
                 if (locked.isEmpty()) return Optional.<String>empty();
                 // 로그인 수단 단계(50)가 지우기 전에 실패 횟수 키를 지울 이메일을 읽어 둔다
@@ -98,7 +113,12 @@ public class WithdrawalPurgeJob {
             return false;
         }
         if (email.isEmpty()) return false;
-        forgetTransient(memberId, email.get());
+        // DB 정리는 이미 커밋됐다. 세션·Redis 키가 남아도 정리 결과는 그대로 성공이다
+        try {
+            forgetTransient(memberId, email.get());
+        } catch (RuntimeException e) {
+            log.warn("정리한 회원 {}의 세션·임시 키를 다 지우지 못했습니다: {}", memberId, e.getClass().getSimpleName());
+        }
         return true;
     }
 

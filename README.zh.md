@@ -370,6 +370,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.60.0 | 2026-10-10 | 管理员可立即清理已注销会员，无需等待 30 天 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.60.0) |
 | v1.59.3 | 2026-10-10 | 修复使用 Kakao 注册时头像未被设置的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.3) |
 | v1.59.2 | 2026-10-10 | 修复手机上文字在框内被拆开换行的问题（按词换行、博客标签页、编辑器发布按钮） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.2) |
 | v1.59.1 | 2026-10-10 | 将 🌐 语言菜单从页脚移到页眉（主题按钮旁） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.1) |

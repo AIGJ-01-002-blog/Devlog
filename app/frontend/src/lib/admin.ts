@@ -108,6 +108,8 @@ export const consoleApi = {
   members: (q: string, role: string, status: string, page: number) =>
     api<Paged<MemberLine>>(`/api/admin/members${query({ q, role, status, page })}`),
   memberStats: (handle: string) => api<MemberDetail>(`/api/admin/members/${encodeURIComponent(handle)}/stats`),
+  /** 탈퇴 회원을 30일 유예 전에 바로 정리한다 (020 FR-039). 관리자만, 되돌릴 수 없다 */
+  purgeWithdrawn: (handle: string) => api<void>(`/api/admin/members/${encodeURIComponent(handle)}/purge`, { method: 'POST' }),
   setRole: (handle: string, role: Role) =>
     api<{ handle: string; role: Role }>(`/api/admin/members/${encodeURIComponent(handle)}/role`, { method: 'PUT', body: { role } }),
   posts: (q: string, filter: PostFilter, author: string, page: number) =>

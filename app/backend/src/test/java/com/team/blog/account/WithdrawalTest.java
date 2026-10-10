@@ -176,6 +176,36 @@ class WithdrawalTest extends IntegrationTest {
     }
 
     @Test
+    void 관리자는_탈퇴_회원을_유예_전에_바로_정리하고_같은_소셜_계정은_새로_가입한다() throws Exception {
+        Session a = signup(uniqueLogin("wpnow"));
+        Session admin = signup(uniqueLogin("wpadm"));
+        jdbc.update("UPDATE member SET role = 'ADMIN' WHERE id = ?", admin.memberId());
+        Browser adminHttp = relogin(admin);
+        Session manager = signup(uniqueLogin("wpmgr"));
+        jdbc.update("UPDATE member SET role = 'MANAGER' WHERE id = ?", manager.memberId());
+        Browser managerHttp = relogin(manager);
+        String purge = "/api/admin/members/" + a.handle() + "/purge";
+
+        // 탈퇴 전에는 정리할 수 없다
+        assertThat(code(adminHttp.perform(post(purge).with(csrf())), 409)).isEqualTo("NOT_WITHDRAWN");
+        withdraw(a.http(), true, null, "탈퇴").andExpect(status().isOk());
+
+        // 매니저는 403, 일반 회원은 관리자 API를 볼 수 없다
+        assertThat(code(managerHttp.perform(post(purge).with(csrf())), 403)).isEqualTo("ADMIN_ONLY");
+        Session other = signup(uniqueLogin("wpusr"));
+        other.http().perform(post(purge).with(csrf())).andExpect(status().isNotFound());
+        assertThat(count("SELECT count(*) FROM auth_identity WHERE member_id = ?", a.memberId())).isEqualTo(1);
+
+        adminHttp.perform(post(purge).with(csrf())).andExpect(status().isNoContent());
+        assertThat(count("SELECT count(*) FROM auth_identity WHERE member_id = ?", a.memberId())).isZero();
+        assertThat(jdbc.queryForObject("SELECT deleted_at IS NOT NULL FROM member WHERE id = ?", Boolean.class, a.memberId())).isTrue();
+        assertThat(code(adminHttp.perform(post(purge).with(csrf())), 409)).as("이미 정리한 회원").isEqualTo("NOT_WITHDRAWN");
+
+        Browser again = githubAuthenticated(a.githubId(), "again" + a.memberId(), "again", "again" + a.memberId() + "@example.com");
+        assertThat(read(again.perform(get("/api/auth/me")).andReturn()).path("pendingSignup").asBoolean()).isTrue();
+    }
+
+    @Test
     void 삼십일이_지나면_단계_순서대로_정리하고_익명_처리한다() throws Exception {
         Session a = signup(uniqueLogin("wpa"));
         Session b = signup(uniqueLogin("wpb"));

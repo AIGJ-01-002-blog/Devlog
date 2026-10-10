@@ -370,6 +370,7 @@ We follow [Semantic Versioning](https://semver.org/). New features bump the mino
 
 | Version | Date | Highlights | Release notes |
 | --- | --- | --- | --- |
+| v1.60.0 | 2026-10-10 | Admins can purge a withdrawn member right away instead of waiting 30 days | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.60.0) |
 | v1.59.3 | 2026-10-10 | Fixed the profile photo not being copied when signing up with Kakao | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.3) |
 | v1.59.2 | 2026-10-10 | Fixed awkward text wrapping inside boxes on phones (word-level line breaks, blog tabs, editor Publish button) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.2) |
 | v1.59.1 | 2026-10-10 | Moved the 🌐 language menu from the footer to the header (next to the theme button) | [View](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.59.1) |
