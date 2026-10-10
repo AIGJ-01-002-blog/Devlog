@@ -94,6 +94,8 @@ kubectl -n blog rollout status deploy/blog-app
 
 알림은 `.github/actions/notify`가 Discord와 텔레그램에 같은 내용으로 보낸다(배포 성공·실패, 릴리스, PR 리뷰 요청·머지, CI 통과·실패). 각각 변수 `DISCORD_ENABLED`·`TELEGRAM_ENABLED`가 `true`이고 값이 있을 때만 보내며, 전송이 실패해도 워크플로 결과는 바뀌지 않는다.
 
+회원이 설정에서 넣는 디스코드 웹훅 알림(spec 078)은 이 배포 알림과 별개라 Secret이 필요 없다. 끄려면 앱 환경 변수 `DISCORD_NOTIFY_ENABLED=false`.
+
 배포는 `deploy/scripts/rollout.sh`가 한다. 새 이미지로 바꾼 뒤 모든 파드가 준비(`/actuator/health/readiness` UP)되기를 기다리고, 시간(`ROLLOUT_TIMEOUT_SECONDS`, 기본 300초) 안에 안 되면 `kubectl rollout undo`로 직전 버전으로 되돌린다. 새 파드가 준비되기 전에는 옛 파드를 내리지 않으므로(`maxUnavailable: 0`) 되돌리는 동안에도 서비스는 끊기지 않는다. Actions → 블로그 배포 → Run workflow에서 `rollback_test`를 켜면 없는 이미지로 배포해 롤백을 시험한다.
 
 ### 저장소 설정 (Settings → Secrets and variables → Actions)

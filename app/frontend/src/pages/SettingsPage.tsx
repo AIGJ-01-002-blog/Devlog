@@ -16,6 +16,7 @@ import { MUTABLE_TYPES, notificationsApi, type MutableType } from '../lib/notifi
 import { formatBytes, storageUsage, type StorageUsage } from '../lib/postImages'
 import { Link } from '../lib/router'
 import { NavIcon, type IconName } from '../components/NavIcons'
+import { discordApi, isDiscordWebhookUrl, type DiscordStatus } from '../lib/discord'
 import { LINK_POLL_MS, linkTimeLeft, telegramApi, type TelegramLink, type TelegramStatus } from '../lib/telegram'
 import type { FriendOverview, FriendPerson, Visibility } from '../lib/types'
 import { DEFAULT_VISIBILITY_CHANGED } from '../lib/visibility'
@@ -62,7 +63,7 @@ export const SETTINGS_TABS = [
 
 export type SettingsTab = (typeof SETTINGS_TABS)[number]['id']
 
-const HASH_ALIASES: Record<string, SettingsTab> = { telegram: 'notifications', password: 'account', social: 'profile' }
+const HASH_ALIASES: Record<string, SettingsTab> = { telegram: 'notifications', discord: 'notifications', password: 'account', social: 'profile' }
 
 export function tabFromHash(hash: string): SettingsTab {
   let key: string
@@ -116,7 +117,7 @@ export function SettingsPage() {
       <Link to="/settings/withdraw" className="btn btn-text danger">회원 탈퇴</Link>
     </section>
   </>
-  else if (tab === 'notifications') body = <><NotificationsSection /><TelegramSection /></>
+  else if (tab === 'notifications') body = <><NotificationsSection /><TelegramSection /><DiscordSection /></>
   else if (tab === 'friends') body = <FriendsSection />
   else if (tab === 'ai') body = <AiConnectSection />
   else body = <ExportSection />
@@ -548,6 +549,104 @@ function TelegramSection() {
           ) : (
             <button type="button" className="btn" disabled={busy} onClick={connect}>{link ? '주소 다시 만들기' : '연결하기'}</button>
           )}
+        </>
+      )}
+      {message && <p className={message.ok ? 'ok' : 'error'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
+    </section>
+  )
+}
+
+function DiscordSection() {
+  const [status, setStatus] = useState<DiscordStatus | null>(null)
+  const [url, setUrl] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  useEffect(() => { discordApi.status().then(setStatus).catch(() => setStatus(null)) }, [])
+
+  if (!status?.available) return null
+
+  const run = async (fn: () => Promise<void>, fail: string) => {
+    setBusy(true)
+    setMessage(null)
+    try { await fn() } catch (e) { setMessage({ ok: false, text: e instanceof ApiError ? e.message : fail }) } finally { setBusy(false) }
+  }
+
+  const urlOk = isDiscordWebhookUrl(url)
+  const connect = (e: FormEvent) => {
+    e.preventDefault()
+    if (!urlOk) return
+    void run(async () => {
+      setStatus(await discordApi.connect(url))
+      setUrl('')
+      setEditing(false)
+      setMessage({ ok: true, text: '디스코드와 연결했어요. 채널에 첫 메시지를 보냈어요.' })
+    }, '연결하지 못했어요. 다시 시도해 주세요.')
+  }
+
+  const test = () => run(async () => {
+    setStatus(await discordApi.test())
+    setMessage({ ok: true, text: '시험 메시지를 보냈어요. 디스코드 채널을 확인해 보세요.' })
+  }, '보내지 못했어요. 다시 시도해 주세요.')
+
+  const toggle = (on: boolean) => run(async () => {
+    setStatus(await discordApi.setNotifications(on))
+    setMessage({ ok: true, text: '저장했어요.' })
+  }, '바꾸지 못했어요. 다시 시도해 주세요.')
+
+  const disconnect = () => {
+    if (!confirm('디스코드 연결을 끊을까요? 새 알림을 디스코드로 받지 못하게 돼요.')) return
+    void run(async () => {
+      await discordApi.unlink()
+      setStatus({ ...status, linked: false, webhookName: null, linkedAt: null })
+      setMessage({ ok: true, text: '연결을 끊었어요.' })
+    }, '연결을 끊지 못했어요. 다시 시도해 주세요.')
+  }
+
+  const form = (
+    <form className="form" onSubmit={connect}>
+      <label className="field">
+        <span>웹훅 주소</span>
+        <input type="url" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} autoComplete="off" spellCheck={false}
+               placeholder="https://discord.com/api/webhooks/…" aria-invalid={!!url && !urlOk}
+               aria-describedby={url && !urlOk ? 'discord-url-error' : 'discord-url-help'} />
+        <small id="discord-url-help" className="muted">디스코드 채널 설정 › 연동 › 웹후크에서 새 웹후크를 만들고 [웹후크 URL 복사]를 눌러 붙여 넣어 주세요.</small>
+        {url && !urlOk && <small id="discord-url-error" className="error">디스코드 웹훅 주소 꼴이 아니에요.</small>}
+      </label>
+      <div className="row">
+        <button className="btn btn-primary" disabled={busy || !urlOk} data-tip="주소를 확인하고 이 채널로 알림을 보내요">
+          {busy ? '확인하는 중…' : status.linked ? '이 주소로 바꾸기' : '연결하기'}
+        </button>
+        {editing && <button type="button" className="btn btn-text" disabled={busy} onClick={() => { setEditing(false); setUrl('') }}>취소</button>}
+      </div>
+    </form>
+  )
+
+  return (
+    <section className="settings-section" id="discord">
+      <h2>디스코드</h2>
+      {status.linked ? (
+        <>
+          <p>
+            {status.webhookName ? <>웹훅 「{status.webhookName}」</> : '웹훅'}과 연결돼 있어요
+            {status.linkedAt && <span className="muted small"> · {fullDate(status.linkedAt)}부터</span>}
+          </p>
+          <label><input type="checkbox" checked={status.notifications} disabled={busy} onChange={(e) => toggle(e.target.checked)} /> 새 알림을 디스코드로 받기</label>
+          {editing ? form : (
+            <div className="row">
+              <button type="button" className="btn" disabled={busy} onClick={test} data-tip="연결된 채널로 시험 메시지를 하나 보내요">시험 보내기</button>
+              <button type="button" className="btn btn-text" disabled={busy} onClick={() => { setEditing(true); setMessage(null) }}
+                      data-tip="다른 채널의 웹훅 주소로 바꿔요">주소 바꾸기</button>
+              <button type="button" className="btn btn-text danger" disabled={busy} onClick={disconnect}
+                      data-tip="더는 디스코드로 알림을 보내지 않아요">연결 끊기</button>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="muted small">내 디스코드 서버의 채널로 새 알림(댓글·좋아요·팔로우 등)을 받아요. 웹훅 주소는 비밀번호처럼 다뤄 주세요.</p>
+          {form}
         </>
       )}
       {message && <p className={message.ok ? 'ok' : 'error'} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}

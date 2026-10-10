@@ -13,7 +13,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param linkTtl        연결 코드 유효 시간 (FR-002)
  * @param memoDailyLimit 회원당 하루 메모 수 (US3)
  * @param memoMaxChars   메모 최대 글자 수
- * @param audience       누가 연결할 수 있는지. 기본은 관리자만(민서님 전용으로 시작), MEMBERS면 회원 누구나
+ * @param audience       누가 연결할 수 있는지. 기본은 회원 누구나(078), ADMINS면 관리자만
  */
 @ConfigurationProperties("blog.telegram")
 public record TelegramProperties(@DefaultValue("true") boolean enabled,
@@ -24,7 +24,7 @@ public record TelegramProperties(@DefaultValue("true") boolean enabled,
                                  @DefaultValue("10m") Duration linkTtl,
                                  @DefaultValue("20") int memoDailyLimit,
                                  @DefaultValue("4000") int memoMaxChars,
-                                 @DefaultValue("ADMINS") Audience audience) {
+                                 @DefaultValue("MEMBERS") Audience audience) {
 
     public enum Audience { ADMINS, MEMBERS }
 

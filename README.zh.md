@@ -100,7 +100,7 @@ cd app/frontend && npm install && npm run dev            # http://localhost:5173
 </tr>
 <tr>
 <td width="50%"><img src="assets/images/blog.webp" alt="个人博客" /><br/><b>个人博客</b>：文章、系列、简介标签页，博客内搜索，按标签统计文章数，RSS</td>
-<td width="50%"><img src="assets/images/notifications.webp" alt="通知" /><br/><b>通知</b>：评论、回复、点赞、关注汇总在一起，也可推送到 Telegram</td>
+<td width="50%"><img src="assets/images/notifications.webp" alt="通知" /><br/><b>通知</b>：评论、回复、点赞、关注汇总在一起，也可推送到 Telegram 或 Discord</td>
 </tr>
 <tr>
 <td width="50%"><img src="assets/images/search.webp" alt="搜索" /><br/><b>搜索</b>：文章与用户标签页、按相关度排序、高亮搜索词</td>
@@ -154,7 +154,7 @@ flowchart LR
     T[Telegram] -->|Bot API| A
     I -->|/ · /api · /rss| A[blog-app<br/>Spring Boot 4.1 · Java 21<br/>多个 Pod]
     I -->|/blog-images| M[(MinIO / S3<br/>图片 · 附件)]
-    A --> P[(PostgreSQL<br/>Flyway V1~V26)]
+    A --> P[(PostgreSQL<br/>Flyway V1~V27)]
     A --> R[(Redis<br/>会话 · 限流 · 浏览数 · 缓存)]
     A --> M
     A -.可选.-> G[Google Gemini]
@@ -246,7 +246,7 @@ sequenceDiagram
 
 | 路径 | 说明 |
 | --- | --- |
-| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V26）、测试 |
+| [app/backend](app/backend) | 后端：Spring Boot 4.1、Java 21。功能模块、Flyway 迁移（V1~V27）、测试 |
 | [app/frontend](app/frontend) | 前端：React 19 SPA、TypeScript、Vite。界面、自动保存（IndexedDB）、深色模式 |
 | [deploy](deploy) | 部署：Dockerfile、Kubernetes 清单（base、selfhosted、nhn、local），部署、回滚、密钥检查脚本 |
 | [.github](.github) | CI/CD：后端与界面测试、镜像构建与部署、版本发布、Discord 与 Telegram 通知 |
@@ -323,7 +323,7 @@ npm run dev        # http://localhost:5173
 | Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub、Google 登录，会话，CSRF，按路径的权限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | 所有领域 | 保存会员、文章、评论等领域数据 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | 会话、限流、浏览数、缓存 | 多个 Pod 共享同一会话，并发请求也由一个 Redis 脚本判定 |
-| Flyway | Boot 4.1 | 数据库 | 用 V1~V26 迁移管理模式，启动时自动应用 |
+| Flyway | Boot 4.1 | 数据库 | 用 V1~V27 迁移管理模式，启动时自动应用 |
 | commonmark-java (+ GFM 扩展) | 0.30.0 | 正文渲染 | Markdown → HTML。表格、删除线、任务清单、自动链接、标题锚点 |
 | OWASP Java HTML Sanitizer | 20260924.2 | 正文净化 | 按白名单净化渲染后的 HTML，防止 XSS |
 | AWS SDK for Java (S3) | 2.55.12 | media | 把图片和附件上传到 MinIO、S3 |
@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.54.0 | 2026-10-10 | 通过 Discord Webhook 接收博客通知（设置 › 通知） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.54.0) |
 | v1.53.2 | 2026-10-10 | 修复取消关注后再次关注时 Telegram 收到重复关注通知的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.2) |
 | v1.53.1 | 2026-10-10 | 加强 ChatGPT 连接器 OAuth 连接（支持 Basic 发送的 client_id），可用 GitHub Secret 开启 Google 登录 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.1) |
 | v1.53.0 | 2026-10-10 | 网站介绍页面（/about）和页脚链接，加入广告与 Cookie 条款的隐私政策重新同意 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.0) |

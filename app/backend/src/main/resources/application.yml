@@ -240,9 +240,12 @@ blog:
     retention: 90d
     max-per-member: 1000
     cleanup-cron: "0 30 4 * * *"
+  # 디스코드 웹훅 알림 (078): 회원이 자기 채널의 웹훅 주소를 넣는다. 서버 쪽 키는 없다
+  discord:
+    enabled: ${DISCORD_NOTIFY_ENABLED:true}
   # 텔레그램 연결 (spec 023): 봇 토큰이 비어 있거나 TELEGRAM_ENABLED=false면 꺼진다. 알림 보내기·메모로 임시글
   telegram:
     enabled: ${TELEGRAM_ENABLED:true}
     bot-token: ${TELEGRAM_BOT_TOKEN:}
-    # ADMINS(기본, 관리자만) 또는 MEMBERS(회원 누구나)
-    audience: ${TELEGRAM_AUDIENCE:ADMINS}
+    # MEMBERS(기본, 회원 누구나) 또는 ADMINS(관리자만). 078에서 민서님 확인 요청으로 회원 누구나로 바꿈
+    audience: ${TELEGRAM_AUDIENCE:MEMBERS}

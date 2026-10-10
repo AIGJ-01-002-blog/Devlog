@@ -17,6 +17,7 @@ import { MUTABLE_TYPES, notificationsApi } from '../lib/notifications';
 import { formatBytes, storageUsage } from '../lib/postImages';
 import { Link } from '../lib/router';
 import { NavIcon } from '../components/NavIcons';
+import { discordApi, isDiscordWebhookUrl } from '../lib/discord';
 import { LINK_POLL_MS, linkTimeLeft, telegramApi } from '../lib/telegram';
 import { DEFAULT_VISIBILITY_CHANGED } from '../lib/visibility';
 const PROVIDER_NAMES = { GITHUB: 'GitHub', GOOGLE: 'Google', LOCAL: '이메일' };
@@ -35,7 +36,7 @@ export const SETTINGS_TABS = [
     { id: 'ai', label: 'AI 연결', hint: 'AI 도구에 쓸 토큰', icon: 'ai' },
     { id: 'export', label: '내보내기', hint: '내 글을 Markdown으로 받기', icon: 'download' },
 ];
-const HASH_ALIASES = { telegram: 'notifications', password: 'account', social: 'profile' };
+const HASH_ALIASES = { telegram: 'notifications', discord: 'notifications', password: 'account', social: 'profile' };
 export function tabFromHash(hash) {
     let key;
     // 손으로 고친 주소(#%E0 같은 잘못된 인코딩)여도 화면이 깨지지 않게 프로필로 연다
@@ -83,7 +84,7 @@ export function SettingsPage() {
     else if (tab === 'account')
         body = _jsxs(_Fragment, { children: [_jsx(AccountSection, { settings: settings, onChange: setSettings }), settings.hasPassword && _jsx(PasswordSection, {}), _jsxs("section", { className: "settings-section withdraw-link", children: [_jsx("h2", { children: "\uD68C\uC6D0 \uD0C8\uD1F4" }), _jsx("p", { className: "muted small", children: "\uD0C8\uD1F4\uB97C \uC2E0\uCCAD\uD574\uB3C4 30\uC77C \uC548\uC5D0 \uB2E4\uC2DC \uB85C\uADF8\uC778\uD558\uBA74 \uBAA8\uB450 \uBCF5\uAD6C\uD560 \uC218 \uC788\uC5B4\uC694." }), _jsx(Link, { to: "/settings/withdraw", className: "btn btn-text danger", children: "\uD68C\uC6D0 \uD0C8\uD1F4" })] })] });
     else if (tab === 'notifications')
-        body = _jsxs(_Fragment, { children: [_jsx(NotificationsSection, {}), _jsx(TelegramSection, {})] });
+        body = _jsxs(_Fragment, { children: [_jsx(NotificationsSection, {}), _jsx(TelegramSection, {}), _jsx(DiscordSection, {})] });
     else if (tab === 'friends')
         body = _jsx(FriendsSection, {});
     else if (tab === 'ai')
@@ -356,6 +357,60 @@ function TelegramSection() {
     };
     const left = link ? linkTimeLeft(link.expiresAt, now) : null;
     return (_jsxs("section", { className: "settings-section", id: "telegram", children: [_jsx("h2", { children: "\uD154\uB808\uADF8\uB7A8" }), status.linked ? (_jsxs(_Fragment, { children: [_jsxs("p", { children: [status.botUsername ? _jsxs(_Fragment, { children: ["@", status.botUsername] }) : '봇', "\uACFC \uC5F0\uACB0\uB3FC \uC788\uC5B4\uC694", status.linkedAt && _jsxs("span", { className: "muted small", children: [" \u00B7 ", fullDate(status.linkedAt), "\uBD80\uD130"] })] }), _jsxs("label", { children: [_jsx("input", { type: "checkbox", checked: status.notifications, disabled: busy, onChange: (e) => toggle(e.target.checked) }), " \uC0C8 \uC54C\uB9BC\uC744 \uD154\uB808\uADF8\uB7A8\uC73C\uB85C \uBC1B\uAE30"] }), _jsx("p", { className: "muted small", children: "\uBD07\uC5D0\uAC8C \uBCF4\uB0B8 \uBA54\uBAA8\uB294 \uC784\uC2DC\uAE00\uB85C \uC800\uC7A5\uB3FC\uC694. AI \uC0AC\uC6A9\uC5D0 \uB3D9\uC758\uD588\uC73C\uBA74 \uB2E4\uB4EC\uC5B4\uC11C \uC800\uC7A5\uD574\uC694." }), _jsx("button", { type: "button", className: "btn btn-text danger", disabled: busy, onClick: disconnect, children: "\uC5F0\uACB0 \uB04A\uAE30" })] })) : (_jsxs(_Fragment, { children: [_jsx("p", { className: "muted small", children: "\uC5F0\uACB0\uD558\uBA74 \uC0C8 \uC54C\uB9BC\uC744 \uD154\uB808\uADF8\uB7A8\uC73C\uB85C \uBC1B\uACE0, \uBD07\uC5D0\uAC8C \uBCF4\uB0B8 \uBA54\uBAA8\uB97C \uC784\uC2DC\uAE00\uB85C \uC800\uC7A5\uD560 \uC218 \uC788\uC5B4\uC694." }), link && left ? (_jsxs("p", { children: [_jsx("a", { className: "btn btn-primary", href: link.url, target: "_blank", rel: "noopener noreferrer", children: "\uD154\uB808\uADF8\uB7A8 \uC5F4\uAE30" }), ' ', _jsxs("span", { className: "muted small", children: [left, " \uC5F4\uBA74 \uC790\uB3D9\uC73C\uB85C \uC5F0\uACB0\uB3FC\uC694."] })] })) : (_jsx("button", { type: "button", className: "btn", disabled: busy, onClick: connect, children: link ? '주소 다시 만들기' : '연결하기' }))] })), message && _jsx("p", { className: message.ok ? 'ok' : 'error', role: message.ok ? 'status' : 'alert', children: message.text })] }));
+}
+function DiscordSection() {
+    const [status, setStatus] = useState(null);
+    const [url, setUrl] = useState('');
+    const [editing, setEditing] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [message, setMessage] = useState(null);
+    useEffect(() => { discordApi.status().then(setStatus).catch(() => setStatus(null)); }, []);
+    if (!status?.available)
+        return null;
+    const run = async (fn, fail) => {
+        setBusy(true);
+        setMessage(null);
+        try {
+            await fn();
+        }
+        catch (e) {
+            setMessage({ ok: false, text: e instanceof ApiError ? e.message : fail });
+        }
+        finally {
+            setBusy(false);
+        }
+    };
+    const urlOk = isDiscordWebhookUrl(url);
+    const connect = (e) => {
+        e.preventDefault();
+        if (!urlOk)
+            return;
+        void run(async () => {
+            setStatus(await discordApi.connect(url));
+            setUrl('');
+            setEditing(false);
+            setMessage({ ok: true, text: '디스코드와 연결했어요. 채널에 첫 메시지를 보냈어요.' });
+        }, '연결하지 못했어요. 다시 시도해 주세요.');
+    };
+    const test = () => run(async () => {
+        setStatus(await discordApi.test());
+        setMessage({ ok: true, text: '시험 메시지를 보냈어요. 디스코드 채널을 확인해 보세요.' });
+    }, '보내지 못했어요. 다시 시도해 주세요.');
+    const toggle = (on) => run(async () => {
+        setStatus(await discordApi.setNotifications(on));
+        setMessage({ ok: true, text: '저장했어요.' });
+    }, '바꾸지 못했어요. 다시 시도해 주세요.');
+    const disconnect = () => {
+        if (!confirm('디스코드 연결을 끊을까요? 새 알림을 디스코드로 받지 못하게 돼요.'))
+            return;
+        void run(async () => {
+            await discordApi.unlink();
+            setStatus({ ...status, linked: false, webhookName: null, linkedAt: null });
+            setMessage({ ok: true, text: '연결을 끊었어요.' });
+        }, '연결을 끊지 못했어요. 다시 시도해 주세요.');
+    };
+    const form = (_jsxs("form", { className: "form", onSubmit: connect, children: [_jsxs("label", { className: "field", children: [_jsx("span", { children: "\uC6F9\uD6C5 \uC8FC\uC18C" }), _jsx("input", { type: "url", inputMode: "url", value: url, onChange: (e) => setUrl(e.target.value), autoComplete: "off", spellCheck: false, placeholder: "https://discord.com/api/webhooks/\u2026", "aria-invalid": !!url && !urlOk, "aria-describedby": url && !urlOk ? 'discord-url-error' : 'discord-url-help' }), _jsx("small", { id: "discord-url-help", className: "muted", children: "\uB514\uC2A4\uCF54\uB4DC \uCC44\uB110 \uC124\uC815 \u203A \uC5F0\uB3D9 \u203A \uC6F9\uD6C4\uD06C\uC5D0\uC11C \uC0C8 \uC6F9\uD6C4\uD06C\uB97C \uB9CC\uB4E4\uACE0 [\uC6F9\uD6C4\uD06C URL \uBCF5\uC0AC]\uB97C \uB20C\uB7EC \uBD99\uC5EC \uB123\uC5B4 \uC8FC\uC138\uC694." }), url && !urlOk && _jsx("small", { id: "discord-url-error", className: "error", children: "\uB514\uC2A4\uCF54\uB4DC \uC6F9\uD6C5 \uC8FC\uC18C \uAF34\uC774 \uC544\uB2C8\uC5D0\uC694." })] }), _jsxs("div", { className: "row", children: [_jsx("button", { className: "btn btn-primary", disabled: busy || !urlOk, "data-tip": "\uC8FC\uC18C\uB97C \uD655\uC778\uD558\uACE0 \uC774 \uCC44\uB110\uB85C \uC54C\uB9BC\uC744 \uBCF4\uB0B4\uC694", children: busy ? '확인하는 중…' : status.linked ? '이 주소로 바꾸기' : '연결하기' }), editing && _jsx("button", { type: "button", className: "btn btn-text", disabled: busy, onClick: () => { setEditing(false); setUrl(''); }, children: "\uCDE8\uC18C" })] })] }));
+    return (_jsxs("section", { className: "settings-section", id: "discord", children: [_jsx("h2", { children: "\uB514\uC2A4\uCF54\uB4DC" }), status.linked ? (_jsxs(_Fragment, { children: [_jsxs("p", { children: [status.webhookName ? _jsxs(_Fragment, { children: ["\uC6F9\uD6C5 \u300C", status.webhookName, "\u300D"] }) : '웹훅', "\uACFC \uC5F0\uACB0\uB3FC \uC788\uC5B4\uC694", status.linkedAt && _jsxs("span", { className: "muted small", children: [" \u00B7 ", fullDate(status.linkedAt), "\uBD80\uD130"] })] }), _jsxs("label", { children: [_jsx("input", { type: "checkbox", checked: status.notifications, disabled: busy, onChange: (e) => toggle(e.target.checked) }), " \uC0C8 \uC54C\uB9BC\uC744 \uB514\uC2A4\uCF54\uB4DC\uB85C \uBC1B\uAE30"] }), editing ? form : (_jsxs("div", { className: "row", children: [_jsx("button", { type: "button", className: "btn", disabled: busy, onClick: test, "data-tip": "\uC5F0\uACB0\uB41C \uCC44\uB110\uB85C \uC2DC\uD5D8 \uBA54\uC2DC\uC9C0\uB97C \uD558\uB098 \uBCF4\uB0B4\uC694", children: "\uC2DC\uD5D8 \uBCF4\uB0B4\uAE30" }), _jsx("button", { type: "button", className: "btn btn-text", disabled: busy, onClick: () => { setEditing(true); setMessage(null); }, "data-tip": "\uB2E4\uB978 \uCC44\uB110\uC758 \uC6F9\uD6C5 \uC8FC\uC18C\uB85C \uBC14\uAFD4\uC694", children: "\uC8FC\uC18C \uBC14\uAFB8\uAE30" }), _jsx("button", { type: "button", className: "btn btn-text danger", disabled: busy, onClick: disconnect, "data-tip": "\uB354\uB294 \uB514\uC2A4\uCF54\uB4DC\uB85C \uC54C\uB9BC\uC744 \uBCF4\uB0B4\uC9C0 \uC54A\uC544\uC694", children: "\uC5F0\uACB0 \uB04A\uAE30" })] }))] })) : (_jsxs(_Fragment, { children: [_jsx("p", { className: "muted small", children: "\uB0B4 \uB514\uC2A4\uCF54\uB4DC \uC11C\uBC84\uC758 \uCC44\uB110\uB85C \uC0C8 \uC54C\uB9BC(\uB313\uAE00\u00B7\uC88B\uC544\uC694\u00B7\uD314\uB85C\uC6B0 \uB4F1)\uC744 \uBC1B\uC544\uC694. \uC6F9\uD6C5 \uC8FC\uC18C\uB294 \uBE44\uBC00\uBC88\uD638\uCC98\uB7FC \uB2E4\uB904 \uC8FC\uC138\uC694." }), form] })), message && _jsx("p", { className: message.ok ? 'ok' : 'error', role: message.ok ? 'status' : 'alert', children: message.text })] }));
 }
 function FriendsSection() {
     const [data, setData] = useState(null);
