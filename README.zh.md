@@ -369,6 +369,7 @@ npm run dev        # http://localhost:5173
 
 | 版本 | 日期 | 主要内容 | 发布说明 |
 | --- | --- | --- | --- |
+| v1.53.2 | 2026-10-10 | 修复取消关注后再次关注时 Telegram 收到重复关注通知的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.2) |
 | v1.53.1 | 2026-10-10 | 加强 ChatGPT 连接器 OAuth 连接（支持 Basic 发送的 client_id），可用 GitHub Secret 开启 Google 登录 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.1) |
 | v1.53.0 | 2026-10-10 | 网站介绍页面（/about）和页脚链接，加入广告与 Cookie 条款的隐私政策重新同意 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.0) |
 | v1.52.0 | 2026-10-10 | Google AdSense：公开页面加入广告代码、广告页面使用严格 CSP、ads.txt、隐私政策加入广告与 Cookie 说明 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.52.0) |

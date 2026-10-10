@@ -135,15 +135,23 @@ public class NotificationService {
         });
     }
 
-    /** 언팔로우 (FR-012): 안 읽은 묶음에서만 빼고, 0명이면 지운다. 상대에게 따로 알리지 않는다. */
+    /**
+     * 언팔로우 (FR-012): 안 읽은 묶음에서만 빼고, 상대에게 따로 알리지 않는다. 마지막 한 명이 빠지면 지우지 않고 읽음으로 돌린다.
+     * 텔레그램(023)으로 이미 나간 알림은 거둘 수 없어서, 지우면 다시 팔로우할 때 새 알림이 또 나간다(FR-010 7일에 한 번).
+     */
     public void unfollowed(long followerId, long followeeId) {
         tx.executeWithoutResult(s -> {
             lock(followeeId, NotificationType.FOLLOW, 0);
             if (following(followerId, followeeId)) return;
             Long open = unread(followeeId, NotificationType.FOLLOW);
             if (open == null) return;
-            jdbc.update("DELETE FROM notification_actor WHERE notification_id = ? AND actor_id = ?", open, followerId);
-            jdbc.update("DELETE FROM notification n WHERE n.id = ? AND NOT EXISTS (SELECT 1 FROM notification_actor a WHERE a.notification_id = n.id)", open);
+            Boolean others = jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM notification_actor WHERE notification_id = ? AND actor_id <> ?)",
+                    Boolean.class, open, followerId);
+            if (Boolean.TRUE.equals(others)) {
+                jdbc.update("DELETE FROM notification_actor WHERE notification_id = ? AND actor_id = ?", open, followerId);
+            } else {
+                jdbc.update("UPDATE notification SET read_at = now() WHERE id = ? AND read_at IS NULL", open);
+            }
         });
     }
 
