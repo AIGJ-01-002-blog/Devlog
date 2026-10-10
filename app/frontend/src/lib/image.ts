@@ -1,4 +1,4 @@
-import { api } from './api'
+import { api, apiFile } from './api'
 import { t } from './i18n'
 
 /** 프로필 사진 만들기 (005 FR-011·FR-018): 브라우저에서 정사각형으로 잘라 256×256 한 가지 크기로 다시 그린다. */
@@ -113,9 +113,8 @@ export function loadRemoteImage(url: string, timeoutMs = 5000): Promise<HTMLImag
 export const SIGNUP_AVATAR_RELAY = '/api/auth/signup/avatar'
 
 async function loadRelayedImage(signal: AbortSignal): Promise<ImageBitmap> {
-  const res = await fetch(SIGNUP_AVATAR_RELAY, { credentials: 'same-origin', signal })
-  if (!res.ok) throw new Error('relay')
-  return createImageBitmap(await res.blob())
+  const { blob } = await apiFile(SIGNUP_AVATAR_RELAY, signal)
+  return createImageBitmap(blob)
 }
 
 function sizeOf(img: HTMLImageElement | ImageBitmap): { width: number; height: number } {

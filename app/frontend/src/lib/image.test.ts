@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { centerCrop, checkSourceFile, cropAt, prepareSocialAvatar, socialAvatarSource } from './image'
+import { centerCrop, checkSourceFile, cropAt, prepareSocialAvatar, SIGNUP_AVATAR_RELAY, socialAvatarSource } from './image'
 
 describe('프로필 사진 자르기', () => {
   it('가운데 정사각형으로 시작한다', () => {
@@ -48,5 +48,30 @@ describe('가입 전 소셜 사진 만들기', () => {
     expect(await prepareSocialAvatar('https://example.com/a.png')).toBeNull()
     expect(fetchSpy).not.toHaveBeenCalled()
     fetchSpy.mockRestore()
+  })
+
+  it('사진 서버에서 바로 받지 못하면 서버가 대신 받은 사진으로 만든다', async () => {
+    // 사진 서버가 CORS를 허락하지 않은 것처럼 바로 받기를 실패시킨다
+    class FailingImage {
+      onerror: (() => void) | null = null
+      onload: (() => void) | null = null
+      crossOrigin = ''
+      referrerPolicy = ''
+      set src(_: string) { queueMicrotask(() => this.onerror?.()) }
+    }
+    vi.stubGlobal('Image', FailingImage)
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      { ok: true, headers: new Headers(), blob: async () => new Blob(['x'], { type: 'image/png' }) } as unknown as Response)
+    vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue({ width: 640, height: 640 }))
+    const drawn = new Blob(['y'], { type: 'image/webp' })
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: vi.fn() } as unknown as CanvasRenderingContext2D)
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((cb) => cb(drawn))
+    try {
+      expect(await prepareSocialAvatar('https://k.kakaocdn.net/dn/a/img_640x640.jpg')).toBe(drawn)
+      expect(fetchSpy).toHaveBeenCalledWith(SIGNUP_AVATAR_RELAY, expect.objectContaining({ credentials: 'same-origin' }))
+    } finally {
+      vi.restoreAllMocks()
+      vi.unstubAllGlobals()
+    }
   })
 })

@@ -64,13 +64,15 @@ export async function api(path, options = {}) {
         throw errorOf(res, data);
     return data;
 }
-/** 파일로 받는 GET (059 내보내기). 오류는 {@link api}와 같은 ApiError로 던진다. */
-export async function apiFile(path) {
+/** 파일로 받는 GET (059 내보내기, 080 소셜 사진 대신 받기). 오류는 {@link api}와 같은 ApiError로 던진다. */
+export async function apiFile(path, signal) {
     let res;
     try {
-        res = await fetch(path, { credentials: 'same-origin' });
+        res = await fetch(path, { credentials: 'same-origin', signal });
     }
-    catch {
+    catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError')
+            throw e;
         throw new ApiError(0, 'NETWORK', t('네트워크에 연결할 수 없어요.'));
     }
     if (!res.ok) {

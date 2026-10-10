@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, apiFile } from './api';
 import { t } from './i18n';
 /** 프로필 사진 만들기 (005 FR-011·FR-018): 브라우저에서 정사각형으로 잘라 256×256 한 가지 크기로 다시 그린다. */
 export const PROFILE_SIZE = 256;
@@ -106,10 +106,8 @@ export function loadRemoteImage(url, timeoutMs = 5000) {
 /** 서버가 가입 대기 중인 사람의 소셜 사진을 대신 받아 준다 (080 FR-012). 사진 서버가 다른 사이트의 가공을 막을 때 쓴다. */
 export const SIGNUP_AVATAR_RELAY = '/api/auth/signup/avatar';
 async function loadRelayedImage(signal) {
-    const res = await fetch(SIGNUP_AVATAR_RELAY, { credentials: 'same-origin', signal });
-    if (!res.ok)
-        throw new Error('relay');
-    return createImageBitmap(await res.blob());
+    const { blob } = await apiFile(SIGNUP_AVATAR_RELAY, signal);
+    return createImageBitmap(blob);
 }
 function sizeOf(img) {
     return img instanceof HTMLImageElement ? { width: img.naturalWidth, height: img.naturalHeight } : img;
