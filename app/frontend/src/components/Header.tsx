@@ -5,6 +5,7 @@ import { Link, navigate, useLocation } from '../lib/router'
 import { Avatar } from './Avatar'
 import { NavIcon, type IconName } from './NavIcons'
 import { NotificationBell } from './NotificationBell'
+import { LanguageMenu } from './LanguageMenu'
 import { ThemeToggle } from './ThemeToggle'
 import { t } from '../lib/i18n'
 
@@ -166,6 +167,7 @@ export function Header() {
           ) : (
             <Link to={loginPath()} className="btn btn-dark" data-tip={t('로그인하고 글쓰기·좋아요·팔로우')}>{t('로그인')}</Link>
           )}
+          <LanguageMenu />
           <ThemeToggle />
         </nav>
       </div>
