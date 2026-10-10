@@ -54,7 +54,7 @@ export async function decodeFile(file) {
 export function uploadProfileImage(blob) {
     return api('/api/me/profile-image', { method: 'POST', rawBody: blob });
 }
-/** 소셜 사진을 256 이상 크기로 받도록 주소의 크기 값을 바꾼다. 허용된 두 곳이 아니면 null (FR-019). */
+/** 소셜 사진을 256 이상 크기로 받도록 주소의 크기 값을 바꾼다. 허용된 세 곳이 아니면 null (FR-019). */
 export function socialAvatarSource(url) {
     if (!url)
         return null;
@@ -71,6 +71,9 @@ export function socialAvatarSource(url) {
         u.searchParams.set('s', '512');
         return u.toString();
     }
+    // 카카오 사진은 주소에 크기 값이 없고 640px 그대로 온다
+    if (u.hostname === 'k.kakaocdn.net')
+        return u.toString();
     if (u.hostname === 'lh3.googleusercontent.com') {
         // Google 사진 주소 끝의 "=s96-c" 같은 크기 지정을 512로 바꾼다
         const base = u.pathname.replace(/=[^/]*$/, '');

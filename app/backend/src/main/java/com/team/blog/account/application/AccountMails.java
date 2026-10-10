@@ -110,6 +110,7 @@ public class AccountMails {
         return providers.stream().distinct().map(p -> switch (p) {
             case GOOGLE -> "Google";
             case GITHUB -> "GitHub";
+            case KAKAO -> "카카오";
             case LOCAL -> "이메일";
         }).collect(Collectors.joining("·"));
     }

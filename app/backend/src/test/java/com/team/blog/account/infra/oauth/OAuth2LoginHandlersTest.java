@@ -65,6 +65,35 @@ class OAuth2LoginHandlersTest {
     }
 
     @Test
+    void kakaoUsesNumericIdAndOnlyValidVerifiedEmail() throws Exception {
+        Map<String, Object> attrs = Map.of("id", 4012345678L, "kakao_account", Map.of(
+                "email", "MinSeo@Kakao.com", "is_email_valid", true, "is_email_verified", true,
+                "profile", Map.of("nickname", "민서", "profile_image_url", "http://k.kakaocdn.net/dn/abc/img_640x640.jpg",
+                        "is_default_image", false)));
+        assertThat(succeed("kakao", "id", attrs)).isEqualTo(new SocialProfile(AuthProvider.KAKAO, "4012345678", null, "민서",
+                "minseo@kakao.com", "https://k.kakaocdn.net/dn/abc/img_640x640.jpg"));
+    }
+
+    @Test
+    void kakaoUnverifiedEmailAndDefaultPhotoAreDropped() throws Exception {
+        Map<String, Object> attrs = Map.of("id", 7L, "kakao_account", Map.of(
+                "email", "a@b.com", "is_email_valid", true, "is_email_verified", false,
+                "profile", Map.of("nickname", "n", "profile_image_url", "https://k.kakaocdn.net/dn/default.jpg", "is_default_image", true)));
+        SocialProfile p = succeed("kakao", "id", attrs);
+        assertThat(p.verifiedEmail()).isNull();
+        assertThat(p.avatarUrl()).isNull();
+    }
+
+    @Test
+    void kakaoWithoutAccountConsentStillLogsIn() throws Exception {
+        // 이메일·프로필 동의를 하나도 안 하면 kakao_account가 비어 온다. 그래도 가입 마무리 화면으로 넘어가야 한다
+        SocialProfile p = succeed("kakao", "id", Map.of("id", 8L));
+        assertThat(p.providerUserId()).isEqualTo("8");
+        assertThat(p.verifiedEmail()).isNull();
+        assertThat(p.name()).isNull();
+    }
+
+    @Test
     void failureGoesBackToLoginWithCode() throws Exception {
         MockHttpServletResponse res = new MockHttpServletResponse();
         handlers.onAuthenticationFailure(new MockHttpServletRequest(), res, new BadCredentialsException("x"));

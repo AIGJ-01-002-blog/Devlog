@@ -23,6 +23,9 @@
   --color-danger-fill: #c92a2a;
   --color-on-fill: #ffffff;
   --color-github: #24292f;
+  --color-kakao: #FEE500;
+  --color-kakao-hover: #F5DC00;
+  --color-on-kakao: rgba(0, 0, 0, 0.85);
   --color-warn-bg: #fff9db;
   --color-warn-text: #8a6d00;
   --color-ok-bg: #e6fcf5;
@@ -85,6 +88,9 @@
   --color-danger-fill: #c92a2a;
   --color-on-fill: #ffffff;
   --color-github: #2f363d;
+  --color-kakao: #FEE500;
+  --color-kakao-hover: #F5DC00;
+  --color-on-kakao: rgba(0, 0, 0, 0.85);
   --color-warn-bg: #3b3200;
   --color-warn-text: #ffe066;
   --color-ok-bg: #0b3d2e;
@@ -139,6 +145,9 @@
     --color-danger-fill: #c92a2a;
     --color-on-fill: #ffffff;
     --color-github: #2f363d;
+    --color-kakao: #FEE500;
+    --color-kakao-hover: #F5DC00;
+    --color-on-kakao: rgba(0, 0, 0, 0.85);
     --color-warn-bg: #3b3200;
     --color-warn-text: #ffe066;
     --color-ok-bg: #0b3d2e;
@@ -585,7 +594,10 @@ input[type="checkbox"], input[type="radio"] { width: auto; flex-shrink: 0; margi
 /* 004 이메일 로그인·가입 */
 .btn-google { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); height: 48px; border-radius: var(--radius); font-size: 1rem; margin-bottom: 8px; }
 .btn-google:hover { background: var(--color-surface-2); }
-.auth-page .btn-github, .auth-page .btn-google { display: flex; width: 100%; justify-content: center; gap: 8px; }
+/* 카카오 로그인 버튼: 카카오 디자인 가이드대로 노란 바탕과 85% 검정 글자를 다크 모드에서도 그대로 쓴다 */
+.btn-kakao { background: var(--color-kakao); color: var(--color-on-kakao); height: 48px; border-radius: var(--radius); font-size: 1rem; margin-bottom: 8px; }
+.btn-kakao:hover { background: var(--color-kakao-hover); }
+.auth-page .btn-github, .auth-page .btn-google, .auth-page .btn-kakao { display: flex; width: 100%; justify-content: center; gap: 8px; }
 .divider { display: flex; align-items: center; gap: 12px; color: var(--color-text-muted); font-size: 0.875rem; margin: 24px 0 16px; }
 .divider::before, .divider::after { content: ""; flex: 1; border-top: 1px solid var(--color-border); }
 .auth-links { display: flex; gap: 8px; justify-content: center; margin-top: 12px; color: var(--color-text-muted); }

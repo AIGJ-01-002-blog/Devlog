@@ -15,6 +15,8 @@ interface Draft {
 interface Check { available: boolean; message: string | null; suggestion?: string | null }
 
 /** 소셜 가입 마무리 (docs/08·09): 접두어 고정 + 본문 입력, 0.5초 뒤 중복 확인, 닉네임, 약관 동의. */
+const PROVIDER_NAMES: Record<string, string> = { GITHUB: 'GitHub', GOOGLE: 'Google', KAKAO: '카카오' }
+
 export function SignupSocialPage() {
   const { refresh } = useAuth()
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -66,7 +68,7 @@ export function SignupSocialPage() {
   }
   if (!draft) return <main className="container narrow"><p className="muted center">불러오는 중…</p></main>
 
-  const providerName = draft.provider === 'GITHUB' ? 'GitHub' : 'Google'
+  const providerName = PROVIDER_NAMES[draft.provider] ?? draft.provider
   // 메일 인증 전에는 사진을 올릴 수 없어(005 FR-017) 이메일을 따로 받는 가입은 복사하지 않는다
   const photo = draft.emailRequired || photoBroken ? null : socialAvatarSource(draft.avatarUrl)
 
@@ -111,7 +113,7 @@ export function SignupSocialPage() {
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" maxLength={254} required
                    spellCheck={false} autoCapitalize="none" aria-describedby="email-help" aria-invalid={!!errors.email} />
             <small id="email-help" className={errors.email ? 'error' : 'muted'}>
-              {errors.email ?? `${draft.provider === 'GITHUB' ? 'GitHub' : 'Google'} 계정에 인증된 이메일이 없어요. 받을 수 있는 이메일을 넣으면 인증 메일을 보내요.`}
+              {errors.email ?? `${providerName} 계정에 인증된 이메일이 없어요. 받을 수 있는 이메일을 넣으면 인증 메일을 보내요.`}
             </small>
           </label>
         )}

@@ -173,6 +173,10 @@ jobs:
           # 구글 로그인(004): 값이 있으면 BLOG_SECRET_ENV의 같은 값을 덮어쓴다. 여기와 BLOG_SECRET_ENV 둘 다 GOOGLE_CLIENT_ID가 없을 때만 Google 버튼이 숨는다
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          # 카카오 로그인(080): 구글과 같다. 비즈 앱 전환 전이면 변수 KAKAO_SCOPES로 이메일 동의항목을 뺀다
+          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          KAKAO_SCOPES: ${{ vars.KAKAO_SCOPES }}
         run: |
           umask 077
           # oracle은 KUBECONFIG Secret을 쓴다. school은 앞 단계가 SSH로 받아 둔 파일을 쓴다
@@ -182,7 +186,7 @@ jobs:
           fi
           f="deploy/k8s/overlays/$OVERLAY/secret.env"
           printf '%s\n' "$BLOG_SECRET_ENV" > "$f"
-          for key in SMTP_PASSWORD SMTP_HOST TELEGRAM_BOT_TOKEN GEMINI_API_KEY OLLAMA_BASE_URL OLLAMA_ACCESS_CLIENT_ID OLLAMA_ACCESS_CLIENT_SECRET OLLAMA_AUTH_TOKEN GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
+          for key in SMTP_PASSWORD SMTP_HOST TELEGRAM_BOT_TOKEN GEMINI_API_KEY OLLAMA_BASE_URL OLLAMA_ACCESS_CLIENT_ID OLLAMA_ACCESS_CLIENT_SECRET OLLAMA_AUTH_TOKEN GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET KAKAO_SCOPES; do
             val="${!key}"
             [ -n "$val" ] || continue
             grep -v "^${key}=" "$f" > "$f.tmp" || true
