@@ -9,7 +9,13 @@ export function TermsPage({ kind }) {
     }, []);
     // 재동의 화면의 "전문 보기"(/privacy#ads)처럼 항목을 가리켜 왔으면 그 항목으로 내려간다. 본문은 늦게 받는 묶음이라 브라우저가 못 찾는다
     useEffect(() => {
-        const id = decodeURIComponent(window.location.hash.slice(1));
+        let id = '';
+        try {
+            id = decodeURIComponent(window.location.hash.slice(1));
+        }
+        catch {
+            return; // 잘못 인코딩된 해시는 무시하고 맨 위에 둔다
+        }
         if (id)
             document.getElementById(id)?.scrollIntoView({ block: 'start' });
     }, [kind]);

@@ -74,7 +74,7 @@ export function App() {
       <div id={MAIN_ID} tabIndex={-1}>
         <WithdrawnGate path={path}><AgreementGate path={path}><PageErrorBoundary path={path}><Suspense fallback={<Loading />}>{route(path)}</Suspense></PageErrorBoundary></AgreementGate></WithdrawnGate>
       </div>
-      {!path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && !path.startsWith('/admin') && <SiteFooter />}
+      {!path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && !path.startsWith('/admin') && !path.startsWith('/manage/') && <SiteFooter />}
       {!path.startsWith('/write') && path !== '/account/restore' && !path.startsWith('/oauth/') && <MobileNav path={path} />}
       <TooltipLayer />
     </>
