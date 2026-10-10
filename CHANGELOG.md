@@ -6,6 +6,16 @@ MVP(로그인·글쓰기·글 읽기 + 화면)를 실제로 쓸 수 있을 때 1
 
 main에 이 파일의 맨 위 버전이 새로 들어오면 `.github/workflows/release.yml`이 태그(`v버전`)와 GitHub Release를 만든다.
 
+## [1.53.1] - 2026-10-10
+
+ChatGPT 커넥터 로그인 연결을 더 많은 연결 방식에서 되게 하고, 구글 로그인을 GitHub Secret 두 개로 켤 수 있게 한다 (spec 052, 민서님 요청 "chatgpt랑 google Oauth도 추가해줘").
+
+### 고침
+- ChatGPT처럼 토큰 요청의 `client_id`를 `Authorization: Basic`에 담아 보내는 앱도 토큰을 받는다. 비밀값은 보지 않는다(공개 클라이언트 그대로)
+- ChatGPT의 커넥터별 돌아갈 주소(`https://chatgpt.com/connector/oauth/...`)와 표준 필드가 더 붙은 등록 요청을 테스트로 확인한다
+
+### 배포
+- GitHub Secret `GOOGLE_CLIENT_ID`·`GOOGLE_CLIENT_SECRET`가 있으면 배포가 `BLOG_SECRET_ENV`의 같은 값을 덮어쓴다. 두 값이 들어가면 로그인 화면에 [Google로 계속하기]가 생긴다
 ## [1.53.0] - 2026-10-10
 
 사이트 소개 화면을 더하고, 광고·쿠키 항목을 더한 개인정보 처리방침에 다시 동의를 받는다 (spec 077, 민서님 답).

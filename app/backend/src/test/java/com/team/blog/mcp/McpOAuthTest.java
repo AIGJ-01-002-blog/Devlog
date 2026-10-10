@@ -159,6 +159,42 @@ class McpOAuthTest extends IntegrationTest {
     }
 
     @Test
+    void ChatGPT처럼_등록하고_Basic으로_client_id를_보내도_연결된다() throws Exception {
+        // ChatGPT 새 커넥터는 커넥터마다 다른 돌아갈 주소를 쓰고, 등록 본문에 표준 필드를 더 담는다
+        String cb = "https://chatgpt.com/connector/oauth/cb_" + "x".repeat(20);
+        Map<String, Object> reg = new HashMap<>();
+        reg.put("client_name", "ChatGPT");
+        reg.put("redirect_uris", List.of(cb));
+        reg.put("grant_types", List.of("authorization_code", "refresh_token"));
+        reg.put("response_types", List.of("code"));
+        reg.put("token_endpoint_auth_method", "client_secret_basic");
+        reg.put("scope", "devlog.read devlog.write");
+        JsonNode r = read(mvc.perform(post("/api/oauth/register").contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(reg)))
+                .andExpect(status().isCreated()).andReturn());
+        // 공개 클라이언트로 답한다(비밀값 없음)
+        assertThat(r.path("token_endpoint_auth_method").asString()).isEqualTo("none");
+        assertThat(r.has("client_secret")).isFalse();
+        String clientId = r.path("client_id").asString();
+
+        Session me = signup(uniqueLogin("oauthgpt"));
+        Map<String, Object> body = authorize(clientId, true);
+        body.put("redirectUri", cb);
+        String code = query(read(me.http().perform(asJson(post("/api/oauth/authorize"), body)).andExpect(status().isOk()).andReturn())
+                .path("redirect").asString()).get("code");
+
+        String basic = "Basic " + Base64.getEncoder().encodeToString((clientId + ":").getBytes(StandardCharsets.UTF_8));
+        JsonNode t = read(mvc.perform(post("/api/oauth/token").contentType(MediaType.APPLICATION_FORM_URLENCODED).header("Authorization", basic)
+                        .param("grant_type", "authorization_code").param("code", code).param("redirect_uri", cb).param("code_verifier", VERIFIER)
+                        .param("resource", "http://localhost:8080/api/mcp"))
+                .andExpect(status().isOk()).andReturn());
+        ping(t.path("access_token").asString()).andExpect(status().isOk());
+        // 갱신도 Basic으로
+        mvc.perform(post("/api/oauth/token").contentType(MediaType.APPLICATION_FORM_URLENCODED).header("Authorization", basic)
+                        .param("grant_type", "refresh_token").param("refresh_token", t.path("refresh_token").asString()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void 거부하거나_요청이_틀리면_토큰이_나오지_않는다() throws Exception {
         String clientId = register();
         Session me = signup(uniqueLogin("oauthno"));
