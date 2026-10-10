@@ -63,7 +63,7 @@
 
 生产服务器准备就绪后将在 https://devlog.life 上线。在那之前，可以按下面的步骤在自己的电脑上运行。
 
-1. 用 GitHub、Google 账号或邮箱注册，设定博客地址（`/@your-id`）和昵称。
+1. 用 GitHub、Google、Kakao、Facebook 账号或邮箱注册，设定博客地址（`/@your-id`）和昵称。
 2. 点击 **写文章**，用 Markdown 写作。左边输入，右边立即显示预览，写作过程中会自动保存。
 3. 点击 **发布** 并选择标签和公开范围，文章就会出现在首页、标签、搜索和关注者的动态中。
 
@@ -135,12 +135,12 @@ cd app/frontend && npm install && npm run dev            # http://localhost:5173
 - **浏览数**：同一个人浏览同一篇文章，24 小时内只计一次。原始 IP 地址不会保存在任何地方。
 - **关注与动态**：`/feed` 只显示你关注的人发布的所有人可见文章。
 - **好友**：好友申请与接受、好友的最近动态、仅好友可见的文章。
-- **通知**：同一篇文章的点赞合并为"某某等 N 人"，可以按类型关闭。保存 90 天。
+- **通知**：同一篇文章的点赞合并为"某某等 N 人"，可以按类型关闭。也可以通过 Telegram、Discord 接收。保存 90 天。
 
 ### 账号与运营
 
-- **注册与登录**：GitHub、Google 的 OAuth2，或邮箱（验证邮件、重置密码）。博客地址和昵称的规则、保留词。
-- **个人资料与设置**：头像裁剪、昵称和自我介绍、博客简介标签页、社交链接、默认公开范围、通知设置。
+- **注册与登录**：GitHub、Google、Kakao、Facebook 的 OAuth2，或邮箱（验证邮件、重置密码）。博客地址和昵称的规则、保留词。
+- **个人资料与设置**：头像裁剪、昵称和自我介绍、博客简介标签页、社交链接、默认公开范围、粉丝与关注列表是否公开、通知设置。界面可选韩语、English、日本語、中文。
 - **举报、隐藏、封禁**：举报文章和评论（6 种理由），管理员的举报处理页面，从 1 天到永久的封禁。
 - **注销与恢复**：在 30 天宽限期内登录即可恢复账号。之后每天逐个账号在一个事务中删除。
 
@@ -166,7 +166,7 @@ flowchart LR
 
 | 模块 | 职责 | 存储 |
 | --- | --- | --- |
-| **account** | 注册与登录（GitHub、Google、邮箱）、博客地址与昵称、个人资料与设置、简介、社交链接、注销与恢复 | PostgreSQL、Redis（会话） |
+| **account** | 注册与登录（GitHub、Google、Kakao、Facebook、邮箱）、博客地址与昵称、个人资料与设置、简介、社交链接、注销与恢复 | PostgreSQL、Redis（会话） |
 | **post** | 写作、自动保存、发布、编辑、公开范围、回收站、文章管理、Markdown 预览 | PostgreSQL、Redis（自动保存、幂等键） |
 | **media** | 图片、GIF、附件的上传与检查，清理未使用的文件 | MinIO/S3（未配置时使用本地文件夹） |
 | **discovery · page** | 首页、博客、文章页面、上下篇文章、RSS、包含链接预览 head 信息的页面外壳 | PostgreSQL |
@@ -322,7 +322,7 @@ npm run dev        # http://localhost:5173
 | --- | --- | --- | --- |
 | Java | 21 | 整个应用 | LTS 版本。用 record 简洁地定义请求和响应的结构 |
 | Spring Boot | 4.1.1 | 整个应用 | 把 Web MVC、校验、安全、邮件、Actuator 健康检查（Kubernetes 就绪探针）统一到一个版本 |
-| Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub、Google 登录，会话，CSRF，按路径的权限 |
+| Spring Security · OAuth2 Client | Boot 4.1 | account | GitHub、Google、Kakao、Facebook 登录，会话，CSRF，按路径的权限 |
 | Spring Data JPA (Hibernate) | Boot 4.1 | 所有领域 | 保存会员、文章、评论等领域数据 |
 | Spring Session Data Redis · Spring Data Redis | Boot 4.1 | 会话、限流、浏览数、缓存 | 多个 Pod 共享同一会话，并发请求也由一个 Redis 脚本判定 |
 | Flyway | Boot 4.1 | 数据库 | 用 V1~V31 迁移管理模式，启动时自动应用 |
@@ -388,7 +388,7 @@ npm run dev        # http://localhost:5173
 | v1.53.0 | 2026-10-10 | 网站介绍页面（/about）和页脚链接，加入广告与 Cookie 条款的隐私政策重新同意 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.53.0) |
 | v1.52.0 | 2026-10-10 | Google AdSense：公开页面加入广告代码、广告页面使用严格 CSP、ads.txt、隐私政策加入广告与 Cookie 说明 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.52.0) |
 | v1.51.3 | 2026-10-10 | AI 日记更像人写的：按主题成段代替时间列表，引导用日记口吻写备忘 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.3) |
-| v1.51.2 | 2026-10-09 | 运维仪表盘（Kubernetes Dashboard，只读登录）（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/Devlog/releases/tag/v1.51.2) |
+| v1.51.2 | 2026-10-09 | 运维仪表盘（Kubernetes Dashboard，只读登录）（部署配置） | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.2) |
 | v1.51.1 | 2026-10-09 | 修复 `suggest_topics` 因“已部署”“颜色 token”等词误判视角的问题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.1) |
 | v1.51.0 | 2026-10-09 | MCP `suggest_topics`：从笔记、AI 日记、提案和草稿中推荐面向开发者的选题 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.51.0) |
 | v1.50.2 | 2026-10-09 | 首页分支按钮选中一个后其他按钮不再消失，长名称在按钮内省略显示 | [查看](https://github.com/AIGJ-01-002-blog/devlog/releases/tag/v1.50.2) |
