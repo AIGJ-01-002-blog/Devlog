@@ -18,7 +18,8 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.util.StringUtils;
 
 /**
- * 소셜 로그인 앱 등록. GitHub은 application.yml, Google은 GOOGLE_CLIENT_ID, 카카오는 KAKAO_CLIENT_ID에 값이 있을 때만 켠다 (004, 080).
+ * 소셜 로그인 앱 등록. GitHub은 application.yml, Google은 GOOGLE_CLIENT_ID, 카카오는 KAKAO_CLIENT_ID, Facebook은 FACEBOOK_CLIENT_ID에 값이 있을 때만 켠다
+ * (004, 080, 083).
  * 비밀 파일에 값이 빈 채로 있어도 앱이 뜨고, 화면은 /api/auth/providers를 보고 그 버튼을 숨긴다.
  */
 @Configuration
@@ -39,6 +40,10 @@ public class OAuthClientsConfig {
         String kakaoId = env.getProperty("KAKAO_CLIENT_ID");
         if (StringUtils.hasText(kakaoId) && all.stream().noneMatch(r -> r.getRegistrationId().equals("kakao"))) {
             all.add(kakao(kakaoId, env));
+        }
+        String facebookId = env.getProperty("FACEBOOK_CLIENT_ID");
+        if (StringUtils.hasText(facebookId) && all.stream().noneMatch(r -> r.getRegistrationId().equals("facebook"))) {
+            all.add(facebook(facebookId, env));
         }
         return new InMemoryClientRegistrationRepository(all);
     }
@@ -62,6 +67,29 @@ public class OAuthClientsConfig {
                 .userInfoUri("https://kapi.kakao.com/v2/user/me")
                 .userNameAttributeName("id")
                 .clientName("Kakao")
+                .build();
+    }
+
+    /**
+     * Facebook 로그인 (spec 083). Spring 기본 등록(CommonOAuth2Provider.FACEBOOK)은 2016년 Graph API 버전을 적어 두어 쓰지 않는다.
+     * 버전을 빼면 앱의 가장 오래된 버전으로 처리되므로 버전을 적고, 만료되기 전에 올린다(버전은 다음 버전이 나오고 2년 뒤 만료).
+     * email·public_profile은 앱 검수 없이 쓸 수 있는 권한이다. 사진은 512px로 받는다.
+     */
+    static final String FACEBOOK_GRAPH = "https://graph.facebook.com/v26.0";
+
+    static ClientRegistration facebook(String clientId, Environment env) {
+        return ClientRegistration.withRegistrationId("facebook")
+                .clientId(clientId)
+                .clientSecret(env.getProperty("FACEBOOK_CLIENT_SECRET", ""))
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUri(siteBaseUrl(env) + "/login/oauth2/code/{registrationId}")
+                .scope("public_profile", "email")
+                .authorizationUri("https://www.facebook.com/v26.0/dialog/oauth")
+                .tokenUri(FACEBOOK_GRAPH + "/oauth/access_token")
+                .userInfoUri(FACEBOOK_GRAPH + "/me?fields=id,name,email,picture.width(512).height(512)")
+                .userNameAttributeName("id")
+                .clientName("Facebook")
                 .build();
     }
 

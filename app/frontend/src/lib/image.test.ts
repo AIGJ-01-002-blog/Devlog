@@ -33,6 +33,12 @@ describe('소셜 사진 주소', () => {
     expect(socialAvatarSource('http://k.kakaocdn.net/dn/abc/img_640x640.jpg')).toBeNull()
   })
 
+  it('Facebook 사진은 주소 그대로 쓴다', () => {
+    const fb = 'https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=1&height=512&width=512&ext=1&hash=x'
+    expect(socialAvatarSource(fb)).toBe(fb)
+    expect(socialAvatarSource('https://scontent.xx.fbcdn.net/v/a.jpg')).toBeNull()
+  })
+
   it('다른 곳이거나 https가 아니면 쓰지 않는다', () => {
     expect(socialAvatarSource('http://avatars.githubusercontent.com/u/1')).toBeNull()
     expect(socialAvatarSource('https://evil.example/a.png')).toBeNull()

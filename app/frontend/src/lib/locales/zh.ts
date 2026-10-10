@@ -116,7 +116,6 @@ export const zh: Record<string, string> = {
   "GitHub 보기": "查看 GitHub",
   "GitHub로 계속하기": "使用 GitHub 继续",
   "Google 계정으로 로그인하거나 가입해요": "使用 Google 账号登录或注册",
-  "Google·GitHub로 처음 오셨다면 블로그 주소와 닉네임을 정하고 가입을 마쳐요.": "如果是首次通过 Google·GitHub 登录，请设置博客ID和昵称完成注册。",
   "Google로 계속하기": "使用 Google 继续",
   "Google이 이 내용을 서비스 개선에 쓰고, 사람이 검토할 수 있어요.": "Google 会将这些内容用于改进服务，并可能由人工审核。",
   "Inoreader에서 이 블로그 구독하기": "在 Inoreader 中订阅此博客",
@@ -1171,7 +1170,6 @@ export const zh: Record<string, string> = {
   "친구에게만 보이는 글": "仅好友可见的文章",
   "카카오": "Kakao",
   "카카오 계정으로 로그인하거나 가입해요": "使用 Kakao 账号登录或注册",
-  "카카오·Google·GitHub로 처음 오셨다면 블로그 주소와 닉네임을 정하고 가입을 마쳐요.": "首次使用 Kakao、Google 或 GitHub 登录时，设置博客ID和昵称即可完成注册。",
   "카카오로 계속하기": "使用 Kakao 继续",
   "커밋 4개 · 대화 요약 · 태그 spring-ai, ollama": "4 个提交 · 对话摘要 · 标签 spring-ai、ollama",
   "켜면 연결한 AI가 글을 바로 발행하거나 삭제할 수 있어요. 삭제는 웹에서 지울 때와 같아요.": "开启后，已连接的 AI 可以直接发布或删除文章。删除与在网页上删除相同。",
@@ -1312,4 +1310,7 @@ export const zh: Record<string, string> = {
   "👥 친구에게만": "👥 仅好友可见",
   "🔒 비공개": "🔒 仅自己可见",
   "언어: {0}": "语言：{0}",
+  "Facebook 계정으로 로그인하거나 가입해요": "使用 Facebook 账号登录或注册",
+  "Facebook으로 계속하기": "使用 Facebook 继续",
+  "소셜 계정으로 처음 오셨다면 블로그 주소와 닉네임을 정하고 가입을 마쳐요.": "首次使用社交账号？请设置博客地址和昵称以完成注册。",
 }

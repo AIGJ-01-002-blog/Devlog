@@ -21,7 +21,7 @@ import { discordApi, isDiscordWebhookUrl } from '../lib/discord';
 import { LINK_POLL_MS, linkTimeLeft, telegramApi } from '../lib/telegram';
 import { DEFAULT_VISIBILITY_CHANGED } from '../lib/visibility';
 import { t, tNodes } from '../lib/i18n';
-const PROVIDER_NAMES = { GITHUB: 'GitHub', GOOGLE: 'Google', KAKAO: t('카카오'), LOCAL: t('이메일') };
+const PROVIDER_NAMES = { GITHUB: 'GitHub', GOOGLE: 'Google', KAKAO: t('카카오'), FACEBOOK: 'Facebook', LOCAL: t('이메일') };
 const BIO_MAX = 200;
 const BIO_LINES = 4;
 /** 서버(BioPolicy)와 같은 정리: 앞뒤·줄 끝 공백 제거, 연속 빈 줄은 하나로. 글자 수·줄 수는 정리한 뒤 센다. */
