@@ -55,5 +55,5 @@ export function FollowButton({ handle, following, onChange, small = false }) {
         wanted.current = next;
         void flush();
     };
-    return (_jsxs("span", { className: "follow-wrap", children: [_jsx("button", { type: "button", className: `btn ${on ? 'btn-outline following' : 'btn-primary'}${small ? ' btn-small' : ''}`, "aria-pressed": on, onClick: click, onMouseEnter: () => setHover(true), onMouseLeave: () => setHover(false), onFocus: (e) => setHover(e.currentTarget.matches(':focus-visible')), onBlur: () => setHover(false), children: followLabel(on, hover) }), error && _jsx("span", { className: "error small", role: "alert", children: FOLLOW_ERROR })] }));
+    return (_jsxs("span", { className: "follow-wrap", children: [_jsx("button", { type: "button", className: `btn ${on ? 'btn-outline following' : 'btn-primary'}${small ? ' btn-small' : ''}`, "aria-pressed": on, onClick: click, "data-tip": on ? '팔로우를 그만둬요(상대에게 알리지 않아요)' : '상대 수락 없이 새 글을 피드와 알림으로 받아요', onMouseEnter: () => setHover(true), onMouseLeave: () => setHover(false), onFocus: (e) => setHover(e.currentTarget.matches(':focus-visible')), onBlur: () => setHover(false), children: followLabel(on, hover) }), error && _jsx("span", { className: "error small", role: "alert", children: FOLLOW_ERROR })] }));
 }

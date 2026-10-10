@@ -156,6 +156,38 @@ public class NotificationService {
     }
 
     /**
+     * 친구 요청 (015 A-1, 008 FR-014). 묶지 않고 요청마다 하나다. 같은 사람의 요청은 7일에 한 번만 알린다(요청 취소 뒤 다시 보내도).
+     * 처리 시점에 요청이 이미 수락·거절·취소됐으면 만들지 않는다. 거절·취소·끊기는 알리지 않는다.
+     */
+    public void friendRequested(long requesterId, long receiverId, Instant at) {
+        friend(NotificationType.FRIEND_REQUEST, receiverId, requesterId, at);
+    }
+
+    /** 친구 수락: 요청한 사람에게 (맞요청으로 바로 맺어진 경우 포함). 그 사이 끊겼으면 만들지 않는다. 같은 사람은 7일에 한 번. */
+    public void friendAccepted(long requesterId, long accepterId, Instant at) {
+        friend(NotificationType.FRIEND_ACCEPTED, requesterId, accepterId, at);
+    }
+
+    /** 요청이면 행동자가 보낸 요청이 아직 대기 중일 때, 수락이면 아직 친구일 때만 만든다. */
+    private void friend(NotificationType type, long receiverId, long actorId, Instant at) {
+        if (!allowed(type, receiverId, actorId, null)) return;
+        String still = type == NotificationType.FRIEND_REQUEST ? "status = 'PENDING' AND requested_by = " + actorId : "status = 'ACCEPTED'";
+        tx.executeWithoutResult(s -> {
+            lock(receiverId, type, actorId);
+            if (!Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM friendship WHERE member_a_id = ? AND member_b_id = ? AND "
+                    + still + ")", Boolean.class, Math.min(receiverId, actorId), Math.max(receiverId, actorId)))) return;
+            Boolean recent = jdbc.queryForObject("""
+                    SELECT EXISTS (SELECT 1 FROM notification n JOIN notification_actor a ON a.notification_id = n.id AND a.actor_id = ?
+                                   WHERE n.receiver_id = ? AND n.type = ? AND a.created_at > ?)
+                    """, Boolean.class, actorId, receiverId, type.name(), Timestamp.from(at.minus(FOLLOW_REPEAT)));
+            if (Boolean.TRUE.equals(recent)) return;
+            Timestamp ts = Timestamp.from(at);
+            long id = insert(receiverId, type, ts);
+            jdbc.update("INSERT INTO notification_actor (notification_id, actor_id, created_at) VALUES (?, ?, ?)", id, actorId, ts);
+        });
+    }
+
+    /**
      * 팔로우한 사람의 새 글 (FR-004·FR-006), 구독한 시리즈의 새 글 (072). 팔로우와 구독을 함께 하는 사람에게는 하나만 간다. 처음 전체 공개될 때 한 번 오는 사건이라 중복이 없다. 처리 시점에 이미 공개 목록 조건을
      * 벗어났으면 만들지 않는다. 팔로워 전원에게 문장 하나로 만든다(끈 사람·탈퇴 신청한 사람 제외). 행동자 = 글 작성자라 따로 적지 않는다.
      */

@@ -156,7 +156,7 @@ function BlogTags({ handle, initial, active }: { handle: string; initial: TagCou
   )
 }
 
-/** 친구 요청·수락·취소·끊기 (008 US1). 거절·취소·끊기는 상대에게 알리지 않는다. */
+/** 친구 요청·수락·취소·끊기 (008 US1). 요청과 수락은 상대에게 알린다(015 A-1). 거절·취소·끊기는 알리지 않는다. */
 function FriendButton({ profile, onChange }: { profile: BlogProfile; onChange: (f: FriendRelation) => void }) {
   const { me } = useAuth()
   const [busy, setBusy] = useState(false)
@@ -183,25 +183,29 @@ function FriendButton({ profile, onChange }: { profile: BlogProfile; onChange: (
   return (
     <div className="friend-actions row">
       {relation === 'NONE' && (
-        <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => friendsApi.request(profile.handle))}>친구 요청</button>
+        <button type="button" className="btn btn-outline" disabled={busy} data-tip="상대가 수락하면 친구가 돼 친구 공개 글을 서로 볼 수 있어요. 상대에게 알림이 가요"
+                onClick={() => run(() => friendsApi.request(profile.handle))}>친구 요청</button>
       )}
       {relation === 'SENT' && (
         <>
           <span className="muted small">친구 요청을 보냈어요</span>
-          <button type="button" className="btn btn-text" disabled={busy} onClick={() => run(removeAs('NONE'))}>요청 취소</button>
+          <button type="button" className="btn btn-text" disabled={busy} data-tip="보낸 요청을 거둬요(상대에게 알리지 않아요)"
+                  onClick={() => run(removeAs('NONE'))}>요청 취소</button>
         </>
       )}
       {relation === 'RECEIVED' && (
         <>
           <span className="muted small">나에게 친구 요청을 보냈어요</span>
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => run(() => friendsApi.accept(profile.handle))}>수락</button>
-          <button type="button" className="btn btn-text" disabled={busy} onClick={() => run(removeAs('NONE'))}>거절</button>
+          <button type="button" className="btn btn-primary" disabled={busy} data-tip="친구가 되고 상대에게 수락 알림이 가요"
+                  onClick={() => run(() => friendsApi.accept(profile.handle))}>수락</button>
+          <button type="button" className="btn btn-text" disabled={busy} data-tip="요청을 지워요(상대에게 알리지 않아요)"
+                  onClick={() => run(removeAs('NONE'))}>거절</button>
         </>
       )}
       {relation === 'FRIENDS' && (
         <>
           <span className="badge"><span aria-hidden="true">👥</span> 친구</span>
-          <button type="button" className="btn btn-text" disabled={busy} onClick={() => {
+          <button type="button" className="btn btn-text" disabled={busy} data-tip="친구 관계를 끊어요(상대에게 알리지 않아요)" onClick={() => {
             if (confirm(`${profile.nickname}님과 친구를 끊을까요? 상대에게 알림은 가지 않아요.`)) void run(removeAs('NONE'))
           }}>친구 끊기</button>
         </>

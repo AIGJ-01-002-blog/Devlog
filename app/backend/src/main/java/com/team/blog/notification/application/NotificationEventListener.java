@@ -8,6 +8,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.team.blog.comment.application.CommentEvents;
 import com.team.blog.follow.application.FollowEvents;
+import com.team.blog.friend.application.FriendEvents;
 import com.team.blog.like.application.LikeEvents;
 import com.team.blog.moderation.application.ModerationEvents;
 import com.team.blog.moderation.application.ReportTarget;
@@ -63,6 +64,18 @@ class NotificationEventListener {
     @TransactionalEventListener
     public void on(FollowEvents.Unfollowed e) {
         run("unfollow", () -> notifications.unfollowed(e.followerId(), e.followeeId()));
+    }
+
+    @Async(NotificationAsyncConfig.EXECUTOR)
+    @TransactionalEventListener
+    public void on(FriendEvents.FriendRequested e) {
+        run("friend-request", () -> notifications.friendRequested(e.requesterId(), e.receiverId(), e.at()));
+    }
+
+    @Async(NotificationAsyncConfig.EXECUTOR)
+    @TransactionalEventListener
+    public void on(FriendEvents.FriendAccepted e) {
+        run("friend-accepted", () -> notifications.friendAccepted(e.requesterId(), e.accepterId(), e.at()));
     }
 
     @Async(NotificationAsyncConfig.EXECUTOR)
